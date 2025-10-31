@@ -1,0 +1,27 @@
+═══════════════════════════════════════════════════════
+   متغيرات البيئة لـ Vercel - Environment Variables
+═══════════════════════════════════════════════════════
+
+عند النشر على Vercel، أضف هذه المتغيرات في:
+Settings → Environment Variables
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 المتغيرات المطلوبة:
+
+1. NEXT_PUBLIC_SUPABASE_URL
+   القيمة: https://gtnyspavjsoolvnphihs.supabase.co
+
+2. NEXT_PUBLIC_SUPABASE_ANON_KEY
+   القيمة: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0bnlzcGF2anNvb2x2bnBoaWhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE3MjcxNDAsImV4cCI6MjA3NzMwMzE0MH0.kKpUYPuRdJOBd39S9w_bvb-Zc7w5qyYj07UtLy-V5BU
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📌 ملاحظات:
+
+- اضفها للبيئات: Production, Preview, Development
+- تأكد من نسخ القيم بدقة
+- بعد إضافتها، أعد النشر
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+

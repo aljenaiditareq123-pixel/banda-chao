@@ -1,0 +1,12 @@
+═══════════════════════════════════════════════════════════
+  طريقة بسيطة جداً - 3 خطوات فقط!
+═══════════════════════════════════════════════════════════
+
+1. في Supabase: Storage → avatars → Policies
+
+2. اضغط: New policy → Get started quickly
+
+3. اختر: "Enable insert access for authenticated users"
+   ثم: Use template → Review → Save
+
+✅ انتهيت!
