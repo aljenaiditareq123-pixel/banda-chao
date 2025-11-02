@@ -1,0 +1,58 @@
+═══════════════════════════════════════════════════════
+   ✅ الحل الذي يعمل - Working Solution
+═══════════════════════════════════════════════════════
+
+📋 المشكلة: Terminal لا يعرف npx
+✅ الحل: إصلاح PATH
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 في Terminal، انسخ والصق هذه الأوامر بالترتيب:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1️⃣ إصلاح PATH:
+
+   export PATH="$HOME/.nvm/versions/node/v24.11.0/bin:$PATH"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+2️⃣ سجّل دخول Vercel:
+
+   npx vercel login
+
+   → سيظهر رابط في Terminal
+   → انسخ الرابط وافتحه في المتصفح
+   → اضغط "Authorize" أو "Approve"
+   → ✅ سيرجع تلقائياً
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+3️⃣ انشر المشروع:
+
+   npx vercel
+
+   → سيطلب إعدادات:
+   → اضغط Enter للقيم الافتراضية
+   → أضف Environment Variables عندما يسألك
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 متغيرات البيئة:
+
+   NEXT_PUBLIC_SUPABASE_URL
+   = https://gtnyspavjsoolvnphihs.supabase.co
+
+   NEXT_PUBLIC_SUPABASE_ANON_KEY
+   = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0bnlzcGF2anNvb2x2bnBoaWhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE3MjcxNDAsImV4cCI6MjA3NzMwMzE0MH0.kKpUYPuRdJOBd39S9w_bvb-Zc7w5qyYj07UtLy-V5BU
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ بعد دقائق قليلة: https://banda-chao.vercel.app
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 ابدأ الآن: انسخ الأمر الأول في Terminal!
+
+═══════════════════════════════════════════════════════
+

@@ -1,0 +1,54 @@
+═══════════════════════════════════════════════════════
+   ✅ Vercel CLI مثبت - الآن نفّذ هذه الأوامر!
+═══════════════════════════════════════════════════════
+
+✅ تم تثبيت Vercel CLI بنجاح!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 الآن في Terminal، انسخ والصق:
+
+1️⃣ سجّل دخول Vercel:
+
+   vercel login
+
+   → سيظهر رابط في Terminal
+   → انسخ الرابط وافتحه في المتصفح
+   → اضغط "Authorize" أو "Approve"
+   → ✅ سيرجع تلقائياً
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+2️⃣ انشر المشروع:
+
+   vercel
+
+   → سيطلب إعدادات:
+   → اضغط Enter للقيم الافتراضية
+   → أضف Environment Variables عندما يسألك
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+3️⃣ متغيرات البيئة:
+
+   عندما يسأل عن NEXT_PUBLIC_SUPABASE_URL:
+   → https://gtnyspavjsoolvnphihs.supabase.co
+
+   عندما يسأل عن NEXT_PUBLIC_SUPABASE_ANON_KEY:
+   → eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0bnlzcGF2anNvb2x2bnBoaWhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE3MjcxNDAsImV4cCI6MjA3NzMwMzE0MH0.kKpUYPuRdJOBd39S9w_bvb-Zc7w5qyYj07UtLy-V5BU
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ بعد دقائق قليلة:
+
+   ستحصل على رابط مثل:
+   https://banda-chao.vercel.app
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 ابدأ الآن: انسخ والصق في Terminal
+
+   vercel login
+
+═══════════════════════════════════════════════════════
+

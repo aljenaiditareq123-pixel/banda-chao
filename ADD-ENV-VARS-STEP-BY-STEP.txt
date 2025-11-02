@@ -1,0 +1,101 @@
+═══════════════════════════════════════════════════════
+   ✅ أنت في المكان الصحيح!
+   📝 أضف المتغيرات الآن - خطوة بخطوة
+═══════════════════════════════════════════════════════
+
+✅ أنت في صفحة:
+   Project Settings → Environment Variables
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 الخطوات بالتفصيل:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 المتغير الأول:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1️⃣ في حقل "Key" (المفتاح):
+   أدخل بالضبط:
+   NEXT_PUBLIC_SUPABASE_URL
+
+2️⃣ في حقل "Value" (القيمة):
+   أدخل بالضبط:
+   https://gtnyspavjsoolvnphihs.supabase.co
+
+3️⃣ في قائمة "Environments" (البيئات):
+   ✅ اضغط على القائمة المنسدلة
+   ✅ تأكد من اختيار "All Environments"
+      (أو اختر: Production, Preview, Development)
+
+4️⃣ "Sensitive" (حساس):
+   ❌ اتركه معطلاً (Disabled) - لا حاجة لتفعيله
+
+5️⃣ اضغط "Save" أو "Add"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 المتغير الثاني:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1️⃣ اضغط "Add Another" (إضافة آخر)
+
+2️⃣ في حقل "Key" (المفتاح):
+   أدخل بالضبط:
+   NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+3️⃣ في حقل "Value" (القيمة):
+   أدخل بالضبط:
+   eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0bnlzcGF2anNvb2x2bnBoaWhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE3MjcxNDAsImV4cCI6MjA3NzMwMzE0MH0.kKpUYPuRdJOBd39S9w_bvb-Zc7w5qyYj07UtLy-V5BU
+
+   ⚠️ مهم: انسخ القيمة كاملة!
+
+4️⃣ في قائمة "Environments" (البيئات):
+   ✅ تأكد من اختيار "All Environments"
+      (أو اختر: Production, Preview, Development)
+
+5️⃣ "Sensitive" (حساس):
+   ❌ اتركه معطلاً (Disabled)
+
+6️⃣ اضغط "Save" أو "Add"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ بعد إضافة المتغيرين:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1️⃣ ستظهر المتغيرات في القائمة أدناه
+
+2️⃣ اذهب إلى "Deployments" (في القائمة الجانبية)
+
+3️⃣ اضغط على آخر deployment
+
+4️⃣ اضغط "Redeploy" أو "Redeploy Production"
+
+5️⃣ انتظر 2-5 دقائق
+
+6️⃣ ✅ ستحصل على رابط الموقع!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 ملخص القيم:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+المتغير 1:
+Key: NEXT_PUBLIC_SUPABASE_URL
+Value: https://gtnyspavjsoolvnphihs.supabase.co
+
+المتغير 2:
+Key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+Value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0bnlzcGF2anNvb2x2bnBoaWhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE3MjcxNDAsImV4cCI6MjA3NzMwMzE0MH0.kKpUYPuRdJOBd39S9w_bvb-Zc7w5qyYj07UtLy-V5BU
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 نصيحة: انسخ القيم من هذا الملف لتجنب الأخطاء!
+
+═══════════════════════════════════════════════════════
+

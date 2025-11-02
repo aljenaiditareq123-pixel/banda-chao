@@ -6,6 +6,8 @@ import EditDeleteButtons from '@/components/EditDeleteButtons';
 import Link from 'next/link';
 import Image from 'next/image';
 
+export const dynamic = 'force-dynamic';
+
 export default async function ProductDetailPage({ params }: { params: { id: string } }) {
   const supabase = await createClient();
 
@@ -59,6 +61,17 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
                     />
                   ))}
                 </div>
+              ) : product.image_url ? (
+                <div className="aspect-square">
+                  <Image
+                    src={product.image_url}
+                    alt={product.name}
+                    width={800}
+                    height={800}
+                    className="w-full h-full object-cover rounded-lg"
+                    unoptimized
+                  />
+                </div>
               ) : (
                 <div className="aspect-square bg-gradient-to-br from-red-100 to-pink-100 rounded-lg flex items-center justify-center">
                   <span className="text-6xl">📦</span>
@@ -110,6 +123,7 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
               </div>
 
               <div className="border-t border-gray-200 pt-4 mt-4">
+                <h3 className="font-semibold mb-3">卖家信息</h3>
                 <div className="flex items-center space-x-3">
                   <Link
                     href={`/profile/${product.user_id}`}
@@ -135,6 +149,41 @@ export default async function ProductDetailPage({ params }: { params: { id: stri
                   </Link>
                 </div>
               </div>
+
+              {/* External Links */}
+              {(product.taobao_link || product.jd_link) && (
+                <div className="border-t border-gray-200 pt-4 mt-4">
+                  <h3 className="font-semibold mb-3">购买链接</h3>
+                  <div className="flex flex-wrap gap-3">
+                    {product.taobao_link && (
+                      <a
+                        href={product.taobao_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition"
+                      >
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                        </svg>
+                        <span>淘宝购买</span>
+                      </a>
+                    )}
+                    {product.jd_link && (
+                      <a
+                        href={product.jd_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+                      >
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                        </svg>
+                        <span>京东购买</span>
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

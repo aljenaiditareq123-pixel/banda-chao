@@ -1,0 +1,81 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password      String    // hashed password
+  name          String?
+  profilePicture String?  @map("profile_picture")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  
+  // Relations
+  sentMessages     Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+  posts            Post[]
+  products         Product[]
+
+  @@map("users")
+}
+
+model Message {
+  id          String   @id @default(uuid())
+  content     String
+  senderId    String   @map("sender_id")
+  receiverId  String   @map("receiver_id")
+  timestamp   DateTime @default(now())
+  read        Boolean  @default(false)
+  
+  // Relations
+  sender   User @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@index([senderId, receiverId])
+  @@map("messages")
+}
+
+model Post {
+  id        String   @id @default(uuid())
+  content   String
+  userId    String   @map("user_id")
+  images    String[] // Array of image URLs
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("posts")
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  imageUrl    String?  @map("image_url")
+  externalLink String   @map("external_link") // Link to Amazon, Noon, Shein, etc.
+  userId      String   @map("user_id")
+  price       Float?
+  category    String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([category])
+  @@map("products")
+}
+

@@ -1,0 +1,77 @@
+═══════════════════════════════════════════════════════
+   ✅ تم إصلاح vercel.json!
+   📋 الآن: أضف متغيرات البيئة
+═══════════════════════════════════════════════════════
+
+❌ المشكلة:
+   "Environment Variable references Secret which does not exist"
+
+✅ الحل:
+   تم إزالة قسم "env" من vercel.json
+   سنضيف المتغيرات مباشرة في Vercel Dashboard
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 الطريقة 1: عبر Vercel Dashboard (الأسهل!)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1️⃣ اذهب إلى:
+   https://vercel.com/dashboard
+
+2️⃣ اضغط على مشروع "banda-chao"
+
+3️⃣ اضغط على "Settings" (في القائمة)
+
+4️⃣ اضغط على "Environment Variables"
+
+5️⃣ أضف المتغيرات التالية:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 المتغير 1:
+   Name: NEXT_PUBLIC_SUPABASE_URL
+   Value: https://gtnyspavjsoolvnphihs.supabase.co
+   ✅ اضبط للبيئات: Production, Preview, Development
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 المتغير 2:
+   Name: NEXT_PUBLIC_SUPABASE_ANON_KEY
+   Value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0bnlzcGF2anNvb2x2bnBoaWhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE3MjcxNDAsImV4cCI6MjA3NzMwMzE0MH0.kKpUYPuRdJOBd39S9w_bvb-Zc7w5qyYj07UtLy-V5BU
+   ✅ اضبط للبيئات: Production, Preview, Development
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+6️⃣ بعد إضافة المتغيرات:
+   → اضغط "Save"
+   → ثم اضغط "Redeploy" (أعد النشر)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 الطريقة 2: عبر Terminal (أسرع!)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+في Terminal، نفّذ:
+
+export PATH="$HOME/.nvm/versions/node/v24.11.0/bin:$PATH"
+
+npx vercel env add NEXT_PUBLIC_SUPABASE_URL production preview development
+# عند السؤال، أدخل: https://gtnyspavjsoolvnphihs.supabase.co
+
+npx vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY production preview development
+# عند السؤال، أدخل: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0bnlzcGF2anNvb2x2bnBoaWhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE3MjcxNDAsImV4cCI6MjA3NzMwMzE0MH0.kKpUYPuRdJOBd39S9w_bvb-Zc7w5qyYj07UtLy-V5BU
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✨ بعد إضافة المتغيرات:
+
+   npx vercel --prod
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 نصيحة: استخدم الطريقة 1 (Dashboard) فهي أسهل!
+
+═══════════════════════════════════════════════════════
+

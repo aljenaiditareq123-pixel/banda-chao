@@ -1,34 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Header() {
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const supabase = createClient();
+  const { user, loading, logout } = useAuth();
 
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-      setLoading(false);
-    };
-
-    getUser();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, [supabase.auth]);
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
+  const handleLogout = () => {
+    logout();
     router.push('/');
     router.refresh();
   };
@@ -61,6 +42,12 @@ export default function Header() {
             </Link>
             {user && (
               <>
+                <Link href="/chat" className="text-gray-700 hover:text-red-600 transition">
+                  聊天
+                </Link>
+                <Link href="/feed" className="text-gray-700 hover:text-red-600 transition">
+                  动态
+                </Link>
                 <Link href="/videos/new" className="text-gray-700 hover:text-red-600 transition">
                   上传视频
                 </Link>
@@ -84,10 +71,18 @@ export default function Header() {
                   href={`/profile/${user.id}`}
                   className="flex items-center space-x-2 text-gray-700 hover:text-red-600 transition"
                 >
-                  <div className="h-8 w-8 rounded-full bg-red-600 flex items-center justify-center text-white text-sm">
-                    {user.email?.charAt(0).toUpperCase()}
-                  </div>
-                  <span className="hidden sm:inline">我的账户</span>
+                  {user.profilePicture ? (
+                    <img
+                      src={user.profilePicture}
+                      alt={user.name || 'User'}
+                      className="h-8 w-8 rounded-full"
+                    />
+                  ) : (
+                    <div className="h-8 w-8 rounded-full bg-red-600 flex items-center justify-center text-white text-sm">
+                      {(user.name || user.email)?.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <span className="hidden sm:inline">{user.name || '我的账户'}</span>
                 </Link>
                 <button
                   onClick={handleLogout}
@@ -99,13 +94,13 @@ export default function Header() {
             ) : (
               <>
                 <Link
-                  href="/auth/login"
+                  href="/login"
                   className="px-4 py-2 text-gray-700 hover:text-red-600 transition"
                 >
                   登录
                 </Link>
                 <Link
-                  href="/auth/signup"
+                  href="/register"
                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
                 >
                   注册

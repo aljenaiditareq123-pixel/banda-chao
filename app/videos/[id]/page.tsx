@@ -6,6 +6,8 @@ import LikeButton from '@/components/LikeButton';
 import EditDeleteButtons from '@/components/EditDeleteButtons';
 import Image from 'next/image';
 
+export const dynamic = 'force-dynamic';
+
 export default async function VideoDetailPage({ params }: { params: { id: string } }) {
   const supabase = await createClient();
 

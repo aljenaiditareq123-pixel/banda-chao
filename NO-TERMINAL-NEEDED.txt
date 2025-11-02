@@ -1,0 +1,47 @@
+═══════════════════════════════════════════════════════
+   ✅ لا تحتاج Terminal - No Terminal Needed!
+═══════════════════════════════════════════════════════
+
+🎯 يمكنك النشر مباشرة من المتصفح!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📌 افتح هذا الرابط:
+
+   https://vercel.com/new
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 الخطوات البسيطة:
+
+1️⃣ بعد فتح الرابط:
+   → سجّل دخول (أو أنشئ حساب)
+   → اضغط "Continue with GitHub" (أسهل)
+
+2️⃣ اضغط "Add New..." أو "New Project"
+
+3️⃣ ابحث عن:
+   → "Upload" أو "Deploy from local folder"
+   → أو اسحب المجلد مباشرة
+
+4️⃣ ارفع المجلد:
+   /Users/tarqahmdaljnydy/Desktop/banda-chao
+
+5️⃣ أضف Environment Variables:
+
+   NEXT_PUBLIC_SUPABASE_URL
+   = https://gtnyspavjsoolvnphihs.supabase.co
+
+   NEXT_PUBLIC_SUPABASE_ANON_KEY
+   = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0bnlzcGF2anNvb2x2bnBoaWhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE3MjcxNDAsImV4cCI6MjA3NzMwMzE0MH0.kKpUYPuRdJOBd39S9w_bvb-Zc7w5qyYj07UtLy-V5BU
+
+6️⃣ اضغط "Deploy"
+
+7️⃣ ✅ احصل على رابط!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 ابدأ الآن: https://vercel.com/new
+
+═══════════════════════════════════════════════════════
+

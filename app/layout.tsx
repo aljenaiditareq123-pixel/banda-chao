@@ -3,6 +3,8 @@ import "./globals.css";
 import Header from "@/components/Header";
 import InstallPWA from "@/components/InstallPWA";
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
+import { AuthProvider } from "@/contexts/AuthContext";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 export const metadata: Metadata = {
   title: "Banda Chao - 社交电商平台",
@@ -34,10 +36,14 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icon-192.png" />
       </head>
       <body className="antialiased bg-gray-50">
-        <Header />
-        <main>{children}</main>
-        <InstallPWA />
-        <ServiceWorkerRegistration />
+        <ErrorBoundary>
+          <AuthProvider>
+            <Header />
+            <main>{children}</main>
+            <InstallPWA />
+            <ServiceWorkerRegistration />
+          </AuthProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

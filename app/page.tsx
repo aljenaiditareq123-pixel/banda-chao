@@ -3,18 +3,20 @@ import ProductCard from "@/components/ProductCard";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 
+export const dynamic = 'force-dynamic';
+
 export default async function Home() {
   const supabase = await createClient();
 
-  // Fetch short videos
+  // Fetch short videos - latest 5
   const { data: shortVideos } = await supabase
     .from('videos')
     .select('*')
     .eq('type', 'short')
     .order('created_at', { ascending: false })
-    .limit(4);
+    .limit(5);
 
-  // Fetch long videos
+  // Fetch long videos - latest 3
   const { data: longVideos } = await supabase
     .from('videos')
     .select('*')
@@ -22,12 +24,12 @@ export default async function Home() {
     .order('created_at', { ascending: false })
     .limit(3);
 
-  // Fetch products
+  // Fetch products - latest 6
   const { data: products } = await supabase
     .from('products')
     .select('*')
     .order('created_at', { ascending: false })
-    .limit(4);
+    .limit(6);
 
   // Map database data to component format
   const formattedShortVideos = (shortVideos || []).map((video: any) => ({
@@ -64,7 +66,7 @@ export default async function Home() {
     name: product.name,
     description: product.description,
     price: product.price,
-    images: [], // TODO: Add product images table
+    images: product.image_url ? [product.image_url] : [],
     category: product.category,
     stock: product.stock || 0,
     rating: product.rating || 0,
@@ -112,14 +114,14 @@ export default async function Home() {
               查看更多 →
             </Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             {formattedShortVideos.length > 0 ? (
               formattedShortVideos.map((video) => (
                 <VideoCard key={video.id} video={video} />
               ))
             ) : (
-              <div className="col-span-4 text-center py-12 text-gray-500">
-                暂无短视频，成为第一个上传视频的用户吧！
+              <div className="col-span-full text-center py-12 text-gray-500">
+                暂无内容
               </div>
             )}
           </div>
@@ -144,8 +146,8 @@ export default async function Home() {
                 <VideoCard key={video.id} video={video} />
               ))
             ) : (
-              <div className="col-span-3 text-center py-12 text-gray-500">
-                暂无长视频
+              <div className="col-span-full text-center py-12 text-gray-500">
+                暂无内容
               </div>
             )}
           </div>
@@ -164,14 +166,14 @@ export default async function Home() {
               查看更多 →
             </Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
             {formattedProducts.length > 0 ? (
               formattedProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))
             ) : (
-              <div className="col-span-4 text-center py-12 text-gray-500">
-                暂无商品
+              <div className="col-span-full text-center py-12 text-gray-500">
+                暂无内容
               </div>
             )}
           </div>
