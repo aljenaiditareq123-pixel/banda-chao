@@ -3,9 +3,9 @@ services:
     name: banda-chao-backend
     env: node
     plan: free
-    rootDir: ""
-    buildCommand: cd server && npm install && npx prisma generate && npm run build
-    startCommand: cd server && npm start
+    rootDir: server
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
