@@ -1,92 +1,100 @@
-# ✅ إكمال إعداد Render - خطوات نهائية
+# ✅ Render Setup - أكمل الإعدادات
 
-## 🎯 **بعد نشر Backend على Render:**
-
-### **1. احصل على Backend URL:**
-
-من Render Dashboard:
-- اذهب إلى Web Service
-- انسخ **URL** 
-- مثال: `https://banda-chao-backend.onrender.com`
+## 🎉 **ممتاز! Repository مربوط!**
 
 ---
 
-### **2. تحقق من أن Backend يعمل:**
-
-افتح في المتصفح:
-```
-https://your-backend-url.onrender.com/api/health
-```
-
-يجب أن ترى:
-```json
-{
-  "status": "ok",
-  "message": "Banda Chao Server is running"
-}
-```
+## ✅ **ما تم:**
+- ✅ Repository: `aljenaiditareq123-pixel / banda-chao`
+- ✅ Name: `banda-chao-backend`
+- ✅ Language: `Node`
+- ✅ Region: `Oregon (US West)`
 
 ---
 
-### **3. إضافة Environment Variables في Vercel:**
-
-#### **الطريقة 1: من Terminal:**
-
-```bash
-# إضافة API URL
-vercel env add NEXT_PUBLIC_API_URL production
-# أدخل: https://your-backend-url.onrender.com/api/v1
-
-# إضافة Socket URL
-vercel env add NEXT_PUBLIC_SOCKET_URL production
-# أدخل: https://your-backend-url.onrender.com
-```
-
-#### **الطريقة 2: من Vercel Dashboard:**
-
-1. اذهب إلى: https://vercel.com/tareqs-projects-c3589369/banda-chao
-2. Settings → Environment Variables
-3. أضف:
-
-**NEXT_PUBLIC_API_URL**
-- Value: `https://your-backend-url.onrender.com/api/v1`
-- Environment: Production, Preview, Development
-
-**NEXT_PUBLIC_SOCKET_URL**
-- Value: `https://your-backend-url.onrender.com`
-- Environment: Production, Preview, Development
+## 📝 **أكمل الإعدادات:**
 
 ---
 
-### **4. Redeploy Frontend:**
+### **1. Root Directory:**
 
-```bash
-vercel --prod
-```
-
-أو من Vercel Dashboard:
-- Deployments → آخر deployment → Redeploy
-
----
-
-### **5. التحقق النهائي:**
-
-افتح: https://banda-chao.vercel.app
-
-**اختبر:**
-- ✅ Login/Register
-- ✅ Chat
-- ✅ Feed  
-- ✅ Products
-- ✅ Profile
+#### **في حقل "Root Directory Optional":**
+- اكتب:
+  ```
+  server
+  ```
+- هذا مهم جداً لأن Backend في مجلد `server/`
 
 ---
 
-## ✅ **كل شيء جاهز!**
+### **2. Build Command:**
 
-بعد إضافة Environment Variables و Redeploy، الموقع سيعمل بالكامل! 🚀
+#### **ابحث عن "Build Command" في الصفحة:**
+- (عادة في الأسفل، في قسم "Build & Deploy")
+- اكتب:
+  ```
+  npm install && npm run build
+  ```
 
 ---
 
-**أرسل لي Backend URL من Render وسأساعدك في إعداد Environment Variables!**
+### **3. Start Command:**
 
+#### **ابحث عن "Start Command":**
+- اكتب:
+  ```
+  npm start
+  ```
+
+---
+
+### **4. Environment Variables (لاحقاً):**
+
+#### **سنضيفها بعد إنشاء Database:**
+- PORT (سيحدده Render تلقائياً)
+- NODE_ENV: `production`
+- DATABASE_URL: (من Render Database)
+- JWT_SECRET: (أي نص عشوائي طويل)
+- JWT_EXPIRES_IN: `7d`
+- FRONTEND_URL: (رابط Vercel)
+
+---
+
+### **5. Create Web Service:**
+
+#### **بعد التأكد من جميع الإعدادات:**
+- انزل للأسفل
+- اضغط **"Create Web Service"** (الأخضر)
+- Render سيبدأ البناء والنشر
+
+---
+
+## ⏱️ **بعد Create:**
+
+### **Render سيبدأ:**
+- ✅ Clone Repository
+- ✅ Install Dependencies
+- ✅ Build Project
+- ✅ Deploy Service
+- قد يستغرق 5-10 دقائق
+
+---
+
+## ✅ **بعد النشر:**
+
+### **ستحصل على:**
+- ✅ Backend URL (مثلاً: `https://banda-chao-backend.onrender.com`)
+- ✅ يمكنك استخدامه في Frontend
+
+---
+
+## 📋 **ملخص:**
+
+1. ✅ **Root Directory:** `server`
+2. ✅ **Build Command:** `npm install && npm run build`
+3. ✅ **Start Command:** `npm start`
+4. ✅ **Create Web Service**
+
+---
+
+**اكتب 'server' في Root Directory الآن!** 🚀
