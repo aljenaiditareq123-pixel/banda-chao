@@ -1,98 +1,77 @@
-# ✅ Commit & Publish - الخطوات النهائية!
+# ✅ Commit و Publish في GitHub Desktop
 
-## 🎉 **رائع! كل شيء جاهز!**
-
----
-
-## 📝 **الخطوات المتبقية:**
-
-### **1. اكتب رسالة Commit:**
-
-#### **في مربع "Summary (required)":**
-اكتب واحدة من:
-- `Add documentation files`
-- `Update project documentation`
-- `Initial commit with docs`
-
-*(مربع "Description" اختياري - يمكنك تركه فارغ)*
+## ✅ **أنت في GitHub Desktop**
 
 ---
 
-### **2. Commit الملفات:**
-
-#### **اضغط على:**
-- زر **"Commit 12 files to main"** 
-- (الأزرق في الأسفل)
-- سيبدأ حفظ الملفات
+## 📋 **الخطوات:**
 
 ---
 
-### **3. Publish Branch:**
+### **الخطوة 1: Commit الملفات**
+
+#### **في أسفل الشاشة:**
+
+1. **Summary (required):**
+   - اكتب:
+     ```
+     Add server directory and deployment configuration
+     ```
+
+2. **Description (optional):**
+   - يمكنك تركها فارغة أو كتابة:
+     ```
+     Add server directory with Express backend
+     Update render.yaml configuration
+     Add deployment documentation
+     ```
+
+3. **اضغط:** **"Commit 69 files to main"** (الزر الأزرق)
+
+---
+
+### **الخطوة 2: Publish Branch**
 
 #### **بعد Commit:**
-- ابحث عن زر **"Publish branch"**
-- موجود في الأعلى بجانب **"Current Branch: main"**
-- اضغط عليه
+
+1. **في الأعلى:** ابحث عن زر **"Publish branch"** (مع أيقونة upload)
+2. **اضغط:** **"Publish branch"**
+3. **انتظر حتى يكتمل Push**
 
 ---
 
-### **4. إعدادات Publish (إذا طلب):**
+## ✅ **بعد Publish:**
 
-#### **في نافذة Publish:**
-- **Name:** `banda-chao` (تأكد أنه صحيح)
-- **Description:** (اتركه فارغ - اختياري)
-- **Keep this code private:** ❌ **لا تضع ✅**
-- **Organization:** (اتركه فارغ)
-
-#### **اضغط:**
-- **"Publish repository"** أو **"Publish"**
+1. ✅ **جميع الملفات على GitHub**
+2. ✅ **مجلد `server` موجود في GitHub**
+3. ✅ **Render سيبدأ Build جديد تلقائياً**
+4. ✅ **سيستخدم آخر commit الذي يحتوي على `server`**
+5. ✅ **Build سينجح!**
 
 ---
 
-### **5. انتظر...**
+## 📋 **الخطوات الكاملة:**
 
-سيبدأ GitHub Desktop في:
-- رفع الملفات للـ GitHub
-- سترى تقدم العملية
-
----
-
-## ✅ **بعد النشر:**
-
-سترى:
-- ✅ **"Published to GitHub"**
-- أو **"Pushed to GitHub"**
-- جميع الملفات ستكون على GitHub
-
----
-
-## 🔍 **للتحقق:**
-
-### **افتح في المتصفح:**
 ```
-https://github.com/aljenaiditareq123-pixel/banda-chao
+1️⃣  Summary: Add server directory and deployment configuration
+2️⃣  Commit 69 files to main
+3️⃣  Publish branch
+4️⃣  انتظر حتى يكتمل Push
+5️⃣  Render سيبدأ Build تلقائياً
 ```
 
-سترى جميع الملفات هناك! ✅
+---
+
+## 🎯 **بعد Publish:**
+
+### **Render سيبدأ:**
+
+1. ✅ **Clone Repository**
+2. ✅ **يستخدم آخر commit**
+3. ✅ **يجد مجلد `server`**
+4. ✅ **`cd server && npm install && ...`**
+5. ✅ **Build سينجح!**
 
 ---
 
-## 🚀 **بعد ذلك:**
-
-1. ✅ Repository على GitHub
-2. ✅ جميع الملفات موجودة
-3. ✅ يمكنك استخدام Repository في Render الآن!
-
----
-
-## 📋 **ملخص:**
-
-1. ✅ **اكتب رسالة:** `Add documentation files`
-2. ✅ **Commit:** اضغط "Commit 12 files to main"
-3. ✅ **Publish:** اضغط "Publish branch"
-4. ✅ **جاهز!** 🎉
-
----
-
-**ابدأ بكتابة رسالة Commit الآن!** 🚀
-
+**Commit ثم Publish branch الآن!** 🚀
