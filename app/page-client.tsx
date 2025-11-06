@@ -58,9 +58,13 @@ export default function HomePageClient() {
       console.log('🔍 [HomePage] Fetching short videos...');
       const shortVideosRes = await videosAPI.getVideos('short', 1, 5);
       console.log('✅ [HomePage] Short videos response:', shortVideosRes);
-      console.log('📊 [HomePage] Short videos data:', shortVideosRes.data);
-      const shortVideosData = shortVideosRes.data.data || [];
-      console.log('📋 [HomePage] Formatted short videos:', shortVideosData.length, 'videos');
+      console.log('📊 [HomePage] Short videos response.data:', shortVideosRes.data);
+      console.log('📊 [HomePage] Short videos response.data.data:', shortVideosRes.data?.data);
+      console.log('📊 [HomePage] Short videos response.data.data type:', typeof shortVideosRes.data?.data);
+      console.log('📊 [HomePage] Short videos response.data.data isArray:', Array.isArray(shortVideosRes.data?.data));
+      const shortVideosData = shortVideosRes.data?.data || [];
+      console.log('📋 [HomePage] Short videos data length:', shortVideosData.length);
+      console.log('📋 [HomePage] Short videos data sample:', shortVideosData[0] || 'N/A');
       const formattedShortVideos = shortVideosData.map((video: any) => ({
         id: video.id,
         userId: video.userId,
@@ -79,9 +83,10 @@ export default function HomePageClient() {
       console.log('🔍 [HomePage] Fetching long videos...');
       const longVideosRes = await videosAPI.getVideos('long', 1, 3);
       console.log('✅ [HomePage] Long videos response:', longVideosRes);
-      console.log('📊 [HomePage] Long videos data:', longVideosRes.data);
-      const longVideosData = longVideosRes.data.data || [];
-      console.log('📋 [HomePage] Formatted long videos:', longVideosData.length, 'videos');
+      console.log('📊 [HomePage] Long videos response.data:', longVideosRes.data);
+      console.log('📊 [HomePage] Long videos response.data.data:', longVideosRes.data?.data);
+      const longVideosData = longVideosRes.data?.data || [];
+      console.log('📋 [HomePage] Long videos data length:', longVideosData.length);
       const formattedLongVideos = longVideosData.map((video: any) => ({
         id: video.id,
         userId: video.userId,
