@@ -1,0 +1,10 @@
+تحتاج إلى إنشاء أيقونات للتطبيق:
+
+1. icon-192.png - 192x192 pixels
+2. icon-512.png - 512x512 pixels
+
+يمكنك استخدام:
+- https://realfavicongenerator.net/
+- https://www.pwabuilder.com/imageGenerator
+
+أو أي محرر صور لإنشاء الأيقونات.
