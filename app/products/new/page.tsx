@@ -1,20 +1,21 @@
 'use client';
 
 import { useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { productsAPI } from '@/lib/api';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function NewProductPage() {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [category, setCategory] = useState('');
-  const [stock, setStock] = useState('');
-  const [images, setImages] = useState<File[]>([]);
+  const [imageUrl, setImageUrl] = useState('');
+  const [externalLink, setExternalLink] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  const supabase = createClient();
+  const { user } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,58 +23,27 @@ export default function NewProductPage() {
     setError(null);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         throw new Error('请先登录');
       }
 
-      // Create product
-      const { data: product, error: productError } = await supabase
-        .from('products')
-        .insert({
-          user_id: user.id,
-          name,
-          description,
-          price: parseFloat(price),
-          category,
-          stock: parseInt(stock) || 0,
-        })
-        .select()
-        .single();
-
-      if (productError) throw productError;
-
-      // Upload images
-      if (images.length > 0 && product) {
-        for (let i = 0; i < images.length; i++) {
-          const file = images[i];
-          const fileExt = file.name.split('.').pop();
-          const fileName = `${product.id}-${i}-${Math.random()}.${fileExt}`;
-          const filePath = `products/${fileName}`;
-
-          const { error: uploadError } = await supabase.storage
-            .from('avatars') // Using avatars bucket for now, can create products bucket later
-            .upload(filePath, file);
-
-          if (!uploadError) {
-            const { data } = supabase.storage
-              .from('avatars')
-              .getPublicUrl(filePath);
-
-            await supabase
-              .from('product_images')
-              .insert({
-                product_id: product.id,
-                image_url: data.publicUrl,
-                order_index: i,
-              });
-          }
-        }
+      if (!name || !description || !externalLink) {
+        throw new Error('请填写所有必填字段');
       }
 
-      router.push(`/products/${product.id}`);
+      // Create product using Express API
+      const response = await productsAPI.createProduct({
+        name,
+        description,
+        externalLink,
+        price: price ? parseFloat(price) : undefined,
+        category: category || undefined,
+        imageUrl: imageUrl || undefined,
+      });
+
+      router.push(`/products/${response.data.data.id}`);
     } catch (err: any) {
-      setError(err.message || '创建失败');
+      setError(err.response?.data?.error || err.message || '创建失败');
     } finally {
       setLoading(false);
     }
@@ -97,9 +67,9 @@ export default function NewProductPage() {
             </label>
             <input
               type="text"
+              required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              required
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-red-500 focus:border-red-500"
               placeholder="输入商品名称"
             />
@@ -129,7 +99,6 @@ export default function NewProductPage() {
                 step="0.01"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                required
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-red-500 focus:border-red-500"
                 placeholder="0.00"
               />
@@ -137,14 +106,15 @@ export default function NewProductPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                库存
+                外部链接 *
               </label>
               <input
-                type="number"
-                value={stock}
-                onChange={(e) => setStock(e.target.value)}
+                type="url"
+                value={externalLink}
+                onChange={(e) => setExternalLink(e.target.value)}
+                required
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-red-500 focus:border-red-500"
-                placeholder="0"
+                placeholder="https://..."
               />
             </div>
           </div>
@@ -156,7 +126,6 @@ export default function NewProductPage() {
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              required
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-red-500 focus:border-red-500"
             >
               <option value="">选择分类</option>
@@ -171,16 +140,16 @@ export default function NewProductPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              商品图片
+              商品图片 URL
             </label>
             <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={(e) => setImages(Array.from(e.target.files || []))}
-              className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100"
+              type="url"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-red-500 focus:border-red-500"
+              placeholder="https://example.com/image.jpg"
             />
-            <p className="mt-1 text-sm text-gray-500">可以上传多张图片</p>
+            <p className="mt-1 text-sm text-gray-500">输入图片链接 (可选)</p>
           </div>
 
           <div className="flex space-x-4">

@@ -1,141 +1,49 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { videosAPI } from '@/lib/api';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function NewVideoPage() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [type, setType] = useState<'short' | 'long'>('short');
-  const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
-  const [videoPreview, setVideoPreview] = useState<string | null>(null);
-  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+  const [videoUrl, setVideoUrl] = useState('');
+  const [thumbnailUrl, setThumbnailUrl] = useState('');
+  const [duration, setDuration] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const videoRef = useRef<HTMLVideoElement>(null);
   const router = useRouter();
-  const supabase = createClient();
-
-  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setVideoFile(file);
-      const url = URL.createObjectURL(file);
-      setVideoPreview(url);
-    }
-  };
-
-  const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setThumbnailFile(file);
-      const url = URL.createObjectURL(file);
-      setThumbnailPreview(url);
-    }
-  };
-
-  const getVideoDuration = (videoElement: HTMLVideoElement): Promise<number> => {
-    return new Promise((resolve) => {
-      videoElement.onloadedmetadata = () => {
-        resolve(Math.round(videoElement.duration));
-      };
-    });
-  };
+  const { user } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    setUploadProgress(0);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         throw new Error('请先登录');
       }
 
-      if (!videoFile) {
-        throw new Error('请选择视频文件');
+      if (!title || !videoUrl || !thumbnailUrl || !duration) {
+        throw new Error('请填写所有必填字段');
       }
 
-      if (!thumbnailFile) {
-        throw new Error('请选择缩略图');
-      }
+      // Create video using Express API
+      const response = await videosAPI.createVideo({
+        title,
+        description: description || undefined,
+        videoUrl,
+        thumbnailUrl,
+        duration: parseInt(duration, 10),
+        type,
+      });
 
-      // Get video duration
-      let duration = 0;
-      if (videoRef.current && videoPreview) {
-        try {
-          duration = await getVideoDuration(videoRef.current);
-        } catch (err) {
-          console.error('Error getting duration:', err);
-          duration = 60; // Default duration
-        }
-      }
-
-      // Upload video file
-      setUploadProgress(20);
-      const videoExt = videoFile.name.split('.').pop();
-      const videoFileName = `${user.id}-${Date.now()}-${Math.random().toString(36).substring(7)}.${videoExt}`;
-      const videoFilePath = `videos/${videoFileName}`;
-
-      const { error: videoUploadError } = await supabase.storage
-        .from('avatars') // Using avatars bucket for now
-        .upload(videoFilePath, videoFile, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
-      if (videoUploadError) throw videoUploadError;
-
-      const { data: videoUrlData } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(videoFilePath);
-
-      setUploadProgress(60);
-
-      // Upload thumbnail
-      const thumbnailExt = thumbnailFile.name.split('.').pop();
-      const thumbnailFileName = `${user.id}-${Date.now()}-thumb-${Math.random().toString(36).substring(7)}.${thumbnailExt}`;
-      const thumbnailFilePath = `thumbnails/${thumbnailFileName}`;
-
-      const { error: thumbnailUploadError } = await supabase.storage
-        .from('avatars')
-        .upload(thumbnailFilePath, thumbnailFile);
-
-      if (thumbnailUploadError) throw thumbnailUploadError;
-
-      const { data: thumbnailUrlData } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(thumbnailFilePath);
-
-      setUploadProgress(80);
-
-      // Create video record in database
-      const { data: video, error: videoError } = await supabase
-        .from('videos')
-        .insert({
-          user_id: user.id,
-          title,
-          description: description || null,
-          video_url: videoUrlData.publicUrl,
-          thumbnail_url: thumbnailUrlData.publicUrl,
-          duration,
-          type,
-        })
-        .select()
-        .single();
-
-      if (videoError) throw videoError;
-
-      setUploadProgress(100);
-      router.push(`/videos/${video.id}`);
+      router.push(`/videos/${response.data.data.id}`);
     } catch (err: any) {
-      setError(err.message || '上传失败');
-      setUploadProgress(0);
+      setError(err.response?.data?.error || err.message || '创建失败');
     } finally {
       setLoading(false);
     }
@@ -198,68 +106,54 @@ export default function NewVideoPage() {
             />
           </div>
 
-          {/* Video Upload */}
+          {/* Video URL */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              视频文件 *
+              视频 URL *
             </label>
             <input
-              type="file"
-              accept="video/*"
-              onChange={handleVideoChange}
+              type="url"
+              value={videoUrl}
+              onChange={(e) => setVideoUrl(e.target.value)}
               required
-              className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-red-500 focus:border-red-500"
+              placeholder="https://example.com/video.mp4"
             />
-            {videoPreview && (
-              <div className="mt-4">
-                <video
-                  ref={videoRef}
-                  src={videoPreview}
-                  controls
-                  className="w-full max-w-md rounded-lg"
-                />
-              </div>
-            )}
+            <p className="mt-1 text-sm text-gray-500">输入视频链接</p>
           </div>
 
-          {/* Thumbnail Upload */}
+          {/* Thumbnail URL */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              缩略图 *
+              缩略图 URL *
             </label>
             <input
-              type="file"
-              accept="image/*"
-              onChange={handleThumbnailChange}
+              type="url"
+              value={thumbnailUrl}
+              onChange={(e) => setThumbnailUrl(e.target.value)}
               required
-              className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-red-500 focus:border-red-500"
+              placeholder="https://example.com/thumbnail.jpg"
             />
-            {thumbnailPreview && (
-              <div className="mt-4">
-                <img
-                  src={thumbnailPreview}
-                  alt="Thumbnail preview"
-                  className="w-full max-w-md rounded-lg"
-                />
-              </div>
-            )}
+            <p className="mt-1 text-sm text-gray-500">输入缩略图链接</p>
           </div>
 
-          {/* Upload Progress */}
-          {loading && uploadProgress > 0 && (
-            <div>
-              <div className="flex justify-between text-sm text-gray-600 mb-1">
-                <span>上传进度</span>
-                <span>{uploadProgress}%</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-red-600 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${uploadProgress}%` }}
-                />
-              </div>
-            </div>
-          )}
+          {/* Duration */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              时长 (秒) *
+            </label>
+            <input
+              type="number"
+              value={duration}
+              onChange={(e) => setDuration(e.target.value)}
+              required
+              min="1"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-red-500 focus:border-red-500"
+              placeholder="60"
+            />
+            <p className="mt-1 text-sm text-gray-500">输入视频时长（秒）</p>
+          </div>
 
           {/* Submit Buttons */}
           <div className="flex space-x-4">

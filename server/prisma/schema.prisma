@@ -24,6 +24,7 @@ model User {
   receivedMessages Message[] @relation("ReceivedMessages")
   posts            Post[]
   products         Product[]
+  videos           Video[]
 
   @@map("users")
 }
@@ -77,5 +78,28 @@ model Product {
   @@index([userId])
   @@index([category])
   @@map("products")
+}
+
+model Video {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  title        String
+  description  String?
+  videoUrl     String   @map("video_url")
+  thumbnailUrl String   @map("thumbnail_url")
+  duration     Int      // Duration in seconds
+  type         String   // 'short' or 'long'
+  views        Int      @default(0)
+  likes        Int      @default(0)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("videos")
 }
 

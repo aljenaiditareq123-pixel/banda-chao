@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { searchAPI } from '@/lib/api';
 import Link from 'next/link';
 import VideoCard from '@/components/VideoCard';
 import ProductCard from '@/components/ProductCard';
@@ -11,14 +11,14 @@ export default function SearchPage() {
   const [searchResults, setSearchResults] = useState<{
     videos: any[];
     products: any[];
-  }>({ videos: [], products: [] });
+    users: any[];
+  }>({ videos: [], products: [], users: [] });
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
-  const supabase = createClient();
 
   const handleSearch = async () => {
     if (!query.trim()) {
-      setSearchResults({ videos: [], products: [] });
+      setSearchResults({ videos: [], products: [], users: [] });
       setSearched(false);
       return;
     }
@@ -27,27 +27,47 @@ export default function SearchPage() {
     setSearched(true);
 
     try {
-      // Search videos
-      const { data: videos } = await supabase
-        .from('videos')
-        .select('*, profiles(username, avatar_url)')
-        .or(`title.ilike.%${query}%,description.ilike.%${query}%`)
-        .limit(20);
+      const response = await searchAPI.search(query);
+      const data = response.data;
 
-      // Search products
-      const { data: products } = await supabase
-        .from('products')
-        .select('*, profiles(username, avatar_url)')
-        .or(`name.ilike.%${query}%,description.ilike.%${query}%`)
-        .limit(20);
+      // Format videos
+      const formattedVideos = (data.videos || []).map((video: any) => ({
+        id: video.id,
+        userId: video.userId,
+        title: video.title,
+        thumbnail: video.thumbnailUrl,
+        videoUrl: video.videoUrl,
+        duration: video.duration,
+        views: video.views || 0,
+        likes: video.likes || 0,
+        comments: 0,
+        createdAt: video.createdAt,
+        type: video.type as 'short' | 'long',
+      }));
+
+      // Format products
+      const formattedProducts = (data.products || []).map((product: any) => ({
+        id: product.id,
+        userId: product.userId,
+        name: product.name,
+        description: product.description,
+        price: product.price,
+        images: product.imageUrl ? [product.imageUrl] : [],
+        category: product.category,
+        stock: 0,
+        rating: 0,
+        reviewCount: 0,
+        createdAt: product.createdAt,
+      }));
 
       setSearchResults({
-        videos: videos || [],
-        products: products || [],
+        videos: formattedVideos,
+        products: formattedProducts,
+        users: data.users || [],
       });
     } catch (error) {
       console.error('Search error:', error);
-      setSearchResults({ videos: [], products: [] });
+      setSearchResults({ videos: [], products: [], users: [] });
     } finally {
       setLoading(false);
     }
@@ -122,23 +142,7 @@ export default function SearchPage() {
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {searchResults.videos.map((video) => (
-                    <VideoCard
-                      key={video.id}
-                      video={{
-                        id: video.id,
-                        userId: video.user_id,
-                        title: video.title,
-                        description: video.description,
-                        thumbnail: video.thumbnail_url,
-                        videoUrl: video.video_url,
-                        duration: video.duration,
-                        views: video.views,
-                        likes: video.likes,
-                        comments: 0,
-                        createdAt: video.created_at,
-                        type: video.type,
-                      }}
-                    />
+                    <VideoCard key={video.id} video={video} />
                   ))}
                 </div>
               </div>
@@ -152,29 +156,14 @@ export default function SearchPage() {
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {searchResults.products.map((product) => (
-                    <ProductCard
-                      key={product.id}
-                      product={{
-                        id: product.id,
-                        userId: product.user_id,
-                        name: product.name,
-                        description: product.description,
-                        price: product.price,
-                        images: [],
-                        category: product.category,
-                        stock: product.stock,
-                        rating: product.rating,
-                        reviewCount: product.review_count,
-                        createdAt: product.created_at,
-                      }}
-                    />
+                    <ProductCard key={product.id} product={product} />
                   ))}
                 </div>
               </div>
             )}
 
             {/* No Results */}
-            {searchResults.videos.length === 0 && searchResults.products.length === 0 && (
+            {searchResults.videos.length === 0 && searchResults.products.length === 0 && searchResults.users.length === 0 && (
               <div className="text-center py-12">
                 <p className="text-gray-600 text-lg">未找到结果</p>
                 <p className="text-gray-500 mt-2">尝试使用不同的关键词搜索</p>

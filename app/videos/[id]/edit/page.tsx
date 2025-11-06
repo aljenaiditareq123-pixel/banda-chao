@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { useState, useEffect } from 'react';
+import { videosAPI } from '@/lib/api';
 import { useRouter, useParams } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function EditVideoPage() {
   const [title, setTitle] = useState('');
@@ -13,40 +14,37 @@ export default function EditVideoPage() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const params = useParams();
-  const supabase = createClient();
+  const { user } = useAuth();
+  const videoId = params.id as string;
 
   useEffect(() => {
     const loadVideo = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        router.push('/auth/login');
+        router.push('/login');
         return;
       }
 
-      const { data: video, error } = await supabase
-        .from('videos')
-        .select('*')
-        .eq('id', params.id)
-        .single();
+      try {
+        const response = await videosAPI.getVideo(videoId);
+        const video = response.data;
 
-      if (error || !video) {
-        setError('视频不存在');
-        return;
+        if (video.userId !== user.id) {
+          setError('无权编辑此视频');
+          return;
+        }
+
+        setTitle(video.title);
+        setDescription(video.description || '');
+        setType(video.type);
+      } catch (err: any) {
+        setError(err.response?.data?.error || '视频不存在');
+      } finally {
+        setLoading(false);
       }
-
-      if (video.user_id !== user.id) {
-        setError('无权编辑此视频');
-        return;
-      }
-
-      setTitle(video.title);
-      setDescription(video.description || '');
-      setType(video.type);
-      setLoading(false);
     };
 
     loadVideo();
-  }, [params.id, router, supabase]);
+  }, [videoId, user, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,26 +52,19 @@ export default function EditVideoPage() {
     setError(null);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         throw new Error('请先登录');
       }
 
-      const { error: updateError } = await supabase
-        .from('videos')
-        .update({
-          title,
-          description: description || null,
-          type,
-        })
-        .eq('id', params.id)
-        .eq('user_id', user.id);
+      await videosAPI.updateVideo(videoId, {
+        title,
+        description: description || undefined,
+        type,
+      });
 
-      if (updateError) throw updateError;
-
-      router.push(`/videos/${params.id}`);
+      router.push(`/videos/${videoId}`);
     } catch (err: any) {
-      setError(err.message || '更新失败');
+      setError(err.response?.data?.error || err.message || '更新失败');
     } finally {
       setSaving(false);
     }
@@ -88,20 +79,12 @@ export default function EditVideoPage() {
     setError(null);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         throw new Error('请先登录');
       }
 
-      const { error: deleteError } = await supabase
-        .from('videos')
-        .delete()
-        .eq('id', params.id)
-        .eq('user_id', user.id);
-
-      if (deleteError) throw deleteError;
-
-      router.push('/');
+      await videosAPI.deleteVideo(videoId);
+      router.push('/videos/short');
     } catch (err: any) {
       setError(err.message || '删除失败');
     } finally {

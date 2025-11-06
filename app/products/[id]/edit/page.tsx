@@ -1,57 +1,56 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { productsAPI } from '@/lib/api';
 import { useRouter, useParams } from 'next/navigation';
-import { redirect } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function EditProductPage() {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [category, setCategory] = useState('');
-  const [stock, setStock] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const [externalLink, setExternalLink] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const params = useParams();
-  const supabase = createClient();
+  const { user } = useAuth();
+  const productId = params.id as string;
 
   useEffect(() => {
     const loadProduct = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        router.push('/auth/login');
+        router.push('/login');
         return;
       }
 
-      const { data: product, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('id', params.id)
-        .single();
+      try {
+        const response = await productsAPI.getProduct(productId);
+        const product = response.data;
 
-      if (error || !product) {
-        setError('商品不存在');
-        return;
+        if (product.userId !== user.id) {
+          setError('无权编辑此商品');
+          return;
+        }
+
+        setName(product.name);
+        setDescription(product.description);
+        setPrice(product.price?.toString() || '');
+        setCategory(product.category || '');
+        setImageUrl(product.imageUrl || '');
+        setExternalLink(product.externalLink || '');
+      } catch (err: any) {
+        setError(err.response?.data?.error || '商品不存在');
+      } finally {
+        setLoading(false);
       }
-
-      if (product.user_id !== user.id) {
-        setError('无权编辑此商品');
-        return;
-      }
-
-      setName(product.name);
-      setDescription(product.description);
-      setPrice(product.price.toString());
-      setCategory(product.category);
-      setStock(product.stock.toString());
-      setLoading(false);
     };
 
     loadProduct();
-  }, [params.id, router, supabase]);
+  }, [productId, user, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,28 +58,22 @@ export default function EditProductPage() {
     setError(null);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         throw new Error('请先登录');
       }
 
-      const { error: updateError } = await supabase
-        .from('products')
-        .update({
-          name,
-          description,
-          price: parseFloat(price),
-          category,
-          stock: parseInt(stock) || 0,
-        })
-        .eq('id', params.id)
-        .eq('user_id', user.id);
+      await productsAPI.updateProduct(productId, {
+        name,
+        description,
+        price: price ? parseFloat(price) : undefined,
+        category: category || undefined,
+        imageUrl: imageUrl || undefined,
+        externalLink: externalLink || undefined,
+      });
 
-      if (updateError) throw updateError;
-
-      router.push(`/products/${params.id}`);
+      router.push(`/products/${productId}`);
     } catch (err: any) {
-      setError(err.message || '更新失败');
+      setError(err.response?.data?.error || err.message || '更新失败');
     } finally {
       setSaving(false);
     }
@@ -95,19 +88,11 @@ export default function EditProductPage() {
     setError(null);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         throw new Error('请先登录');
       }
 
-      const { error: deleteError } = await supabase
-        .from('products')
-        .delete()
-        .eq('id', params.id)
-        .eq('user_id', user.id);
-
-      if (deleteError) throw deleteError;
-
+      await productsAPI.deleteProduct(productId);
       router.push('/products');
     } catch (err: any) {
       setError(err.message || '删除失败');
@@ -179,13 +164,14 @@ export default function EditProductPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                库存
+                外部链接
               </label>
               <input
-                type="number"
-                value={stock}
-                onChange={(e) => setStock(e.target.value)}
+                type="url"
+                value={externalLink}
+                onChange={(e) => setExternalLink(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-red-500 focus:border-red-500"
+                placeholder="https://..."
               />
             </div>
           </div>
@@ -208,6 +194,19 @@ export default function EditProductPage() {
               <option value="美食">美食</option>
               <option value="其他">其他</option>
             </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              商品图片 URL
+            </label>
+            <input
+              type="url"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-red-500 focus:border-red-500"
+              placeholder="https://example.com/image.jpg"
+            />
           </div>
 
           <div className="flex space-x-4">

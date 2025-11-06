@@ -9,6 +9,8 @@ import userRoutes from './api/users';
 import messageRoutes from './api/messages';
 import postRoutes from './api/posts';
 import productRoutes from './api/products';
+import videoRoutes from './api/videos';
+import searchRoutes from './api/search';
 import authRoutes from './api/auth';
 
 // Load environment variables
@@ -56,6 +58,8 @@ app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/messages', messageRoutes);
 app.use('/api/v1/posts', postRoutes);
 app.use('/api/v1/products', productRoutes);
+app.use('/api/v1/videos', videoRoutes);
+app.use('/api/v1/search', searchRoutes);
 app.use('/api/v1/auth', authRoutes);
 
 // 404 handler

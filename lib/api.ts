@@ -100,5 +100,36 @@ export const productsAPI = {
   deleteProduct: (id: string) => api.delete(`/products/${id}`),
 };
 
+// Videos API
+export const videosAPI = {
+  getVideos: (type?: string, page?: number, limit?: number) =>
+    api.get('/videos', { params: { type, page, limit } }),
+  getVideo: (id: string) => api.get(`/videos/${id}`),
+  createVideo: (data: {
+    title: string;
+    description?: string;
+    videoUrl: string;
+    thumbnailUrl: string;
+    duration: number;
+    type: 'short' | 'long';
+  }) => api.post('/videos', data),
+  updateVideo: (id: string, data: {
+    title?: string;
+    description?: string;
+    videoUrl?: string;
+    thumbnailUrl?: string;
+    duration?: number;
+    type?: 'short' | 'long';
+  }) => api.put(`/videos/${id}`, data),
+  deleteVideo: (id: string) => api.delete(`/videos/${id}`),
+  likeVideo: (id: string) => api.post(`/videos/${id}/like`),
+};
+
+// Search API
+export const searchAPI = {
+  search: (query: string, type?: 'videos' | 'products' | 'users') =>
+    api.get('/search', { params: { q: query, type } }),
+};
+
 export default api;
 

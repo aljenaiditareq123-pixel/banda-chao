@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { productsAPI } from '@/lib/api';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const ITEMS_PER_PAGE = 12;
 
@@ -32,9 +33,11 @@ export default function ProductsPageClient() {
   const { user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [totalProducts, setTotalProducts] = useState(0);
+  const { t } = useLanguage();
 
   useEffect(() => {
     loadProducts();
@@ -55,8 +58,10 @@ export default function ProductsPageClient() {
 
       setProducts(paginatedProducts);
       setTotalProducts(allProducts.length);
-    } catch (error) {
+      setError(null);
+    } catch (error: any) {
       console.error('Failed to load products:', error);
+      setError(error.response?.data?.error || '抱歉，加载商品时出现问题。可能是服务器响应缓慢，请稍后再试。');
     } finally {
       setLoading(false);
     }
@@ -78,17 +83,51 @@ export default function ProductsPageClient() {
     setCurrentPage(1);
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-red-600 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-gray-600 text-lg">{t('loading')}</p>
+          <p className="text-gray-500 text-sm mt-2">请稍候，正在加载商品...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center max-w-md mx-auto px-4">
+          <div className="mb-4">
+            <svg className="mx-auto h-16 w-16 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('error')}</h2>
+          <p className="text-red-600 mb-6">{error}</p>
+          <button
+            onClick={loadProducts}
+            className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-semibold"
+          >
+            {t('retry')}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-4xl font-bold text-gray-900">商品</h1>
+          <h1 className="text-4xl font-bold text-gray-900">{t('products')}</h1>
           {user && (
             <Link
               href="/products/new"
               className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
             >
-              + 添加商品
+              + {t('addProduct')}
             </Link>
           )}
         </div>
@@ -111,12 +150,7 @@ export default function ProductsPageClient() {
         </div>
 
         {/* Products Grid */}
-        {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">加载中...</p>
-          </div>
-        ) : products.length > 0 ? (
+        {products.length > 0 ? (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
               {products.map((product) => (
