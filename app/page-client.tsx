@@ -52,9 +52,15 @@ export default function HomePageClient() {
       setLoading(true);
       setError(null);
 
+      console.log('🔍 [HomePage] Starting to fetch data...');
+
       // Fetch short videos
+      console.log('🔍 [HomePage] Fetching short videos...');
       const shortVideosRes = await videosAPI.getVideos('short', 1, 5);
+      console.log('✅ [HomePage] Short videos response:', shortVideosRes);
+      console.log('📊 [HomePage] Short videos data:', shortVideosRes.data);
       const shortVideosData = shortVideosRes.data.data || [];
+      console.log('📋 [HomePage] Formatted short videos:', shortVideosData.length, 'videos');
       const formattedShortVideos = shortVideosData.map((video: any) => ({
         id: video.id,
         userId: video.userId,
@@ -70,8 +76,12 @@ export default function HomePageClient() {
       }));
 
       // Fetch long videos
+      console.log('🔍 [HomePage] Fetching long videos...');
       const longVideosRes = await videosAPI.getVideos('long', 1, 3);
+      console.log('✅ [HomePage] Long videos response:', longVideosRes);
+      console.log('📊 [HomePage] Long videos data:', longVideosRes.data);
       const longVideosData = longVideosRes.data.data || [];
+      console.log('📋 [HomePage] Formatted long videos:', longVideosData.length, 'videos');
       const formattedLongVideos = longVideosData.map((video: any) => ({
         id: video.id,
         userId: video.userId,
@@ -87,9 +97,13 @@ export default function HomePageClient() {
       }));
 
       // Fetch products
+      console.log('🔍 [HomePage] Fetching products...');
       const productsRes = await productsAPI.getProducts();
+      console.log('✅ [HomePage] Products response:', productsRes);
+      console.log('📊 [HomePage] Products data:', productsRes.data);
       // Backend returns array directly, axios wraps it in .data
       const productsData = Array.isArray(productsRes.data) ? productsRes.data : [];
+      console.log('📋 [HomePage] Formatted products:', productsData.length, 'products');
       const formattedProducts = productsData.slice(0, 6).map((product: any) => ({
         id: product.id,
         userId: product.userId,
@@ -104,14 +118,27 @@ export default function HomePageClient() {
         createdAt: product.createdAt,
       }));
 
+      console.log('🔍 [HomePage] Setting state with data...');
+      console.log('📊 [HomePage] Short videos to set:', formattedShortVideos.length);
+      console.log('📊 [HomePage] Long videos to set:', formattedLongVideos.length);
+      console.log('📊 [HomePage] Products to set:', formattedProducts.length);
+
       setShortVideos(formattedShortVideos);
       setLongVideos(formattedLongVideos);
       setProducts(formattedProducts);
+
+      console.log('✅ [HomePage] Data fetch completed successfully!');
     } catch (err: any) {
-      console.error('Error fetching data:', err);
+      console.error('❌ [HomePage] Error fetching data:', err);
+      console.error('❌ [HomePage] Error details:', {
+        message: err.message,
+        response: err.response,
+        data: err.response?.data,
+      });
       setError(err.response?.data?.error || 'Failed to load content');
     } finally {
       setLoading(false);
+      console.log('🏁 [HomePage] Fetch completed, loading set to false');
     }
   };
 
@@ -192,15 +219,18 @@ export default function HomePageClient() {
             </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            {shortVideos.length > 0 ? (
-              shortVideos.map((video) => (
-                <VideoCard key={video.id} video={video} />
-              ))
-            ) : (
-              <div className="col-span-full text-center py-12 text-gray-500">
-                {t('noContent')}
-              </div>
-            )}
+            {(() => {
+              console.log('🔍 [HomePage] Rendering short videos section, count:', shortVideos.length);
+              return shortVideos.length > 0 ? (
+                shortVideos.map((video) => (
+                  <VideoCard key={video.id} video={video} />
+                ))
+              ) : (
+                <div className="col-span-full text-center py-12 text-gray-500">
+                  {t('noContent')}
+                </div>
+              );
+            })()}
           </div>
         </div>
       </section>
@@ -218,15 +248,18 @@ export default function HomePageClient() {
             </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {longVideos.length > 0 ? (
-              longVideos.map((video) => (
-                <VideoCard key={video.id} video={video} />
-              ))
-            ) : (
-              <div className="col-span-full text-center py-12 text-gray-500">
-                {t('noContent')}
-              </div>
-            )}
+            {(() => {
+              console.log('🔍 [HomePage] Rendering long videos section, count:', longVideos.length);
+              return longVideos.length > 0 ? (
+                longVideos.map((video) => (
+                  <VideoCard key={video.id} video={video} />
+                ))
+              ) : (
+                <div className="col-span-full text-center py-12 text-gray-500">
+                  {t('noContent')}
+                </div>
+              );
+            })()}
           </div>
         </div>
       </section>
@@ -244,15 +277,18 @@ export default function HomePageClient() {
             </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
-            {products.length > 0 ? (
-              products.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))
-            ) : (
-              <div className="col-span-full text-center py-12 text-gray-500">
-                {t('noContent')}
-              </div>
-            )}
+            {(() => {
+              console.log('🔍 [HomePage] Rendering products section, count:', products.length);
+              return products.length > 0 ? (
+                products.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))
+              ) : (
+                <div className="col-span-full text-center py-12 text-gray-500">
+                  {t('noContent')}
+                </div>
+              );
+            })()}
           </div>
         </div>
       </section>
