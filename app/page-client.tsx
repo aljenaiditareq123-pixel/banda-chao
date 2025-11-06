@@ -88,7 +88,8 @@ export default function HomePageClient() {
 
       // Fetch products
       const productsRes = await productsAPI.getProducts();
-      const productsData = productsRes.data || [];
+      // Backend returns array directly, axios wraps it in .data
+      const productsData = Array.isArray(productsRes.data) ? productsRes.data : [];
       const formattedProducts = productsData.slice(0, 6).map((product: any) => ({
         id: product.id,
         userId: product.userId,
