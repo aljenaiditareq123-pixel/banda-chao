@@ -90,9 +90,31 @@ export default function HomePageClient() {
       console.error('❌ [HomePage] Error details:', {
         message: err.message,
         response: err.response?.data,
-        status: err.response?.status
+        status: err.response?.status,
+        code: err.code,
+        stack: err.stack
       });
-      setError(err.response?.data?.error || 'Failed to load content');
+      
+      // More detailed error message
+      let errorMessage = 'Failed to load content';
+      if (err.code === 'ERR_NETWORK' || err.message.includes('Network')) {
+        errorMessage = 'Network error: Cannot connect to backend. Please check your connection.';
+      } else if (err.response?.status === 401) {
+        errorMessage = 'Unauthorized: Please check authentication.';
+      } else if (err.response?.status === 403) {
+        errorMessage = 'Forbidden: Access denied.';
+      } else if (err.response?.status === 404) {
+        errorMessage = 'Not found: API endpoint not found.';
+      } else if (err.response?.status === 500) {
+        errorMessage = 'Server error: Backend is having issues.';
+      } else if (err.response?.data?.error) {
+        errorMessage = err.response.data.error;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
+      setDebugInfo(`Error: ${errorMessage} | Code: ${err.code || 'N/A'} | Status: ${err.response?.status || 'N/A'}`);
     } finally {
       console.log('🏁 [HomePage] Setting loading to false');
       setLoading(false);
@@ -284,15 +306,24 @@ export default function HomePageClient() {
   return (
     <div className="min-h-screen">
       {/* Debug Info Banner - Temporary for troubleshooting */}
-      <div className="bg-blue-100 border-b border-blue-300 p-3 text-sm font-mono">
+      <div className="bg-blue-100 border-b-2 border-blue-400 p-4 text-sm font-mono sticky top-0 z-50 shadow-md">
         <div className="max-w-7xl mx-auto">
-          <strong className="text-blue-800">🔍 Debug Info:</strong>
-          <div className="mt-1 text-blue-700">
-            Short Videos: <span className="font-bold">{shortVideos.length}</span> | 
-            Long Videos: <span className="font-bold">{longVideos.length}</span> | 
-            Products: <span className="font-bold">{products.length}</span> | 
-            Loading: <span className="font-bold">{loading ? 'Yes' : 'No'}</span> | 
-            Error: <span className="font-bold">{error || 'None'}</span>
+          <strong className="text-blue-900 text-base">🔍 Debug Info:</strong>
+          <div className="mt-2 text-blue-800 space-y-1">
+            <div>
+              <span className="font-bold">Short Videos:</span> <span className="text-red-600 font-bold">{shortVideos.length}</span> | 
+              <span className="font-bold"> Long Videos:</span> <span className="text-red-600 font-bold">{longVideos.length}</span> | 
+              <span className="font-bold"> Products:</span> <span className="text-red-600 font-bold">{products.length}</span>
+            </div>
+            <div>
+              <span className="font-bold">Loading:</span> <span className={loading ? 'text-yellow-600 font-bold' : 'text-green-600 font-bold'}>{loading ? 'Yes' : 'No'}</span> | 
+              <span className="font-bold"> Error:</span> <span className={error ? 'text-red-600 font-bold' : 'text-green-600 font-bold'}>{error || 'None'}</span>
+            </div>
+            {debugInfo && (
+              <div className="text-xs text-red-700 bg-red-50 p-2 rounded mt-1">
+                {debugInfo}
+              </div>
+            )}
           </div>
         </div>
       </div>
