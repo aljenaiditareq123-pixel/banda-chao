@@ -13,6 +13,7 @@ import videoRoutes from './api/videos';
 import searchRoutes from './api/search';
 import authRoutes from './api/auth';
 import seedRoutes from './api/seed';
+import oauthRoutes from './api/oauth';
 
 // Load environment variables
 dotenv.config();
@@ -78,6 +79,7 @@ app.use('/api/v1/videos', videoRoutes);
 app.use('/api/v1/search', searchRoutes);
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1', seedRoutes);
+app.use('/api/v1/oauth', oauthRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {
