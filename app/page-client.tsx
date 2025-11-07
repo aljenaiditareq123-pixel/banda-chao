@@ -336,30 +336,48 @@ export default function HomePageClient() {
 
   return (
     <div className="min-h-screen">
-      {/* Debug Info Banner - Always visible for troubleshooting */}
-      <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white border-b-2 border-blue-700 p-4 text-sm font-mono sticky top-0 z-50 shadow-lg">
+      {/* Debug Info Banner - Always visible for troubleshooting - ULTRA VISIBLE */}
+      <div className="bg-red-600 text-white border-b-4 border-red-800 p-6 text-base font-bold sticky top-0 z-[9999] shadow-2xl" style={{ position: 'sticky', top: 0 }}>
         <div className="max-w-7xl mx-auto">
-          <strong className="text-white text-base block mb-2">🔍 Debug Info:</strong>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-xs">
-            <div>
-              <span className="font-bold">Short Videos:</span> <span className="bg-white text-blue-600 px-2 py-1 rounded font-bold">{shortVideos.length}</span>
+          <div className="flex items-center justify-between mb-3">
+            <strong className="text-white text-2xl block">🔍 DEBUG INFO - معلومات التشخيص</strong>
+            <button 
+              onClick={fetchAllData}
+              className="bg-white text-red-600 px-4 py-2 rounded font-bold hover:bg-gray-200"
+            >
+              إعادة المحاولة / Retry
+            </button>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
+            <div className="bg-white text-red-600 p-3 rounded-lg">
+              <span className="font-bold block mb-1">Short Videos:</span>
+              <span className="text-3xl font-bold">{shortVideos.length}</span>
             </div>
-            <div>
-              <span className="font-bold">Long Videos:</span> <span className="bg-white text-blue-600 px-2 py-1 rounded font-bold">{longVideos.length}</span>
+            <div className="bg-white text-red-600 p-3 rounded-lg">
+              <span className="font-bold block mb-1">Long Videos:</span>
+              <span className="text-3xl font-bold">{longVideos.length}</span>
             </div>
-            <div>
-              <span className="font-bold">Products:</span> <span className="bg-white text-blue-600 px-2 py-1 rounded font-bold">{products.length}</span>
+            <div className="bg-white text-red-600 p-3 rounded-lg">
+              <span className="font-bold block mb-1">Products:</span>
+              <span className="text-3xl font-bold">{products.length}</span>
             </div>
-            <div>
-              <span className="font-bold">Loading:</span> <span className={`px-2 py-1 rounded font-bold ${loading ? 'bg-yellow-400 text-yellow-900' : 'bg-green-400 text-green-900'}`}>{loading ? 'Yes' : 'No'}</span>
+            <div className={`p-3 rounded-lg ${loading ? 'bg-yellow-400 text-yellow-900' : 'bg-green-400 text-green-900'}`}>
+              <span className="font-bold block mb-1">Loading:</span>
+              <span className="text-2xl font-bold">{loading ? 'نعم / Yes' : 'لا / No'}</span>
             </div>
-            <div>
-              <span className="font-bold">Error:</span> <span className={`px-2 py-1 rounded font-bold ${error ? 'bg-red-400 text-red-900' : 'bg-green-400 text-green-900'}`}>{error ? 'Yes' : 'No'}</span>
+            <div className={`p-3 rounded-lg ${error ? 'bg-red-400 text-red-900' : 'bg-green-400 text-green-900'}`}>
+              <span className="font-bold block mb-1">Error:</span>
+              <span className="text-2xl font-bold">{error ? 'نعم / Yes' : 'لا / No'}</span>
             </div>
           </div>
           {testResults && (
-            <div className="mt-2 text-xs bg-blue-700 p-2 rounded">
-              <strong>Status:</strong> {testResults}
+            <div className="mt-3 bg-red-800 p-3 rounded text-sm">
+              <strong>Status / الحالة:</strong> {testResults}
+            </div>
+          )}
+          {error && (
+            <div className="mt-3 bg-red-900 p-3 rounded text-sm">
+              <strong>Error / الخطأ:</strong> {error}
             </div>
           )}
         </div>
