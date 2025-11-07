@@ -44,6 +44,7 @@ export default function HomePageClient() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [debugInfo, setDebugInfo] = useState<string>('');
   const { t } = useLanguage();
 
   console.log('📊 [HomePage] Initial state:', {
@@ -282,6 +283,12 @@ export default function HomePageClient() {
 
   return (
     <div className="min-h-screen">
+      {/* Debug Info Banner - Remove after fixing */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="bg-blue-100 border-b border-blue-300 p-2 text-xs">
+          <strong>Debug:</strong> Short Videos: {shortVideos.length} | Long Videos: {longVideos.length} | Products: {products.length} | Loading: {loading ? 'Yes' : 'No'} | Error: {error || 'None'}
+        </div>
+      )}
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-red-600 to-pink-600 text-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
