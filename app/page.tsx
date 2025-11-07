@@ -1,19 +1,34 @@
+'use client';
+
 import { Suspense } from 'react';
-import HomePageClient from './page-client';
+import dynamic from 'next/dynamic';
+
+// Dynamically import HomePageClient to ensure it loads as a client component
+const HomePageClient = dynamic(() => import('./page-client'), {
+  ssr: false, // Disable server-side rendering to ensure client-side execution
+  loading: () => (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-4 border-red-600 border-t-transparent mx-auto mb-4"></div>
+        <p className="text-gray-600 text-lg">加载中...</p>
+        <p className="text-gray-500 text-sm mt-2">正在加载页面内容...</p>
+      </div>
+    </div>
+  ),
+});
 
 export default function Home() {
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f0f0f0' }}>
-      <Suspense fallback={
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-red-600 border-t-transparent mx-auto mb-4"></div>
-            <p className="text-gray-600 text-lg">加载中...</p>
-          </div>
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-red-600 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-gray-600 text-lg">加载中...</p>
+          <p className="text-gray-500 text-sm mt-2">正在加载页面内容...</p>
         </div>
-      }>
-        <HomePageClient />
-      </Suspense>
-    </div>
+      </div>
+    }>
+      <HomePageClient />
+    </Suspense>
   );
 }
