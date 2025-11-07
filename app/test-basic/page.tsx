@@ -1,3 +1,5 @@
+'use client';
+
 export default function TestBasicPage() {
   return (
     <div style={{ padding: '50px', backgroundColor: '#f0f0f0', minHeight: '100vh' }}>
