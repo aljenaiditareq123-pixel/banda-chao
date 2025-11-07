@@ -60,12 +60,14 @@ export default function DebugPage() {
     try {
       addLog('info', '🛍️ Testing Products API...');
       const productsRes = await productsAPI.getProducts();
+      const productsData = productsRes.data?.data || (Array.isArray(productsRes.data) ? productsRes.data : []);
       addLog('success', '✅ Products API Response:', {
         status: productsRes.status,
         hasData: !!productsRes.data,
-        isArray: Array.isArray(productsRes.data),
-        dataLength: Array.isArray(productsRes.data) ? productsRes.data.length : 0,
-        firstProduct: Array.isArray(productsRes.data) ? productsRes.data[0] : null
+        hasDataData: !!productsRes.data?.data,
+        isArray: Array.isArray(productsData),
+        dataLength: productsData.length,
+        firstProduct: productsData[0] || null
       });
     } catch (err: any) {
       addLog('error', '❌ Products API Error:', {

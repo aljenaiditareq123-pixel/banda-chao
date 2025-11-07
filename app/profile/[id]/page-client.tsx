@@ -63,7 +63,7 @@ export default function ProfilePageClient({ userId }: { userId: string }) {
 
       // Load user's products
       const productsResponse = await productsAPI.getProducts();
-      const allProducts = Array.isArray(productsResponse.data) ? productsResponse.data : [];
+      const allProducts = productsResponse.data?.data || (Array.isArray(productsResponse.data) ? productsResponse.data : []);
       const userProducts = allProducts.filter((product: Product) => product.userId === userId);
       setProducts(userProducts);
     } catch (error) {

@@ -41,10 +41,11 @@ export default function TestAPIPage() {
       // Test Products API
       try {
         const productsRes = await productsAPI.getProducts();
+        const productsData = productsRes.data?.data || (Array.isArray(productsRes.data) ? productsRes.data : []);
         testResults.products = {
           success: true,
-          count: Array.isArray(productsRes.data) ? productsRes.data.length : 0,
-          data: productsRes.data,
+          count: productsData.length,
+          data: productsData,
         };
       } catch (err: any) {
         testResults.products = {
