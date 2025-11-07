@@ -252,7 +252,8 @@ export default function HomePageClient() {
         isArray: Array.isArray(response.data)
       });
 
-      const productsData = Array.isArray(response.data) ? response.data : [];
+      // Products API now returns { data: [...], total: ... } to match videos API format
+      const productsData = response.data?.data || (Array.isArray(response.data) ? response.data : []);
       console.log('📋 [HomePage] Products raw data:', {
         count: productsData.length,
         firstProduct: productsData[0] || 'N/A'

@@ -27,7 +27,11 @@ router.get('/', async (req: Request, res: Response) => {
       }
     });
 
-    res.json(products);
+    // Return consistent format with videos API
+    res.json({
+      data: products,
+      total: products.length
+    });
   } catch (error: any) {
     console.error('Get products error:', error);
     res.status(500).json({ error: 'Failed to fetch products', message: error.message });
