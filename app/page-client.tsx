@@ -44,7 +44,7 @@ export default function HomePageClient() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [debugInfo, setDebugInfo] = useState<string>('');
+  const [testResults, setTestResults] = useState<string>('Initializing...');
   const { t } = useLanguage();
 
   console.log('📊 [HomePage] Initial state:', {
@@ -58,33 +58,38 @@ export default function HomePageClient() {
   // useEffect to fetch data on component mount
   useEffect(() => {
     console.log('🔥 [HomePage] useEffect triggered!');
-    console.log('🔍 [HomePage] Starting to fetch data...');
-    
+    setTestResults('useEffect triggered - starting fetch...');
     fetchAllData();
   }, []);
 
   // Function to fetch all data
   const fetchAllData = async () => {
     console.log('📡 [HomePage] fetchAllData called');
+    setTestResults('fetchAllData called...');
     
     try {
       console.log('🔄 [HomePage] Setting loading to true');
       setLoading(true);
       setError(null);
+      setTestResults('Loading started...');
 
       // Fetch short videos
       console.log('🎬 [HomePage] Step 1: Fetching short videos...');
+      setTestResults('Step 1: Fetching short videos...');
       await fetchShortVideos();
 
       // Fetch long videos
       console.log('🎥 [HomePage] Step 2: Fetching long videos...');
+      setTestResults('Step 2: Fetching long videos...');
       await fetchLongVideos();
 
       // Fetch products
       console.log('🛍️ [HomePage] Step 3: Fetching products...');
+      setTestResults('Step 3: Fetching products...');
       await fetchProducts();
 
       console.log('✅ [HomePage] All data fetched successfully!');
+      setTestResults(`✅ Success! Videos: ${shortVideos.length} short, ${longVideos.length} long | Products: ${products.length}`);
     } catch (err: any) {
       console.error('❌ [HomePage] Error in fetchAllData:', err);
       console.error('❌ [HomePage] Error details:', {
@@ -99,22 +104,28 @@ export default function HomePageClient() {
       let errorMessage = 'Failed to load content';
       if (err.code === 'ERR_NETWORK' || err.message.includes('Network')) {
         errorMessage = 'Network error: Cannot connect to backend. Please check your connection.';
+        setTestResults(`❌ Network Error: ${err.message}`);
       } else if (err.response?.status === 401) {
         errorMessage = 'Unauthorized: Please check authentication.';
+        setTestResults(`❌ 401 Unauthorized`);
       } else if (err.response?.status === 403) {
         errorMessage = 'Forbidden: Access denied.';
+        setTestResults(`❌ 403 Forbidden`);
       } else if (err.response?.status === 404) {
         errorMessage = 'Not found: API endpoint not found.';
+        setTestResults(`❌ 404 Not Found: ${err.config?.url}`);
       } else if (err.response?.status === 500) {
         errorMessage = 'Server error: Backend is having issues.';
+        setTestResults(`❌ 500 Server Error`);
       } else if (err.response?.data?.error) {
         errorMessage = err.response.data.error;
+        setTestResults(`❌ Error: ${errorMessage}`);
       } else if (err.message) {
         errorMessage = err.message;
+        setTestResults(`❌ Error: ${err.message}`);
       }
       
       setError(errorMessage);
-      setDebugInfo(`Error: ${errorMessage} | Code: ${err.code || 'N/A'} | Status: ${err.response?.status || 'N/A'}`);
     } finally {
       console.log('🏁 [HomePage] Setting loading to false');
       setLoading(false);
@@ -125,6 +136,8 @@ export default function HomePageClient() {
   const fetchShortVideos = async () => {
     try {
       console.log('📹 [HomePage] Calling videosAPI.getVideos("short", 1, 5)');
+      setTestResults('Calling Videos API (short)...');
+      
       const response = await videosAPI.getVideos('short', 1, 5);
       
       console.log('✅ [HomePage] Short videos API response received:', response);
@@ -140,6 +153,11 @@ export default function HomePageClient() {
         count: videosData.length,
         firstVideo: videosData[0] || 'N/A'
       });
+
+      if (videosData.length === 0) {
+        setTestResults('⚠️ API returned empty array for short videos');
+        console.warn('⚠️ [HomePage] No short videos returned from API');
+      }
 
       const formattedVideos = videosData.map((video: any) => {
         console.log('🔄 [HomePage] Formatting video:', video.id, video.title);
@@ -160,9 +178,11 @@ export default function HomePageClient() {
 
       console.log('✅ [HomePage] Formatted short videos:', formattedVideos.length);
       setShortVideos(formattedVideos);
+      setTestResults(`✅ Short videos: ${formattedVideos.length} loaded`);
       console.log('💾 [HomePage] Short videos state updated:', formattedVideos.length);
     } catch (err: any) {
       console.error('❌ [HomePage] Error fetching short videos:', err);
+      setTestResults(`❌ Short videos error: ${err.message}`);
       throw err;
     }
   };
@@ -171,6 +191,8 @@ export default function HomePageClient() {
   const fetchLongVideos = async () => {
     try {
       console.log('📹 [HomePage] Calling videosAPI.getVideos("long", 1, 3)');
+      setTestResults('Calling Videos API (long)...');
+      
       const response = await videosAPI.getVideos('long', 1, 3);
       
       console.log('✅ [HomePage] Long videos API response received:', response);
@@ -206,9 +228,11 @@ export default function HomePageClient() {
 
       console.log('✅ [HomePage] Formatted long videos:', formattedVideos.length);
       setLongVideos(formattedVideos);
+      setTestResults(`✅ Long videos: ${formattedVideos.length} loaded`);
       console.log('💾 [HomePage] Long videos state updated:', formattedVideos.length);
     } catch (err: any) {
       console.error('❌ [HomePage] Error fetching long videos:', err);
+      setTestResults(`❌ Long videos error: ${err.message}`);
       throw err;
     }
   };
@@ -217,6 +241,8 @@ export default function HomePageClient() {
   const fetchProducts = async () => {
     try {
       console.log('🛍️ [HomePage] Calling productsAPI.getProducts()');
+      setTestResults('Calling Products API...');
+      
       const response = await productsAPI.getProducts();
       
       console.log('✅ [HomePage] Products API response received:', response);
@@ -251,9 +277,11 @@ export default function HomePageClient() {
 
       console.log('✅ [HomePage] Formatted products:', formattedProducts.length);
       setProducts(formattedProducts);
+      setTestResults(`✅ Products: ${formattedProducts.length} loaded`);
       console.log('💾 [HomePage] Products state updated:', formattedProducts.length);
     } catch (err: any) {
       console.error('❌ [HomePage] Error fetching products:', err);
+      setTestResults(`❌ Products error: ${err.message}`);
       throw err;
     }
   };
@@ -267,6 +295,7 @@ export default function HomePageClient() {
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-red-600 border-t-transparent mx-auto mb-4"></div>
           <p className="text-gray-600 text-lg">{t('loading')}</p>
           <p className="text-gray-500 text-sm mt-2">请稍候，正在加载内容...</p>
+          <p className="text-blue-600 text-xs mt-4 font-mono">{testResults}</p>
         </div>
       </div>
     );
@@ -284,7 +313,8 @@ export default function HomePageClient() {
             </svg>
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('error')}</h2>
-          <p className="text-red-600 mb-6">{error}</p>
+          <p className="text-red-600 mb-4">{error}</p>
+          <p className="text-blue-600 text-xs mb-6 font-mono bg-blue-50 p-3 rounded">{testResults}</p>
           <button
             onClick={fetchAllData}
             className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-semibold"
@@ -305,28 +335,35 @@ export default function HomePageClient() {
 
   return (
     <div className="min-h-screen">
-      {/* Debug Info Banner - Temporary for troubleshooting */}
-      <div className="bg-blue-100 border-b-2 border-blue-400 p-4 text-sm font-mono sticky top-0 z-50 shadow-md">
+      {/* Debug Info Banner - Always visible for troubleshooting */}
+      <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white border-b-2 border-blue-700 p-4 text-sm font-mono sticky top-0 z-50 shadow-lg">
         <div className="max-w-7xl mx-auto">
-          <strong className="text-blue-900 text-base">🔍 Debug Info:</strong>
-          <div className="mt-2 text-blue-800 space-y-1">
+          <strong className="text-white text-base block mb-2">🔍 Debug Info:</strong>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-xs">
             <div>
-              <span className="font-bold">Short Videos:</span> <span className="text-red-600 font-bold">{shortVideos.length}</span> | 
-              <span className="font-bold"> Long Videos:</span> <span className="text-red-600 font-bold">{longVideos.length}</span> | 
-              <span className="font-bold"> Products:</span> <span className="text-red-600 font-bold">{products.length}</span>
+              <span className="font-bold">Short Videos:</span> <span className="bg-white text-blue-600 px-2 py-1 rounded font-bold">{shortVideos.length}</span>
             </div>
             <div>
-              <span className="font-bold">Loading:</span> <span className={loading ? 'text-yellow-600 font-bold' : 'text-green-600 font-bold'}>{loading ? 'Yes' : 'No'}</span> | 
-              <span className="font-bold"> Error:</span> <span className={error ? 'text-red-600 font-bold' : 'text-green-600 font-bold'}>{error || 'None'}</span>
+              <span className="font-bold">Long Videos:</span> <span className="bg-white text-blue-600 px-2 py-1 rounded font-bold">{longVideos.length}</span>
             </div>
-            {debugInfo && (
-              <div className="text-xs text-red-700 bg-red-50 p-2 rounded mt-1">
-                {debugInfo}
-              </div>
-            )}
+            <div>
+              <span className="font-bold">Products:</span> <span className="bg-white text-blue-600 px-2 py-1 rounded font-bold">{products.length}</span>
+            </div>
+            <div>
+              <span className="font-bold">Loading:</span> <span className={`px-2 py-1 rounded font-bold ${loading ? 'bg-yellow-400 text-yellow-900' : 'bg-green-400 text-green-900'}`}>{loading ? 'Yes' : 'No'}</span>
+            </div>
+            <div>
+              <span className="font-bold">Error:</span> <span className={`px-2 py-1 rounded font-bold ${error ? 'bg-red-400 text-red-900' : 'bg-green-400 text-green-900'}`}>{error ? 'Yes' : 'No'}</span>
+            </div>
           </div>
+          {testResults && (
+            <div className="mt-2 text-xs bg-blue-700 p-2 rounded">
+              <strong>Status:</strong> {testResults}
+            </div>
+          )}
         </div>
       </div>
+
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-red-600 to-pink-600 text-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
