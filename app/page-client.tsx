@@ -36,6 +36,8 @@ interface Product {
 }
 
 export default function HomePageClient() {
+  console.log('🚀 [HomePage] Component rendered!');
+  
   const [shortVideos, setShortVideos] = useState<Video[]>([]);
   const [longVideos, setLongVideos] = useState<Video[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -44,6 +46,7 @@ export default function HomePageClient() {
   const { t } = useLanguage();
 
   useEffect(() => {
+    console.log('🔥 [HomePage] useEffect triggered!');
     fetchData();
   }, []);
 
