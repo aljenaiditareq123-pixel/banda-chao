@@ -37,7 +37,8 @@ interface Product {
 
 export default function HomePageClient() {
   console.log('🚀 [HomePage] Component rendered!');
-  
+
+  // State declarations
   const [shortVideos, setShortVideos] = useState<Video[]>([]);
   const [longVideos, setLongVideos] = useState<Video[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -45,112 +46,198 @@ export default function HomePageClient() {
   const [error, setError] = useState<string | null>(null);
   const { t } = useLanguage();
 
+  console.log('📊 [HomePage] Initial state:', {
+    shortVideos: shortVideos.length,
+    longVideos: longVideos.length,
+    products: products.length,
+    loading,
+    error
+  });
+
+  // useEffect to fetch data on component mount
   useEffect(() => {
     console.log('🔥 [HomePage] useEffect triggered!');
-    fetchData();
+    console.log('🔍 [HomePage] Starting to fetch data...');
+    
+    fetchAllData();
   }, []);
 
-  const fetchData = async () => {
+  // Function to fetch all data
+  const fetchAllData = async () => {
+    console.log('📡 [HomePage] fetchAllData called');
+    
     try {
+      console.log('🔄 [HomePage] Setting loading to true');
       setLoading(true);
       setError(null);
 
-      console.log('🔍 [HomePage] Starting to fetch data...');
-
       // Fetch short videos
-      console.log('🔍 [HomePage] Fetching short videos...');
-      const shortVideosRes = await videosAPI.getVideos('short', 1, 5);
-      console.log('✅ [HomePage] Short videos response:', shortVideosRes);
-      console.log('📊 [HomePage] Short videos response.data:', shortVideosRes.data);
-      console.log('📊 [HomePage] Short videos response.data.data:', shortVideosRes.data?.data);
-      console.log('📊 [HomePage] Short videos response.data.data type:', typeof shortVideosRes.data?.data);
-      console.log('📊 [HomePage] Short videos response.data.data isArray:', Array.isArray(shortVideosRes.data?.data));
-      const shortVideosData = shortVideosRes.data?.data || [];
-      console.log('📋 [HomePage] Short videos data length:', shortVideosData.length);
-      console.log('📋 [HomePage] Short videos data sample:', shortVideosData[0] || 'N/A');
-      const formattedShortVideos = shortVideosData.map((video: any) => ({
-        id: video.id,
-        userId: video.userId,
-        title: video.title,
-        thumbnail: video.thumbnailUrl,
-        videoUrl: video.videoUrl,
-        duration: video.duration,
-        views: video.views || 0,
-        likes: video.likes || 0,
-        comments: 0,
-        createdAt: video.createdAt,
-        type: video.type as 'short',
-      }));
+      console.log('🎬 [HomePage] Step 1: Fetching short videos...');
+      await fetchShortVideos();
 
       // Fetch long videos
-      console.log('🔍 [HomePage] Fetching long videos...');
-      const longVideosRes = await videosAPI.getVideos('long', 1, 3);
-      console.log('✅ [HomePage] Long videos response:', longVideosRes);
-      console.log('📊 [HomePage] Long videos response.data:', longVideosRes.data);
-      console.log('📊 [HomePage] Long videos response.data.data:', longVideosRes.data?.data);
-      const longVideosData = longVideosRes.data?.data || [];
-      console.log('📋 [HomePage] Long videos data length:', longVideosData.length);
-      const formattedLongVideos = longVideosData.map((video: any) => ({
-        id: video.id,
-        userId: video.userId,
-        title: video.title,
-        thumbnail: video.thumbnailUrl,
-        videoUrl: video.videoUrl,
-        duration: video.duration,
-        views: video.views || 0,
-        likes: video.likes || 0,
-        comments: 0,
-        createdAt: video.createdAt,
-        type: video.type as 'long',
-      }));
+      console.log('🎥 [HomePage] Step 2: Fetching long videos...');
+      await fetchLongVideos();
 
       // Fetch products
-      console.log('🔍 [HomePage] Fetching products...');
-      const productsRes = await productsAPI.getProducts();
-      console.log('✅ [HomePage] Products response:', productsRes);
-      console.log('📊 [HomePage] Products data:', productsRes.data);
-      // Backend returns array directly, axios wraps it in .data
-      const productsData = Array.isArray(productsRes.data) ? productsRes.data : [];
-      console.log('📋 [HomePage] Formatted products:', productsData.length, 'products');
-      const formattedProducts = productsData.slice(0, 6).map((product: any) => ({
-        id: product.id,
-        userId: product.userId,
-        name: product.name,
-        description: product.description,
-        price: product.price,
-        images: product.imageUrl ? [product.imageUrl] : [],
-        category: product.category,
-        stock: 0,
-        rating: 0,
-        reviewCount: 0,
-        createdAt: product.createdAt,
-      }));
+      console.log('🛍️ [HomePage] Step 3: Fetching products...');
+      await fetchProducts();
 
-      console.log('🔍 [HomePage] Setting state with data...');
-      console.log('📊 [HomePage] Short videos to set:', formattedShortVideos.length);
-      console.log('📊 [HomePage] Long videos to set:', formattedLongVideos.length);
-      console.log('📊 [HomePage] Products to set:', formattedProducts.length);
-
-      setShortVideos(formattedShortVideos);
-      setLongVideos(formattedLongVideos);
-      setProducts(formattedProducts);
-
-      console.log('✅ [HomePage] Data fetch completed successfully!');
+      console.log('✅ [HomePage] All data fetched successfully!');
     } catch (err: any) {
-      console.error('❌ [HomePage] Error fetching data:', err);
+      console.error('❌ [HomePage] Error in fetchAllData:', err);
       console.error('❌ [HomePage] Error details:', {
         message: err.message,
-        response: err.response,
-        data: err.response?.data,
+        response: err.response?.data,
+        status: err.response?.status
       });
       setError(err.response?.data?.error || 'Failed to load content');
     } finally {
+      console.log('🏁 [HomePage] Setting loading to false');
       setLoading(false);
-      console.log('🏁 [HomePage] Fetch completed, loading set to false');
     }
   };
 
+  // Function to fetch short videos
+  const fetchShortVideos = async () => {
+    try {
+      console.log('📹 [HomePage] Calling videosAPI.getVideos("short", 1, 5)');
+      const response = await videosAPI.getVideos('short', 1, 5);
+      
+      console.log('✅ [HomePage] Short videos API response received:', response);
+      console.log('📊 [HomePage] Response structure:', {
+        hasData: !!response.data,
+        hasDataData: !!response.data?.data,
+        dataType: typeof response.data?.data,
+        isArray: Array.isArray(response.data?.data)
+      });
+
+      const videosData = response.data?.data || [];
+      console.log('📋 [HomePage] Short videos raw data:', {
+        count: videosData.length,
+        firstVideo: videosData[0] || 'N/A'
+      });
+
+      const formattedVideos = videosData.map((video: any) => {
+        console.log('🔄 [HomePage] Formatting video:', video.id, video.title);
+        return {
+          id: video.id,
+          userId: video.userId,
+          title: video.title,
+          thumbnail: video.thumbnailUrl,
+          videoUrl: video.videoUrl,
+          duration: video.duration,
+          views: video.views || 0,
+          likes: video.likes || 0,
+          comments: 0,
+          createdAt: video.createdAt,
+          type: 'short' as const,
+        };
+      });
+
+      console.log('✅ [HomePage] Formatted short videos:', formattedVideos.length);
+      setShortVideos(formattedVideos);
+      console.log('💾 [HomePage] Short videos state updated:', formattedVideos.length);
+    } catch (err: any) {
+      console.error('❌ [HomePage] Error fetching short videos:', err);
+      throw err;
+    }
+  };
+
+  // Function to fetch long videos
+  const fetchLongVideos = async () => {
+    try {
+      console.log('📹 [HomePage] Calling videosAPI.getVideos("long", 1, 3)');
+      const response = await videosAPI.getVideos('long', 1, 3);
+      
+      console.log('✅ [HomePage] Long videos API response received:', response);
+      console.log('📊 [HomePage] Response structure:', {
+        hasData: !!response.data,
+        hasDataData: !!response.data?.data,
+        dataType: typeof response.data?.data,
+        isArray: Array.isArray(response.data?.data)
+      });
+
+      const videosData = response.data?.data || [];
+      console.log('📋 [HomePage] Long videos raw data:', {
+        count: videosData.length,
+        firstVideo: videosData[0] || 'N/A'
+      });
+
+      const formattedVideos = videosData.map((video: any) => {
+        console.log('🔄 [HomePage] Formatting video:', video.id, video.title);
+        return {
+          id: video.id,
+          userId: video.userId,
+          title: video.title,
+          thumbnail: video.thumbnailUrl,
+          videoUrl: video.videoUrl,
+          duration: video.duration,
+          views: video.views || 0,
+          likes: video.likes || 0,
+          comments: 0,
+          createdAt: video.createdAt,
+          type: 'long' as const,
+        };
+      });
+
+      console.log('✅ [HomePage] Formatted long videos:', formattedVideos.length);
+      setLongVideos(formattedVideos);
+      console.log('💾 [HomePage] Long videos state updated:', formattedVideos.length);
+    } catch (err: any) {
+      console.error('❌ [HomePage] Error fetching long videos:', err);
+      throw err;
+    }
+  };
+
+  // Function to fetch products
+  const fetchProducts = async () => {
+    try {
+      console.log('🛍️ [HomePage] Calling productsAPI.getProducts()');
+      const response = await productsAPI.getProducts();
+      
+      console.log('✅ [HomePage] Products API response received:', response);
+      console.log('📊 [HomePage] Response structure:', {
+        hasData: !!response.data,
+        dataType: typeof response.data,
+        isArray: Array.isArray(response.data)
+      });
+
+      const productsData = Array.isArray(response.data) ? response.data : [];
+      console.log('📋 [HomePage] Products raw data:', {
+        count: productsData.length,
+        firstProduct: productsData[0] || 'N/A'
+      });
+
+      const formattedProducts = productsData.slice(0, 6).map((product: any) => {
+        console.log('🔄 [HomePage] Formatting product:', product.id, product.name);
+        return {
+          id: product.id,
+          userId: product.userId,
+          name: product.name,
+          description: product.description,
+          price: product.price,
+          images: product.imageUrl ? [product.imageUrl] : [],
+          category: product.category,
+          stock: 0,
+          rating: 0,
+          reviewCount: 0,
+          createdAt: product.createdAt,
+        };
+      });
+
+      console.log('✅ [HomePage] Formatted products:', formattedProducts.length);
+      setProducts(formattedProducts);
+      console.log('💾 [HomePage] Products state updated:', formattedProducts.length);
+    } catch (err: any) {
+      console.error('❌ [HomePage] Error fetching products:', err);
+      throw err;
+    }
+  };
+
+  // Loading state
   if (loading) {
+    console.log('⏳ [HomePage] Rendering loading state');
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -162,7 +249,9 @@ export default function HomePageClient() {
     );
   }
 
+  // Error state
   if (error) {
+    console.log('❌ [HomePage] Rendering error state:', error);
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center max-w-md mx-auto px-4">
@@ -172,11 +261,9 @@ export default function HomePageClient() {
             </svg>
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('error')}</h2>
-          <p className="text-red-600 mb-6">
-            {error || '抱歉，加载内容时出现问题。可能是服务器响应缓慢，请稍后再试。'}
-          </p>
+          <p className="text-red-600 mb-6">{error}</p>
           <button
-            onClick={fetchData}
+            onClick={fetchAllData}
             className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-semibold"
           >
             {t('retry')}
@@ -185,6 +272,13 @@ export default function HomePageClient() {
       </div>
     );
   }
+
+  // Main render
+  console.log('🎨 [HomePage] Rendering main content with data:', {
+    shortVideos: shortVideos.length,
+    longVideos: longVideos.length,
+    products: products.length
+  });
 
   return (
     <div className="min-h-screen">
@@ -214,7 +308,7 @@ export default function HomePageClient() {
         </div>
       </section>
 
-      {/* Short Videos Section */}
+      {/* Short Videos Section - Grid Layout */}
       <section className="py-12 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-8">
@@ -226,24 +320,28 @@ export default function HomePageClient() {
               {t('viewMore')} →
             </Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             {(() => {
-              console.log('🔍 [HomePage] Rendering short videos section, count:', shortVideos.length);
-              return shortVideos.length > 0 ? (
-                shortVideos.map((video) => (
-                  <VideoCard key={video.id} video={video} />
-                ))
-              ) : (
-                <div className="col-span-full text-center py-12 text-gray-500">
-                  {t('noContent')}
-                </div>
-              );
+              console.log('🎬 [HomePage] Rendering short videos grid, count:', shortVideos.length);
+              if (shortVideos.length > 0) {
+                return shortVideos.map((video) => {
+                  console.log('📹 [HomePage] Rendering video card:', video.id);
+                  return <VideoCard key={video.id} video={video} />;
+                });
+              } else {
+                console.log('⚠️ [HomePage] No short videos to display');
+                return (
+                  <div className="col-span-full text-center py-12 text-gray-500">
+                    {t('noContent')}
+                  </div>
+                );
+              }
             })()}
           </div>
         </div>
       </section>
 
-      {/* Long Videos Section */}
+      {/* Long Videos Section - Grid Layout */}
       <section className="py-12 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-8">
@@ -257,22 +355,26 @@ export default function HomePageClient() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {(() => {
-              console.log('🔍 [HomePage] Rendering long videos section, count:', longVideos.length);
-              return longVideos.length > 0 ? (
-                longVideos.map((video) => (
-                  <VideoCard key={video.id} video={video} />
-                ))
-              ) : (
-                <div className="col-span-full text-center py-12 text-gray-500">
-                  {t('noContent')}
-                </div>
-              );
+              console.log('🎥 [HomePage] Rendering long videos grid, count:', longVideos.length);
+              if (longVideos.length > 0) {
+                return longVideos.map((video) => {
+                  console.log('📹 [HomePage] Rendering video card:', video.id);
+                  return <VideoCard key={video.id} video={video} />;
+                });
+              } else {
+                console.log('⚠️ [HomePage] No long videos to display');
+                return (
+                  <div className="col-span-full text-center py-12 text-gray-500">
+                    {t('noContent')}
+                  </div>
+                );
+              }
             })()}
           </div>
         </div>
       </section>
 
-      {/* Products Section */}
+      {/* Products Section - Grid Layout */}
       <section className="py-12 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-8">
@@ -284,18 +386,22 @@ export default function HomePageClient() {
               {t('viewMore')} →
             </Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
             {(() => {
-              console.log('🔍 [HomePage] Rendering products section, count:', products.length);
-              return products.length > 0 ? (
-                products.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))
-              ) : (
-                <div className="col-span-full text-center py-12 text-gray-500">
-                  {t('noContent')}
-                </div>
-              );
+              console.log('🛍️ [HomePage] Rendering products grid, count:', products.length);
+              if (products.length > 0) {
+                return products.map((product) => {
+                  console.log('📦 [HomePage] Rendering product card:', product.id);
+                  return <ProductCard key={product.id} product={product} />;
+                });
+              } else {
+                console.log('⚠️ [HomePage] No products to display');
+                return (
+                  <div className="col-span-full text-center py-12 text-gray-500">
+                    {t('noContent')}
+                  </div>
+                );
+              }
             })()}
           </div>
         </div>
@@ -303,4 +409,3 @@ export default function HomePageClient() {
     </div>
   );
 }
-
