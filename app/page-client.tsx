@@ -88,8 +88,11 @@ export default function HomePageClient() {
       setTestResults('Step 3: Fetching products...');
       await fetchProducts();
 
-      console.log('✅ [HomePage] All data fetched successfully!');
-      setTestResults(`✅ Success! Videos: ${shortVideos.length} short, ${longVideos.length} long | Products: ${products.length}`);
+      // Wait a moment for state updates, then get final counts
+      setTimeout(() => {
+        console.log('✅ [HomePage] All data fetched successfully!');
+        setTestResults(`✅ Success! Check Debug Banner for counts.`);
+      }, 100);
     } catch (err: any) {
       console.error('❌ [HomePage] Error in fetchAllData:', err);
       console.error('❌ [HomePage] Error details:', {
