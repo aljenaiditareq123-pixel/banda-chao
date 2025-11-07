@@ -283,12 +283,19 @@ export default function HomePageClient() {
 
   return (
     <div className="min-h-screen">
-      {/* Debug Info Banner - Remove after fixing */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="bg-blue-100 border-b border-blue-300 p-2 text-xs">
-          <strong>Debug:</strong> Short Videos: {shortVideos.length} | Long Videos: {longVideos.length} | Products: {products.length} | Loading: {loading ? 'Yes' : 'No'} | Error: {error || 'None'}
+      {/* Debug Info Banner - Temporary for troubleshooting */}
+      <div className="bg-blue-100 border-b border-blue-300 p-3 text-sm font-mono">
+        <div className="max-w-7xl mx-auto">
+          <strong className="text-blue-800">🔍 Debug Info:</strong>
+          <div className="mt-1 text-blue-700">
+            Short Videos: <span className="font-bold">{shortVideos.length}</span> | 
+            Long Videos: <span className="font-bold">{longVideos.length}</span> | 
+            Products: <span className="font-bold">{products.length}</span> | 
+            Loading: <span className="font-bold">{loading ? 'Yes' : 'No'}</span> | 
+            Error: <span className="font-bold">{error || 'None'}</span>
+          </div>
         </div>
-      )}
+      </div>
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-red-600 to-pink-600 text-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
