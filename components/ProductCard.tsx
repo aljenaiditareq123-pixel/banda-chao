@@ -7,7 +7,7 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const formatPrice = (price: number) => {
+  const formatPrice = (price: number | null) => {
     return `¥${price.toFixed(2)}`;
   };
 
