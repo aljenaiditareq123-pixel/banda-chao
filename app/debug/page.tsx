@@ -164,13 +164,13 @@ export default function DebugPage() {
           </div>
 
           {!loading && logs.length === 0 && (
-            <p className="text-gray-500 text-center py-8">No logs yet. Click "Run Tests Again" to start.</p>
+            <p className="text-gray-500 text-center py-8">No logs yet. Click &quot;Run Tests Again&quot; to start.</p>
           )}
         </div>
 
         <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <p className="text-yellow-800">
-            <strong>📋 Instructions:</strong> Copy all the information above and send it to me. This will help me understand what's happening with the API calls.
+            <strong>📋 Instructions:</strong> Copy all the information above and send it to me. This will help me understand what&apos;s happening with the API calls.
           </p>
         </div>
       </div>
