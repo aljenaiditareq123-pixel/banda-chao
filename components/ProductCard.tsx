@@ -8,6 +8,9 @@ interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
   const formatPrice = (price: number | null) => {
+    if (price === null || price === undefined) {
+      return '价格待定';
+    }
     return `¥${price.toFixed(2)}`;
   };
 
