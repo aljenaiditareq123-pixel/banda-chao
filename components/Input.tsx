@@ -1,70 +1,79 @@
 'use client';
 
-import { forwardRef, InputHTMLAttributes, ReactNode } from 'react';
+import { InputHTMLAttributes, ReactNode, forwardRef } from 'react';
 import { clsx } from '@/lib/utils';
 
+type IconPosition = 'left' | 'right';
+
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
-  iconLeft?: ReactNode;
-  iconRight?: ReactNode;
   error?: string | boolean;
   helperText?: string;
-  label?: string;
+  icon?: ReactNode;
+  iconPosition?: IconPosition;
 }
+
+const baseClasses =
+  'w-full rounded-lg border bg-white text-[#1f2937] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2E7D32]/40 focus:border-[#2E7D32] transition';
+
+const paddingClasses: Record<IconPosition, string> = {
+  left: 'pl-11 pr-4',
+  right: 'pl-4 pr-11',
+};
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
   (
     {
-      iconLeft,
-      iconRight,
       error,
       helperText,
-      label,
+      icon,
+      iconPosition = 'left',
       className,
-      type = 'text',
+      disabled,
       ...props
     },
     ref
   ) => {
     const hasError = Boolean(error);
+    const computedPadding = icon ? paddingClasses[iconPosition] : 'px-4';
 
     return (
-      <div className="w-full space-y-1">
-        {label && (
-          <label className="block text-sm font-medium text-gray-700" htmlFor={props.id}>
-            {label}
-          </label>
-        )}
+      <div className="space-y-2">
         <div className="relative">
-          {iconLeft && (
-            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
-              {iconLeft}
+          {icon && (
+            <span
+              className={clsx(
+                'absolute top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none',
+                iconPosition === 'left' ? 'left-3' : 'right-3'
+              )}
+            >
+              {icon}
             </span>
           )}
+
           <input
             ref={ref}
-            type={type}
             className={clsx(
-              'w-full rounded-lg border bg-white px-4 py-2 text-sm text-gray-900 placeholder-gray-400 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-offset-1',
-              iconLeft && 'pl-10',
-              iconRight && 'pr-10',
-              hasError
-                ? 'border-red-500 focus:border-red-500 focus:ring-red-300'
-                : 'border-gray-300 focus:border-[#2E7D32] focus:ring-[#2E7D32]/40',
+              baseClasses,
+              computedPadding,
+              hasError && 'border-red-500 focus:border-red-500 focus:ring-red-500/40',
+              disabled && 'bg-gray-100 text-gray-400 cursor-not-allowed',
               className
             )}
+            aria-invalid={hasError}
             {...props}
           />
-          {iconRight && (
-            <span className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
-              {iconRight}
-            </span>
-          )}
         </div>
-        {hasError ? (
-          <p className="text-xs text-red-600">{typeof error === 'string' ? error : helperText}</p>
-        ) : (
-          helperText && <p className="text-xs text-gray-500">{helperText}</p>
-        )}
+
+        {(() => {
+          const errorMessage = typeof error === 'string' ? error : undefined;
+          const message = errorMessage ?? helperText;
+          if (!message) return null;
+          return (
+            <p className={clsx('text-sm', hasError ? 'text-red-500' : 'text-gray-500')}>
+              {message}
+            </p>
+          );
+        })()}
       </div>
     );
   }
