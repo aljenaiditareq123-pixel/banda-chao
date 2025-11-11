@@ -11,3 +11,10 @@ export async function POST() {
 export async function GET() {
   return NextResponse.json(mockReply);
 }
+
+const methodNotAllowed = () =>
+  NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
+
+export const PUT = methodNotAllowed;
+export const PATCH = methodNotAllowed;
+export const DELETE = methodNotAllowed;

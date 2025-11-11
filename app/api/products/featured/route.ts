@@ -45,3 +45,11 @@ export async function GET() {
     generatedAt: new Date().toISOString(),
   });
 }
+
+const methodNotAllowed = () =>
+  NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
+
+export const POST = methodNotAllowed;
+export const PUT = methodNotAllowed;
+export const PATCH = methodNotAllowed;
+export const DELETE = methodNotAllowed;
