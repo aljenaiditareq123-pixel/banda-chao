@@ -33,7 +33,14 @@ const applyCorsHeaders = (response: NextResponse, origin: string | null) => {
 type CookieOptions = Parameters<NextResponse['cookies']['set']>[2];
 
 export async function middleware(request: NextRequest) {
-  const isApiRequest = request.nextUrl.pathname.startsWith('/api/');
+  const { pathname } = request.nextUrl;
+
+  if (pathname.startsWith('/founder-dashboard')) {
+    const openResponse = NextResponse.next();
+    return applySecurityHeaders(openResponse);
+  }
+
+  const isApiRequest = pathname.startsWith('/api/');
   const origin = request.headers.get('origin');
 
   if (isApiRequest && origin && !allowedOrigins.has(origin)) {
