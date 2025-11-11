@@ -1,16 +1,15 @@
 import { NextResponse } from 'next/server';
 
-const mockFounderReply = {
-  response:
-    'مرحباً أيها المؤسس، رؤيتك في محلها. دعنا نحدد قراراً استراتيجياً واحداً الآن ونضع له مسار تنفيذ واضح.',
+const mockTechReply = {
+  response: 'تحياتي من الباندا التقني. سأراجع البنية الحالية وأقترح تحسيناً عملياً للبنية التقنية.',
 };
 
 export async function POST() {
-  return NextResponse.json(mockFounderReply);
+  return NextResponse.json(mockTechReply);
 }
 
 export async function GET() {
-  return NextResponse.json(mockFounderReply);
+  return NextResponse.json(mockTechReply);
 }
 
 const methodNotAllowed = () =>
