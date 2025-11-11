@@ -27,9 +27,21 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   useEffect(() => {
     // Load language from localStorage
-    const savedLanguage = localStorage.getItem('language') as Language;
+    const savedLanguage = localStorage.getItem('language') as Language | null;
     if (savedLanguage && (savedLanguage === 'zh' || savedLanguage === 'ar' || savedLanguage === 'en')) {
       setLanguageState(savedLanguage);
+      document.cookie = `NEXT_LOCALE=${encodeURIComponent(savedLanguage)}; path=/; max-age=31536000`;
+      return;
+    }
+
+    const cookieMatch = document.cookie.match(/(?:^|;\s*)NEXT_LOCALE=([^;]+)/);
+    if (cookieMatch) {
+      const cookieLang = decodeURIComponent(cookieMatch[1]) as Language;
+      if (cookieLang === 'zh' || cookieLang === 'ar' || cookieLang === 'en') {
+        setLanguageState(cookieLang);
+        localStorage.setItem('language', cookieLang);
+        document.cookie = `NEXT_LOCALE=${encodeURIComponent(cookieLang)}; path=/; max-age=31536000`;
+      }
     }
   }, []);
 
@@ -42,6 +54,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
     localStorage.setItem('language', lang);
+    document.cookie = `NEXT_LOCALE=${encodeURIComponent(lang)}; path=/; max-age=31536000`;
   };
 
   const t = (key: string): string => {

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import "./globals.css";
 import Header from "@/components/Header";
 import InstallPWA from "@/components/InstallPWA";
@@ -30,8 +31,14 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = cookies();
+  const cookieLocale = cookieStore.get("NEXT_LOCALE")?.value as "zh" | "ar" | "en" | undefined;
+  const locale = cookieLocale ?? "zh";
+  const htmlLang = locale === "zh" ? "zh-CN" : locale;
+  const direction = locale === "ar" ? "rtl" : "ltr";
+
   return (
-    <html lang="zh-CN" dir="ltr">
+    <html lang={htmlLang} dir={direction} suppressHydrationWarning>
       <head>
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
