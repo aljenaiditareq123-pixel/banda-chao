@@ -1,0 +1,1 @@
+import FounderAIAssistant from '@/components/FounderAIAssistant'; export default function FounderDashboardPage() { return (<div className='bg-slate-950 min-h-screen text-white p-16'><FounderAIAssistant /></div>); }
