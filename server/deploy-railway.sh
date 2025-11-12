@@ -44,3 +44,4 @@ echo "Backend URL: $BACKEND_URL"
 echo ""
 echo "⚠️  مهم: انسخ Backend URL وأضفه في Vercel Environment Variables!"
 
+

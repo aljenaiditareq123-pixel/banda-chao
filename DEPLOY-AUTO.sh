@@ -28,3 +28,4 @@ npx vercel --yes --prod
 echo ""
 echo "✅ تم النشر!"
 
+

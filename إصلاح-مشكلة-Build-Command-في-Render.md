@@ -98,3 +98,4 @@ cd server && npm install && npx prisma generate && npm run build
 
 **أخبرني: هل قمت بتصحيح Build Command؟** 🔍
 
+

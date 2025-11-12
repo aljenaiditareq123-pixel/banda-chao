@@ -127,3 +127,4 @@ curl "https://banda-chao-backend.onrender.com/api/v1/search?q=test"
 **📅 تاريخ:** اليوم  
 **✍️ الحالة:** ✅ **Backend جاهز - يحتاج Seed و Frontend Update**
 
+

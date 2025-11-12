@@ -99,3 +99,4 @@ postgresql://username:password@dpg-xxxxx-a.oregon-postgres.render.com/banda_chao
 
 **احذف Variable الحالي وأضف DATABASE_URL بالطريقة الصحيحة!** 🔧
 
+

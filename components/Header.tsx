@@ -4,11 +4,13 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useCart } from '@/contexts/CartContext';
 
 export default function Header() {
   const router = useRouter();
   const { user, loading, logout } = useAuth();
   const { language, setLanguage, t } = useLanguage();
+  const { totalItems } = useCart();
 
   const handleLogout = () => {
     logout();
@@ -27,7 +29,7 @@ export default function Header() {
 
           {/* Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <Link href="/" className="text-gray-700 hover:text-red-600 transition">
+          <Link href="/" className="text-gray-700 hover:text-red-600 transition">
               {t('home')}
             </Link>
             <Link href="/videos/short" className="text-gray-700 hover:text-red-600 transition">
@@ -88,6 +90,16 @@ export default function Header() {
                 العربية
               </button>
             </div>
+            <Link
+              href="/cart"
+              className="flex items-center space-x-1 text-gray-700 hover:text-red-600 transition"
+              aria-label={t('cartTitle') ?? 'Cart'}
+            >
+              <span role="img" aria-label="cart" className="text-xl leading-none">
+                🛒
+              </span>
+              <span className="text-sm font-semibold">{totalItems}</span>
+            </Link>
 
             {loading ? (
               <div className="h-8 w-8 rounded-full bg-gray-200 animate-pulse" />

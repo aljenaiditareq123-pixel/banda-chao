@@ -112,3 +112,4 @@ postgres://username:password@dpg-xxxxx-a.oregon-postgres.render.com/database_nam
 
 **اذهب إلى Database Settings وابحث عن "Internal Database URL"!** 🔍
 
+

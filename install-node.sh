@@ -37,3 +37,4 @@ echo "   cd /Users/tarqahmdaljnydy/Desktop/banda-chao"
 echo "   npm install"
 echo "   npm run dev"
 
+

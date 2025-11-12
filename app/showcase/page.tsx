@@ -90,6 +90,16 @@ export default function ShowcasePage() {
               ابحث الآن →
             </Link>
           </div>
+
+          {/* Feature 7 - Founder Assistant */}
+          <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition">
+            <div className="text-4xl mb-4">🤖</div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">مساعد المؤسس</h3>
+            <p className="text-gray-600 mb-4">6 مساعدين ذكيين: الرؤية، التقنية، الأمن، التجارة، المحتوى، اللوجستيات</p>
+            <Link href="/founder/assistant" className="text-red-600 hover:underline">
+              تحدث مع المساعدين →
+            </Link>
+          </div>
         </div>
 
         {/* Quick Links */}
@@ -130,6 +140,14 @@ export default function ShowcasePage() {
               <div className="text-2xl mb-2">🚀</div>
               <div className="font-semibold text-gray-900">صفحة البدء</div>
             </Link>
+
+            <Link
+              href="/founder/assistant"
+              className="p-4 bg-emerald-50 border-2 border-emerald-200 rounded-lg hover:bg-emerald-100 transition text-center"
+            >
+              <div className="text-2xl mb-2">🤖</div>
+              <div className="font-semibold text-gray-900">مساعد المؤسس</div>
+            </Link>
           </div>
         </div>
 
@@ -169,4 +187,5 @@ export default function ShowcasePage() {
     </div>
   );
 }
+
 

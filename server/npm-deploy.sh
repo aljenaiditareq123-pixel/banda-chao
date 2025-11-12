@@ -15,3 +15,4 @@ echo "1. Deploy to Railway/Render"
 echo "2. Set Environment Variables"
 echo "3. Run migrations: npx prisma migrate deploy"
 
+

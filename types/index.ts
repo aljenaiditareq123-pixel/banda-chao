@@ -38,6 +38,24 @@ export interface Product {
   rating: number;
   reviewCount: number;
   createdAt: string;
+  externalLink?: string;
+  maker?: {
+    id: string;
+    name?: string;
+    profilePicture?: string;
+  };
+}
+
+export interface Maker {
+  id: string;
+  name: string;
+  bio?: string;
+  story?: string;
+  coverImage?: string;
+  profilePicture?: string;
+  location?: string;
+  tagline?: string;
+  socialLinks?: Record<string, string>;
 }
 
 // Comment Types

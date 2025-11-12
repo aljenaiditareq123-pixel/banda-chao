@@ -132,3 +132,4 @@ Value: https://banda-chao-backend.onrender.com
 **📅 تاريخ:** اليوم  
 **✍️ الحالة:** 🔧 **يحتاج إضافة Environment Variables في Vercel**
 
+

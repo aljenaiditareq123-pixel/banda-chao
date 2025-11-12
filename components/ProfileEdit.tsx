@@ -159,3 +159,4 @@ export default function ProfileEdit({ profile }: { profile: Profile }) {
     </div>
   );
 }
+

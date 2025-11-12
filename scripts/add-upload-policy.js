@@ -120,3 +120,4 @@ createUploadPolicy().then(success => {
   }
 });
 
+

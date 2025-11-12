@@ -125,3 +125,4 @@ npm install && npx prisma generate --schema=prisma/schema.prisma && npm run buil
 
 **اذهب إلى Settings وأصلح Build Command الآن!** 🔧
 
+

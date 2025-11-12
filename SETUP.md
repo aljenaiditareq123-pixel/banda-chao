@@ -99,3 +99,4 @@ npm run dev
 إذا واجهت أي مشاكل، تحقق من:
 - [Supabase Documentation](https://supabase.com/docs)
 - [Next.js Documentation](https://nextjs.org/docs)
+

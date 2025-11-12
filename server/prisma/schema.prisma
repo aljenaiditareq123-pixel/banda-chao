@@ -103,3 +103,15 @@ model Video {
   @@map("videos")
 }
 
+model Maker {
+  id                String   @id @default(uuid())
+  slug              String   @unique
+  name              String
+  bio               String?
+  story             String?
+  profilePictureUrl String?  @map("profile_picture_url")
+  coverPictureUrl   String?  @map("cover_picture_url")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+}
+

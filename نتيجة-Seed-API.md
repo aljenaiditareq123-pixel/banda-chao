@@ -85,3 +85,4 @@ curl -X POST https://banda-chao-backend.onrender.com/api/v1/seed \
 **📅 تاريخ:** اليوم  
 **✍️ الحالة:** ❌ **فشل - يحتاج إعادة تشغيل Backend**
 
+

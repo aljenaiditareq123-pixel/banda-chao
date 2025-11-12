@@ -87,3 +87,4 @@ curl -X POST https://banda-chao-backend.onrender.com/api/v1/seed \
 **📅 تاريخ:** اليوم  
 **✍️ الحالة:** ⚠️ **يحتاج إضافة SEED_SECRET في Render**
 
+

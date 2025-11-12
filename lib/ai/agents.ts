@@ -51,46 +51,98 @@ export class DevelopmentAgent extends BaseAgent {
   }
 
   async process(message: string, context?: any): Promise<AgentResponse> {
-    // محاكاة استجابة AI (يمكن استبدالها بـ OpenAI API)
-    const lowerMessage = message.toLowerCase();
-    
-    if (lowerMessage.includes('تحسين') || lowerMessage.includes('improve')) {
+    // استخدام Technical Panda API للتنفيذ المباشر
+    try {
+      const response = await fetch('/api/technical-panda', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          message: message,
+          assistantType: 'technical'
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get response from Technical Panda');
+      }
+
+      const data = await response.json();
+      
+      if (data.error) {
+        return {
+          message: `❌ خطأ: ${data.error}`,
+          suggestions: ['يرجى التحقق من إعدادات API']
+        };
+      }
+
+      // Extract suggestions and actions from Technical Panda response
+      const reply = data.reply || data.result || 'تم التنفيذ';
+      const executedActions = data.executedActions || [];
+      
+      // Parse suggestions from reply
+      const suggestions: string[] = [];
+      if (data.suggestions && data.suggestions.length > 0) {
+        suggestions.push(...data.suggestions);
+      }
+      
+      // Add executed actions as suggestions
+      if (executedActions.length > 0) {
+        suggestions.push(...executedActions.map((action: string) => `✅ ${action}`));
+      }
+
       return {
-        message: '🔍 وجدت فرص للتحسين:',
+        message: reply,
+        suggestions: suggestions.length > 0 ? suggestions : undefined,
+        actions: executedActions.length > 0 ? [{
+          type: 'code' as const,
+          description: 'تم تنفيذ الإجراءات تلقائياً',
+          priority: 'high' as const
+        }] : undefined
+      };
+    } catch (error: any) {
+      // Fallback to basic response if API fails
+      const lowerMessage = message.toLowerCase();
+      
+      if (lowerMessage.includes('تحسين') || lowerMessage.includes('improve')) {
+        return {
+          message: '🔍 وجدت فرص للتحسين:',
+          suggestions: [
+            'إضافة نظام التخزين المؤقت (Caching) لتحسين الأداء',
+            'تحسين تحميل الصور باستخدام Next.js Image في جميع المكونات',
+            'إضافة Service Worker للعمل Offline',
+            'تحسين SEO بإضافة Meta tags ديناميكية'
+          ],
+          actions: [
+            {
+              type: 'code',
+              description: 'تحسين استخدام Next.js Image في VideoCard و ProductCard',
+              priority: 'medium'
+            }
+          ]
+        };
+      }
+
+      if (lowerMessage.includes('خطأ') || lowerMessage.includes('error')) {
+        return {
+          message: '🔧 سأساعدك في حل المشاكل:',
+          suggestions: [
+            'تحقق من Console للأخطاء',
+            'تحقق من Supabase Connection',
+            'تحقق من Environment Variables'
+          ]
+        };
+      }
+
+      return {
+        message: '👨‍💻 Developer AI جاهز للمساعدة!',
         suggestions: [
-          'إضافة نظام التخزين المؤقت (Caching) لتحسين الأداء',
-          'تحسين تحميل الصور باستخدام Next.js Image في جميع المكونات',
-          'إضافة Service Worker للعمل Offline',
-          'تحسين SEO بإضافة Meta tags ديناميكية'
-        ],
-        actions: [
-          {
-            type: 'code',
-            description: 'تحسين استخدام Next.js Image في VideoCard و ProductCard',
-            priority: 'medium'
-          }
+          'يمكنني مساعدتك في: تحسين الكود، حل الأخطاء، إضافة ميزات جديدة',
+          'أخبرني ما تحتاجه وسأساعدك'
         ]
       };
     }
-
-    if (lowerMessage.includes('خطأ') || lowerMessage.includes('error')) {
-      return {
-        message: '🔧 سأساعدك في حل المشاكل:',
-        suggestions: [
-          'تحقق من Console للأخطاء',
-          'تحقق من Supabase Connection',
-          'تحقق من Environment Variables'
-        ]
-      };
-    }
-
-    return {
-      message: '👨‍💻 Developer AI جاهز للمساعدة!',
-      suggestions: [
-        'يمكنني مساعدتك في: تحسين الكود، حل الأخطاء، إضافة ميزات جديدة',
-        'أخبرني ما تحتاجه وسأساعدك'
-      ]
-    };
   }
 
   getStatus(): string {
@@ -309,4 +361,5 @@ export function getAllAgents(): BaseAgent[] {
     new ChatAgent(),
   ];
 }
+
 

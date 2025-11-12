@@ -42,3 +42,4 @@ echo ""
 echo "🎉 تم! الموقع جاهز الآن!"
 echo "   افتح: https://banda-chao.vercel.app"
 
+

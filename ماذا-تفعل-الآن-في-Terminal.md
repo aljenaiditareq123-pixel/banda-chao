@@ -86,3 +86,4 @@ Visit https://vercel.com/oauth/device?user_code=NZDJ-TNBD
 
 **بعد الموافقة، Script سيستمر تلقائياً!** 🚀
 
+

@@ -4,9 +4,10 @@ import LikeButton from './LikeButton';
 
 interface ProductCardProps {
   product: Product;
+  href?: string;
 }
 
-export default function ProductCard({ product }: ProductCardProps) {
+export default function ProductCard({ product, href }: ProductCardProps) {
   const formatPrice = (price: number | null) => {
     if (price === null || price === undefined) {
       return '价格待定';
@@ -15,7 +16,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   };
 
   return (
-    <Link href={`/products/${product.id}`} className="block group">
+    <Link href={href ?? `/products/${product.id}`} className="block group">
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
         <div className="relative aspect-square bg-gray-100">
           {product.images && product.images.length > 0 ? (

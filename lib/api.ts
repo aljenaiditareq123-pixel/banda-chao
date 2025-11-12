@@ -157,3 +157,15 @@ export const searchAPI = {
 
 export default api;
 
+export interface CheckoutSessionRequestItem {
+  productId: string;
+  quantity: number;
+}
+
+export const checkoutAPI = {
+  createCheckoutSession: async (items: CheckoutSessionRequestItem[]) => {
+    const response = await api.post('/orders/create-checkout-session', { items });
+    return response.data as { url: string };
+  },
+};
+
