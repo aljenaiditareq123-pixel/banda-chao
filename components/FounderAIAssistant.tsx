@@ -195,6 +195,7 @@ const createAssistantRecord = <T,>(value: T) =>
 type TimeoutHandle = ReturnType<typeof setTimeout>;
 
 const FounderAIAssistant: React.FC = () => {
+  const [isMounted, setIsMounted] = useState(false);
   const [activeAssistantId, setActiveAssistantId] = useState<AssistantId>('founder');
   const [dialogs, setDialogs] = useState<Record<AssistantId, ChatMessage[]>>(createInitialDialogs);
   const [drafts, setDrafts] = useState<Record<AssistantId, string>>(() =>
@@ -231,17 +232,22 @@ const FounderAIAssistant: React.FC = () => {
     };
   }, []);
 
-  // Initialize Web Speech API for Voice Input
+  // Set mounted state to prevent hydration errors
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Initialize Web Speech API for Voice Input - only once on mount
+  useEffect(() => {
+    if (!isMounted) return;
     if (typeof window !== 'undefined') {
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       
-      if (SpeechRecognition) {
-        // Create new recognition instance each time
+      if (SpeechRecognition && !recognitionRef.current) {
         const recognition = new SpeechRecognition();
         recognition.continuous = false;
         recognition.interimResults = false;
-        recognition.lang = 'ar-SA'; // Arabic (Saudi Arabia)
+        recognition.lang = 'ar-SA';
 
         recognition.onstart = () => {
           setIsListening(true);
@@ -412,7 +418,7 @@ const FounderAIAssistant: React.FC = () => {
         }
       }
     };
-  }, [activeAssistantId]);
+  }, []); // Only run once on mount, not on assistant change
 
   const handleTabChange = useCallback((assistantId: AssistantId) => {
     // Stop listening if active
@@ -436,107 +442,9 @@ const FounderAIAssistant: React.FC = () => {
   }, [isListening]);
 
   const toggleListening = useCallback(() => {
-    // Check if Speech Recognition is supported
-    if (typeof window === 'undefined') {
-      return;
-    }
-    
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
+    if (!recognitionRef.current) {
       alert('ميزة التعرف على الصوت غير مدعومة في متصفحك. يرجى استخدام Chrome أو Edge.');
       return;
-    }
-
-    // Re-initialize recognition if needed (it gets recreated on assistant change)
-    if (!recognitionRef.current) {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      recognition.lang = 'ar-SA';
-      
-      recognition.onstart = () => setIsListening(true);
-      recognition.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        setIsListening(false);
-        if (transcript.trim()) {
-          const currentId = activeAssistantId;
-          setDrafts((prev) => ({
-            ...prev,
-            [currentId]: transcript,
-          }));
-          // Auto send after 500ms
-          setTimeout(() => {
-            const messageText = transcript.trim();
-            if (!messageText) return;
-            
-            const founderMessage: ChatMessage = {
-              id: `${currentId}-founder-${Date.now()}`,
-              role: 'founder',
-              text: messageText,
-              createdAt: new Date().toISOString(),
-            };
-            setDialogs((prev) => ({
-              ...prev,
-              [currentId]: [...prev[currentId], founderMessage],
-            }));
-            setDrafts((prev) => ({ ...prev, [currentId]: '' }));
-            setErrors((prev) => ({ ...prev, [currentId]: null }));
-            setLoadingAssistantId(currentId);
-            
-            // Send to API (same logic as handleSubmit)
-            (async () => {
-              try {
-                const assistant = assistantMap[currentId];
-                const systemPrompts: Record<AssistantId, string> = {
-                  founder: `أنت الباندا المؤسس - النسخة الإلكترونية للمؤسس الحقيقي لمنصة Panda Chao. أنت تعرف كل شيء عن المشروع من اليوم الأول حتى الآن.`,
-                  tech: 'أنت الباندا التقني لمنصة Panda Chao. أنت متخصص في البنية التحتية والأنظمة التقنية.',
-                  guard: 'أنت الباندا الحارس لمنصة Panda Chao. أنت متخصص في الأمن وحماية البيانات.',
-                  commerce: 'أنت باندا التجارة لمنصة Panda Chao. أنت متخصص في المبيعات والتسويق.',
-                  content: 'أنت باندا المحتوى لمنصة Panda Chao. أنت متخصص في إنشاء المحتوى والقصص.',
-                  logistics: 'أنت باندا اللوجستيات لمنصة Panda Chao. أنت متخصص في العمليات والشحن.',
-                };
-                const response = await fetch(assistant.endpoint, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ 
-                    message: messageText,
-                    systemPrompt: systemPrompts[currentId],
-                    assistantType: currentId === 'founder' ? 'vision' : currentId === 'tech' ? 'technical' : currentId === 'guard' ? 'security' : currentId,
-                  }),
-                });
-                if (!response.ok) throw new Error(`Error: ${response.status}`);
-                const data = await response.json() as { reply?: string; response?: string };
-                const assistantMessage: ChatMessage = {
-                  id: `${currentId}-assistant-${Date.now()}`,
-                  role: 'assistant',
-                  text: data.reply ?? data.response ?? assistant.openingMessage,
-                  createdAt: new Date().toISOString(),
-                };
-                setDialogs((prev) => ({
-                  ...prev,
-                  [currentId]: [...prev[currentId], assistantMessage],
-                }));
-              } catch (err) {
-                setErrors((prev) => ({
-                  ...prev,
-                  [currentId]: 'تعذر الحصول على استشارة من هذا المساعد الآن.',
-                }));
-              } finally {
-                setLoadingAssistantId((prev) => (prev === currentId ? null : prev));
-              }
-            })();
-          }, 500);
-        }
-      };
-      recognition.onerror = (event: any) => {
-        console.error('Speech recognition error:', event.error);
-        setIsListening(false);
-        if (event.error === 'not-allowed') {
-          alert('يرجى السماح بالوصول إلى الميكروفون.');
-        }
-      };
-      recognition.onend = () => setIsListening(false);
-      recognitionRef.current = recognition;
     }
 
     if (isListening) {
@@ -911,7 +819,7 @@ const FounderAIAssistant: React.FC = () => {
                   dir="rtl"
                 />
                 {/* Voice Input Button */}
-                {typeof window !== 'undefined' && 
+                {isMounted && typeof window !== 'undefined' && 
                  ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition) && (
                   <button
                     type="button"
