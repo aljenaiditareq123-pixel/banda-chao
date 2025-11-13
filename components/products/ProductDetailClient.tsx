@@ -7,6 +7,7 @@ import Button from '@/components/Button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCart } from '@/contexts/CartContext';
 import { Product } from '@/types';
+import ProductVideos from '@/components/videos/ProductVideos';
 
 const MAIN_IMAGE_PLACEHOLDER = 'https://via.placeholder.com/640x640?text=Product';
 const THUMB_PLACEHOLDERS = [
@@ -180,6 +181,11 @@ export default function ProductDetailClient({ locale, product }: ProductDetailCl
               </p>
             </div>
           </div>
+        </div>
+
+        {/* Product Videos Section */}
+        <div className="mt-10">
+          <ProductVideos productId={product.id} />
         </div>
         </div>
       </div>

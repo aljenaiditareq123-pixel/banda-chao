@@ -67,7 +67,7 @@ export default function Header() {
 
           {/* User Actions */}
           <div className="flex items-center space-x-4">
-            {/* Language Switcher */}
+            {/* Language Switcher - Chinese, Arabic, and English */}
             <div className="flex items-center space-x-2 border border-gray-300 rounded-lg px-2 py-1">
               <button
                 onClick={() => setLanguage('zh')}
@@ -76,6 +76,7 @@ export default function Header() {
                     ? 'bg-red-600 text-white'
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}
+                title="中文"
               >
                 中文
               </button>
@@ -86,8 +87,20 @@ export default function Header() {
                     ? 'bg-red-600 text-white'
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}
+                title="العربية"
               >
-                العربية
+                عربي
+              </button>
+              <button
+                onClick={() => setLanguage('en')}
+                className={`px-2 py-1 text-sm rounded transition ${
+                  language === 'en'
+                    ? 'bg-red-600 text-white'
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+                title="English"
+              >
+                EN
               </button>
             </div>
             <Link

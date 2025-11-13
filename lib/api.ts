@@ -102,8 +102,15 @@ export const postsAPI = {
 
 // Products API
 export const productsAPI = {
-  getProducts: (category?: string) =>
-    api.get('/products', { params: { category } }),
+  getProducts: (category?: string, params?: { minPrice?: number; maxPrice?: number; makerIds?: string }) =>
+    api.get('/products', { 
+      params: { 
+        ...(category && { category }),
+        ...(params?.minPrice !== undefined && { minPrice: params.minPrice }),
+        ...(params?.maxPrice !== undefined && { maxPrice: params.maxPrice }),
+        ...(params?.makerIds && { makerIds: params.makerIds }),
+      } 
+    }),
   getProduct: (id: string) => api.get(`/products/${id}`),
   createProduct: (data: {
     name: string;
@@ -136,6 +143,7 @@ export const videosAPI = {
     thumbnailUrl: string;
     duration: number;
     type: 'short' | 'long';
+    productIds?: string[];
   }) => api.post('/videos', data),
   updateVideo: (id: string, data: {
     title?: string;

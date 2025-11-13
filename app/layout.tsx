@@ -9,6 +9,8 @@ import { CartProvider } from "@/contexts/CartContext";
 import ChatWidget from "@/components/ChatWidget";
 import DevPanel from "@/components/DevPanel";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import LanguageDirection from "@/components/LanguageDirection";
+import Analytics from "@/components/Analytics";
 
 export const metadata: Metadata = {
   title: "Banda Chao - 社交电商平台",
@@ -34,19 +36,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN">
+    <html lang="zh-CN" suppressHydrationWarning>
       <head>
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
       </head>
-      <body className="antialiased bg-gray-50">
+      <body className="antialiased bg-gray-50" suppressHydrationWarning>
         <ErrorBoundary>
           <LanguageProvider>
+            <LanguageDirection />
+            <Analytics />
             <CartProvider>
               <AuthProvider>
                 <Header />
                 <main>{children}</main>
-                <ChatWidget />
                 <ChatWidget />
                 <DevPanel />
                 <InstallPWA />
