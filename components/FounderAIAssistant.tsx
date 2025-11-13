@@ -819,8 +819,7 @@ const FounderAIAssistant: React.FC = () => {
                   dir="rtl"
                 />
                 {/* Voice Input Button */}
-                {isMounted && typeof window !== 'undefined' && 
-                 ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition) && (
+                {isMounted && (
                   <button
                     type="button"
                     onClick={toggleListening}
@@ -830,7 +829,7 @@ const FounderAIAssistant: React.FC = () => {
                         : 'bg-white/20 text-white hover:bg-white/30'
                     }`}
                     title={isListening ? 'إيقاف الاستماع' : 'بدء التحدث'}
-                    disabled={isLoading}
+                    disabled={isLoading || !recognitionRef.current}
                   >
                     <span className="text-xl">{isListening ? '🔴' : '🎤'}</span>
                   </button>
