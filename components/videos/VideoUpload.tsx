@@ -391,8 +391,10 @@ export default function VideoUpload({ type: initialType, onSuccess, onCancel }: 
 
         {/* Title */}
         <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            标题 *
+          </label>
           <Input
-            label="标题 *"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="输入视频标题"

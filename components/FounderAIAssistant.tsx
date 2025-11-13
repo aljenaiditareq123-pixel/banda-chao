@@ -44,6 +44,23 @@ type AssistantProfile = {
   theme: AssistantTheme;
 };
 
+// Helper function to get API base URL
+// Note: For Next.js API Routes (/api/chat, /api/technical-panda), we use relative paths
+// which automatically resolve to the current origin (localhost:3000 in dev, vercel.app in production)
+// If NEXT_PUBLIC_API_URL is set, it should point to the Frontend URL, not Backend API
+const getApiBaseUrl = (): string => {
+  // For Next.js API Routes, always use current origin (relative paths work correctly)
+  // NEXT_PUBLIC_API_URL should be the Frontend URL (e.g., https://banda-chao.vercel.app)
+  // But since we're using relative paths (/api/chat), we don't need it here
+  if (typeof window !== 'undefined') {
+    // Client-side: use current origin for Next.js API Routes
+    return window.location.origin;
+  }
+  // Server-side: use environment variable if available, otherwise empty (will use relative path)
+  // In Next.js, relative paths in fetch() on server-side resolve to the same origin
+  return process.env.NEXT_PUBLIC_API_URL || '';
+};
+
 const assistants: AssistantProfile[] = [
   {
     id: 'founder',
@@ -67,7 +84,7 @@ const assistants: AssistantProfile[] = [
   {
     id: 'tech',
     label: 'الباندا التقني',
-    endpoint: '/api/chat',
+    endpoint: '/api/technical-panda',
     overline: 'مهندس البنية والأنظمة',
     title: 'الباندا التقني',
     description: 'يضمن جاهزية البنية التحتية ويقترح حلولاً تقنية قابلة للتوسع.',
@@ -355,7 +372,13 @@ const FounderAIAssistant: React.FC = () => {
                 logistics: 'أنت باندا اللوجستيات لمنصة Panda Chao. أنت متخصص في العمليات والشحن. عندما يطلب منك الباندا المؤسس شيئاً، استجب فوراً.',
               };
 
-              const response = await fetch(assistant.endpoint, {
+              // Build API URL - use NEXT_PUBLIC_API_URL if endpoint is relative
+              const apiBaseUrl = getApiBaseUrl();
+              const apiUrl = assistant.endpoint.startsWith('http')
+                ? assistant.endpoint
+                : `${apiBaseUrl}${assistant.endpoint}`;
+
+              const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
@@ -664,7 +687,13 @@ const FounderAIAssistant: React.FC = () => {
           logistics: 'أنت باندا اللوجستيات لمنصة Panda Chao. أنت متخصص في العمليات والشحن. عندما يطلب منك الباندا المؤسس شيئاً، استجب فوراً.',
         };
 
-        const response = await fetch(assistant.endpoint, {
+        // Build API URL - use NEXT_PUBLIC_API_URL if endpoint is relative
+        const apiBaseUrl = getApiBaseUrl();
+        const apiUrl = assistant.endpoint.startsWith('http')
+          ? assistant.endpoint
+          : `${apiBaseUrl}${assistant.endpoint}`;
+
+        const response = await fetch(apiUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

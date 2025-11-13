@@ -20,11 +20,13 @@ export function normalizeProduct(apiProduct: any): Product {
     name: apiProduct.name ?? 'Untitled Product',
     description: apiProduct.description ?? '',
     price:
-      typeof apiProduct.price === 'number'
+      apiProduct.price === null || apiProduct.price === undefined
+        ? null
+        : typeof apiProduct.price === 'number'
         ? apiProduct.price
-        : Number(apiProduct.price) || 0,
+        : Number(apiProduct.price) || null,
     images,
-    category: apiProduct.category ?? 'Uncategorized',
+    category: apiProduct.category && typeof apiProduct.category === 'string' ? apiProduct.category : 'Uncategorized',
     stock:
       typeof apiProduct.stock === 'number'
         ? apiProduct.stock

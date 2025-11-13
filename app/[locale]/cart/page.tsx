@@ -55,11 +55,11 @@ export default function LocaleCartPage({ params }: CartPageProps) {
               {items.length === 0 ? (
                 <div className="text-center py-16 space-y-6">
                   <p className="text-lg text-gray-600">{t('cartEmpty') ?? 'Your cart is empty.'}</p>
-                  <Button asChild>
-                    <Link href={`/${locale}/products`}>
+                  <Link href={`/${locale}/products`}>
+                    <Button>
                       {t('browseProducts') ?? 'Browse Products'}
-                    </Link>
-                  </Button>
+                    </Button>
+                  </Link>
                 </div>
               ) : (
                 <div className="space-y-6">
@@ -137,13 +137,13 @@ export default function LocaleCartPage({ params }: CartPageProps) {
                   <span className="font-semibold text-[#2E7D32] text-lg">¥{total.toFixed(2)}</span>
                 </div>
               </div>
-              <Button asChild isFullWidth disabled={items.length === 0}>
-                <Link href={`/${locale}/checkout`}>
+              <Link href={`/${locale}/checkout`} className={items.length === 0 ? 'pointer-events-none' : ''}>
+                <Button isFullWidth disabled={items.length === 0}>
                   {t('proceedToCheckout') ?? 'Proceed to Checkout'}
-                </Link>
-              </Button>
+                </Button>
+              </Link>
               <p className="text-xs text-gray-400">
-                {t('cartItemsCount', { count: totalItems }) ?? `${totalItems} item(s) in cart`}
+                {t('cartItemsCount')?.replace('{count}', totalItems.toString()) ?? `${totalItems} item(s) in cart`}
               </p>
             </aside>
           </div>

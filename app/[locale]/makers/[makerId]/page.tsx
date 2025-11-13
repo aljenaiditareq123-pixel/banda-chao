@@ -48,7 +48,7 @@ async function fetchMakerProducts(makerId: string): Promise<Product[]> {
     const items = Array.isArray(json.data) ? json.data : [];
     const normalized = items.map(normalizeProduct);
 
-    const filtered = normalized.filter((product) => product.userId === makerId || product.maker?.id === makerId);
+    const filtered = normalized.filter((product: Product) => product.userId === makerId || product.maker?.id === makerId);
     return filtered.length > 0 ? filtered : normalized;
   } catch (error) {
     console.error('[MakerPage] Failed to fetch maker products:', error);

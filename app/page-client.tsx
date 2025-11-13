@@ -6,6 +6,7 @@ import ProductCard from "@/components/ProductCard";
 import Link from "next/link";
 import { videosAPI, productsAPI } from "@/lib/api";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { Product } from "@/types";
 
 interface Video {
   id: string;
@@ -19,20 +20,6 @@ interface Video {
   comments: number;
   createdAt: string;
   type: 'short' | 'long';
-}
-
-interface Product {
-  id: string;
-  userId: string;
-  name: string;
-  description: string;
-  price: number | null;
-  images: string[];
-  category: string | null;
-  stock: number;
-  rating: number;
-  reviewCount: number;
-  createdAt: string;
 }
 
 export default function HomePageClient() {

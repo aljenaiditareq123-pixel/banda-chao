@@ -1,7 +1,9 @@
-'use client';
+import { redirect } from 'next/navigation';
 
-import HomePageClient from './page-client';
-
+/**
+ * Root page - redirects to default locale (Chinese)
+ * This ensures the proper homepage with locale support is displayed
+ */
 export default function Home() {
-  return <HomePageClient />;
+  redirect('/zh');
 }

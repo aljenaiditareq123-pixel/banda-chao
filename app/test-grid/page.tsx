@@ -1,6 +1,6 @@
 'use client';
 
-import Grid from '@/components/Grid';
+import { Grid, GridItem } from '@/components/Grid';
 import Button from '@/components/Button';
 
 const mockCards = Array.from({ length: 8 }).map((_, index) => (
@@ -27,15 +27,15 @@ export default function TestGridPage() {
             <p className="text-gray-600">Different column configurations adjusting to breakpoints.</p>
           </div>
 
-          <Grid columns={2} gap="md">
+          <Grid columns={{ base: 1, md: 2 }} gap="gap-4">
             {mockCards.slice(0, 4)}
           </Grid>
 
-          <Grid columns={3} gap="lg">
+          <Grid columns={{ base: 1, md: 3 }} gap="gap-6">
             {mockCards.slice(0, 6)}
           </Grid>
 
-          <Grid columns={4} gap="md">
+          <Grid columns={{ base: 1, md: 2, lg: 4 }} gap="gap-4">
             {mockCards}
           </Grid>
         </section>

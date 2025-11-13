@@ -353,7 +353,7 @@ Now, respond to the user's request and EXECUTE the actions immediately.`;
           case 'writefile':
             // Extract file path and content from action.param
             // Format: "filepath" [content] or filepath [content]
-            const writeMatch = action.param.match(/(?:['"]?)([^\s'"]+\.(ts|tsx|js|jsx|json|md|css|html))(?:['"]?)\s+(.+)/s);
+            const writeMatch = action.param.match(/(?:['"]?)([^\s'"]+\.(ts|tsx|js|jsx|json|md|css|html))(?:['"]?)\s+([\s\S]+)/);
             if (writeMatch) {
               const writeFilePath = writeMatch[1];
               const writeContent = writeMatch[3];
