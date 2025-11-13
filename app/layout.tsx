@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import "./globals.css";
 import Header from "@/components/Header";
 import InstallPWA from "@/components/InstallPWA";
@@ -45,7 +46,9 @@ export default function RootLayout({
         <ErrorBoundary>
           <LanguageProvider>
             <LanguageDirection />
-            <Analytics />
+            <Suspense fallback={null}>
+              <Analytics />
+            </Suspense>
             <CartProvider>
               <AuthProvider>
                 <Header />

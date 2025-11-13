@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 
 /**
@@ -12,7 +12,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
  * - Google Analytics
  * - Custom analytics service
  */
-export default function Analytics() {
+function AnalyticsContent() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -57,5 +57,13 @@ export default function Analytics() {
   }, []);
 
   return null; // This component doesn't render anything
+}
+
+export default function Analytics() {
+  return (
+    <Suspense fallback={null}>
+      <AnalyticsContent />
+    </Suspense>
+  );
 }
 
