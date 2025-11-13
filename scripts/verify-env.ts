@@ -63,7 +63,7 @@ function maskValue(value: string | undefined): string {
   return `${value.substring(0, 4)}...${value.substring(value.length - 4)}`;
 }
 
-function checkEnvVar(name: string, config: typeof REQUIRED_ENV_VARS[string]): EnvCheckResult {
+function checkEnvVar(name: keyof typeof REQUIRED_ENV_VARS, config: typeof REQUIRED_ENV_VARS[keyof typeof REQUIRED_ENV_VARS]): EnvCheckResult {
   const value = process.env[name];
   const exists = !!value;
   const masked = maskValue(value);
@@ -140,7 +140,7 @@ function main() {
   let hasWarnings = false;
 
   for (const [name, config] of Object.entries(REQUIRED_ENV_VARS)) {
-    const result = checkEnvVar(name, config);
+    const result = checkEnvVar(name as keyof typeof REQUIRED_ENV_VARS, config);
     results.push(result);
 
     if (result.status === '❌') {

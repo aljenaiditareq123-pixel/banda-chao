@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom';
 import { cleanup } from '@testing-library/react';
 import { afterEach, vi } from 'vitest';
+import React from 'react';
 
 // Cleanup after each test
 afterEach(() => {
@@ -24,7 +25,8 @@ vi.mock('next/navigation', () => ({
 // Mock Next.js Link
 vi.mock('next/link', () => ({
   default: ({ children, href }: { children: React.ReactNode; href: string }) => {
-    return <a href={href}>{children}</a>;
+    // eslint-disable-next-line react/react-in-jsx-scope
+    return React.createElement('a', { href }, children);
   },
 }));
 
@@ -84,7 +86,7 @@ Object.defineProperty(window, 'SpeechRecognition', {
 
 Object.defineProperty(window, 'webkitSpeechRecognition', {
   writable: true,
-  value: window.SpeechRecognition,
+  value: (window as any).SpeechRecognition,
 });
 
 // Mock Speech Synthesis API
