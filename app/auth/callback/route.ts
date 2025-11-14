@@ -1,13 +1,18 @@
 import { NextResponse } from 'next/server';
 import axios from 'axios';
 
+export const dynamic = 'force-dynamic';
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL 
   ? `${process.env.NEXT_PUBLIC_API_URL}/api/v1`
   : 'https://banda-chao-backend.onrender.com/api/v1';
 
 export async function GET(request: Request) {
+  let origin: string;
   try {
-    const { searchParams, origin } = new URL(request.url);
+    const url = new URL(request.url);
+    origin = url.origin;
+    const searchParams = url.searchParams;
     const code = searchParams.get('code');
     const provider = searchParams.get('provider') || 'google';
     const next = searchParams.get('next') ?? '/';
@@ -37,6 +42,10 @@ export async function GET(request: Request) {
     }
   } catch (error: any) {
     console.error('Callback route error:', error);
-    return NextResponse.redirect(`${origin}/login?error=callback_error`);
+    // Fallback origin if URL parsing fails
+    const fallbackOrigin = process.env.NEXT_PUBLIC_API_URL?.replace('/api/v1', '') || 
+                          process.env.FRONTEND_URL || 
+                          'https://banda-chao.vercel.app';
+    return NextResponse.redirect(`${fallbackOrigin}/login?error=callback_error`);
   }
 }

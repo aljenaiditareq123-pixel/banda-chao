@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 
-export default function CallbackHandlerPage() {
+export const dynamic = 'force-dynamic';
+
+function CallbackHandlerContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { setUser } = useAuth();
@@ -47,6 +49,21 @@ export default function CallbackHandlerPage() {
         <p className="text-gray-500 text-sm mt-2">Processing login...</p>
       </div>
     </div>
+  );
+}
+
+export default function CallbackHandlerPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-red-600 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-gray-600 text-lg">正在加载...</p>
+        </div>
+      </div>
+    }>
+      <CallbackHandlerContent />
+    </Suspense>
   );
 }
 
