@@ -67,4 +67,10 @@ export interface Comment {
   content: string;
   likes: number;
   createdAt: string;
+  user?: {
+    id: string;
+    name: string | null;
+    profilePicture: string | null;
+  };
+  userLiked?: boolean;
 }

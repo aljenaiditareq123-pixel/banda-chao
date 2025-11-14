@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { videosAPI, productsAPI } from '@/lib/api';
 
 interface LikeButtonProps {
   videoId?: string;
@@ -11,46 +12,37 @@ interface LikeButtonProps {
 }
 
 export default function LikeButton({ videoId, productId, initialLikes, initialLiked }: LikeButtonProps) {
+  const { user } = useAuth();
   const [likes, setLikes] = useState(initialLikes);
   const [liked, setLiked] = useState(initialLiked || false);
   const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState<any>(null);
-  const supabase = createClient();
 
   useEffect(() => {
-    getUser();
-  }, []);
+    setLikes(initialLikes);
+    setLiked(initialLiked || false);
+  }, [initialLikes, initialLiked]);
 
   useEffect(() => {
+    // Check if user has liked this item when component mounts
     if (user && (videoId || productId)) {
-      checkLike();
+      checkLikeStatus();
     }
   }, [user, videoId, productId]);
 
-  const getUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    setUser(user);
-  };
-
-  const checkLike = async () => {
+  const checkLikeStatus = async () => {
     if (!user) return;
 
-    if (videoId) {
-      const { data } = await supabase
-        .from('video_likes')
-        .select('*')
-        .eq('video_id', videoId)
-        .eq('user_id', user.id)
-        .single();
-      setLiked(!!data);
-    } else if (productId) {
-      const { data } = await supabase
-        .from('product_likes')
-        .select('*')
-        .eq('product_id', productId)
-        .eq('user_id', user.id)
-        .single();
-      setLiked(!!data);
+    try {
+      if (videoId) {
+        const response = await videosAPI.checkVideoLike(videoId);
+        setLiked(response.data?.liked || false);
+      } else if (productId) {
+        const response = await productsAPI.checkProductLike(productId);
+        setLiked(response.data?.liked || false);
+      }
+    } catch (error) {
+      // If endpoint doesn't exist yet, use initialLiked value
+      console.warn('Could not check like status:', error);
     }
   };
 
@@ -65,45 +57,34 @@ export default function LikeButton({ videoId, productId, initialLikes, initialLi
     try {
       if (videoId) {
         if (liked) {
-          await supabase
-            .from('video_likes')
-            .delete()
-            .eq('video_id', videoId)
-            .eq('user_id', user.id);
-          setLikes(likes - 1);
+          await videosAPI.unlikeVideo(videoId);
+          setLikes((prev) => Math.max(0, prev - 1));
         } else {
-          await supabase
-            .from('video_likes')
-            .insert({
-              video_id: videoId,
-              user_id: user.id,
-            });
-          setLikes(likes + 1);
+          await videosAPI.likeVideo(videoId);
+          setLikes((prev) => prev + 1);
         }
       } else if (productId) {
         if (liked) {
-          await supabase
-            .from('product_likes')
-            .delete()
-            .eq('product_id', productId)
-            .eq('user_id', user.id);
-          setLikes(likes - 1);
+          await productsAPI.unlikeProduct(productId);
+          setLikes((prev) => Math.max(0, prev - 1));
         } else {
-          await supabase
-            .from('product_likes')
-            .insert({
-              product_id: productId,
-              user_id: user.id,
-            });
-          setLikes(likes + 1);
+          await productsAPI.likeProduct(productId);
+          setLikes((prev) => prev + 1);
         }
       }
       setLiked(!liked);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error toggling like:', error);
+      // Revert optimistic update on error
+      setLiked(liked);
+      setLikes(initialLikes);
+      
+      // Show user-friendly error message
+      const errorMessage = error.response?.data?.error || error.message || '操作失败，请重试';
+      alert(errorMessage);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
@@ -115,10 +96,10 @@ export default function LikeButton({ videoId, productId, initialLikes, initialLi
           ? 'bg-red-100 text-red-600 hover:bg-red-200'
           : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
       } disabled:opacity-50`}
+      aria-label={liked ? 'Unlike' : 'Like'}
     >
       <span className="text-lg">{liked ? '❤️' : '🤍'}</span>
       <span>{likes}</span>
     </button>
   );
 }
-

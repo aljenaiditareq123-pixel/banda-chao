@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { videosAPI, productsAPI } from '@/lib/api';
 
 interface EditDeleteButtonsProps {
   userId: string;
@@ -13,65 +14,56 @@ interface EditDeleteButtonsProps {
 }
 
 export default function EditDeleteButtons({ userId, videoId, productId, onDelete }: EditDeleteButtonsProps) {
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
-  const supabase = createClient();
   const router = useRouter();
 
   useEffect(() => {
-    const getCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setCurrentUserId(user?.id || null);
-      setLoading(false);
-    };
-    getCurrentUser();
-  }, []);
+    // Set loading to false once user is loaded
+    setLoading(false);
+  }, [user]);
 
   const handleDelete = async () => {
     if (!confirm('确定要删除吗？此操作无法撤销。')) {
       return;
     }
 
+    if (!user || user.id !== userId) {
+      alert('无权删除');
+      return;
+    }
+
     setDeleting(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user || user.id !== userId) {
-        throw new Error('无权删除');
-      }
-
       if (videoId) {
-        const { error } = await supabase
-          .from('videos')
-          .delete()
-          .eq('id', videoId)
-          .eq('user_id', user.id);
-
-        if (error) throw error;
-        router.push('/');
-        router.refresh();
+        await videosAPI.deleteVideo(videoId);
+        if (onDelete) {
+          onDelete();
+        } else {
+          router.push('/');
+          router.refresh();
+        }
       } else if (productId) {
-        const { error } = await supabase
-          .from('products')
-          .delete()
-          .eq('id', productId)
-          .eq('user_id', user.id);
-
-        if (error) throw error;
-        router.push('/products');
-        router.refresh();
+        await productsAPI.deleteProduct(productId);
+        if (onDelete) {
+          onDelete();
+        } else {
+          router.push('/products');
+          router.refresh();
+        }
       }
-
-      if (onDelete) onDelete();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Delete error:', error);
-      alert('删除失败');
+      const errorMessage = error.response?.data?.error || error.message || '删除失败';
+      alert(errorMessage);
     } finally {
       setDeleting(false);
     }
   };
 
-  if (loading || currentUserId !== userId) {
+  // Don't show buttons if user is not the owner
+  if (loading || !user || user.id !== userId) {
     return null;
   }
 
@@ -95,5 +87,3 @@ export default function EditDeleteButtons({ userId, videoId, productId, onDelete
     </div>
   );
 }
-
-

@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { usersAPI } from '@/lib/api';
 
 interface Profile {
   id: string;
@@ -12,16 +13,35 @@ interface Profile {
 }
 
 export default function ProfileEdit({ profile }: { profile: Profile }) {
+  const { user, updateUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [username, setUsername] = useState(profile.username || '');
   const [bio, setBio] = useState(profile.bio || '');
   const [avatar, setAvatar] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(profile.avatar_url);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  const supabase = createClient();
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setAvatar(file);
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSave = async () => {
+    if (!user || user.id !== profile.id) {
+      setError('无权编辑此资料');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -30,39 +50,31 @@ export default function ProfileEdit({ profile }: { profile: Profile }) {
 
       // Upload avatar if changed
       if (avatar) {
-        const fileExt = avatar.name.split('.').pop();
-        const fileName = `${profile.id}-${Math.random()}.${fileExt}`;
-        const filePath = `avatars/${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from('avatars')
-          .upload(filePath, avatar, { upsert: true });
-
-        if (uploadError) throw uploadError;
-
-        const { data } = supabase.storage
-          .from('avatars')
-          .getPublicUrl(filePath);
-
-        avatarUrl = data.publicUrl;
+        try {
+          const uploadResponse = await usersAPI.uploadAvatar(avatar);
+          avatarUrl = uploadResponse.data?.url || uploadResponse.data?.avatarUrl || avatarPreview;
+        } catch (uploadError: any) {
+          console.warn('Avatar upload failed, continuing with current avatar:', uploadError);
+          // If upload fails, keep existing avatar or use preview
+          if (avatarPreview) {
+            avatarUrl = avatarPreview;
+          }
+        }
       }
 
-      // Update profile
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          username: username || null,
-          bio: bio || null,
-          avatar_url: avatarUrl,
-        })
-        .eq('id', profile.id);
-
-      if (updateError) throw updateError;
+      // Update profile via Express API
+      await updateUser({
+        name: username || undefined,
+        profilePicture: avatarUrl || undefined,
+        bio: bio || undefined,
+      });
 
       setIsEditing(false);
       router.refresh();
     } catch (error: any) {
-      setError(error.message || '更新失败');
+      console.error('Error updating profile:', error);
+      const errorMessage = error.response?.data?.error || error.message || '更新失败';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -98,10 +110,19 @@ export default function ProfileEdit({ profile }: { profile: Profile }) {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               头像
             </label>
+            {avatarPreview && (
+              <div className="mb-2">
+                <img
+                  src={avatarPreview}
+                  alt="Avatar preview"
+                  className="w-20 h-20 rounded-full object-cover"
+                />
+              </div>
+            )}
             <input
               type="file"
               accept="image/*"
-              onChange={(e) => setAvatar(e.target.files?.[0] || null)}
+              onChange={handleAvatarChange}
               className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100"
             />
           </div>
@@ -141,6 +162,7 @@ export default function ProfileEdit({ profile }: { profile: Profile }) {
               setUsername(profile.username || '');
               setBio(profile.bio || '');
               setAvatar(null);
+              setAvatarPreview(profile.avatar_url);
             }}
             className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
             disabled={loading}
@@ -159,4 +181,3 @@ export default function ProfileEdit({ profile }: { profile: Profile }) {
     </div>
   );
 }
-

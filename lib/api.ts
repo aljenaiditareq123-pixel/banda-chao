@@ -72,8 +72,19 @@ export const authAPI = {
 export const usersAPI = {
   getMe: () => api.get('/users/me'),
   getUser: (id: string) => api.get(`/users/${id}`),
-  updateUser: (id: string, data: { name?: string; profilePicture?: string }) =>
+  updateUser: (id: string, data: { name?: string; profilePicture?: string; bio?: string }) =>
     api.put(`/users/${id}`, data),
+  uploadAvatar: (file: File) => {
+    const formData = new FormData();
+    formData.append('avatar', file);
+    // Axios automatically sets Content-Type to multipart/form-data when FormData is used
+    // We should not set it manually as it can cause issues with boundary
+    return api.post('/users/avatar', formData, {
+      headers: {
+        // Remove Content-Type header - let axios set it automatically with boundary
+      },
+    });
+  },
 };
 
 // Messages API
@@ -125,6 +136,9 @@ export const productsAPI = {
     category?: string;
   }) => api.put(`/products/${id}`, data),
   deleteProduct: (id: string) => api.delete(`/products/${id}`),
+  likeProduct: (id: string) => api.post(`/products/${id}/like`),
+  unlikeProduct: (id: string) => api.delete(`/products/${id}/like`),
+  checkProductLike: (id: string) => api.get(`/products/${id}/like`),
 };
 
 // Videos API
@@ -151,6 +165,27 @@ export const videosAPI = {
   }) => api.put(`/videos/${id}`, data),
   deleteVideo: (id: string) => api.delete(`/videos/${id}`),
   likeVideo: (id: string) => api.post(`/videos/${id}/like`),
+  unlikeVideo: (id: string) => api.delete(`/videos/${id}/like`),
+  checkVideoLike: (id: string) => api.get(`/videos/${id}/like`),
+};
+
+// Comments API
+export const commentsAPI = {
+  getComments: (videoId?: string, productId?: string) =>
+    api.get('/comments', {
+      params: {
+        ...(videoId && { videoId }),
+        ...(productId && { productId }),
+      },
+    }),
+  createComment: (data: {
+    videoId?: string;
+    productId?: string;
+    content: string;
+  }) => api.post('/comments', data),
+  deleteComment: (id: string) => api.delete(`/comments/${id}`),
+  likeComment: (id: string) => api.post(`/comments/${id}/like`),
+  unlikeComment: (id: string) => api.delete(`/comments/${id}/like`),
 };
 
 // Search API

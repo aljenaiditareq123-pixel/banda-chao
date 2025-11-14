@@ -1,19 +1,21 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { commentsAPI } from '@/lib/api';
 
 interface Comment {
   id: string;
-  user_id: string;
+  userId: string;
   content: string;
   likes: number;
-  created_at: string;
-  profiles?: {
-    username: string | null;
-    avatar_url: string | null;
+  createdAt: string;
+  user?: {
+    id: string;
+    name: string | null;
+    profilePicture: string | null;
   };
-  user_liked?: boolean;
+  userLiked?: boolean;
 }
 
 interface CommentsProps {
@@ -22,99 +24,113 @@ interface CommentsProps {
 }
 
 export default function Comments({ videoId, productId }: CommentsProps) {
+  const { user } = useAuth();
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState<any>(null);
-  const supabase = createClient();
+  const [sending, setSending] = useState(false);
 
   useEffect(() => {
-    getUser();
-  }, []);
-
-  useEffect(() => {
-    if (user !== null) {
-      loadComments();
-    }
-  }, [videoId, productId, user]);
-
-  const getUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    setUser(user);
-  };
+    loadComments();
+  }, [videoId, productId]);
 
   const loadComments = async () => {
-    const { data, error } = await supabase
-      .from('comments')
-      .select(`
-        *,
-        profiles:user_id (
-          username,
-          avatar_url
-        )
-      `)
-      .eq(videoId ? 'video_id' : 'product_id', videoId || productId)
-      .order('created_at', { ascending: false });
-
-    if (!error && data) {
-      // Check if user liked each comment
-      if (user) {
-        const commentIds = data.map(c => c.id);
-        const { data: likes } = await supabase
-          .from('comment_likes')
-          .select('comment_id')
-          .eq('user_id', user.id)
-          .in('comment_id', commentIds);
-
-        const likedIds = new Set(likes?.map(l => l.comment_id) || []);
-        data.forEach((comment: any) => {
-          comment.user_liked = likedIds.has(comment.id);
-        });
-      }
-      setComments(data as Comment[]);
+    setLoading(true);
+    try {
+      const response = await commentsAPI.getComments(videoId, productId);
+      // Transform API response to match our Comment interface
+      const commentsData = response.data?.data || response.data || [];
+      setComments(commentsData.map((comment: any) => ({
+        id: comment.id,
+        userId: comment.userId || comment.user_id,
+        content: comment.content,
+        likes: comment.likes || 0,
+        createdAt: comment.createdAt || comment.created_at,
+        user: comment.user || {
+          id: comment.userId || comment.user_id,
+          name: comment.user?.name || comment.user?.username || null,
+          profilePicture: comment.user?.profilePicture || comment.user?.avatar_url || null,
+        },
+        userLiked: comment.userLiked || comment.user_liked || false,
+      })));
+    } catch (error) {
+      console.error('Error loading comments:', error);
+      // If endpoint doesn't exist, show empty state
+      setComments([]);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newComment.trim() || !user) return;
+    if (!newComment.trim() || !user || sending) return;
 
-    setLoading(true);
-    const { error } = await supabase
-      .from('comments')
-      .insert({
-        user_id: user.id,
-        video_id: videoId || null,
-        product_id: productId || null,
+    setSending(true);
+    try {
+      await commentsAPI.createComment({
+        videoId: videoId || undefined,
+        productId: productId || undefined,
         content: newComment.trim(),
       });
-
-    if (!error) {
       setNewComment('');
-      loadComments();
+      // Reload comments after successful submission
+      await loadComments();
+    } catch (error: any) {
+      console.error('Error submitting comment:', error);
+      const errorMessage = error.response?.data?.error || error.message || '发送失败，请重试';
+      alert(errorMessage);
+    } finally {
+      setSending(false);
     }
-    setLoading(false);
   };
 
   const handleLike = async (commentId: string, currentlyLiked: boolean) => {
-    if (!user) return;
-
-    if (currentlyLiked) {
-      await supabase
-        .from('comment_likes')
-        .delete()
-        .eq('comment_id', commentId)
-        .eq('user_id', user.id);
-    } else {
-      await supabase
-        .from('comment_likes')
-        .insert({
-          user_id: user.id,
-          comment_id: commentId,
-        });
+    if (!user) {
+      alert('请先登录');
+      return;
     }
-    loadComments();
+
+    try {
+      if (currentlyLiked) {
+        await commentsAPI.unlikeComment(commentId);
+      } else {
+        await commentsAPI.likeComment(commentId);
+      }
+      // Reload comments to get updated like status
+      await loadComments();
+    } catch (error: any) {
+      console.error('Error toggling comment like:', error);
+      const errorMessage = error.response?.data?.error || error.message || '操作失败';
+      alert(errorMessage);
+    }
   };
+
+  const handleDelete = async (commentId: string) => {
+    if (!user) return;
+    if (!confirm('确定要删除这条评论吗？')) return;
+
+    try {
+      await commentsAPI.deleteComment(commentId);
+      // Remove comment from list optimistically
+      setComments((prev) => prev.filter((c) => c.id !== commentId));
+    } catch (error: any) {
+      console.error('Error deleting comment:', error);
+      const errorMessage = error.response?.data?.error || error.message || '删除失败';
+      alert(errorMessage);
+      // Reload comments to sync state
+      await loadComments();
+    }
+  };
+
+  if (loading && comments.length === 0) {
+    return (
+      <div className="space-y-4">
+        <h3 className="text-xl font-bold text-gray-900">评论</h3>
+        <div className="text-center py-8 text-gray-500">加载中...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -129,14 +145,14 @@ export default function Comments({ videoId, productId }: CommentsProps) {
             onChange={(e) => setNewComment(e.target.value)}
             placeholder="添加评论..."
             className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
-            disabled={loading}
+            disabled={sending}
           />
           <button
             type="submit"
-            disabled={loading || !newComment.trim()}
+            disabled={sending || !newComment.trim()}
             className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
           >
-            {loading ? '发送中...' : '发送'}
+            {sending ? '发送中...' : '发送'}
           </button>
         </form>
       ) : (
@@ -151,33 +167,44 @@ export default function Comments({ videoId, productId }: CommentsProps) {
           comments.map((comment) => (
             <div key={comment.id} className="flex space-x-3 p-4 bg-white rounded-lg border border-gray-200">
               <div className="flex-shrink-0">
-                {comment.profiles?.avatar_url ? (
+                {comment.user?.profilePicture ? (
                   <img
-                    src={comment.profiles.avatar_url}
-                    alt={comment.profiles.username || 'User'}
+                    src={comment.user.profilePicture}
+                    alt={comment.user.name || 'User'}
                     className="w-10 h-10 rounded-full"
                   />
                 ) : (
                   <div className="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center text-white">
-                    {(comment.profiles?.username || 'U').charAt(0).toUpperCase()}
+                    {(comment.user?.name || 'U').charAt(0).toUpperCase()}
                   </div>
                 )}
               </div>
               <div className="flex-1">
-                <div className="flex items-center space-x-2 mb-1">
-                  <span className="font-semibold text-gray-900">
-                    {comment.profiles?.username || '未命名用户'}
-                  </span>
-                  <span className="text-sm text-gray-500">
-                    {new Date(comment.created_at).toLocaleDateString('zh-CN')}
-                  </span>
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center space-x-2">
+                    <span className="font-semibold text-gray-900">
+                      {comment.user?.name || '未命名用户'}
+                    </span>
+                    <span className="text-sm text-gray-500">
+                      {new Date(comment.createdAt).toLocaleDateString('zh-CN')}
+                    </span>
+                  </div>
+                  {/* Show delete button if user is the owner */}
+                  {user && user.id === comment.userId && (
+                    <button
+                      onClick={() => handleDelete(comment.id)}
+                      className="text-sm text-red-600 hover:text-red-700"
+                    >
+                      删除
+                    </button>
+                  )}
                 </div>
                 <p className="text-gray-700 mb-2">{comment.content}</p>
                 <div className="flex items-center space-x-4">
                   <button
-                    onClick={() => handleLike(comment.id, comment.user_liked || false)}
+                    onClick={() => handleLike(comment.id, comment.userLiked || false)}
                     className={`flex items-center space-x-1 text-sm ${
-                      comment.user_liked ? 'text-red-600' : 'text-gray-500'
+                      comment.userLiked ? 'text-red-600' : 'text-gray-500'
                     } hover:text-red-600`}
                   >
                     <span>❤️</span>
@@ -192,4 +219,3 @@ export default function Comments({ videoId, productId }: CommentsProps) {
     </div>
   );
 }
-

@@ -18,7 +18,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name?: string) => Promise<void>;
   logout: () => void;
-  updateUser: (data: { name?: string; profilePicture?: string }) => Promise<void>;
+  updateUser: (data: { name?: string; profilePicture?: string; bio?: string }) => Promise<void>;
   setUser: (user: User) => void;
 }
 
@@ -85,12 +85,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
   };
 
-  const updateUser = async (data: { name?: string; profilePicture?: string }) => {
+  const updateUser = async (data: { name?: string; profilePicture?: string; bio?: string }) => {
     if (!user) return;
     
     try {
       const response = await usersAPI.updateUser(user.id, data);
-      setUser(response.data.user);
+      // Update user state with response data
+      const updatedUser = response.data?.user || response.data;
+      if (updatedUser) {
+        setUser({
+          ...user,
+          name: updatedUser.name || user.name,
+          profilePicture: updatedUser.profilePicture || updatedUser.avatar_url || user.profilePicture,
+        });
+      }
     } catch (error: any) {
       throw new Error(error.response?.data?.error || 'Failed to update user');
     }
