@@ -104,7 +104,7 @@ export default function Header() {
               </button>
             </div>
             <Link
-              href="/cart"
+              href={`/${language}/cart`}
               className="flex items-center space-x-1 text-gray-700 hover:text-red-600 transition"
               aria-label={t('cartTitle') ?? 'Cart'}
             >
