@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import "./globals.css";
 import Header from "@/components/Header";
@@ -17,18 +17,19 @@ export const metadata: Metadata = {
   title: "Banda Chao - 社交电商平台",
   description: "Banda Chao - 结合社交媒体与电子商务的平台，面向中国年轻工作者",
   manifest: "/manifest.json",
-  themeColor: "#dc2626",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "Banda Chao",
   },
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: "#dc2626",
 };
 
 export default function RootLayout({

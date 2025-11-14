@@ -1,16 +1,12 @@
 import axios from 'axios';
 
-// TEMPORARY: Hard-code Backend URL for testing
-// TODO: Revert to using environment variable after fixing the issue
-const API_BASE_URL = 'https://banda-chao-backend.onrender.com/api/v1';
+// Use environment variable with fallback to production URL
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL 
+  ? `${process.env.NEXT_PUBLIC_API_URL}/api/v1`
+  : 'https://banda-chao-backend.onrender.com/api/v1';
 
-// OLD CODE (commented out):
-// const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL 
-//   ? `${process.env.NEXT_PUBLIC_API_URL}/api/v1`
-//   : 'http://localhost:3001/api/v1';
-
-// Log API URL to help debug (always log in browser)
-if (typeof window !== 'undefined') {
+// Log API URL to help debug (only in development)
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
   console.log('🔗 API Base URL:', API_BASE_URL);
   console.log('🔗 NEXT_PUBLIC_API_URL env:', process.env.NEXT_PUBLIC_API_URL || 'NOT SET');
 }
