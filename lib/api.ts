@@ -26,6 +26,11 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    // If FormData is being sent, let axios set Content-Type automatically with boundary
+    // Don't manually set Content-Type for FormData
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+    }
     return config;
   },
   (error) => {
@@ -78,12 +83,8 @@ export const usersAPI = {
     const formData = new FormData();
     formData.append('avatar', file);
     // Axios automatically sets Content-Type to multipart/form-data when FormData is used
-    // We should not set it manually as it can cause issues with boundary
-    return api.post('/users/avatar', formData, {
-      headers: {
-        // Remove Content-Type header - let axios set it automatically with boundary
-      },
-    });
+    // The interceptor handles removing Content-Type header if FormData is detected
+    return api.post('/users/avatar', formData);
   },
 };
 
