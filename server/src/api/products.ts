@@ -186,5 +186,158 @@ router.delete('/:id', authenticateToken, async (req: AuthRequest, res: Response)
   }
 });
 
-export default router;
+// Like a product
+router.post('/:id/like', authenticateToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.userId!;
 
+    const product = await prisma.product.findUnique({
+      where: { id }
+    });
+
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
+    // Check if user already liked this product
+    const existingLike = await prisma.productLike.findUnique({
+      where: {
+        userId_productId: {
+          userId,
+          productId: id
+        }
+      }
+    });
+
+    if (existingLike) {
+      return res.status(400).json({ error: 'Product already liked' });
+    }
+
+    // Note: Products don't have a likes count field in the schema
+    // We'll just create the like record
+    await prisma.productLike.create({
+      data: {
+        userId,
+        productId: id
+      }
+    });
+
+    // Count total likes for this product
+    const likesCount = await prisma.productLike.count({
+      where: { productId: id }
+    });
+
+    res.json({
+      message: 'Product liked successfully',
+      data: {
+        id: product.id,
+        likes: likesCount,
+        liked: true
+      }
+    });
+  } catch (error: any) {
+    console.error('Like product error:', error);
+    if (error.code === 'P2002') {
+      return res.status(400).json({ error: 'Product already liked' });
+    }
+    res.status(500).json({ error: 'Failed to like product', message: error.message });
+  }
+});
+
+// Unlike a product
+router.delete('/:id/like', authenticateToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.userId!;
+
+    const product = await prisma.product.findUnique({
+      where: { id }
+    });
+
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
+    // Check if user liked this product
+    const existingLike = await prisma.productLike.findUnique({
+      where: {
+        userId_productId: {
+          userId,
+          productId: id
+        }
+      }
+    });
+
+    if (!existingLike) {
+      return res.status(400).json({ error: 'Product not liked' });
+    }
+
+    // Delete like
+    await prisma.productLike.delete({
+      where: {
+        userId_productId: {
+          userId,
+          productId: id
+        }
+      }
+    });
+
+    // Count total likes for this product
+    const likesCount = await prisma.productLike.count({
+      where: { productId: id }
+    });
+
+    res.json({
+      message: 'Product unliked successfully',
+      data: {
+        id: product.id,
+        likes: likesCount,
+        liked: false
+      }
+    });
+  } catch (error: any) {
+    console.error('Unlike product error:', error);
+    res.status(500).json({ error: 'Failed to unlike product', message: error.message });
+  }
+});
+
+// Check if product is liked
+router.get('/:id/like', authenticateToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.userId!;
+
+    const product = await prisma.product.findUnique({
+      where: { id }
+    });
+
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
+    const like = await prisma.productLike.findUnique({
+      where: {
+        userId_productId: {
+          userId,
+          productId: id
+        }
+      }
+    });
+
+    // Count total likes for this product
+    const likesCount = await prisma.productLike.count({
+      where: { productId: id }
+    });
+
+    res.json({
+      liked: !!like,
+      likesCount
+    });
+  } catch (error: any) {
+    console.error('Check product like error:', error);
+    res.status(500).json({ error: 'Failed to check product like', message: error.message });
+  }
+});
+
+export default router;

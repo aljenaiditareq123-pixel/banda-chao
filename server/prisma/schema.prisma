@@ -16,6 +16,7 @@ model User {
   password      String    // hashed password
   name          String?
   profilePicture String?  @map("profile_picture")
+  bio           String?
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
   
@@ -25,6 +26,10 @@ model User {
   posts            Post[]
   products         Product[]
   videos           Video[]
+  videoLikes       VideoLike[]
+  productLikes     ProductLike[]
+  comments         Comment[]
+  commentLikes     CommentLike[]
 
   @@map("users")
 }
@@ -74,6 +79,8 @@ model Product {
   
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productLikes ProductLike[]
+  comments Comment[]
 
   @@index([userId])
   @@index([category])
@@ -96,6 +103,8 @@ model Video {
   
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  videoLikes VideoLike[]
+  comments Comment[]
 
   @@index([userId])
   @@index([type])
@@ -113,5 +122,76 @@ model Maker {
   coverPictureUrl   String?  @map("cover_picture_url")
   createdAt         DateTime @default(now()) @map("created_at")
   updatedAt         DateTime @updatedAt @map("updated_at")
+}
+
+model VideoLike {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  videoId   String   @map("video_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  // Relations
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  video Video @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, videoId])
+  @@index([userId])
+  @@index([videoId])
+  @@map("video_likes")
+}
+
+model ProductLike {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  productId String   @map("product_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  // Relations
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, productId])
+  @@index([userId])
+  @@index([productId])
+  @@map("product_likes")
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  videoId   String?  @map("video_id")
+  productId String?  @map("product_id")
+  content   String
+  likes     Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  // Relations
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  video        Video?        @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  product      Product?      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  commentLikes CommentLike[]
+  
+  @@index([userId])
+  @@index([videoId])
+  @@index([productId])
+  @@index([createdAt])
+  @@map("comments")
+}
+
+model CommentLike {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  commentId String   @map("comment_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  // Relations
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, commentId])
+  @@index([userId])
+  @@index([commentId])
+  @@map("comment_likes")
 }
 

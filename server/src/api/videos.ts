@@ -213,10 +213,11 @@ router.delete('/:id', authenticateToken, async (req: AuthRequest, res: Response)
   }
 });
 
-// Like/Unlike a video
+// Like a video
 router.post('/:id/like', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
+    const userId = req.userId!;
 
     const video = await prisma.video.findUnique({
       where: { id }
@@ -226,23 +227,148 @@ router.post('/:id/like', authenticateToken, async (req: AuthRequest, res: Respon
       return res.status(404).json({ error: 'Video not found' });
     }
 
-    // For simplicity, we'll just increment likes
-    // In a real app, you'd want to track which users liked which videos
-    const updatedVideo = await prisma.video.update({
-      where: { id },
-      data: { likes: { increment: 1 } }
+    // Check if user already liked this video
+    const existingLike = await prisma.videoLike.findUnique({
+      where: {
+        userId_videoId: {
+          userId,
+          videoId: id
+        }
+      }
+    });
+
+    if (existingLike) {
+      return res.status(400).json({ error: 'Video already liked' });
+    }
+
+    // Create like and update video likes count in a transaction
+    await prisma.$transaction([
+      prisma.videoLike.create({
+        data: {
+          userId,
+          videoId: id
+        }
+      }),
+      prisma.video.update({
+        where: { id },
+        data: { likes: { increment: 1 } }
+      })
+    ]);
+
+    const updatedVideo = await prisma.video.findUnique({
+      where: { id }
     });
 
     res.json({
       message: 'Video liked successfully',
-      data: updatedVideo
+      data: {
+        id: updatedVideo!.id,
+        likes: updatedVideo!.likes,
+        liked: true
+      }
     });
   } catch (error: any) {
     console.error('Like video error:', error);
+    if (error.code === 'P2002') {
+      return res.status(400).json({ error: 'Video already liked' });
+    }
     res.status(500).json({ error: 'Failed to like video', message: error.message });
   }
 });
 
+// Unlike a video
+router.delete('/:id/like', authenticateToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.userId!;
+
+    const video = await prisma.video.findUnique({
+      where: { id }
+    });
+
+    if (!video) {
+      return res.status(404).json({ error: 'Video not found' });
+    }
+
+    // Check if user liked this video
+    const existingLike = await prisma.videoLike.findUnique({
+      where: {
+        userId_videoId: {
+          userId,
+          videoId: id
+        }
+      }
+    });
+
+    if (!existingLike) {
+      return res.status(400).json({ error: 'Video not liked' });
+    }
+
+    // Delete like and update video likes count in a transaction
+    await prisma.$transaction([
+      prisma.videoLike.delete({
+        where: {
+          userId_videoId: {
+            userId,
+            videoId: id
+          }
+        }
+      }),
+      prisma.video.update({
+        where: { id },
+        data: { likes: { decrement: 1 } }
+      })
+    ]);
+
+    const updatedVideo = await prisma.video.findUnique({
+      where: { id }
+    });
+
+    res.json({
+      message: 'Video unliked successfully',
+      data: {
+        id: updatedVideo!.id,
+        likes: Math.max(0, updatedVideo!.likes),
+        liked: false
+      }
+    });
+  } catch (error: any) {
+    console.error('Unlike video error:', error);
+    res.status(500).json({ error: 'Failed to unlike video', message: error.message });
+  }
+});
+
+// Check if video is liked
+router.get('/:id/like', authenticateToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.userId!;
+
+    const video = await prisma.video.findUnique({
+      where: { id }
+    });
+
+    if (!video) {
+      return res.status(404).json({ error: 'Video not found' });
+    }
+
+    const like = await prisma.videoLike.findUnique({
+      where: {
+        userId_videoId: {
+          userId,
+          videoId: id
+        }
+      }
+    });
+
+    res.json({
+      liked: !!like,
+      likesCount: video.likes
+    });
+  } catch (error: any) {
+    console.error('Check video like error:', error);
+    res.status(500).json({ error: 'Failed to check video like', message: error.message });
+  }
+});
+
 export default router;
-
-
