@@ -77,7 +77,7 @@ server
 
 **Build Command:**
 ```bash
-npm install && npx prisma generate && npm run build
+npm install --include=dev && npx prisma generate && npm run build
 ```
 
 **Start Command:**
@@ -126,8 +126,10 @@ node dist/index.js
 
 **Build Command:**
 ```bash
-cd server && npm install && npx prisma generate && npm run build
+cd server && npm install --include=dev && npx prisma generate && npm run build
 ```
+
+**ملاحظة مهمة:** `--include=dev` يضمن تثبيت `devDependencies` (بما فيها `@types/*`) المطلوبة للـ build.
 
 **Start Command:**
 ```bash
@@ -263,7 +265,7 @@ server
 
 **Build Command:**
 ```bash
-npm install && npx prisma generate && npm run build
+npm install --include=dev && npx prisma generate && npm run build
 ```
 
 **Start Command:**
@@ -299,7 +301,7 @@ node dist/index.js
 
 **✅ Success Indicators:**
 ```
-==> Running build command 'npm install && npx prisma generate && npm run build'...
+==> Running build command 'npm install --include=dev && npx prisma generate && npm run build'...
 > banda-chao-server@1.0.0 build
 > tsc
 ==> Build successful 🎉
@@ -454,7 +456,9 @@ export interface AuthRequest extends Request {
 ### 3. Render Dashboard Settings
 
 **Root Directory:** `server`  
-**Build Command:** `npm install && npx prisma generate && npm run build`  
+**Build Command:** `npm install --include=dev && npx prisma generate && npm run build`
+
+**ملاحظة:** `--include=dev` يضمن تثبيت `devDependencies` (بما فيها `@types/*`) المطلوبة للـ build.  
 **Start Command:** `node dist/index.js`
 
 ---
@@ -470,7 +474,7 @@ export interface AuthRequest extends Request {
 ### في Render Dashboard:
 
 - [ ] Root Directory = `server`
-- [ ] Build Command = `npm install && npx prisma generate && npm run build`
+- [ ] Build Command = `npm install --include=dev && npx prisma generate && npm run build`
 - [ ] Start Command = `node dist/index.js`
 - [ ] Node Version = `20.x.x` (أو `18.x.x`)
 - [ ] Environment Variables موجودة (DATABASE_URL, JWT_SECRET, etc.)
