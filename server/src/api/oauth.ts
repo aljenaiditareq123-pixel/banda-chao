@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../utils/prisma';
+import { getUserRoleFromEmail } from '../utils/roles';
 
 const router = Router();
 
@@ -91,8 +92,12 @@ router.post('/google/callback', async (req: Request, res: Response) => {
       });
     }
 
-    const tokens = await tokenResponse.json();
-    const { access_token } = tokens;
+    const tokens = await tokenResponse.json() as { access_token?: string };
+    const access_token = tokens.access_token;
+
+    if (!access_token) {
+      return res.status(400).json({ error: 'Failed to get access token from Google' });
+    }
 
     // Get user info from Google
     const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
@@ -105,61 +110,124 @@ router.post('/google/callback', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Failed to fetch user info from Google' });
     }
 
-    const googleUser = await userInfoResponse.json();
-    const { email, name, picture, id: googleId } = googleUser;
+    const googleUser = await userInfoResponse.json() as { email?: string; name?: string; picture?: string; id?: string };
+    const email = googleUser.email;
+    const name = googleUser.name;
+    const picture = googleUser.picture;
+    const googleId = googleUser.id;
 
     if (!email) {
       return res.status(400).json({ error: 'Email not provided by Google' });
     }
 
     // Check if user exists, if not create new user
-    let user = await prisma.user.findUnique({
+    let existingUser = await prisma.user.findUnique({
       where: { email }
     });
 
-    if (!user) {
+    let user: {
+      id: string;
+      email: string;
+      name: string | null;
+      profilePicture: string | null;
+      bio: string | null;
+      role: string;
+      createdAt: Date;
+      updatedAt: Date;
+    } | null = null;
+
+    // Calculate user role before creating/updating user
+    const role = getUserRoleFromEmail(email);
+
+    if (!existingUser) {
       // Create new user
-      user = await prisma.user.create({
+      const newUser = await prisma.user.create({
         data: {
           email,
           name: name || email.split('@')[0],
           profilePicture: picture || null,
           password: '', // OAuth users don't have passwords
+          role
         },
         select: {
           id: true,
           email: true,
           name: true,
           profilePicture: true,
-          createdAt: true
+          bio: true,
+          role: true,
+          createdAt: true,
+          updatedAt: true
         }
       });
+      
+      user = newUser;
     } else {
       // Update user profile picture if available
-      if (picture && picture !== user.profilePicture) {
-        user = await prisma.user.update({
-          where: { id: user.id },
+      if (picture && picture !== existingUser.profilePicture) {
+        const updatedUser = await prisma.user.update({
+          where: { id: existingUser.id },
           data: { profilePicture: picture },
           select: {
             id: true,
             email: true,
             name: true,
             profilePicture: true,
-            createdAt: true
+            bio: true,
+            role: true,
+            createdAt: true,
+            updatedAt: true
           }
         });
+        
+        user = updatedUser;
+      } else {
+        // Fetch user with role
+        const fetchedUser = await prisma.user.findUnique({
+          where: { id: existingUser.id },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            profilePicture: true,
+            bio: true,
+            role: true,
+            createdAt: true,
+            updatedAt: true
+          }
+        });
+        if (!fetchedUser) {
+          return res.status(500).json({ error: 'Failed to retrieve user' });
+        }
+        user = fetchedUser;
       }
     }
 
     // Generate JWT token
+    if (!user) {
+      return res.status(500).json({ error: 'Failed to create or retrieve user' });
+    }
+
+    // Use role from database (fallback to calculation if missing for backward compatibility)
+    const finalRole = user.role || getUserRoleFromEmail(user.email);
+
     const jwtSecret: string = process.env.JWT_SECRET || 'your-secret-key';
     const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
-    const payload = { userId: user.id, email: user.email };
+    const payload = { userId: user.id, email: user.email, role: finalRole };
     const token = jwt.sign(payload, jwtSecret, { expiresIn } as jwt.SignOptions);
 
     res.json({
       message: 'Google OAuth login successful',
-      user,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        profilePicture: user.profilePicture,
+        bio: user.bio,
+        role: finalRole,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
+      },
       token
     });
   } catch (error: any) {
@@ -169,5 +237,3 @@ router.post('/google/callback', async (req: Request, res: Response) => {
 });
 
 export default router;
-
-
