@@ -4,6 +4,7 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
+import path from 'path';
 import { setupWebSocketHandlers } from './services/websocket';
 import userRoutes from './api/users';
 import messageRoutes from './api/messages';
@@ -15,12 +16,20 @@ import authRoutes from './api/auth';
 import seedRoutes from './api/seed';
 import oauthRoutes from './api/oauth';
 import commentRoutes from './api/comments';
+import orderRoutes from './api/orders';
 
 // Load environment variables
 dotenv.config();
 
 const app: Express = express();
 const PORT = process.env.PORT || 3001;
+
+// Basic startup log for Render diagnostics (no secrets)
+console.log('Server starting...', {
+  node: process.version,
+  env: process.env.NODE_ENV || 'development',
+  port: PORT,
+});
 
 // Create HTTP server
 const httpServer = createServer(app);
@@ -85,6 +94,7 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1', seedRoutes);
 app.use('/api/v1/oauth', oauthRoutes);
 app.use('/api/v1/comments', commentRoutes);
+app.use('/api/v1/orders', orderRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {
