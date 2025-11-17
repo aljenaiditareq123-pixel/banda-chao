@@ -7,7 +7,8 @@ import Input from '@/components/Input';
 import Button from '@/components/Button';
 import { useCart } from '@/contexts/CartContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { checkoutAPI } from '@/lib/api';
+import { ordersAPI } from '@/lib/api';
+import { useRouter } from 'next/navigation';
 
 interface CheckoutPageProps {
   params: {
@@ -19,8 +20,9 @@ const IMAGE_PLACEHOLDER = 'https://via.placeholder.com/80x80?text=Item';
 
 export default function LocaleCheckoutPage({ params }: CheckoutPageProps) {
   const { locale } = params;
-  const { items } = useCart();
+  const { items, clearCart } = useCart();
   const { t, setLanguage } = useLanguage();
+  const router = useRouter();
 
   useEffect(() => {
     if (locale === 'zh' || locale === 'ar' || locale === 'en') {
@@ -55,15 +57,15 @@ export default function LocaleCheckoutPage({ params }: CheckoutPageProps) {
 
   return (
     <Layout showHeader={false}>
-      <div className="bg-gray-50 py-12">
+      <div className="bg-gradient-to-br from-gray-50 via-white to-gray-50 min-h-screen py-12">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-3xl font-semibold text-gray-900 mb-8">
-            {t('checkoutTitle') ?? 'Checkout'}
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8">
+            {t('checkoutTitle') ?? 'الدفع'}
           </h1>
           <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-8">
-            <section className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 space-y-6">
-              <h2 className="text-2xl font-semibold text-gray-900">
-                {t('shippingInformation') ?? 'Shipping Information'}
+            <section className="bg-white rounded-2xl border-2 border-gray-200 shadow-lg p-6 md:p-8 space-y-6">
+              <h2 className="text-2xl font-bold text-gray-900">
+                {t('shippingInformation') ?? 'معلومات الشحن'}
               </h2>
               <form className="space-y-5" onSubmit={(event) => event.preventDefault()}>
                 <div>
@@ -130,17 +132,27 @@ export default function LocaleCheckoutPage({ params }: CheckoutPageProps) {
               </div>
             </section>
 
-            <aside className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 space-y-6 h-fit">
-              <h2 className="text-2xl font-semibold text-gray-900">
-                {t('orderSummary') ?? 'Order Summary'}
+            <aside className="bg-white rounded-2xl border-2 border-gray-200 shadow-lg p-6 md:p-8 space-y-6 h-fit sticky top-4">
+              <h2 className="text-2xl font-bold text-gray-900">
+                {t('orderSummary') ?? 'ملخص الطلب'}
               </h2>
 
               <div className="space-y-4">
                 {items.length === 0 ? (
-                  <div className="text-sm text-gray-500">
-                    {t('cartEmpty') ?? 'Your cart is empty.'}{' '}
-                    <Link href={`/${locale}/products`} className="text-[#2E7D32] hover:text-[#256628]">
-                      {t('browseProducts') ?? 'Browse Products'}
+                  <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
+                    <div className="text-5xl mb-4">🛒</div>
+                    <p className="text-lg font-semibold text-gray-700 mb-2">
+                      {t('cartEmpty') ?? 'سلة التسوق فارغة'}
+                    </p>
+                    <p className="text-sm text-gray-500 mb-4">
+                      {t('cartEmptyDescription') ?? 'ابدأ بإضافة منتجات إلى سلة التسوق'}
+                    </p>
+                    <Link
+                      href={`/${locale}/products`}
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition font-medium"
+                    >
+                      <span>🛍️</span>
+                      <span>{t('browseProducts') ?? 'تصفح المنتجات'}</span>
                     </Link>
                   </div>
                 ) : (
@@ -186,9 +198,20 @@ export default function LocaleCheckoutPage({ params }: CheckoutPageProps) {
                 </div>
               </div>
 
+              {error && (
+                <div className="bg-red-50 border-2 border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
+                  <div className="flex items-center gap-2">
+                    <span>⚠️</span>
+                    <span>{error}</span>
+                  </div>
+                </div>
+              )}
+
               <Button
                 isFullWidth
+                variant="primary"
                 disabled={items.length === 0 || isSubmitting}
+                className="py-3 text-base font-semibold"
                 onClick={async () => {
                   if (items.length === 0 || isSubmitting) return;
 
@@ -206,40 +229,52 @@ export default function LocaleCheckoutPage({ params }: CheckoutPageProps) {
                   setIsSubmitting(true);
 
                   try {
-                    const payload = items.map((item) => ({
-                      productId: item.product.id,
-                      quantity: item.quantity,
-                    }));
+                    const orderData = {
+                      items: items.map((item) => ({
+                        productId: item.product.id,
+                        quantity: item.quantity,
+                      })),
+                      shippingName: formValues.fullName,
+                      shippingAddress: formValues.street,
+                      shippingCity: formValues.city,
+                      shippingCountry: formValues.country,
+                      shippingPhone: formValues.phone,
+                    };
 
-                    const { url } = await checkoutAPI.createCheckoutSession(payload);
+                    const response = await ordersAPI.createOrder(orderData);
+                    const order = response.data.data;
 
-                    if (url) {
-                      window.location.href = url;
-                    } else {
-                      throw new Error('Missing checkout URL');
-                    }
+                    // Clear cart after successful order
+                    clearCart();
+
+                    // Redirect to success page with order ID
+                    router.push(`/${locale}/order/success?orderId=${order.id}`);
                   } catch (checkoutError: any) {
-                    console.error('[Checkout] Failed to create session:', checkoutError);
+                    console.error('[Checkout] Failed to create order:', checkoutError);
                     const message =
+                      checkoutError.response?.data?.error ||
                       checkoutError.response?.data?.message ||
                       checkoutError.message ||
                       t('checkoutErrorGeneric') ||
-                      'Unable to start checkout. Please try again.';
+                      'Unable to create order. Please try again.';
                     setError(message);
                   } finally {
                     setIsSubmitting(false);
                   }
                 }}
               >
-                {isSubmitting
-                  ? t('processingPayment') ?? 'Processing…'
-                  : t('proceedToPayment') ?? 'Proceed to Payment'}
+                {isSubmitting ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    {t('processingPayment') ?? 'جاري المعالجة...'}
+                  </>
+                ) : (
+                  t('proceedToPayment') ?? 'تأكيد الطلب'
+                )}
               </Button>
-              {error && (
-                <p className="text-sm text-red-600" role="alert">
-                  {error}
-                </p>
-              )}
             </aside>
           </div>
         </div>
