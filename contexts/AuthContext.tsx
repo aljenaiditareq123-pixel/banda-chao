@@ -1,13 +1,16 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { authAPI, usersAPI } from '@/lib/api';
+
+type UserRole = "FOUNDER" | "USER";
 
 interface User {
   id: string;
   email: string;
   name: string | null;
   profilePicture: string | null;
+  role: UserRole;
   createdAt: string;
 }
 
@@ -15,8 +18,8 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name?: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User | null>;
+  register: (email: string, password: string, name?: string) => Promise<User>;
   logout: () => void;
   updateUser: (data: { name?: string; profilePicture?: string; bio?: string }) => Promise<void>;
   setUser: (user: User) => void;
@@ -29,58 +32,137 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Check for stored token on mount
-    const storedToken = localStorage.getItem('auth_token');
-    if (storedToken) {
-      setToken(storedToken);
-      fetchUser(storedToken);
-    } else {
+  const fetchUser = useCallback(async () => {
+    // Only run in browser
+    if (typeof window === 'undefined') {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await usersAPI.getMe();
+      const userData = response.data;
+      setUser({
+        id: userData.id,
+        email: userData.email,
+        name: userData.name,
+        profilePicture: userData.profilePicture,
+        role: userData.role || 'USER', // Default to 'USER' if role is missing
+        createdAt: userData.createdAt,
+      });
+    } catch (error: any) {
+      // Silently handle error - don't break the app
+      // This is expected if user is not logged in or token is invalid
+      console.error('Failed to fetch user:', error?.response?.status || error?.message || 'Unknown error');
+      
+      // Clear invalid token only in browser
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.removeItem('auth_token');
+        } catch (e) {
+          // localStorage may not be available - ignore
+        }
+      }
+      setToken(null);
+      setUser(null);
+    } finally {
       setLoading(false);
     }
   }, []);
 
-  const fetchUser = async (authToken: string) => {
-    try {
-      const response = await usersAPI.getMe();
-      setUser(response.data);
-    } catch (error) {
-      console.error('Failed to fetch user:', error);
-      localStorage.removeItem('auth_token');
-      setToken(null);
-    } finally {
+  useEffect(() => {
+    // Check for stored token on mount (only in browser)
+    if (typeof window === 'undefined') {
       setLoading(false);
+      return;
     }
-  };
 
-  const login = async (email: string, password: string) => {
+    const initializeAuth = async () => {
+      try {
+        // Safely access localStorage
+        let storedToken: string | null = null;
+        try {
+          storedToken = localStorage.getItem('auth_token');
+        } catch (e) {
+          // localStorage may not be available (private browsing, etc.)
+          console.warn('localStorage not available:', e);
+          setLoading(false);
+          return;
+        }
+
+        if (storedToken) {
+          setToken(storedToken);
+          await fetchUser();
+        } else {
+          setLoading(false);
+        }
+      } catch (error) {
+        // Handle any unexpected errors gracefully
+        console.error('Error initializing auth:', error);
+        setLoading(false);
+      }
+    };
+
+    initializeAuth();
+  }, [fetchUser]);
+
+  const login = async (email: string, password: string): Promise<User | null> => {
     try {
       const response = await authAPI.login({ email, password });
       const { token: authToken, user: userData } = response.data;
       
-      localStorage.setItem('auth_token', authToken);
+      const loggedInUser: User = {
+        id: userData.id,
+        email: userData.email,
+        name: userData.name,
+        profilePicture: userData.profilePicture,
+        role: userData.role || 'USER', // Default to 'USER' if role is missing
+        createdAt: userData.createdAt,
+      };
+      
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('auth_token', authToken);
+      }
       setToken(authToken);
-      setUser(userData);
+      setUser(loggedInUser);
+      
+      return loggedInUser;
     } catch (error: any) {
+      // Throw error to be handled by the caller
       throw new Error(error.response?.data?.error || 'Login failed');
     }
   };
 
-  const register = async (email: string, password: string, name?: string) => {
+  const register = async (email: string, password: string, name?: string): Promise<User> => {
     try {
       const response = await authAPI.register({ email, password, name });
       const { token: authToken, user: userData } = response.data;
       
-      localStorage.setItem('auth_token', authToken);
+      const registeredUser: User = {
+        id: userData.id,
+        email: userData.email,
+        name: userData.name,
+        profilePicture: userData.profilePicture,
+        role: userData.role || 'USER', // Default to 'USER' if role is missing
+        createdAt: userData.createdAt,
+      };
+      
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('auth_token', authToken);
+      }
       setToken(authToken);
-      setUser(userData);
+      setUser(registeredUser);
+      
+      return registeredUser;
     } catch (error: any) {
       throw new Error(error.response?.data?.error || 'Registration failed');
     }
   };
 
   const logout = () => {
-    localStorage.removeItem('auth_token');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('auth_token');
+    }
     setToken(null);
     setUser(null);
   };
@@ -97,6 +179,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           ...user,
           name: updatedUser.name || user.name,
           profilePicture: updatedUser.profilePicture || updatedUser.avatar_url || user.profilePicture,
+          // Keep existing role (role is not updated via this endpoint)
         });
       }
     } catch (error: any) {

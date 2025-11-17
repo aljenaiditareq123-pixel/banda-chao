@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -12,6 +13,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const { login, user } = useAuth();
+  const { language } = useLanguage();
 
   const handleGoogleLogin = async () => {
     try {
@@ -66,12 +68,17 @@ export default function LoginPage() {
       const loggedInUser = await login(email.trim(), password);
 
       // بعد تسجيل الدخول الناجح، توجيه المستخدم حسب دوره
-      if (loggedInUser.role === 'FOUNDER') {
+      if (loggedInUser && loggedInUser.role === 'FOUNDER') {
         // Redirect Founder directly to assistant page
         router.push('/founder/assistant');
+      } else if (loggedInUser) {
+        // Redirect regular users to home page with current language
+        router.push(`/${language || 'ar'}`);
       } else {
-        // Redirect regular users to home page
-        router.push('/');
+        // If login returned null (shouldn't happen, but handle it)
+        setError('فشل تسجيل الدخول، يرجى المحاولة مرة أخرى');
+        setLoading(false);
+        return;
       }
       router.refresh();
     } catch (error: any) {
