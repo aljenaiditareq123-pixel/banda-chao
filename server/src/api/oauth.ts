@@ -130,10 +130,8 @@ router.post('/google/callback', async (req: Request, res: Response) => {
       email: string;
       name: string | null;
       profilePicture: string | null;
-      bio: string | null;
       role: string;
       createdAt: Date;
-      updatedAt: Date;
     } | null = null;
 
     // Calculate user role before creating/updating user
@@ -154,10 +152,8 @@ router.post('/google/callback', async (req: Request, res: Response) => {
           email: true,
           name: true,
           profilePicture: true,
-          bio: true,
           role: true,
-          createdAt: true,
-          updatedAt: true
+          createdAt: true
         }
       });
       
@@ -173,10 +169,8 @@ router.post('/google/callback', async (req: Request, res: Response) => {
             email: true,
             name: true,
             profilePicture: true,
-            bio: true,
             role: true,
-            createdAt: true,
-            updatedAt: true
+            createdAt: true
           }
         });
         
@@ -190,10 +184,8 @@ router.post('/google/callback', async (req: Request, res: Response) => {
             email: true,
             name: true,
             profilePicture: true,
-            bio: true,
             role: true,
-            createdAt: true,
-            updatedAt: true
+            createdAt: true
           }
         });
         if (!fetchedUser) {
@@ -226,10 +218,8 @@ router.post('/google/callback', async (req: Request, res: Response) => {
         email: user.email,
         name: user.name,
         profilePicture: user.profilePicture,
-        bio: user.bio,
         role: finalRole,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt
+        createdAt: user.createdAt
       },
       token
     });
