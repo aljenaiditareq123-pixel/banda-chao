@@ -29,13 +29,15 @@ export const authenticateToken = (
       token,
       process.env.JWT_SECRET || 'your-secret-key',
       (err: any, decoded: any) => {
+        // Use 401 Unauthorized for authentication failures (invalid/expired tokens)
+        // This matches TestSprite expectations and HTTP standards
         if (err) {
-          return res.status(403).json({ error: 'Invalid or expired token' });
+          return res.status(401).json({ error: 'Invalid or expired token' });
         }
 
         // Ensure decoded object exists and contains userId
         if (!decoded || !decoded.userId) {
-          return res.status(403).json({ error: 'Token payload is invalid' });
+          return res.status(401).json({ error: 'Token payload is invalid' });
         }
 
         // Safely assign userId and email from decoded token
@@ -46,7 +48,7 @@ export const authenticateToken = (
         if (req.userId) {
           next();
         } else {
-          return res.status(403).json({ error: 'Failed to authenticate user' });
+          return res.status(401).json({ error: 'Failed to authenticate user' });
         }
       }
     );

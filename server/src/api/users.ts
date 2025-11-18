@@ -3,6 +3,8 @@ import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { prisma } from '../utils/prisma';
 import { getUserRoleFromEmail } from '../utils/roles';
 import { createNotification } from '../services/notifications';
+import { isValidUUID, isValidEmail } from '../utils/validation';
+import bcrypt from 'bcryptjs';
 import multer from 'multer';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
@@ -40,6 +42,105 @@ const upload = multer({
   fileFilter,
   limits: {
     fileSize: 5 * 1024 * 1024 // 5MB max file size
+  }
+});
+
+// Create new user (POST /api/v1/users)
+// This route matches TestSprite expectations for user creation
+router.post('/', async (req: Request, res: Response) => {
+  try {
+    const { email, password, name } = req.body;
+
+    // Validation: Check required fields
+    if (!email || !password) {
+      return res.status(400).json({ 
+        error: 'Missing required fields',
+        message: 'Email and password are required' 
+      });
+    }
+
+    // Validate email format
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ 
+        error: 'Invalid email format',
+        message: 'Please provide a valid email address' 
+      });
+    }
+
+    // Validate password length
+    if (password.length < 6) {
+      return res.status(400).json({ 
+        error: 'Password too short',
+        message: 'Password must be at least 6 characters' 
+      });
+    }
+
+    // Check if user already exists (409 Conflict for duplicates)
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    if (existingUser) {
+      return res.status(409).json({ 
+        error: 'User already exists',
+        message: 'A user with this email already exists' 
+      });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Calculate user role before creating user
+    const role = getUserRoleFromEmail(email);
+
+    // Create user
+    const user = await prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        name: name || email.split('@')[0],
+        role
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        profilePicture: true,
+        bio: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    });
+
+    res.status(201).json({
+      message: 'User created successfully',
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        profilePicture: user.profilePicture,
+        bio: user.bio,
+        role: user.role,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
+      }
+    });
+  } catch (error: any) {
+    console.error('User creation error:', error);
+    
+    // Handle Prisma unique constraint violation (shouldn't happen but safety check)
+    if (error.code === 'P2002') {
+      return res.status(409).json({ 
+        error: 'User already exists',
+        message: 'A user with this email already exists' 
+      });
+    }
+    
+    res.status(500).json({ 
+      error: 'Failed to create user', 
+      message: error.message 
+    });
   }
 });
 
@@ -145,6 +246,14 @@ router.get('/:id', authenticateToken, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
+    // Validate UUID format
+    if (!isValidUUID(id)) {
+      return res.status(400).json({ 
+        error: 'Invalid ID format',
+        message: 'User ID must be a valid UUID' 
+      });
+    }
+
     const user = await prisma.user.findUnique({
       where: { id },
       select: {
@@ -153,12 +262,17 @@ router.get('/:id', authenticateToken, async (req: Request, res: Response) => {
         name: true,
         profilePicture: true,
         bio: true,
-        createdAt: true
+        role: true,
+        createdAt: true,
+        updatedAt: true
       }
     });
 
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ 
+        error: 'User not found',
+        message: 'The requested user does not exist' 
+      });
     }
 
     res.json(user);
@@ -172,17 +286,65 @@ router.get('/:id', authenticateToken, async (req: Request, res: Response) => {
 router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const { name, profilePicture, bio } = req.body;
+    const { email, name, profilePicture, bio } = req.body;
 
-    // Verify user can only update their own profile
-    if (id !== req.userId) {
-      return res.status(403).json({ error: 'You can only update your own profile' });
+    // Validate UUID format
+    if (!isValidUUID(id)) {
+      return res.status(400).json({ 
+        error: 'Invalid ID format',
+        message: 'User ID must be a valid UUID' 
+      });
     }
 
+    // Check if user exists first
+    const existingUser = await prisma.user.findUnique({
+      where: { id }
+    });
+
+    if (!existingUser) {
+      return res.status(404).json({ 
+        error: 'User not found',
+        message: 'The user you are trying to update does not exist' 
+      });
+    }
+
+    // Validate email format if provided
+    if (email !== undefined) {
+      if (!isValidEmail(email)) {
+        return res.status(400).json({ 
+          error: 'Invalid email format',
+          message: 'Please provide a valid email address' 
+        });
+      }
+
+      // Check if email is already taken by another user
+      const emailTaken = await prisma.user.findUnique({
+        where: { email },
+        select: { id: true }
+      });
+
+      if (emailTaken && emailTaken.id !== id) {
+        return res.status(409).json({ 
+          error: 'Email already exists',
+          message: 'This email is already in use by another user' 
+        });
+      }
+    }
+
+    // Build update data object
     const updateData: any = {};
+    if (email !== undefined) updateData.email = email;
     if (name !== undefined) updateData.name = name;
     if (profilePicture !== undefined) updateData.profilePicture = profilePicture;
     if (bio !== undefined) updateData.bio = bio;
+
+    // Validate that at least one field is being updated
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ 
+        error: 'Missing fields',
+        message: 'At least one field must be provided for update' 
+      });
+    }
 
     const updatedUser = await prisma.user.update({
       where: { id },
@@ -193,17 +355,35 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
         name: true,
         profilePicture: true,
         bio: true,
+        role: true,
         createdAt: true,
         updatedAt: true
       }
     });
 
-    res.json({
+    res.status(200).json({
       message: 'User updated successfully',
       user: updatedUser
     });
   } catch (error: any) {
     console.error('Update user error:', error);
+    
+    // Handle Prisma not found error
+    if (error.code === 'P2025') {
+      return res.status(404).json({ 
+        error: 'User not found',
+        message: 'The user you are trying to update does not exist' 
+      });
+    }
+    
+    // Handle Prisma unique constraint violation
+    if (error.code === 'P2002') {
+      return res.status(409).json({ 
+        error: 'Email already exists',
+        message: 'This email is already in use by another user' 
+      });
+    }
+    
     res.status(500).json({ error: 'Failed to update user', message: error.message });
   }
 });
@@ -429,6 +609,101 @@ router.get('/:id/following', authenticateToken, async (req: Request, res: Respon
     res.status(500).json({
       error: 'Failed to fetch following',
       message: error.message,
+    });
+  }
+});
+
+// Delete user by ID
+// Must be after /:id/following to avoid route conflicts
+router.delete('/:id', authenticateToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    // Validate UUID format
+    if (!isValidUUID(id)) {
+      return res.status(400).json({ 
+        error: 'Invalid ID format',
+        message: 'User ID must be a valid UUID' 
+      });
+    }
+
+    // Check if user exists
+    const user = await prisma.user.findUnique({
+      where: { id },
+      include: {
+        // Check for dependencies that would prevent deletion
+        orders: { take: 1 },
+        products: { take: 1 },
+        videos: { take: 1 },
+        posts: { take: 1 },
+        maker: true,
+        // Check if user is referenced in follows (as followingId or followerId)
+        _count: {
+          select: {
+            followers: true,
+            following: true,
+            sentMessages: true,
+            receivedMessages: true
+          }
+        }
+      }
+    });
+
+    if (!user) {
+      return res.status(404).json({ 
+        error: 'User not found',
+        message: 'The user you are trying to delete does not exist' 
+      });
+    }
+
+    // Check for dependencies that would prevent deletion (409 Conflict)
+    const hasOrders = user.orders.length > 0;
+    const hasProducts = user.products.length > 0;
+    const hasVideos = user.videos.length > 0;
+    const hasPosts = user.posts.length > 0;
+    const hasMaker = user.maker !== null;
+    const hasFollowers = user._count.followers > 0;
+    const hasFollowing = user._count.following > 0;
+    const hasMessages = user._count.sentMessages > 0 || user._count.receivedMessages > 0;
+
+    if (hasOrders || hasProducts || hasVideos || hasPosts || hasMaker || hasFollowers || hasFollowing || hasMessages) {
+      const dependencies = [];
+      if (hasOrders) dependencies.push('orders');
+      if (hasProducts) dependencies.push('products');
+      if (hasVideos) dependencies.push('videos');
+      if (hasPosts) dependencies.push('posts');
+      if (hasMaker) dependencies.push('maker profile');
+      if (hasFollowers || hasFollowing) dependencies.push('follow relationships');
+      if (hasMessages) dependencies.push('messages');
+
+      return res.status(409).json({ 
+        error: 'Cannot delete user with dependencies',
+        message: `Cannot delete user because they have associated ${dependencies.join(', ')}. Please remove these dependencies first.`,
+        dependencies
+      });
+    }
+
+    // Delete the user (204 No Content on success)
+    await prisma.user.delete({
+      where: { id }
+    });
+
+    // Return 204 No Content (no response body) as per TestSprite expectations
+    res.status(204).send();
+  } catch (error: any) {
+    console.error('Delete user error:', error);
+    
+    // Handle Prisma not found error (shouldn't happen after our check, but safety)
+    if (error.code === 'P2025') {
+      return res.status(404).json({ 
+        error: 'User not found',
+        message: 'The user you are trying to delete does not exist' 
+      });
+    }
+    
+    res.status(500).json({ 
+      error: 'Failed to delete user', 
+      message: error.message 
     });
   }
 });

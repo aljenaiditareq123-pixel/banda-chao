@@ -20,13 +20,18 @@ router.post('/register', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Password must be at least 6 characters' });
     }
 
-    // Check if user already exists
+    // Validate email format
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+
+    // Check if user already exists (return 409 Conflict for duplicates)
     const existingUser = await prisma.user.findUnique({
       where: { email }
     });
 
     if (existingUser) {
-      return res.status(400).json({ error: 'User already exists' });
+      return res.status(409).json({ error: 'User already exists', message: 'A user with this email already exists' });
     }
 
     // Hash password
