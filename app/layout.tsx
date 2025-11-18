@@ -1,16 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import "./globals.css";
-import Header from "@/components/Header";
 import InstallPWA from "@/components/InstallPWA";
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { LanguageProvider } from "@/contexts/LanguageContext";
-import { CartProvider } from "@/contexts/CartContext";
-import ChatWidget from "@/components/ChatWidget";
 import DevPanel from "@/components/DevPanel";
-import ErrorBoundary from "@/components/ErrorBoundary";
-import LanguageDirection from "@/components/LanguageDirection";
 import Analytics from "@/components/Analytics";
 
 export const metadata: Metadata = {
@@ -38,30 +31,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN" suppressHydrationWarning>
+    <html lang="ar" dir="rtl" suppressHydrationWarning>
       <head>
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
       </head>
       <body className="antialiased bg-gray-50" suppressHydrationWarning>
-        <ErrorBoundary>
-          <LanguageProvider>
-            <LanguageDirection />
-            <Suspense fallback={null}>
-              <Analytics />
-            </Suspense>
-            <CartProvider>
-              <AuthProvider>
-                <Header />
-                <main>{children}</main>
-                <ChatWidget />
-                <DevPanel />
-                <InstallPWA />
-                <ServiceWorkerRegistration />
-              </AuthProvider>
-            </CartProvider>
-          </LanguageProvider>
-        </ErrorBoundary>
+        <Suspense fallback={null}>
+          <Analytics />
+        </Suspense>
+        {children}
+        <DevPanel />
+        <InstallPWA />
+        <ServiceWorkerRegistration />
       </body>
     </html>
   );

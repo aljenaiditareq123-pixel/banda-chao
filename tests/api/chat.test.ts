@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { POST } from '@/app/api/chat/route';
 
-// Mock environment variables
-vi.mock('process', () => ({
-  env: {
-    GEMINI_API_KEY: 'test-key',
-    OPENAI_API_KEY: undefined,
-  },
-}));
+// Mock environment variables before importing the route
+const originalEnv = process.env;
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  // Reset environment
+  process.env = { ...originalEnv };
+});
 
 // Mock fetch
 global.fetch = vi.fn();
@@ -15,9 +15,12 @@ global.fetch = vi.fn();
 describe('Chat API Route', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.GEMINI_API_KEY = 'test-key-12345678901234567890';
+    process.env.OPENAI_API_KEY = undefined;
   });
 
   it('returns error when message is missing', async () => {
+    const { POST } = await import('@/app/api/chat/route');
     const request = new Request('http://localhost/api/chat', {
       method: 'POST',
       body: JSON.stringify({}),
@@ -31,6 +34,8 @@ describe('Chat API Route', () => {
   });
 
   it('returns error when message is not a string', async () => {
+    const { POST } = await import('@/app/api/chat/route');
+    
     const request = new Request('http://localhost/api/chat', {
       method: 'POST',
       body: JSON.stringify({ message: 123 }),
@@ -44,6 +49,13 @@ describe('Chat API Route', () => {
   });
 
   it('calls Gemini API when GEMINI_API_KEY is available', async () => {
+    // Set environment variable
+    process.env.GEMINI_API_KEY = 'test-key-12345678901234567890';
+    process.env.OPENAI_API_KEY = undefined;
+
+    // Dynamically import after setting env
+    const { POST } = await import('@/app/api/chat/route');
+
     const mockGeminiResponse = {
       candidates: [
         {
@@ -56,6 +68,7 @@ describe('Chat API Route', () => {
 
     (global.fetch as any).mockResolvedValueOnce({
       ok: true,
+      status: 200,
       json: async () => mockGeminiResponse,
     });
 
@@ -77,8 +90,11 @@ describe('Chat API Route', () => {
 
   it('returns error when no API keys are configured', async () => {
     // Temporarily remove API key
-    const originalEnv = process.env.GEMINI_API_KEY;
     delete (process.env as any).GEMINI_API_KEY;
+    delete (process.env as any).OPENAI_API_KEY;
+
+    // Dynamically import after removing env
+    const { POST } = await import('@/app/api/chat/route');
 
     const request = new Request('http://localhost/api/chat', {
       method: 'POST',
@@ -92,10 +108,17 @@ describe('Chat API Route', () => {
     expect(data.error).toContain('No AI provider is configured');
 
     // Restore
-    process.env.GEMINI_API_KEY = originalEnv;
+    process.env.GEMINI_API_KEY = 'test-key-12345678901234567890';
   });
 
   it('handles API errors gracefully', async () => {
+    // Set environment variable
+    process.env.GEMINI_API_KEY = 'test-key-12345678901234567890';
+    process.env.OPENAI_API_KEY = undefined;
+
+    // Dynamically import after setting env
+    const { POST } = await import('@/app/api/chat/route');
+
     (global.fetch as any).mockRejectedValueOnce(new Error('Network error'));
 
     const request = new Request('http://localhost/api/chat', {

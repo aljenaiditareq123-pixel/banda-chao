@@ -1,7 +1,7 @@
-'use client';
+import { redirect } from 'next/navigation';
 
-import ProductsPageClient from './page-client';
-
+// Redirect non-locale products route to locale route
+// Default to Arabic locale, could be enhanced to detect user preference
 export default function ProductsPage() {
-  return <ProductsPageClient />;
+  redirect('/ar/products');
 }

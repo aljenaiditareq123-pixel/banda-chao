@@ -7,7 +7,6 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "seed": "tsx scripts/seed.ts",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
@@ -18,8 +17,6 @@
     "pre-launch": "tsx scripts/run-pre-launch-checks.ts"
   },
   "dependencies": {
-    "@supabase/ssr": "^0.1.0",
-    "@supabase/supabase-js": "^2.39.0",
     "axios": "^1.6.2",
     "next": "^14.2.5",
     "react": "^18.3.1",

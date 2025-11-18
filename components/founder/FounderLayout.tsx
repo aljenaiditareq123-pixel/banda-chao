@@ -1,0 +1,56 @@
+'use client';
+
+import { ReactNode } from 'react';
+import FounderSidebarNav from './FounderSidebarNav';
+
+interface FounderLayoutProps {
+  children: ReactNode;
+  showSidebar?: boolean;
+  title?: string;
+  description?: string;
+}
+
+export default function FounderLayout({
+  children,
+  showSidebar = true,
+  title,
+  description,
+}: FounderLayoutProps) {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        {(title || description) && (
+          <div className="mb-8">
+            {title && (
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">{title}</h1>
+            )}
+            {description && (
+              <p className="text-gray-600 text-lg max-w-3xl">{description}</p>
+            )}
+          </div>
+        )}
+
+        {/* Main Layout */}
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Sidebar */}
+          {showSidebar && (
+            <aside className="lg:w-64 flex-shrink-0">
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sticky top-8">
+                <FounderSidebarNav />
+              </div>
+            </aside>
+          )}
+
+          {/* Main Content */}
+          <main className="flex-1 min-w-0">
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 lg:p-8">
+              {children}
+            </div>
+          </main>
+        </div>
+      </div>
+    </div>
+  );
+}
+

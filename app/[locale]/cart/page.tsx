@@ -47,17 +47,19 @@ export default function LocaleCartPage({ params }: CartPageProps) {
 
   return (
     <Layout showHeader={false}>
-      <div className="bg-gray-50 py-12">
+      <div className="bg-gradient-to-br from-gray-50 via-white to-gray-50 min-h-screen py-12">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-3xl font-semibold text-gray-900 mb-8">{t('cartTitle') ?? 'Shopping Cart'}</h1>
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8">{t('cartTitle') ?? 'سلة التسوق'}</h1>
           <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-8">
-            <section className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 space-y-6">
+            <section className="bg-white rounded-2xl border-2 border-gray-200 shadow-lg p-6 md:p-8 space-y-6">
               {items.length === 0 ? (
-                <div className="text-center py-16 space-y-6">
-                  <p className="text-lg text-gray-600">{t('cartEmpty') ?? 'Your cart is empty.'}</p>
+                <div className="text-center py-20 space-y-6">
+                  <div className="text-6xl mb-4">🛒</div>
+                  <p className="text-xl font-semibold text-gray-700">{t('cartEmpty') ?? 'سلة التسوق فارغة'}</p>
+                  <p className="text-gray-500">{t('cartEmptyDescription') ?? 'ابدأ بإضافة منتجات إلى سلة التسوق'}</p>
                   <Link href={`/${locale}/products`}>
-                    <Button>
-                      {t('browseProducts') ?? 'Browse Products'}
+                    <Button variant="primary" className="px-8 py-3 text-base font-semibold">
+                      {t('browseProducts') ?? 'ابدأ التسوق'}
                     </Button>
                   </Link>
                 </div>
@@ -121,29 +123,29 @@ export default function LocaleCartPage({ params }: CartPageProps) {
               )}
             </section>
 
-            <aside className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 space-y-6 h-fit">
-              <h2 className="text-2xl font-semibold text-gray-900">{t('orderSummary') ?? 'Order Summary'}</h2>
-              <div className="space-y-4 text-sm text-gray-600">
-                <div className="flex items-center justify-between">
-                  <span>{t('subtotal') ?? 'Subtotal'}</span>
+            <aside className="bg-white rounded-2xl border-2 border-gray-200 shadow-lg p-6 md:p-8 space-y-6 h-fit sticky top-4">
+              <h2 className="text-2xl font-bold text-gray-900">{t('orderSummary') ?? 'ملخص الطلب'}</h2>
+              <div className="space-y-4 text-sm">
+                <div className="flex items-center justify-between text-gray-700">
+                  <span className="font-medium">{t('subtotal') ?? 'المجموع الفرعي'}</span>
                   <span className="font-semibold text-gray-900">¥{subtotal.toFixed(2)}</span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span>{t('shipping') ?? 'Shipping'}</span>
-                  <span>{shippingPlaceholder}</span>
+                <div className="flex items-center justify-between text-gray-600">
+                  <span>{t('shipping') ?? 'الشحن'}</span>
+                  <span className="text-sm">{shippingPlaceholder}</span>
                 </div>
-                <div className="border-t border-gray-100 pt-4 flex items-center justify-between text-base">
-                  <span className="font-semibold text-gray-900">{t('total') ?? 'Total'}</span>
-                  <span className="font-semibold text-[#2E7D32] text-lg">¥{total.toFixed(2)}</span>
+                <div className="border-t-2 border-gray-200 pt-4 flex items-center justify-between">
+                  <span className="font-bold text-lg text-gray-900">{t('total') ?? 'الإجمالي'}</span>
+                  <span className="font-bold text-primary-600 text-xl">¥{total.toFixed(2)}</span>
                 </div>
               </div>
               <Link href={`/${locale}/checkout`} className={items.length === 0 ? 'pointer-events-none' : ''}>
-                <Button isFullWidth disabled={items.length === 0}>
-                  {t('proceedToCheckout') ?? 'Proceed to Checkout'}
+                <Button isFullWidth disabled={items.length === 0} variant="primary" className="py-3 text-base font-semibold">
+                  {t('proceedToCheckout') ?? 'الانتقال إلى الدفع'}
                 </Button>
               </Link>
-              <p className="text-xs text-gray-400">
-                {t('cartItemsCount')?.replace('{count}', totalItems.toString()) ?? `${totalItems} item(s) in cart`}
+              <p className="text-xs text-center text-gray-500 pt-2 border-t border-gray-200">
+                {t('cartItemsCount')?.replace('{count}', totalItems.toString()) ?? `${totalItems} عنصر في السلة`}
               </p>
             </aside>
           </div>

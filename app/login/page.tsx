@@ -1,19 +1,23 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 
-export default function LoginPage() {
+function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login, user } = useAuth();
   const { language } = useLanguage();
+  
+  // Get redirect parameter from URL, default to home page
+  const redirectTo = searchParams.get('redirect') || `/${language || 'ar'}`;
 
   const handleGoogleLogin = async () => {
     try {
@@ -72,8 +76,8 @@ export default function LoginPage() {
         // Redirect Founder directly to assistant page
         router.push('/founder/assistant');
       } else if (loggedInUser) {
-        // Redirect regular users to home page with current language
-        router.push(`/${language || 'ar'}`);
+        // Redirect regular users to redirect URL or home page
+        router.push(redirectTo);
       } else {
         // If login returned null (shouldn't happen, but handle it)
         setError('فشل تسجيل الدخول، يرجى المحاولة مرة أخرى');
@@ -223,4 +227,18 @@ export default function LoginPage() {
   );
 }
 
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">جاري التحميل...</p>
+        </div>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
+  );
+}
 

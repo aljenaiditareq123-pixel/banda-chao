@@ -2,32 +2,46 @@
 
 import { ButtonHTMLAttributes, forwardRef } from 'react';
 import { clsx } from '@/lib/utils';
+import { buttonStyles } from '@/lib/theme';
 
-type ButtonVariant = 'primary' | 'secondary' | 'text';
+type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'success' | 'text';
+type ButtonSize = 'sm' | 'md' | 'lg' | 'xl';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
+  size?: ButtonSize;
   isFullWidth?: boolean;
 }
 
 const variantClasses: Record<ButtonVariant, string> = {
-  primary:
-    'bg-[#2E7D32] text-white hover:bg-[#256628] focus:ring-[#2E7D32]/60 border border-transparent',
-  secondary:
-    'bg-transparent text-[#2E7D32] border border-[#2E7D32] hover:bg-[#2E7D32]/10 focus:ring-[#2E7D32]/40',
-  text:
-    'bg-transparent text-[#111111] border border-transparent hover:text-[#2E7D32] focus:ring-[#2E7D32]/30',
+  primary: buttonStyles.variants.primary,
+  secondary: buttonStyles.variants.secondary,
+  outline: buttonStyles.variants.outline,
+  ghost: buttonStyles.variants.ghost,
+  danger: buttonStyles.variants.danger,
+  success: buttonStyles.variants.success,
+  text: 'bg-transparent hover:bg-transparent border-none shadow-none',
 };
 
-const baseClasses =
-  'inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed';
+const sizeClasses: Record<ButtonSize, string> = {
+  sm: buttonStyles.sizes.sm,
+  md: buttonStyles.sizes.md,
+  lg: buttonStyles.sizes.lg,
+  xl: buttonStyles.sizes.xl,
+};
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ variant = 'primary', isFullWidth = false, className, children, ...props }, ref) => {
+  ({ variant = 'primary', size = 'md', isFullWidth = false, className, children, ...props }, ref) => {
     return (
       <button
         ref={ref}
-        className={clsx(baseClasses, variantClasses[variant], isFullWidth && 'w-full', className)}
+        className={clsx(
+          buttonStyles.base,
+          variantClasses[variant],
+          sizeClasses[size],
+          isFullWidth && 'w-full',
+          className
+        )}
         {...props}
       >
         {children}

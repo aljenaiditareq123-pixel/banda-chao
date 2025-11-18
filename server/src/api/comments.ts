@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { prisma } from '../utils/prisma';
+import jwt from 'jsonwebtoken';
 
 const router = Router();
 
@@ -15,11 +16,11 @@ router.get('/', async (req: Request, res: Response) => {
     // Try to get user ID from token if provided
     if (token) {
       try {
-        const jwt = require('jsonwebtoken');
         const decoded: any = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
         userId = decoded.userId;
       } catch (error) {
         // Token invalid, continue without userId
+        userId = undefined;
       }
     }
 

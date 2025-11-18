@@ -29,6 +29,8 @@ describe('Technical Panda API Route', () => {
   });
 
   it('handles readFile action', async () => {
+    process.env.GEMINI_API_KEY = 'test-key-12345678901234567890';
+    
     const mockFileContent = 'test file content';
     (fs.readFileSync as any).mockReturnValue(mockFileContent);
     (fs.existsSync as any).mockReturnValue(true);
@@ -36,8 +38,11 @@ describe('Technical Panda API Route', () => {
     const request = new Request('http://localhost/api/technical-panda', {
       method: 'POST',
       body: JSON.stringify({
-        action: 'readFile',
-        target: 'package.json',
+        message: 'Read package.json',
+        action: {
+          type: 'read',
+          target: 'package.json',
+        },
       }),
     });
 
@@ -49,13 +54,18 @@ describe('Technical Panda API Route', () => {
   });
 
   it('handles executeCommand action', async () => {
+    process.env.GEMINI_API_KEY = 'test-key-12345678901234567890';
+    
     (execAsync as any).mockResolvedValue({ stdout: 'command output', stderr: '' });
 
     const request = new Request('http://localhost/api/technical-panda', {
       method: 'POST',
       body: JSON.stringify({
-        action: 'executeCommand',
-        command: 'npm --version',
+        message: 'Run npm --version',
+        action: {
+          type: 'execute',
+          command: 'npm --version',
+        },
       }),
     });
 
@@ -83,13 +93,20 @@ describe('Technical Panda API Route', () => {
   });
 
   it('handles analyzeCodebase action', async () => {
+    process.env.GEMINI_API_KEY = 'test-key-12345678901234567890';
+    
     (fs.readdirSync as any).mockReturnValue(['file1.ts', 'file2.tsx']);
     (fs.statSync as any).mockReturnValue({ isFile: () => true });
+    (fs.existsSync as any).mockReturnValue(true);
+    (fs.readFileSync as any).mockReturnValue('{"dependencies": {}}');
 
     const request = new Request('http://localhost/api/technical-panda', {
       method: 'POST',
       body: JSON.stringify({
-        action: 'analyzeCodebase',
+        message: 'Analyze codebase',
+        action: {
+          type: 'analyze',
+        },
       }),
     });
 

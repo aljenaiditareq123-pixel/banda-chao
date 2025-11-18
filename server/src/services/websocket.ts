@@ -32,7 +32,24 @@ export const setupWebSocketHandlers = (io: Server) => {
     // Join user's personal room
     if (socket.userId) {
       socket.join(`user_${socket.userId}`);
+      // Also join notifications room
+      socket.join(`notifications:${socket.userId}`);
+      console.log(`User ${socket.userId} joined notifications room`);
     }
+
+    // Handle joining notifications room (explicit)
+    socket.on('join_notifications', (data: { userId: string }) => {
+      if (!socket.userId || socket.userId !== data.userId) return;
+      socket.join(`notifications:${data.userId}`);
+      console.log(`User ${socket.userId} explicitly joined notifications room`);
+    });
+
+    // Handle leaving notifications room
+    socket.on('leave_notifications', (data: { userId: string }) => {
+      if (!socket.userId || socket.userId !== data.userId) return;
+      socket.leave(`notifications:${data.userId}`);
+      console.log(`User ${socket.userId} left notifications room`);
+    });
 
     // Handle joining a chat room
     socket.on('join_chat', async (otherUserId: string) => {

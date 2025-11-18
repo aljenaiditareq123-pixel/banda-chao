@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 
-export default function RegisterPage() {
+function RegisterForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -15,8 +15,12 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { register } = useAuth();
   const { t, language } = useLanguage();
+  
+  // Get redirect parameter from URL, default to home page
+  const redirectTo = searchParams.get('redirect') || `/${language || 'ar'}`;
   
   // RTL support for Arabic
   const isRTL = language === 'ar';
@@ -70,33 +74,39 @@ export default function RegisterPage() {
       // إنشاء حساب جديد باستخدام Express API
       await register(email, password, name || undefined);
 
-      // After successful registration, redirect to homepage
+      // After successful registration, redirect to redirect URL or homepage
       setSuccess(true);
       
-      // Wait a bit then go to homepage
+      // Wait a bit then go to redirect URL or homepage
       setTimeout(() => {
-        router.push('/');
+        router.push(redirectTo);
         router.refresh();
-      }, 1500);
+      }, 1200);
     } catch (error: any) {
       // Better error handling for different error types
       let errorMessage = t('registerError') || 'فشل إنشاء الحساب، يرجى المحاولة مرة أخرى';
       
       if (error.response) {
         const status = error.response.status;
+        const backendError = error.response.data?.error || error.response.data?.message;
+        
         if (status === 404) {
-          errorMessage = 'خطأ في الاتصال بالخادم. يرجى التحقق من إعدادات الاتصال.';
+          errorMessage = 'خادم الواجهة الخلفية غير متاح. يرجى المحاولة لاحقاً.';
         } else if (status === 400) {
-          errorMessage = error.response.data?.error || 'البيانات المدخلة غير صحيحة';
-        } else if (status === 500) {
+          if (backendError?.includes('already exists') || backendError?.includes('User already exists')) {
+            errorMessage = 'هذا البريد الإلكتروني مستخدم بالفعل';
+          } else {
+            errorMessage = backendError || 'بيانات غير صحيحة. يرجى التحقق من المعلومات.';
+          }
+        } else if (status >= 500) {
           errorMessage = 'خطأ في الخادم. يرجى المحاولة لاحقاً.';
         } else {
-          errorMessage = error.response.data?.error || error.message || errorMessage;
+          errorMessage = backendError || error.message || errorMessage;
         }
       } else if (error.message) {
         errorMessage = error.message;
       } else if (error.request) {
-        errorMessage = 'لا يمكن الاتصال بالخادم. يرجى التحقق من اتصالك بالإنترنت.';
+        errorMessage = 'فشل الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت.';
       }
       
       setError(errorMessage);
@@ -266,6 +276,21 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">جاري التحميل...</p>
+        </div>
+      </div>
+    }>
+      <RegisterForm />
+    </Suspense>
   );
 }
 

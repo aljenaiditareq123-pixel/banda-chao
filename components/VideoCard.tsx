@@ -7,8 +7,11 @@ interface VideoCardProps {
 
 export default function VideoCard({ video }: VideoCardProps) {
   const formatViews = (views: number) => {
-    if (views >= 10000) {
-      return `${(views / 10000).toFixed(1)}万`;
+    if (views >= 1000000) {
+      return `${(views / 1000000).toFixed(1)}M`;
+    }
+    if (views >= 1000) {
+      return `${(views / 1000).toFixed(1)}K`;
     }
     return views.toString();
   };
@@ -21,28 +24,41 @@ export default function VideoCard({ video }: VideoCardProps) {
 
   return (
     <Link href={`/videos/${video.id}`} className="block group">
-      <div className="relative aspect-video bg-gray-200 rounded-lg overflow-hidden">
-        <img
-          src={video.thumbnail}
-          alt={video.title}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-        />
-        <div className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
-          {formatDuration(video.duration)}
-        </div>
-        {video.type === 'short' && (
-          <div className="absolute top-2 left-2 bg-red-600 text-white text-xs px-2 py-1 rounded">
-            短视频
+      <div className="bg-white rounded-xl border-2 border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden">
+        <div className="relative aspect-video bg-gray-200 overflow-hidden">
+          <img
+            src={video.thumbnail || 'https://via.placeholder.com/640x360?text=Video'}
+            alt={video.title}
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.src = 'https://via.placeholder.com/640x360?text=Video';
+            }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+          <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded-md font-semibold backdrop-blur-sm">
+            {formatDuration(video.duration)}
           </div>
-        )}
-      </div>
-      <div className="mt-3">
-        <h3 className="font-semibold text-gray-900 line-clamp-2 group-hover:text-red-600 transition">
-          {video.title}
-        </h3>
-        <div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
-          <span>{formatViews(video.views)} 次观看</span>
-          <span>{video.likes} 点赞</span>
+          {video.type === 'short' && (
+            <div className="absolute top-2 left-2 bg-red-600 text-white text-xs px-2 py-1 rounded-md font-semibold">
+              {video.type === 'short' ? 'قصير' : 'طويل'}
+            </div>
+          )}
+        </div>
+        <div className="p-4">
+          <h3 className="font-bold text-gray-900 line-clamp-2 group-hover:text-primary-600 transition-colors mb-2 leading-snug">
+            {video.title}
+          </h3>
+          <div className="flex items-center gap-4 text-xs text-gray-600">
+            <span className="flex items-center gap-1">
+              <span>👁️</span>
+              <span>{formatViews(video.views)}</span>
+            </span>
+            <span className="flex items-center gap-1">
+              <span>❤️</span>
+              <span>{video.likes || 0}</span>
+            </span>
+          </div>
         </div>
       </div>
     </Link>

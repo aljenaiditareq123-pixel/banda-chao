@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Product } from '@/types';
-import LikeButton from './LikeButton';
+import LikeButton from '@/components/LikeButton';
 
 interface ProductCardProps {
   product: Product;

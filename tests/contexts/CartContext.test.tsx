@@ -5,16 +5,17 @@ import { Product } from '@/types';
 
 const mockProduct: Product = {
   id: '1',
+  userId: 'user-1',
   name: 'Test Product',
   description: 'Test',
   price: 99.99,
   images: [],
+  category: 'Test Category',
+  stock: 10,
   rating: 0,
   reviewCount: 0,
-  makerId: 'maker-1',
-  maker: { id: 'maker-1', name: 'Maker' },
   createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
+  maker: { id: 'maker-1', name: 'Maker' },
 };
 
 describe('CartContext', () => {

@@ -2,13 +2,14 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import Button from '@/components/Button';
+import ProtectedRoute from '@/components/ProtectedRoute';
 import Layout from '@/components/Layout';
 import Input from '@/components/Input';
-import Button from '@/components/Button';
 import { useCart } from '@/contexts/CartContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { ordersAPI } from '@/lib/api';
-import { useRouter } from 'next/navigation';
 
 interface CheckoutPageProps {
   params: {
@@ -18,7 +19,7 @@ interface CheckoutPageProps {
 
 const IMAGE_PLACEHOLDER = 'https://via.placeholder.com/80x80?text=Item';
 
-export default function LocaleCheckoutPage({ params }: CheckoutPageProps) {
+function CheckoutContent({ params }: CheckoutPageProps) {
   const { locale } = params;
   const { items, clearCart } = useCart();
   const { t, setLanguage } = useLanguage();
@@ -280,6 +281,14 @@ export default function LocaleCheckoutPage({ params }: CheckoutPageProps) {
         </div>
       </div>
     </Layout>
+  );
+}
+
+export default function LocaleCheckoutPage({ params }: CheckoutPageProps) {
+  return (
+    <ProtectedRoute>
+      <CheckoutContent params={params} />
+    </ProtectedRoute>
   );
 }
 

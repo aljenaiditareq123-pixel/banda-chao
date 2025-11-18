@@ -27,8 +27,16 @@ function CallbackHandlerContent() {
       })
         .then(res => res.json())
         .then(data => {
-          if (data.user) {
-            setUser(data.user);
+          const userData = data.user || data;
+          if (userData) {
+            setUser({
+              id: userData.id,
+              email: userData.email,
+              name: userData.name,
+              profilePicture: userData.profilePicture,
+              role: userData.role || 'USER', // Default to 'USER' if role is missing
+              createdAt: userData.createdAt,
+            });
           }
           router.push(next);
         })

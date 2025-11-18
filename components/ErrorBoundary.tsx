@@ -29,7 +29,20 @@ export default class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    // Detailed error logging
+    console.error('========================================');
+    console.error('🚨 ErrorBoundary caught an error!');
+    console.error('========================================');
+    console.error('Error Message:', error.message);
+    console.error('Error Stack:', error.stack);
+    console.error('Error Name:', error.name);
+    console.error('Error Info:', errorInfo);
+    console.error('Component Stack:', errorInfo.componentStack);
+    console.error('========================================');
+    
+    // Also log to console with full error object
+    console.error('Full Error Object:', error);
+    console.error('Full Error Info:', errorInfo);
   }
 
   render() {
@@ -52,10 +65,20 @@ export default class ErrorBoundary extends Component<Props, State> {
                 />
               </svg>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">出错了</h1>
-            <p className="text-gray-600 mb-6">
-              {this.state.error?.message || '发生了意外错误'}
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Internal Server Error</h1>
+            <p className="text-gray-600 mb-2 font-semibold">
+              {this.state.error?.message || 'An unexpected error occurred'}
             </p>
+            {this.state.error?.stack && (
+              <details className="text-left mt-4 mb-4">
+                <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-700">
+                  Show Error Details
+                </summary>
+                <pre className="mt-2 p-4 bg-gray-100 rounded text-xs overflow-auto max-h-48">
+                  {this.state.error.stack}
+                </pre>
+              </details>
+            )}
             <button
               onClick={() => {
                 this.setState({ hasError: false, error: null });

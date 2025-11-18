@@ -5,19 +5,20 @@ import { Product } from '@/types';
 
 const mockProduct: Product = {
   id: '1',
+  userId: 'user-1',
   name: 'Test Product',
   description: 'Test description',
   price: 99.99,
   images: ['https://example.com/image.jpg'],
+  category: 'Test Category',
+  stock: 10,
   rating: 4.5,
   reviewCount: 10,
-  makerId: 'maker-1',
+  createdAt: new Date().toISOString(),
   maker: {
     id: 'maker-1',
     name: 'Test Maker',
   },
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
 };
 
 describe('ProductCard Component', () => {

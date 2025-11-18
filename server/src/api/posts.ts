@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { prisma } from '../utils/prisma';
+import { createNotification } from '../services/notifications';
 
 const router = Router();
 
@@ -166,6 +167,167 @@ router.delete('/:id', authenticateToken, async (req: AuthRequest, res: Response)
   } catch (error: any) {
     console.error('Delete post error:', error);
     res.status(500).json({ error: 'Failed to delete post', message: error.message });
+  }
+});
+
+// Like a post
+router.post('/:id/like', authenticateToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.userId!;
+    const { id: postId } = req.params;
+
+    // Check if post exists
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+    });
+
+    if (!post) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    // Check if already liked (idempotent)
+    const existingLike = await prisma.postLike.findUnique({
+      where: {
+        userId_postId: {
+          userId,
+          postId,
+        },
+      },
+    });
+
+    if (existingLike) {
+      // Already liked, return current count
+      const likesCount = await prisma.postLike.count({
+        where: { postId },
+      });
+
+      return res.status(200).json({
+        message: 'Post already liked',
+        liked: true,
+        likesCount,
+      });
+    }
+
+    // Create new like
+    await prisma.postLike.create({
+      data: {
+        userId,
+        postId,
+      },
+    });
+
+    // Count total likes
+    const likesCount = await prisma.postLike.count({
+      where: { postId },
+    });
+
+    // Create notification for post owner (if not the same user)
+    if (post.userId !== userId) {
+      // Get liker's name for notification
+      const liker = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { name: true },
+      });
+
+      await createNotification({
+        userId: post.userId,
+        type: 'post_like',
+        title: 'إعجاب جديد على منشورك',
+        body: liker?.name ? `${liker.name} أعجب بمنشورك` : 'شخص أعجب بمنشورك',
+        data: {
+          postId,
+          likedByUserId: userId,
+        },
+      });
+    }
+
+    res.status(201).json({
+      message: 'Post liked successfully',
+      liked: true,
+      likesCount,
+    });
+  } catch (error: any) {
+    console.error('[Post Like] Error:', error);
+    res.status(500).json({
+      error: 'Failed to like post',
+      message: error.message,
+    });
+  }
+});
+
+// Unlike a post
+router.delete('/:id/like', authenticateToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.userId!;
+    const { id: postId } = req.params;
+
+    // Delete like (idempotent - deleteMany)
+    await prisma.postLike.deleteMany({
+      where: {
+        userId,
+        postId,
+      },
+    });
+
+    // Count remaining likes
+    const likesCount = await prisma.postLike.count({
+      where: { postId },
+    });
+
+    res.status(200).json({
+      message: 'Post unliked successfully',
+      liked: false,
+      likesCount,
+    });
+  } catch (error: any) {
+    console.error('[Post Like] Error:', error);
+    res.status(500).json({
+      error: 'Failed to unlike post',
+      message: error.message,
+    });
+  }
+});
+
+// Check if post is liked and get like count
+router.get('/:id/like', authenticateToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.userId!;
+    const { id: postId } = req.params;
+
+    // Check if post exists first
+    const post = await prisma.post.findUnique({
+      where: { id: postId },
+    });
+
+    if (!post) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    // Check if liked and count total likes in parallel
+    const [existingLike, likesCount] = await Promise.all([
+      prisma.postLike.findUnique({
+        where: {
+          userId_postId: {
+            userId,
+            postId,
+          },
+        },
+      }),
+      prisma.postLike.count({
+        where: { postId },
+      }),
+    ]);
+
+    res.status(200).json({
+      liked: !!existingLike,
+      likesCount,
+    });
+  } catch (error: any) {
+    console.error('[Post Like] Error:', error);
+    res.status(500).json({
+      error: 'Failed to check post like status',
+      message: error.message,
+    });
   }
 });
 

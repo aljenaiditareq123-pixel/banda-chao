@@ -418,20 +418,51 @@ const translations: Record<Language, Record<string, string>> = {
   },
 };
 
-export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [language, setLanguageState] = useState<Language>('zh');
+export const LanguageProvider: React.FC<{ 
+  children: React.ReactNode;
+  initialLocale?: Language;
+}> = ({ children, initialLocale }) => {
+  // Initialize with initialLocale if provided, otherwise default to 'zh'
+  // This is safe because useState only runs on client-side after hydration
+  const [language, setLanguageState] = useState<Language>(initialLocale || 'zh');
 
   useEffect(() => {
-    // Load language from localStorage
-    const savedLanguage = localStorage.getItem('language') as Language;
-    if (savedLanguage && (savedLanguage === 'zh' || savedLanguage === 'ar' || savedLanguage === 'en')) {
-      setLanguageState(savedLanguage);
+    // Only run in browser (client-side)
+    if (typeof window === 'undefined') {
+      return;
     }
-  }, []);
+
+    try {
+      // If initialLocale is provided, use it and save to localStorage
+      if (initialLocale && (initialLocale === 'zh' || initialLocale === 'ar' || initialLocale === 'en')) {
+        setLanguageState(initialLocale);
+        localStorage.setItem('language', initialLocale);
+        return;
+      }
+      
+      // Otherwise, load language from localStorage
+      const savedLanguage = localStorage.getItem('language') as Language;
+      if (savedLanguage && (savedLanguage === 'zh' || savedLanguage === 'ar' || savedLanguage === 'en')) {
+        setLanguageState(savedLanguage);
+      }
+    } catch (error) {
+      // localStorage may not be available (private browsing, etc.)
+      // Silently fail and use default language
+      console.warn('Failed to access localStorage in LanguageProvider:', error);
+    }
+  }, [initialLocale]);
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
-    localStorage.setItem('language', lang);
+    // Only save to localStorage in browser
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('language', lang);
+      } catch (error) {
+        // localStorage may not be available - ignore
+        console.warn('Failed to save language to localStorage:', error);
+      }
+    }
   };
 
   const t = (key: string): string => {

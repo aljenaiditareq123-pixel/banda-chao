@@ -46,11 +46,28 @@ export interface Product {
   };
 }
 
+export interface MakerUserSummary {
+  id: string;
+  name: string | null;
+  email: string;
+  profilePicture?: string | null;
+  bio?: string | null;
+  createdAt: string;
+}
+
 export interface Maker {
   id: string;
+  userId: string;
+  slug: string;
   name: string;
-  bio?: string;
-  story?: string;
+  bio?: string | null;
+  story?: string | null;
+  profilePictureUrl?: string | null;
+  coverPictureUrl?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  user?: MakerUserSummary;
+  // Legacy fields for backward compatibility
   coverImage?: string;
   profilePicture?: string;
   location?: string;
@@ -73,4 +90,16 @@ export interface Comment {
     profilePicture: string | null;
   };
   userLiked?: boolean;
+}
+
+// Notification Types
+export interface Notification {
+  id: string;
+  userId: string;
+  type: string; // 'post_like' | 'follow' | 'message' | 'order_status'
+  title: string;
+  body?: string | null;
+  data?: any; // JSON data (postId, orderId, senderId, etc.)
+  isRead: boolean;
+  createdAt: string;
 }

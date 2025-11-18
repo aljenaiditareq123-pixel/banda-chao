@@ -1,185 +1,207 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Layout from '@/components/Layout';
 import { Grid, GridItem } from '@/components/Grid';
-import Button from '@/components/Button';
 import ProductCard from '@/components/ProductCard';
+import VideoCard from '@/components/VideoCard';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Product } from '@/types';
-
-const MAKER_PLACEHOLDER_CLASS =
-  'w-full aspect-[4/3] rounded-2xl bg-gray-200 flex items-center justify-center text-4xl text-gray-400 mb-4';
+import { Product, Maker, Video } from '@/types';
+import Button from '@/components/Button';
 
 interface HomePageClientProps {
   locale: string;
   products: Product[];
+  makers: Maker[];
+  videos: Video[];
 }
 
-export default function HomePageClient({ locale, products }: HomePageClientProps) {
-  const { setLanguage, t } = useLanguage();
+const AVATAR_PLACEHOLDER = 'https://via.placeholder.com/200x200?text=Maker';
+const COVER_PLACEHOLDER = 'https://via.placeholder.com/800x400?text=Maker+Cover';
+
+export default function HomePageClient({ locale, products, makers, videos }: HomePageClientProps) {
+  const { t } = useLanguage();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (locale === 'zh' || locale === 'ar' || locale === 'en') {
-      setLanguage(locale);
-    } else {
-      setLanguage('zh');
-    }
-  }, [locale, setLanguage]);
+    setMounted(true);
+  }, []);
 
-  const featuredMakers = [
-    {
-      id: 'maker-1',
-      name: t('featuredMakerName1'),
-      bio: t('featuredMakerBio1'),
-    },
-    {
-      id: 'maker-2',
-      name: t('featuredMakerName2'),
-      bio: t('featuredMakerBio2'),
-    },
-    {
-      id: 'maker-3',
-      name: t('featuredMakerName3'),
-      bio: t('featuredMakerBio3'),
-    },
-  ];
-
-  const howItWorksSteps = [
-    {
-      id: 'step-1',
-      icon: '🔍',
-      title: t('howItWorksStep1Title'),
-      description: t('howItWorksStep1Description'),
-    },
-    {
-      id: 'step-2',
-      icon: '🤝',
-      title: t('howItWorksStep2Title'),
-      description: t('howItWorksStep2Description'),
-    },
-    {
-      id: 'step-3',
-      icon: '🎁',
-      title: t('howItWorksStep3Title'),
-      description: t('howItWorksStep3Description'),
-    },
-  ];
+  if (!mounted) {
+    return (
+      <div className="space-y-8">
+        <div className="animate-pulse">
+          <div className="h-96 bg-gray-200 rounded-lg mb-8"></div>
+          <div className="h-8 bg-gray-200 rounded w-64 mb-4"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-64 bg-gray-200 rounded-lg"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <Layout showHeader={false}>
-      <div className="bg-white">
-        {/* Hero Section */}
-        <section className="bg-gradient-to-r from-[#2E7D32] to-[#66BB6A] text-white py-20">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h1 className="text-4xl md:text-5xl font-bold leading-tight mb-6">
-              {t('homeHeroHeadline')}
-            </h1>
-            <p className="text-lg md:text-xl text-green-50 max-w-2xl mx-auto mb-10">
-              {t('homeHeroDescription')}
-            </p>
-            <div className="flex justify-center">
-              <Link href={`/${locale}/products`} className="inline-flex">
-                <Button variant="primary" className="px-6 py-3 text-base md:text-lg">
-                  {t('homeHeroCTA')}
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        {/* Featured Makers */}
-        <section className="py-16 bg-gray-50">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
-            <div className="text-center">
-              <h2 className="text-3xl font-semibold text-gray-900">{t('featuredMakersTitle')}</h2>
-            </div>
-            <Grid columns={{ base: 1, md: 3 }} gap="gap-8">
-              {featuredMakers.map((maker, index) => (
-                <GridItem key={maker.id}>
-                  <div className="bg-white rounded-3xl shadow-sm border border-gray-100 px-6 py-8 h-full flex flex-col">
-                    <div className={MAKER_PLACEHOLDER_CLASS}>
-                      <span>{['🧵', '🫖', '🎋'][index] ?? '🧶'}</span>
-                    </div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-3">{maker.name}</h3>
-                    <p className="text-sm text-gray-600 leading-relaxed flex-1">{maker.bio}</p>
-                  </div>
-                </GridItem>
-              ))}
-            </Grid>
-          </div>
-        </section>
-
-        {/* Latest Products */}
-        <section className="py-16 bg-white">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <h2 className="text-3xl font-semibold text-gray-900">{t('latestProductsTitle')}</h2>
-              <Link href={`/${locale}/products`} className="inline-flex">
-                <Button variant="text" className="text-[#2E7D32] hover:text-[#256628]">
-                  {t('homeHeroCTA')}
-                </Button>
-              </Link>
-            </div>
-            <Grid columns={{ base: 1, sm: 2, md: 3, lg: 4 }} gap="gap-6">
-              {products.length > 0 ? (
-                products.map((product) => (
-                  <GridItem key={product.id}>
-                    <ProductCard product={product} href={`/${locale}/products/${product.id}`} />
-                  </GridItem>
-                ))
-              ) : (
-                <GridItem className="col-span-full">
-                  <div className="w-full text-center py-12 text-gray-500 border border-dashed border-gray-200 rounded-3xl">
-                    {t('noContent')}
-                  </div>
-                </GridItem>
-              )}
-            </Grid>
-          </div>
-        </section>
-
-        {/* How It Works */}
-        <section className="py-16 bg-gray-50">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
-            <div className="text-center">
-              <h2 className="text-3xl font-semibold text-gray-900">{t('howItWorksTitle')}</h2>
-            </div>
-            <Grid columns={{ base: 1, md: 3 }} gap="gap-8">
-              {howItWorksSteps.map((step) => (
-                <GridItem key={step.id}>
-                  <div className="bg-white rounded-3xl shadow-sm border border-gray-100 px-6 py-8 h-full">
-                    <div className="h-14 w-14 rounded-full bg-[#E8F5E9] text-2xl flex items-center justify-center text-[#2E7D32] mb-6">
-                      {step.icon}
-                    </div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-3">{step.title}</h3>
-                    <p className="text-sm text-gray-600 leading-relaxed">{step.description}</p>
-                  </div>
-                </GridItem>
-              ))}
-            </Grid>
-          </div>
-        </section>
-
-        {/* CTA */}
-        <section className="py-20 bg-[#111111] text-white">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
-            <h2 className="text-3xl md:text-4xl font-semibold leading-snug">
-              {t('ctaHeadline')}
-            </h2>
-            <Link href={`/${locale}/start`} className="inline-flex">
-              <Button
-                variant="secondary"
-                className="px-6 py-3 text-base md:text-lg border-white text-white hover:bg-white hover:text-[#111111]"
-              >
-                {t('ctaButtonText')}
+    <div className="space-y-16 pb-16">
+      {/* Hero Section */}
+      <section className="relative bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800 rounded-3xl overflow-hidden shadow-2xl">
+        <div className="absolute inset-0 bg-black/10"></div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 text-center">
+          <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
+            {t('homeHeroTitle') || 'منصة Banda Chao للحرفيين والمحتوى'}
+          </h1>
+          <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-3xl mx-auto leading-relaxed">
+            {t('homeHeroDescription') || 'اكتشف منتجات يدوية فريدة، شاهد فيديوهات الحرفيين، وتواصل مع مجتمع من المبدعين'}
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <Link href={`/${locale}/makers`}>
+              <Button variant="primary" className="px-8 py-4 text-lg font-semibold bg-white text-primary-700 hover:bg-gray-100">
+                {t('exploreMakers') || 'استكشف الحرفيين'}
+              </Button>
+            </Link>
+            <Link href={`/${locale}/products`}>
+              <Button variant="outline" className="px-8 py-4 text-lg font-semibold border-2 border-white text-white hover:bg-white/10">
+                {t('browseProducts') || 'تصفح المنتجات'}
               </Button>
             </Link>
           </div>
+        </div>
+      </section>
+
+      {/* Featured Makers Section */}
+      {makers.length > 0 && (
+        <section>
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
+              {t('featuredMakers') || 'حرفيون مميزون'}
+            </h2>
+            <Link
+              href={`/${locale}/makers`}
+              className="text-primary-600 hover:text-primary-700 font-medium text-lg"
+            >
+              {t('viewAll') || 'عرض الكل'} →
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {makers.slice(0, 6).map((maker) => {
+              const profileImage = maker.profilePictureUrl || maker.profilePicture || maker.user?.profilePicture || AVATAR_PLACEHOLDER;
+              const coverImage = maker.coverPictureUrl || maker.coverImage || COVER_PLACEHOLDER;
+              const displayBio = maker.bio || '';
+
+              return (
+                <Link
+                  key={maker.id}
+                  href={`/${locale}/makers/${maker.slug || maker.id}`}
+                  className="block bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group border border-gray-200"
+                >
+                  <div className="h-32 bg-gradient-to-br from-primary-100 to-primary-200 relative overflow-hidden">
+                    <img
+                      src={coverImage}
+                      alt={maker.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                  <div className="p-5 -mt-12 relative">
+                    <div className="h-20 w-20 rounded-full border-4 border-white shadow-lg overflow-hidden bg-gray-100 mb-4 relative z-10">
+                      <img
+                        src={profileImage}
+                        alt={maker.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = AVATAR_PLACEHOLDER;
+                        }}
+                      />
+                    </div>
+                    <h3 className="font-bold text-lg text-gray-900 mb-2 group-hover:text-primary-600 transition-colors">
+                      {maker.name}
+                    </h3>
+                    {displayBio && (
+                      <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
+                        {displayBio}
+                      </p>
+                    )}
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
         </section>
-      </div>
-    </Layout>
+      )}
+
+      {/* Featured Products Section */}
+      <section>
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
+            {t('featuredProducts') || 'منتجات مميزة'}
+          </h2>
+          <Link
+            href={`/${locale}/products`}
+            className="text-primary-600 hover:text-primary-700 font-medium text-lg"
+          >
+            {t('viewAll') || 'عرض الكل'} →
+          </Link>
+        </div>
+        {products.length === 0 ? (
+          <div className="text-center py-16 bg-white rounded-xl border border-gray-200">
+            <p className="text-lg text-gray-500">{t('noContent') || 'لا توجد منتجات متاحة حالياً'}</p>
+          </div>
+        ) : (
+          <Grid columns={{ base: 1, sm: 2, md: 3, lg: 4 }} gap="gap-6">
+            {products.map((product) => (
+              <GridItem key={product.id}>
+                <ProductCard product={product} href={`/${locale}/products/${product.id}`} />
+              </GridItem>
+            ))}
+          </Grid>
+        )}
+      </section>
+
+      {/* Featured Videos Section */}
+      {videos.length > 0 && (
+        <section>
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
+              {t('featuredVideos') || 'فيديوهات مميزة'}
+            </h2>
+            <Link
+              href={`/${locale}/videos`}
+              className="text-primary-600 hover:text-primary-700 font-medium text-lg"
+            >
+              {t('viewAll') || 'عرض الكل'} →
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            {videos.slice(0, 6).map((video) => (
+              <VideoCard key={video.id} video={video} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Founder Section */}
+      <section className="bg-gradient-to-br from-primary-50 to-primary-100 rounded-2xl border-2 border-primary-200 p-8 md:p-12 text-center">
+        <div className="max-w-2xl mx-auto">
+          <div className="text-6xl mb-6">🐼</div>
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
+            {t('founderSectionTitle') || 'مركز القيادة للمؤسس'}
+          </h2>
+          <p className="text-lg text-gray-700 mb-6 leading-relaxed">
+            {t('founderSectionDescription') || 'للمؤسس: 6 مساعدين ذكاء اصطناعي متخصصين يساعدونك في القرارات الاستراتيجية، التقنية، الأمان، التجارة، المحتوى، واللوجستيات'}
+          </p>
+          <Link href="/founder">
+            <Button variant="primary" className="px-8 py-3 text-base font-semibold">
+              {t('goToFounderConsole') || 'اذهب إلى مركز المؤسس'}
+            </Button>
+          </Link>
+        </div>
+      </section>
+    </div>
   );
 }
-

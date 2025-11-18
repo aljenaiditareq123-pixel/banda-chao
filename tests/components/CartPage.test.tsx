@@ -5,16 +5,17 @@ import { Product } from '@/types';
 
 const mockProduct: Product = {
   id: '1',
+  userId: 'user-1',
   name: 'Test Product',
   description: 'Test',
   price: 99.99,
   images: ['https://example.com/image.jpg'],
+  category: 'Test Category',
+  stock: 10,
   rating: 0,
   reviewCount: 0,
-  makerId: 'maker-1',
-  maker: { id: 'maker-1', name: 'Maker' },
   createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
+  maker: { id: 'maker-1', name: 'Maker' },
 };
 
 // Mock CartPage component for testing
@@ -75,17 +76,15 @@ describe('CartPage', () => {
   });
 
   it('displays cart items when cart has products', () => {
-    const { result } = render(
+    // Add product to localStorage first
+    const cartItems = [{ product: mockProduct, quantity: 1 }];
+    localStorage.setItem('banda-chao-cart', JSON.stringify(cartItems));
+
+    render(
       <CartProvider>
         <CartPageTest />
       </CartProvider>
     );
-
-    // Add product to cart
-    const cartHook = result.current;
-    if (cartHook) {
-      cartHook.addToCart(mockProduct);
-    }
 
     expect(screen.getByText('Test Product')).toBeInTheDocument();
   });

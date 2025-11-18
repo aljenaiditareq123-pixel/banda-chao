@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { prisma } from '../utils/prisma';
 import { io } from '../index';
+import { createNotification } from '../services/notifications';
 
 const router = Router();
 
@@ -42,6 +43,25 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
     // Emit message via WebSocket
     const roomId = [req.userId, receiverId].sort().join('_');
     io.to(roomId).emit('new_message', message);
+
+    // Create notification for message receiver (if not the same user)
+    if (req.userId !== receiverId) {
+      const sender = await prisma.user.findUnique({
+        where: { id: req.userId! },
+        select: { name: true },
+      });
+
+      await createNotification({
+        userId: receiverId,
+        type: 'message',
+        title: 'رسالة جديدة',
+        body: sender?.name ? `${sender.name}: ${content.substring(0, 50)}${content.length > 50 ? '...' : ''}` : `رسالة جديدة: ${content.substring(0, 50)}${content.length > 50 ? '...' : ''}`,
+        data: {
+          messageId: message.id,
+          fromUserId: req.userId!,
+        },
+      });
+    }
 
     res.status(201).json({
       message: 'Message sent successfully',

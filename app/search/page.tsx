@@ -123,28 +123,36 @@ export default function SearchPage() {
 
   return (
     <Layout showHeader={false}>
-      <div className={`min-h-screen bg-gray-50 ${isRTL ? 'rtl' : ''}`} dir={isRTL ? 'rtl' : 'ltr'}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8">{t('search') || '搜索'}</h1>
+      <div className={`min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 ${isRTL ? 'rtl' : ''}`} dir={isRTL ? 'rtl' : 'ltr'}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+          {/* Header */}
+          <div className="mb-10 text-center md:text-right">
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+              {t('search') || 'البحث'}
+            </h1>
+            <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto md:mx-0">
+              {t('searchSubtitle') || 'ابحث عن المنتجات، الفيديوهات، والحرفيين'}
+            </p>
+          </div>
 
           {/* Search Input */}
           <div className="mb-8">
-            <div className="relative">
+            <div className="relative max-w-3xl mx-auto">
               <input
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder={t('search') || '搜索视频、商品...'}
-                className={`w-full px-4 py-3 ${isRTL ? 'pr-12 pl-4' : 'pl-12 pr-4'} border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500`}
+                placeholder={t('searchPlaceholder') || 'ابحث عن المنتجات، الفيديوهات...'}
+                className={`w-full px-6 py-4 text-lg ${isRTL ? 'pr-14 pl-6' : 'pl-14 pr-6'} border-2 border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors shadow-sm`}
                 onKeyPress={(e) => {
                   if (e.key === 'Enter') {
                     handleSearch();
                   }
                 }}
               />
-              <div className={`absolute inset-y-0 ${isRTL ? 'right-0 pr-3' : 'left-0 pl-3'} flex items-center pointer-events-none`}>
+              <div className={`absolute inset-y-0 ${isRTL ? 'right-0 pr-5' : 'left-0 pl-5'} flex items-center pointer-events-none`}>
                 <svg
-                  className="h-5 w-5 text-gray-400"
+                  className="h-6 w-6 text-gray-400"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -162,47 +170,45 @@ export default function SearchPage() {
 
           {/* Tabs */}
           {searched && (
-            <div className="mb-6 border-b border-gray-200">
-              <div className="flex space-x-1">
-                <button
-                  onClick={() => setActiveTab('all')}
-                  className={`px-4 py-2 text-sm font-medium border-b-2 transition ${
-                    activeTab === 'all'
-                      ? 'border-red-600 text-red-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  全部 ({getTotalResults()})
-                </button>
-                <button
-                  onClick={() => setActiveTab('products')}
-                  className={`px-4 py-2 text-sm font-medium border-b-2 transition ${
-                    activeTab === 'products'
-                      ? 'border-red-600 text-red-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  商品 ({searchResults.products.length})
-                </button>
-                <button
-                  onClick={() => setActiveTab('videos')}
-                  className={`px-4 py-2 text-sm font-medium border-b-2 transition ${
-                    activeTab === 'videos'
-                      ? 'border-red-600 text-red-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  视频 ({searchResults.videos.length})
-                </button>
-              </div>
+            <div className="mb-8 flex flex-wrap gap-2 justify-center md:justify-start border-b-2 border-gray-200 pb-2">
+              <button
+                onClick={() => setActiveTab('all')}
+                className={`px-6 py-3 font-semibold text-sm md:text-base rounded-t-xl transition-all duration-200 ${
+                  activeTab === 'all'
+                    ? 'text-primary-700 bg-primary-50 border-b-2 border-primary-600'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                {t('all') || 'الكل'} ({getTotalResults()})
+              </button>
+              <button
+                onClick={() => setActiveTab('products')}
+                className={`px-6 py-3 font-semibold text-sm md:text-base rounded-t-xl transition-all duration-200 ${
+                  activeTab === 'products'
+                    ? 'text-primary-700 bg-primary-50 border-b-2 border-primary-600'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                {t('products') || 'المنتجات'} ({searchResults.products.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('videos')}
+                className={`px-6 py-3 font-semibold text-sm md:text-base rounded-t-xl transition-all duration-200 ${
+                  activeTab === 'videos'
+                    ? 'text-primary-700 bg-primary-50 border-b-2 border-primary-600'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                {t('videos') || 'الفيديوهات'} ({searchResults.videos.length})
+              </button>
             </div>
           )}
 
           {/* Loading State */}
           {loading && (
-            <div className="text-center py-12">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
-              <p className="mt-4 text-gray-500">搜索中...</p>
+            <div className="text-center py-16">
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mb-4"></div>
+              <p className="text-gray-600">{t('searching') || 'جاري البحث...'}</p>
             </div>
           )}
 
@@ -211,19 +217,24 @@ export default function SearchPage() {
             <div className="space-y-8">
               {/* No Results */}
               {getTabResults() === 0 && (
-                <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-                  <p className="text-gray-500 text-lg mb-2">未找到结果</p>
-                  <p className="text-gray-400 text-sm">尝试使用不同的关键词</p>
+                <div className="text-center py-20 bg-white rounded-2xl border-2 border-gray-200 shadow-sm">
+                  <div className="text-6xl mb-4">🔍</div>
+                  <p className="text-xl font-semibold text-gray-700 mb-2">
+                    {t('noResults') || 'لم يتم العثور على نتائج'}
+                  </p>
+                  <p className="text-gray-500">
+                    {t('tryDifferentKeywords') || 'جرب استخدام كلمات مفتاحية مختلفة'}
+                  </p>
                 </div>
               )}
 
               {/* Products Tab */}
               {(activeTab === 'all' || activeTab === 'products') && searchResults.products.length > 0 && (
                 <section>
-                  <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                    商品 ({searchResults.products.length})
+                  <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
+                    {t('products') || 'المنتجات'} ({searchResults.products.length})
                   </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                     {searchResults.products.map((product) => (
                       <ProductCard
                         key={product.id}
@@ -238,10 +249,10 @@ export default function SearchPage() {
               {/* Videos Tab */}
               {(activeTab === 'all' || activeTab === 'videos') && searchResults.videos.length > 0 && (
                 <section>
-                  <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                    视频 ({searchResults.videos.length})
+                  <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
+                    {t('videos') || 'الفيديوهات'} ({searchResults.videos.length})
                   </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                     {searchResults.videos.map((video) => (
                       <VideoCard key={video.id} video={video} />
                     ))}
@@ -252,25 +263,31 @@ export default function SearchPage() {
               {/* Users Tab (if needed) */}
               {activeTab === 'all' && searchResults.users.length > 0 && (
                 <section>
-                  <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                    用户 ({searchResults.users.length})
+                  <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
+                    {t('users') || 'المستخدمون'} ({searchResults.users.length})
                   </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                     {searchResults.users.map((user: any) => (
                       <Link
                         key={user.id}
                         href={`/profile/${user.id}`}
-                        className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition"
+                        className="bg-white rounded-xl border-2 border-gray-200 shadow-sm hover:shadow-lg transition p-6"
                       >
-                        <div className="flex items-center space-x-3">
-                          <img
-                            src={user.profilePicture || '/default-avatar.png'}
-                            alt={user.name}
-                            className="w-12 h-12 rounded-full"
-                          />
-                          <div>
-                            <p className="font-semibold text-gray-900">{user.name}</p>
-                            <p className="text-sm text-gray-500">{user.email}</p>
+                        <div className="flex items-center gap-4">
+                          {user.profilePicture ? (
+                            <img
+                              src={user.profilePicture}
+                              alt={user.name}
+                              className="w-14 h-14 rounded-full border-2 border-primary-200"
+                            />
+                          ) : (
+                            <div className="w-14 h-14 rounded-full bg-primary-600 flex items-center justify-center text-white font-semibold text-lg">
+                              {(user.name || 'U')[0].toUpperCase()}
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-gray-900 truncate">{user.name || t('user') || 'مستخدم'}</p>
+                            <p className="text-sm text-gray-500 truncate">{user.email}</p>
                           </div>
                         </div>
                       </Link>
@@ -283,8 +300,14 @@ export default function SearchPage() {
 
           {/* Initial State */}
           {!searched && !loading && (
-            <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-              <p className="text-gray-500">输入关键词开始搜索</p>
+            <div className="text-center py-20 bg-white rounded-2xl border-2 border-gray-200 shadow-sm">
+              <div className="text-6xl mb-4">🔍</div>
+              <p className="text-xl font-semibold text-gray-700 mb-2">
+                {t('startSearching') || 'ابدأ البحث'}
+              </p>
+              <p className="text-gray-500">
+                {t('enterKeywordsToSearch') || 'أدخل كلمات مفتاحية للبحث عن المنتجات، الفيديوهات، والمستخدمين'}
+              </p>
             </div>
           )}
         </div>

@@ -17,6 +17,8 @@ import seedRoutes from './api/seed';
 import oauthRoutes from './api/oauth';
 import commentRoutes from './api/comments';
 import orderRoutes from './api/orders';
+import notificationRoutes from './api/notifications';
+import makerRoutes from './api/makers';
 
 // Load environment variables
 dotenv.config();
@@ -95,6 +97,8 @@ app.use('/api/v1', seedRoutes);
 app.use('/api/v1/oauth', oauthRoutes);
 app.use('/api/v1/comments', commentRoutes);
 app.use('/api/v1/orders', orderRoutes);
+app.use('/api/v1/notifications', notificationRoutes);
+app.use('/api/v1/makers', makerRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {

@@ -7,12 +7,13 @@ import VideoCard from '@/components/VideoCard';
 import Comments from '@/components/Comments';
 import LikeButton from '@/components/LikeButton';
 import EditDeleteButtons from '@/components/EditDeleteButtons';
-import Image from 'next/image';
+import { useLanguage } from '@/contexts/LanguageContext';
 import Link from 'next/link';
 
 export default function VideoDetailPageClient() {
   const params = useParams();
   const videoId = params.id as string;
+  const { t } = useLanguage();
   const [video, setVideo] = useState<any>(null);
   const [relatedVideos, setRelatedVideos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,10 +79,10 @@ export default function VideoDetailPageClient() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">جاري التحميل...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">{t('loading') || 'جاري التحميل...'}</p>
         </div>
       </div>
     );
@@ -89,14 +90,16 @@ export default function VideoDetailPageClient() {
 
   if (error || !video) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">{error || 'Video not found'}</p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-50">
+        <div className="text-center bg-white rounded-2xl border-2 border-red-200 shadow-lg p-8 max-w-md mx-4">
+          <div className="text-6xl mb-4">❌</div>
+          <p className="text-red-600 font-semibold text-lg mb-4">{error || t('videoNotFound') || 'الفيديو غير موجود'}</p>
           <Link
             href="/"
-            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition font-medium"
           >
-            العودة للصفحة الرئيسية
+            <span>←</span>
+            <span>{t('backToHome') || 'العودة للصفحة الرئيسية'}</span>
           </Link>
         </div>
       </div>
@@ -104,88 +107,126 @@ export default function VideoDetailPageClient() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 py-8 md:py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Video Player Section */}
-          <div className="lg:col-span-2">
-            <div className="bg-black rounded-lg aspect-video mb-4">
-              <video
-                src={video.videoUrl}
-                controls
-                className="w-full h-full rounded-lg"
-                poster={video.thumbnailUrl}
-              >
-                您的浏览器不支持视频播放。
-              </video>
+          <div className="lg:col-span-2 space-y-6">
+            {/* Video Player */}
+            <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-lg overflow-hidden">
+              <div className="bg-black aspect-video">
+                <video
+                  src={video.videoUrl}
+                  controls
+                  className="w-full h-full"
+                  poster={video.thumbnailUrl}
+                >
+                  {t('videoNotSupported') || 'متصفحك لا يدعم تشغيل الفيديو'}
+                </video>
+              </div>
             </div>
 
             {/* Video Info */}
-            <div className="bg-white rounded-lg p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <h1 className="text-2xl font-bold text-gray-900">{video.title}</h1>
+            <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-lg p-6 md:p-8">
+              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
+                <div className="flex-1">
+                  <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3 leading-tight">
+                    {video.title}
+                  </h1>
+                  <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                    <span className="flex items-center gap-1">
+                      <span>👁️</span>
+                      <span>{formatViews(video.views || 0)} {t('views') || 'مشاهدة'}</span>
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span>⏱️</span>
+                      <span>{formatDuration(video.duration)}</span>
+                    </span>
+                    {video.type && (
+                      <span className="px-3 py-1 bg-primary-100 text-primary-700 rounded-full text-xs font-semibold">
+                        {video.type === 'short' ? t('shortVideo') || 'فيديو قصير' : t('longVideo') || 'فيديو طويل'}
+                      </span>
+                    )}
+                  </div>
+                </div>
                 <EditDeleteButtons userId={video.userId} videoId={video.id} />
               </div>
               
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-4">
-                  <Link
-                    href={`/profile/${video.userId}`}
-                    className="flex items-center space-x-3"
-                  >
-                    {video.user?.profilePicture ? (
-                      <Image
-                        src={video.user.profilePicture}
-                        alt={video.user.name || 'User'}
-                        width={40}
-                        height={40}
-                        className="h-10 w-10 rounded-full"
-                        unoptimized
-                      />
-                    ) : (
-                      <div className="h-10 w-10 rounded-full bg-red-600 flex items-center justify-center text-white">
-                        {(video.user?.name || 'U').charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                    <span className="font-semibold text-gray-900">
-                      {video.user?.name || '未命名用户'}
-                    </span>
-                  </Link>
-                </div>
-                <div className="flex items-center space-x-4">
-                  <span className="text-sm text-gray-600">{formatViews(video.views || 0)} 次观看</span>
+              <div className="flex items-center gap-4 pb-6 border-b border-gray-200">
+                <Link
+                  href={`/profile/${video.userId}`}
+                  className="flex items-center gap-3 hover:opacity-80 transition"
+                >
+                  {video.user?.profilePicture ? (
+                    <img
+                      src={video.user.profilePicture}
+                      alt={video.user.name || 'User'}
+                      className="h-12 w-12 rounded-full border-2 border-primary-200"
+                    />
+                  ) : (
+                    <div className="h-12 w-12 rounded-full bg-primary-600 flex items-center justify-center text-white font-semibold text-lg">
+                      {(video.user?.name || 'U').charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div>
+                    <p className="font-semibold text-gray-900">
+                      {video.user?.name || t('unknownUser') || 'مستخدم غير معروف'}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {new Date(video.createdAt).toLocaleDateString('ar-SA', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      })}
+                    </p>
+                  </div>
+                </Link>
+                <div className="ml-auto">
                   <LikeButton videoId={video.id} initialLikes={video.likes || 0} />
-                  <span className="text-sm text-gray-600">{formatDuration(video.duration)}</span>
                 </div>
               </div>
 
-              {video.description && (
-                <div className="border-t border-gray-200 pt-4">
-                  <p className="text-gray-700 whitespace-pre-line">{video.description}</p>
-                </div>
-              )}
+              {/* Description */}
+              <div className="mt-6">
+                <h2 className="text-lg font-bold text-gray-900 mb-3">
+                  {t('videoDescription') || 'وصف الفيديو'}
+                </h2>
+                {video.description ? (
+                  <p className="text-gray-700 whitespace-pre-line leading-relaxed">
+                    {video.description}
+                  </p>
+                ) : (
+                  <p className="text-gray-500 italic">
+                    {t('noDescription') || 'لم تتم إضافة وصف لهذا الفيديو بعد'}
+                  </p>
+                )}
+              </div>
             </div>
 
             {/* Comments Section */}
-            <div className="bg-white rounded-lg p-6 shadow-sm mt-6">
+            <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-lg p-6 md:p-8">
               <Comments videoId={video.id} />
             </div>
           </div>
 
           {/* Related Videos Sidebar */}
           <div className="lg:col-span-1">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
-              {video.type === 'short' ? '相关短视频' : '相关长视频'}
-            </h2>
-            {relatedVideos.length > 0 ? (
-              <div className="space-y-4">
-                {relatedVideos.map((relatedVideo) => (
-                  <VideoCard key={relatedVideo.id} video={relatedVideo} />
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500">暂无相关视频</p>
-            )}
+            <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-lg p-6 sticky top-4">
+              <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-6">
+                {t('relatedVideos') || 'فيديوهات أخرى'}
+              </h2>
+              {relatedVideos.length > 0 ? (
+                <div className="space-y-4">
+                  {relatedVideos.slice(0, 6).map((relatedVideo) => (
+                    <VideoCard key={relatedVideo.id} video={relatedVideo} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">{t('noRelatedVideos') || 'لا توجد فيديوهات أخرى'}</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

@@ -1,59 +1,50 @@
-import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export const runtime = 'nodejs'; // Use Node.js runtime instead of Edge
-
+/**
+ * Middleware for Banda Chao
+ * 
+ * Currently handles:
+ * - Route exclusions (founder, api, static assets)
+ * - Locale detection (if needed in future)
+ * 
+ * JWT authentication is handled client-side via AuthContext
+ * and on the backend via Express middleware (authenticateToken)
+ * 
+ * Future enhancements:
+ * - Role-based route protection (FOUNDER / MAKER / USER)
+ * - JWT token refresh if needed
+ * - Rate limiting
+ */
 export async function middleware(request: NextRequest) {
-  // Skip Supabase auth for founder pages and API routes
-  if (request.nextUrl.pathname.startsWith('/founder') || request.nextUrl.pathname.startsWith('/api')) {
+  const { pathname } = request.nextUrl;
+
+  // Skip middleware for:
+  // - Founder pages (no auth needed)
+  // - API routes (handled by Next.js API routes or Express backend)
+  // - Static assets (_next/static, _next/image, favicon, images)
+  if (
+    pathname.startsWith('/founder') ||
+    pathname.startsWith('/api') ||
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/favicon') ||
+    /\.(svg|png|jpg|jpeg|gif|webp|ico)$/.test(pathname)
+  ) {
     return NextResponse.next();
   }
 
-  // Check if Supabase environment variables are set
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    // If Supabase is not configured, skip middleware
-    return NextResponse.next();
-  }
+  // For now, just pass through all requests
+  // JWT authentication is handled:
+  // - Client-side: AuthContext checks localStorage for 'auth_token'
+  // - Backend: Express middleware verifies JWT in Authorization header
+  // 
+  // Future: Add role-based access control here if needed
+  // Example:
+  // const token = request.cookies.get('auth_token')?.value;
+  // if (pathname.startsWith('/maker/dashboard') && !hasMakerRole(token)) {
+  //   return NextResponse.redirect(new URL('/login', request.url));
+  // }
 
-  let supabaseResponse = NextResponse.next({
-    request,
-  })
-
-  try {
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return request.cookies.get(name)?.value
-          },
-          set(name: string, value: string, options: any) {
-            request.cookies.set(name, value)
-            supabaseResponse = NextResponse.next({
-              request,
-            })
-            supabaseResponse.cookies.set(name, value, options)
-          },
-          remove(name: string, options: any) {
-            request.cookies.set(name, '')
-            supabaseResponse = NextResponse.next({
-              request,
-            })
-            supabaseResponse.cookies.set(name, '', { ...options, maxAge: 0 })
-          },
-        },
-      }
-    )
-
-    // Refreshing the auth token
-    await supabase.auth.getUser()
-  } catch (error) {
-    // If Supabase fails, continue without auth
-    console.error('[Middleware] Supabase error:', error);
-  }
-
-  return supabaseResponse
+  return NextResponse.next();
 }
 
 export const config = {
@@ -65,8 +56,8 @@ export const config = {
      * - favicon.ico (favicon file)
      * - /founder (founder pages - no auth needed)
      * - /api (API routes)
-     * Feel free to modify this pattern to include more paths.
+     * - Image files (svg, png, jpg, jpeg, gif, webp, ico)
      */
-    '/((?!_next/static|_next/image|favicon.ico|founder|api|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|founder|api|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
   ],
 }
