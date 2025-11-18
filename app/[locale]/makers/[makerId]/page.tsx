@@ -1,25 +1,15 @@
 import { notFound } from 'next/navigation';
 import MakerDetailClient from '@/components/makers/MakerDetailClient';
 import { Maker, Product, Video } from '@/types';
-import { PRODUCTS_ENDPOINT, normalizeProduct, BACKEND_BASE_URL } from '@/lib/product-utils';
+import { PRODUCTS_ENDPOINT, normalizeProduct } from '@/lib/product-utils';
 import { normalizeMaker } from '@/lib/maker-utils';
+import { getApiBaseUrl } from '@/lib/api-utils';
 
 interface LocaleMakerPageProps {
   params: {
     locale: string;
     makerId: string;
   };
-}
-
-// Helper function to get API base URL (server-side safe)
-function getApiBaseUrl(): string {
-  if (process.env.NEXT_PUBLIC_API_URL) {
-    return `${process.env.NEXT_PUBLIC_API_URL}/api/v1`;
-  }
-  if (process.env.NODE_ENV === 'development') {
-    return 'http://localhost:3001/api/v1';
-  }
-  return 'https://banda-chao-backend.onrender.com/api/v1';
 }
 
 async function fetchMaker(makerId: string): Promise<Maker | null> {
@@ -80,7 +70,8 @@ async function fetchMakerProducts(makerId: string): Promise<Product[]> {
 async function fetchMakerVideos(makerId: string): Promise<Video[]> {
   try {
     // Fetch all videos and filter by userId (makerId)
-    const response = await fetch(`${BACKEND_BASE_URL}/api/v1/videos?limit=50`, {
+    const apiBaseUrl = getApiBaseUrl();
+    const response = await fetch(`${apiBaseUrl}/videos?limit=50`, {
       next: { revalidate: 60 },
     });
 

@@ -1,6 +1,6 @@
 import HomePageClient from '@/components/home/HomePageClient';
 import { Product, Maker, Video } from '@/types';
-import { PRODUCTS_ENDPOINT, normalizeProduct } from '@/lib/product-utils';
+import { normalizeProduct } from '@/lib/product-utils';
 import { normalizeMaker } from '@/lib/maker-utils';
 import { getApiBaseUrl } from '@/lib/api-utils';
 
@@ -12,7 +12,8 @@ interface LocalePageProps {
 
 async function fetchLatestProducts(): Promise<Product[]> {
   try {
-    const response = await fetch(PRODUCTS_ENDPOINT, {
+    const apiBaseUrl = getApiBaseUrl();
+    const response = await fetch(`${apiBaseUrl}/products`, {
       next: { revalidate: 60 },
     });
 

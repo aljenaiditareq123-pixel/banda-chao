@@ -25,9 +25,23 @@ function LoginForm() {
       setLoading(true);
       setError(null);
 
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL 
-        ? `${process.env.NEXT_PUBLIC_API_URL}/api/v1`
-        : 'https://banda-chao-backend.onrender.com/api/v1';
+      // Get API base URL - NEXT_PUBLIC_API_URL already includes /api/v1
+      const getApiBaseUrl = (): string => {
+        if (typeof window === 'undefined') {
+          // Server-side
+          if (process.env.NEXT_PUBLIC_API_URL) {
+            return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '');
+          }
+          return 'https://banda-chao-backend.onrender.com/api/v1';
+        }
+        // Client-side
+        if (process.env.NEXT_PUBLIC_API_URL) {
+          return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '');
+        }
+        return 'https://banda-chao-backend.onrender.com/api/v1';
+      };
+
+      const API_BASE_URL = getApiBaseUrl();
 
       // Get Google OAuth URL
       const response = await fetch(`${API_BASE_URL}/oauth/google`);

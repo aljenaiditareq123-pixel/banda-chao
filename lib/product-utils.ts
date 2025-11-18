@@ -1,11 +1,27 @@
 import { Product } from '@/types';
+import { getApiBaseUrl } from './api-utils';
 
 const FALLBACK_BACKEND_URL = 'https://banda-chao-backend.onrender.com';
 
-export const BACKEND_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '') ?? FALLBACK_BACKEND_URL;
+/**
+ * Gets the backend base URL without /api/v1 suffix
+ * Removes /api/v1 from NEXT_PUBLIC_API_URL if present
+ */
+export const BACKEND_BASE_URL = ((): string => {
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    // Remove trailing slash
+    let url = process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '');
+    // Remove /api/v1 suffix if present
+    url = url.replace(/\/api\/v1$/, '');
+    return url;
+  }
+  return FALLBACK_BACKEND_URL;
+})();
 
-export const PRODUCTS_ENDPOINT = `${BACKEND_BASE_URL}/api/v1/products`;
+/**
+ * Products endpoint - uses getApiBaseUrl() which already includes /api/v1
+ */
+export const PRODUCTS_ENDPOINT = `${getApiBaseUrl()}/products`;
 
 export function normalizeProduct(apiProduct: any): Product {
   const images = Array.isArray(apiProduct.images)

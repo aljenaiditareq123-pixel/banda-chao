@@ -19,8 +19,9 @@ function CallbackHandlerContent() {
       // Store token
       localStorage.setItem('auth_token', token);
 
-      // Fetch user info
-      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://banda-chao-backend.onrender.com'}/api/v1/users/me`, {
+      // Fetch user info - NEXT_PUBLIC_API_URL already includes /api/v1
+      const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://banda-chao-backend.onrender.com/api/v1').replace(/\/$/, '');
+      fetch(`${apiBaseUrl}/users/me`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

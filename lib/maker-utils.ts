@@ -1,7 +1,10 @@
 import { Maker } from '@/types';
-import { BACKEND_BASE_URL } from './product-utils';
+import { getApiBaseUrl } from './api-utils';
 
-export const MAKERS_ENDPOINT = `${BACKEND_BASE_URL}/api/v1/makers`;
+/**
+ * Makers endpoint - uses getApiBaseUrl() which already includes /api/v1
+ */
+export const MAKERS_ENDPOINT = `${getApiBaseUrl()}/makers`;
 
 export function normalizeMaker(apiMaker: any): Maker {
   if (!apiMaker) {

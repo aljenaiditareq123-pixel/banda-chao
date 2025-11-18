@@ -3,9 +3,15 @@ import axios from 'axios';
 
 export const dynamic = 'force-dynamic';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL 
-  ? `${process.env.NEXT_PUBLIC_API_URL}/api/v1`
-  : 'https://banda-chao-backend.onrender.com/api/v1';
+// Get API base URL - NEXT_PUBLIC_API_URL already includes /api/v1
+const getApiBaseUrl = (): string => {
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '');
+  }
+  return 'https://banda-chao-backend.onrender.com/api/v1';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 export async function GET(request: Request) {
   let origin: string;

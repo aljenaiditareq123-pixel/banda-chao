@@ -1,12 +1,14 @@
 import HomePageClient from '@/components/home/HomePageClient';
-import { BACKEND_BASE_URL, normalizeProduct } from '@/lib/product-utils';
+import { normalizeProduct } from '@/lib/product-utils';
 import { normalizeMaker } from '@/lib/maker-utils';
+import { getApiBaseUrl } from '@/lib/api-utils';
 import { Product, Maker, Video } from '@/types';
 import { redirect } from 'next/navigation';
 
 async function fetchProducts(): Promise<Product[]> {
   try {
-    const response = await fetch(`${BACKEND_BASE_URL}/api/v1/products`, { next: { revalidate: 60 } });
+    const apiBaseUrl = getApiBaseUrl();
+    const response = await fetch(`${apiBaseUrl}/products`, { next: { revalidate: 60 } });
 
     if (!response.ok) throw new Error('Failed to fetch products');
 
@@ -18,7 +20,8 @@ async function fetchProducts(): Promise<Product[]> {
 
 async function fetchMakers(): Promise<Maker[]> {
   try {
-    const response = await fetch(`${BACKEND_BASE_URL}/api/v1/makers`, { next: { revalidate: 120 } });
+    const apiBaseUrl = getApiBaseUrl();
+    const response = await fetch(`${apiBaseUrl}/makers`, { next: { revalidate: 120 } });
     if (!response.ok) throw new Error('Failed to fetch makers');
     const json = await response.json();
     const items = Array.isArray(json.data) ? json.data : [];
@@ -28,7 +31,8 @@ async function fetchMakers(): Promise<Maker[]> {
 
 async function fetchVideos(): Promise<Video[]> {
   try {
-    const response = await fetch(`${BACKEND_BASE_URL}/api/v1/videos?limit=6`, { next: { revalidate: 120 } });
+    const apiBaseUrl = getApiBaseUrl();
+    const response = await fetch(`${apiBaseUrl}/videos?limit=6`, { next: { revalidate: 120 } });
     if (!response.ok) throw new Error('Failed to fetch videos');
     const json = await response.json();
     const items = Array.isArray(json.data) ? json.data : [];

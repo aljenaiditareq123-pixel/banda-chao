@@ -1,6 +1,7 @@
 import MakersPageClient from './page-client';
 import { Maker } from '@/types';
 import { normalizeMaker } from '@/lib/maker-utils';
+import { getApiBaseUrl } from '@/lib/api-utils';
 
 interface LocaleMakersPageProps {
   params: {
@@ -33,17 +34,6 @@ async function fetchAllMakers(search?: string): Promise<Maker[]> {
     console.error('[MakersPage] Failed to load makers from backend:', error);
     return [];
   }
-}
-
-// Helper function to get API base URL (server-side safe)
-function getApiBaseUrl(): string {
-  if (process.env.NEXT_PUBLIC_API_URL) {
-    return `${process.env.NEXT_PUBLIC_API_URL}/api/v1`;
-  }
-  if (process.env.NODE_ENV === 'development') {
-    return 'http://localhost:3001/api/v1';
-  }
-  return 'https://banda-chao-backend.onrender.com/api/v1';
 }
 
 export default async function LocaleMakersPage({ params, searchParams }: LocaleMakersPageProps) {
