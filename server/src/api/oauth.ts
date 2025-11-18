@@ -212,7 +212,10 @@ router.post('/google/callback', async (req: Request, res: Response) => {
     const finalRole = user.role || getUserRoleFromEmail(user.email);
 
     const jwtSecret: string = process.env.JWT_SECRET || 'your-secret-key';
-    const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
+    const rawExpiresIn = process.env.JWT_EXPIRES_IN;
+    const expiresIn: string | number = rawExpiresIn && rawExpiresIn.trim().length > 0
+      ? rawExpiresIn.trim()
+      : '7d';
     const payload = { userId: user.id, email: user.email, role: finalRole };
     const token = jwt.sign(payload, jwtSecret, { expiresIn } as jwt.SignOptions);
 
