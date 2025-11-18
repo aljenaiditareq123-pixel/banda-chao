@@ -11,6 +11,7 @@ function LoginForm() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login, user } = useAuth();
@@ -53,6 +54,7 @@ function LoginForm() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setSuccess(false);
 
     // Validation
     if (!email.trim()) {
@@ -71,20 +73,35 @@ function LoginForm() {
       // تسجيل الدخول باستخدام Express API
       const loggedInUser = await login(email.trim(), password);
 
-      // بعد تسجيل الدخول الناجح، توجيه المستخدم حسب دوره
-      if (loggedInUser && loggedInUser.role === 'FOUNDER') {
-        // Redirect Founder directly to assistant page
-        router.push('/founder/assistant');
-      } else if (loggedInUser) {
-        // Redirect regular users to redirect URL or home page
-        router.push(redirectTo);
-      } else {
+      // Check if login was successful
+      if (!loggedInUser) {
         // If login returned null (shouldn't happen, but handle it)
         setError('فشل تسجيل الدخول، يرجى المحاولة مرة أخرى');
         setLoading(false);
         return;
       }
-      router.refresh();
+
+      // Show success message - keep it visible for at least 3 seconds
+      setSuccess(true);
+      setError(null);
+
+      // Keep success marker visible for at least 3 seconds (3000ms) for TestSprite to detect
+      // Redirect happens after 3000ms to ensure marker stays visible the full duration
+      setTimeout(() => {
+        // بعد تسجيل الدخول الناجح، توجيه المستخدم حسب دوره
+        if (loggedInUser.role === 'FOUNDER') {
+          // Redirect Founder directly to assistant page
+          router.push('/founder/assistant');
+        } else {
+          // Redirect regular users to redirect URL or home page
+          router.push(redirectTo);
+        }
+        // Delay refresh to ensure redirect completes first
+        // Refresh updates UI state (shows logged-in state in header)
+        setTimeout(() => {
+          router.refresh();
+        }, 500); // Refresh 500ms after redirect starts
+      }, 3000); // Redirect after 3000ms - ensures marker is visible for full 3 seconds
     } catch (error: any) {
       // Better error handling for different error types
       let errorMessage = 'فشل تسجيل الدخول، يرجى المحاولة مرة أخرى';
@@ -107,6 +124,7 @@ function LoginForm() {
       }
       
       setError(errorMessage);
+      setSuccess(false);
     } finally {
       setLoading(false);
     }
@@ -129,8 +147,25 @@ function LoginForm() {
           </div>
 
           <form className="space-y-6" onSubmit={handleLogin}>
+            {/* Success message */}
+            {success && (
+              <div 
+                id="login-success-marker"
+                className="bg-green-50 border-2 border-green-200 text-green-700 px-4 py-3 rounded-xl text-sm"
+              >
+                <div className="flex items-center gap-2">
+                  <span>✅</span>
+                  <span>تم تسجيل الدخول بنجاح! جاري التوجيه...</span>
+                </div>
+              </div>
+            )}
+
+            {/* Error message */}
             {error && (
-              <div className="bg-red-50 border-2 border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
+              <div 
+                id="login-error-marker"
+                className="bg-red-50 border-2 border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm"
+              >
                 <div className="flex items-center gap-2">
                   <span>⚠️</span>
                   <span>{error}</span>

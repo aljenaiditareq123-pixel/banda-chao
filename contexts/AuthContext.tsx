@@ -128,8 +128,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       return loggedInUser;
     } catch (error: any) {
-      // Throw error to be handled by the caller
-      throw new Error(error.response?.data?.error || 'Login failed');
+      // Preserve original error structure so caller can access error.response.status, etc.
+      // If it's already an Error with response, throw it as-is
+      // Otherwise, wrap it in a new Error
+      if (error.response || error.request || error.message) {
+        // Axios error or Error object - throw as-is
+        throw error;
+      }
+      // Unknown error - wrap it
+      throw new Error(error.response?.data?.error || error.message || 'Login failed');
     }
   };
 

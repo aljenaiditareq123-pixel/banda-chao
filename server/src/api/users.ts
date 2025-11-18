@@ -59,8 +59,11 @@ router.post('/', async (req: Request, res: Response) => {
       });
     }
 
+    // Trim and normalize email
+    const normalizedEmail = email.trim().toLowerCase();
+
     // Validate email format
-    if (!isValidEmail(email)) {
+    if (!isValidEmail(normalizedEmail)) {
       return res.status(400).json({ 
         error: 'Invalid email format',
         message: 'Please provide a valid email address' 
@@ -68,16 +71,24 @@ router.post('/', async (req: Request, res: Response) => {
     }
 
     // Validate password length
-    if (password.length < 6) {
+    if (typeof password !== 'string' || password.length < 6) {
       return res.status(400).json({ 
         error: 'Password too short',
         message: 'Password must be at least 6 characters' 
       });
     }
 
+    // Validate name if provided (should be a string)
+    if (name !== undefined && name !== null && typeof name !== 'string') {
+      return res.status(400).json({ 
+        error: 'Invalid name format',
+        message: 'Name must be a string' 
+      });
+    }
+
     // Check if user already exists (409 Conflict for duplicates)
     const existingUser = await prisma.user.findUnique({
-      where: { email }
+      where: { email: normalizedEmail }
     });
 
     if (existingUser) {
@@ -88,54 +99,101 @@ router.post('/', async (req: Request, res: Response) => {
     }
 
     // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Calculate user role before creating user
-    const role = getUserRoleFromEmail(email);
-
-    // Create user
-    const user = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        name: name || email.split('@')[0],
-        role
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        profilePicture: true,
-        role: true,
-        createdAt: true
-      }
-    });
-
-    res.status(201).json({
-      message: 'User created successfully',
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        profilePicture: user.profilePicture,
-        role: user.role,
-        createdAt: user.createdAt
-      }
-    });
-  } catch (error: any) {
-    console.error('User creation error:', error);
-    
-    // Handle Prisma unique constraint violation (shouldn't happen but safety check)
-    if (error.code === 'P2002') {
-      return res.status(409).json({ 
-        error: 'User already exists',
-        message: 'A user with this email already exists' 
+    let hashedPassword: string;
+    try {
+      hashedPassword = await bcrypt.hash(password, 10);
+    } catch (hashError: any) {
+      console.error('Password hashing error:', hashError);
+      return res.status(500).json({ 
+        error: 'Failed to process password',
+        message: 'An error occurred while processing your password' 
       });
     }
+
+    // Calculate user role before creating user
+    let role: 'USER' | 'FOUNDER';
+    try {
+      role = getUserRoleFromEmail(normalizedEmail);
+    } catch (roleError: any) {
+      console.error('Role calculation error:', roleError);
+      // Default to USER if role calculation fails
+      role = 'USER';
+    }
+
+    // Create user
+    let user;
+    try {
+      user = await prisma.user.create({
+        data: {
+          email: normalizedEmail,
+          password: hashedPassword,
+          name: (name && name.trim()) || normalizedEmail.split('@')[0],
+          role
+        },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          profilePicture: true,
+          role: true,
+          createdAt: true
+        }
+      });
+    } catch (prismaError: any) {
+      console.error('Prisma user creation error:', prismaError);
+      
+      // Handle Prisma unique constraint violation (email already exists)
+      if (prismaError.code === 'P2002') {
+        // Check which field violated the constraint
+        const target = prismaError.meta?.target;
+        if (Array.isArray(target) && target.includes('email')) {
+          return res.status(409).json({ 
+            error: 'User already exists',
+            message: 'A user with this email already exists' 
+          });
+        }
+        return res.status(409).json({ 
+          error: 'Duplicate entry',
+          message: 'A user with these details already exists' 
+        });
+      }
+
+      // Handle Prisma validation errors
+      if (prismaError.code === 'P2003') {
+        return res.status(400).json({ 
+          error: 'Invalid reference',
+          message: 'Invalid data provided' 
+        });
+      }
+
+      // Re-throw other Prisma errors to be handled by outer catch
+      throw prismaError;
+    }
+
+    // Return 201 Created with user data
+    // Format: Return user object directly (TestSprite expects created resource)
+    res.status(201).json({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      profilePicture: user.profilePicture,
+      role: user.role,
+      createdAt: user.createdAt
+    });
+  } catch (error: any) {
+    // Log full error details for debugging
+    console.error('User creation error:', {
+      message: error.message,
+      code: error.code,
+      meta: error.meta,
+      stack: error.stack
+    });
     
-    res.status(500).json({ 
-      error: 'Failed to create user', 
-      message: error.message 
+    // Only return 500 for truly unexpected errors
+    // All validation and duplicate errors should have been handled above
+    return res.status(500).json({ 
+      error: 'Internal server error',
+      message: 'An unexpected error occurred while creating the user' 
     });
   }
 });
@@ -673,8 +731,8 @@ router.delete('/:id', authenticateToken, async (req: AuthRequest, res: Response)
       where: { id }
     });
 
-    // Return 204 No Content (no response body) as per TestSprite expectations
-    res.status(204).send();
+    // Return 204 No Content (no response body) as per REST standards and TestSprite expectations
+    return res.status(204).send();
   } catch (error: any) {
     console.error('Delete user error:', error);
     

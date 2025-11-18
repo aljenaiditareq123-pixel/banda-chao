@@ -75,14 +75,36 @@ async function main() {
     ],
   };
 
-  // Create short videos
-  for (let i = 0; i < 5; i++) {
+  // Create 8 short videos (more content for testing)
+  const shortVideoTitles = [
+    '有趣的短视频 #1',
+    '生活小技巧分享',
+    '美食制作教程',
+    '旅行见闻',
+    '搞笑瞬间',
+    '手工制作过程',
+    '日常Vlog分享',
+    '快速化妆教程',
+  ];
+  
+  const shortVideoDescriptions = [
+    '这是一个非常有趣的短视频，希望大家喜欢！',
+    '分享一个实用的生活小技巧，对大家很有帮助。',
+    '今天教大家做一道简单又美味的菜。',
+    '记录一次难忘的旅行经历。',
+    '生活中的搞笑瞬间，让人忍俊不禁。',
+    '展示手工制作的详细过程，简单易学。',
+    '记录一天的有趣生活，分享给大家。',
+    '3分钟快速化妆，适合忙碌的早晨。',
+  ];
+
+  for (let i = 0; i < shortVideoTitles.length; i++) {
     const user = users[i % users.length];
     await prisma.video.create({
       data: {
         userId: user.id,
-        title: videoTitles.short[i],
-        description: videoDescriptions.short[i],
+        title: shortVideoTitles[i],
+        description: shortVideoDescriptions[i],
         videoUrl: `https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4`,
         thumbnailUrl: `https://picsum.photos/640/360?random=${i + 1}`,
         duration: 30 + Math.floor(Math.random() * 60), // 30-90 seconds
@@ -91,7 +113,7 @@ async function main() {
         likes: Math.floor(Math.random() * 500),
       },
     });
-    console.log(`✅ Created short video: ${videoTitles.short[i]}`);
+    console.log(`✅ Created short video: ${shortVideoTitles[i]}`);
   }
 
   // Create long videos
@@ -113,9 +135,10 @@ async function main() {
     console.log(`✅ Created long video: ${videoTitles.long[i]}`);
   }
 
-  // Create 15 products
+  // Create 20+ products covering all Chinese categories: 全部, 电子产品, 时尚, 家居, 运动
   console.log('🛍️ Creating products...');
   const productData = [
+    // 电子产品 (Electronics) - 6 products
     {
       name: 'iPhone 15 Pro',
       description: '最新款iPhone，配备A17 Pro芯片，拍照功能强大，性能卓越。',
@@ -125,75 +148,11 @@ async function main() {
       externalLink: 'https://www.apple.com',
     },
     {
-      name: '时尚运动鞋',
-      description: '舒适透气的运动鞋，适合日常运动和休闲穿着。',
-      price: 299,
-      category: '时尚',
-      imageUrl: 'https://picsum.photos/400/400?random=102',
-      externalLink: 'https://www.example.com',
-    },
-    {
-      name: '现代简约沙发',
-      description: '北欧风格沙发，舒适耐用，适合现代家居装饰。',
-      price: 2999,
-      category: '家居',
-      imageUrl: 'https://picsum.photos/400/400?random=103',
-      externalLink: 'https://www.example.com',
-    },
-    {
-      name: '瑜伽垫',
-      description: '防滑瑜伽垫，厚度适中，适合各种瑜伽练习。',
-      price: 89,
-      category: '运动',
-      imageUrl: 'https://picsum.photos/400/400?random=104',
-      externalLink: 'https://www.example.com',
-    },
-    {
-      name: '有机绿茶',
-      description: '优质有机绿茶，口感清香，健康养生。',
-      price: 59,
-      category: '美食',
-      imageUrl: 'https://picsum.photos/400/400?random=105',
-      externalLink: 'https://www.example.com',
-    },
-    {
       name: '无线蓝牙耳机',
       description: '高品质蓝牙耳机，降噪功能强大，音质清晰。',
       price: 399,
       category: '电子产品',
       imageUrl: 'https://picsum.photos/400/400?random=106',
-      externalLink: 'https://www.example.com',
-    },
-    {
-      name: '时尚连衣裙',
-      description: '优雅时尚的连衣裙，适合各种场合穿着。',
-      price: 199,
-      category: '时尚',
-      imageUrl: 'https://picsum.photos/400/400?random=107',
-      externalLink: 'https://www.example.com',
-    },
-    {
-      name: '实木餐桌',
-      description: '优质实木餐桌，环保健康，经久耐用。',
-      price: 1999,
-      category: '家居',
-      imageUrl: 'https://picsum.photos/400/400?random=108',
-      externalLink: 'https://www.example.com',
-    },
-    {
-      name: '跑步机',
-      description: '家用跑步机，静音设计，适合室内运动。',
-      price: 2999,
-      category: '运动',
-      imageUrl: 'https://picsum.photos/400/400?random=109',
-      externalLink: 'https://www.example.com',
-    },
-    {
-      name: '手工巧克力',
-      description: '精致手工巧克力，多种口味，精美包装。',
-      price: 129,
-      category: '美食',
-      imageUrl: 'https://picsum.photos/400/400?random=110',
       externalLink: 'https://www.example.com',
     },
     {
@@ -205,11 +164,85 @@ async function main() {
       externalLink: 'https://www.example.com',
     },
     {
+      name: '平板电脑',
+      description: '高性能平板电脑，适合办公和学习。',
+      price: 2499,
+      category: '电子产品',
+      imageUrl: 'https://picsum.photos/400/400?random=116',
+      externalLink: 'https://www.example.com',
+    },
+    {
+      name: '游戏手柄',
+      description: '专业游戏手柄，支持多平台，手感舒适。',
+      price: 299,
+      category: '电子产品',
+      imageUrl: 'https://picsum.photos/400/400?random=117',
+      externalLink: 'https://www.example.com',
+    },
+    {
+      name: '便携式充电宝',
+      description: '大容量移动电源，快速充电，安全可靠。',
+      price: 129,
+      category: '电子产品',
+      imageUrl: 'https://picsum.photos/400/400?random=118',
+      externalLink: 'https://www.example.com',
+    },
+    // 时尚 (Fashion) - 5 products
+    {
+      name: '时尚运动鞋',
+      description: '舒适透气的运动鞋，适合日常运动和休闲穿着。',
+      price: 299,
+      category: '时尚',
+      imageUrl: 'https://picsum.photos/400/400?random=102',
+      externalLink: 'https://www.example.com',
+    },
+    {
+      name: '时尚连衣裙',
+      description: '优雅时尚的连衣裙，适合各种场合穿着。',
+      price: 199,
+      category: '时尚',
+      imageUrl: 'https://picsum.photos/400/400?random=107',
+      externalLink: 'https://www.example.com',
+    },
+    {
       name: '时尚背包',
       description: '多功能时尚背包，容量大，适合旅行和日常使用。',
       price: 199,
       category: '时尚',
       imageUrl: 'https://picsum.photos/400/400?random=112',
+      externalLink: 'https://www.example.com',
+    },
+    {
+      name: '潮流太阳镜',
+      description: '时尚太阳镜，UV防护，多种款式选择。',
+      price: 159,
+      category: '时尚',
+      imageUrl: 'https://picsum.photos/400/400?random=119',
+      externalLink: 'https://www.example.com',
+    },
+    {
+      name: '精致手表',
+      description: '经典设计手表，优雅大方，适合商务场合。',
+      price: 899,
+      category: '时尚',
+      imageUrl: 'https://picsum.photos/400/400?random=120',
+      externalLink: 'https://www.example.com',
+    },
+    // 家居 (Home) - 5 products
+    {
+      name: '现代简约沙发',
+      description: '北欧风格沙发，舒适耐用，适合现代家居装饰。',
+      price: 2999,
+      category: '家居',
+      imageUrl: 'https://picsum.photos/400/400?random=103',
+      externalLink: 'https://www.example.com',
+    },
+    {
+      name: '实木餐桌',
+      description: '优质实木餐桌，环保健康，经久耐用。',
+      price: 1999,
+      category: '家居',
+      imageUrl: 'https://picsum.photos/400/400?random=108',
       externalLink: 'https://www.example.com',
     },
     {
@@ -221,6 +254,39 @@ async function main() {
       externalLink: 'https://www.example.com',
     },
     {
+      name: '落地灯',
+      description: '现代风格落地灯，LED光源，节能环保。',
+      price: 299,
+      category: '家居',
+      imageUrl: 'https://picsum.photos/400/400?random=121',
+      externalLink: 'https://www.example.com',
+    },
+    {
+      name: '装饰画',
+      description: '精美装饰画，提升家居品味，多种风格可选。',
+      price: 89,
+      category: '家居',
+      imageUrl: 'https://picsum.photos/400/400?random=122',
+      externalLink: 'https://www.example.com',
+    },
+    // 运动 (Sports) - 5 products
+    {
+      name: '瑜伽垫',
+      description: '防滑瑜伽垫，厚度适中，适合各种瑜伽练习。',
+      price: 89,
+      category: '运动',
+      imageUrl: 'https://picsum.photos/400/400?random=104',
+      externalLink: 'https://www.example.com',
+    },
+    {
+      name: '跑步机',
+      description: '家用跑步机，静音设计，适合室内运动。',
+      price: 2999,
+      category: '运动',
+      imageUrl: 'https://picsum.photos/400/400?random=109',
+      externalLink: 'https://www.example.com',
+    },
+    {
       name: '哑铃套装',
       description: '可调节重量哑铃，适合家庭健身。',
       price: 299,
@@ -229,11 +295,19 @@ async function main() {
       externalLink: 'https://www.example.com',
     },
     {
-      name: '有机蜂蜜',
-      description: '纯天然有机蜂蜜，营养丰富，口感纯正。',
+      name: '运动护膝',
+      description: '专业运动护膝，保护关节，适合跑步和健身。',
       price: 79,
-      category: '美食',
-      imageUrl: 'https://picsum.photos/400/400?random=115',
+      category: '运动',
+      imageUrl: 'https://picsum.photos/400/400?random=123',
+      externalLink: 'https://www.example.com',
+    },
+    {
+      name: '健身球',
+      description: '多用途健身球，适合瑜伽和力量训练。',
+      price: 129,
+      category: '运动',
+      imageUrl: 'https://picsum.photos/400/400?random=124',
       externalLink: 'https://www.example.com',
     },
   ];
@@ -280,8 +354,9 @@ async function main() {
   console.log('🎉 Database seeding completed successfully!');
   console.log(`📊 Summary:`);
   console.log(`   - Users: ${users.length}`);
-  console.log(`   - Videos: 10 (5 short, 5 long)`);
+  console.log(`   - Videos: 13 (8 short, 5 long)`);
   console.log(`   - Products: ${productData.length}`);
+  console.log(`   - Categories: 电子产品 (6), 时尚 (5), 家居 (5), 运动 (5)`);
   console.log(`   - Posts: ${postContents.length}`);
 }
 

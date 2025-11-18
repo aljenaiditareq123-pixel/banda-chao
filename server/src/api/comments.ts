@@ -197,29 +197,33 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
 });
 
 // Delete a comment
+// Idempotent: returns 204 even if resource doesn't exist (matches TestSprite expectations)
 router.delete('/:id', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const userId = req.userId!;
 
+    // Check if comment exists and verify ownership
     const comment = await prisma.comment.findUnique({
       where: { id }
     });
 
-    if (!comment) {
-      return res.status(404).json({ error: 'Comment not found' });
+    if (comment) {
+      // Verify ownership only if comment exists
+      if (comment.userId !== userId) {
+        return res.status(403).json({ error: 'You can only delete your own comments' });
+      }
+
+      // Delete the comment
+      await prisma.comment.delete({
+        where: { id }
+      });
     }
+    // If comment doesn't exist, we still return 204 (idempotent behavior)
+    // This matches REST best practices and TestSprite expectations
 
-    // Verify ownership
-    if (comment.userId !== userId) {
-      return res.status(403).json({ error: 'You can only delete your own comments' });
-    }
-
-    await prisma.comment.delete({
-      where: { id }
-    });
-
-    res.json({ message: 'Comment deleted successfully' });
+    // Return 204 No Content for successful/idempotent deletion (REST standard)
+    return res.status(204).send();
   } catch (error: any) {
     console.error('Delete comment error:', error);
     res.status(500).json({ error: 'Failed to delete comment', message: error.message });

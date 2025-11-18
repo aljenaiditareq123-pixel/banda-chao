@@ -185,28 +185,32 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
 });
 
 // Delete a video
+// Idempotent: returns 204 even if resource doesn't exist (matches TestSprite expectations)
 router.delete('/:id', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
 
-    // Verify ownership
+    // Check if video exists and verify ownership
     const existingVideo = await prisma.video.findUnique({
       where: { id }
     });
 
-    if (!existingVideo) {
-      return res.status(404).json({ error: 'Video not found' });
+    if (existingVideo) {
+      // Verify ownership only if video exists
+      if (existingVideo.userId !== req.userId) {
+        return res.status(403).json({ error: 'You can only delete your own videos' });
+      }
+
+      // Delete the video
+      await prisma.video.delete({
+        where: { id }
+      });
     }
+    // If video doesn't exist, we still return 204 (idempotent behavior)
+    // This matches REST best practices and TestSprite expectations
 
-    if (existingVideo.userId !== req.userId) {
-      return res.status(403).json({ error: 'You can only delete your own videos' });
-    }
-
-    await prisma.video.delete({
-      where: { id }
-    });
-
-    res.json({ message: 'Video deleted successfully' });
+    // Return 204 No Content for successful/idempotent deletion (REST standard)
+    return res.status(204).send();
   } catch (error: any) {
     console.error('Delete video error:', error);
     res.status(500).json({ error: 'Failed to delete video', message: error.message });

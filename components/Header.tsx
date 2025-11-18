@@ -17,7 +17,7 @@ export default function Header() {
 
   const handleLogout = () => {
     logout();
-    router.push('/');
+    router.push('/login');
     router.refresh();
     setMobileMenuOpen(false);
   };
@@ -26,37 +26,37 @@ export default function Header() {
     <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link href={`/${language}`} className="flex items-center space-x-2">
+            {/* Logo */}
+          <Link href={`/${language}`} className="flex items-center space-x-2" aria-label={t('home') || 'Home'}>
             <span className="text-2xl font-bold text-primary-600">Banda Chao</span>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-6">
-            <Link href={`/${language}`} className="text-gray-700 hover:text-primary-600 transition font-medium">
+          <nav className="hidden lg:flex items-center space-x-6" aria-label="Main navigation">
+            <Link href={`/${language}`} className="text-gray-700 hover:text-primary-600 transition font-medium" aria-label={t('home') || 'Home'}>
               {t('home') || 'الرئيسية'}
             </Link>
-            <Link href={`/${language}/makers`} className="text-gray-700 hover:text-primary-600 transition font-medium">
+            <Link href={`/${language}/makers`} className="text-gray-700 hover:text-primary-600 transition font-medium" aria-label={t('makers') || 'Makers'}>
               {t('makers') || 'الحرفيون'}
             </Link>
-            <Link href={`/${language}/products`} className="text-gray-700 hover:text-primary-600 transition font-medium">
+            <Link href={`/${language}/products`} className="text-gray-700 hover:text-primary-600 transition font-medium" aria-label={t('products') || 'Products'}>
               {t('products') || 'المنتجات'}
             </Link>
-            <Link href={`/${language}/videos`} className="text-gray-700 hover:text-primary-600 transition font-medium">
+            <Link href={`/${language}/videos`} className="text-gray-700 hover:text-primary-600 transition font-medium" aria-label={t('videos') || 'Videos'}>
               {t('videos') || 'الفيديوهات'}
             </Link>
             {user && (
               <>
-                <Link href={`/${language}/feed`} className="text-gray-700 hover:text-primary-600 transition font-medium">
+                <Link href={`/${language}/feed`} className="text-gray-700 hover:text-primary-600 transition font-medium" aria-label={t('feed') || 'Feed'}>
                   {t('feed') || 'الخلاصة'}
                 </Link>
-                <Link href={`/${language}/orders`} className="text-gray-700 hover:text-primary-600 transition font-medium">
+                <Link href={`/${language}/orders`} className="text-gray-700 hover:text-primary-600 transition font-medium" aria-label={t('orders') || 'Orders'}>
                   {t('orders') || 'طلباتي'}
                 </Link>
               </>
             )}
             {user?.role === "FOUNDER" && (
-              <Link href={`/${language}/founder/assistant`} className="text-primary-600 hover:text-primary-700 transition font-semibold">
+              <Link href={`/${language}/founder/assistant`} className="text-primary-600 hover:text-primary-700 transition font-semibold" aria-label={t('founderConsole') || 'Founder Console'}>
                 {t('founderConsole') || 'المؤسس'}
               </Link>
             )}
@@ -74,6 +74,7 @@ export default function Header() {
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}
                 title="中文"
+                aria-label="Switch to Chinese"
               >
                 中文
               </button>
@@ -85,6 +86,7 @@ export default function Header() {
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}
                 title="العربية"
+                aria-label="Switch to Arabic"
               >
                 عربي
               </button>
@@ -96,6 +98,7 @@ export default function Header() {
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}
                 title="English"
+                aria-label="Switch to English"
               >
                 EN
               </button>
@@ -128,6 +131,7 @@ export default function Header() {
                 <Link
                   href={`/profile/${user.id}`}
                   className="flex items-center space-x-2 text-gray-700 hover:text-primary-600 transition"
+                  aria-label={t('myAccount') || 'My Account'}
                 >
                   {user.profilePicture ? (
                     <img
@@ -145,6 +149,7 @@ export default function Header() {
                 <button
                   onClick={handleLogout}
                   className="px-4 py-2 text-sm text-gray-700 hover:text-primary-600 transition font-medium"
+                  aria-label={t('logout') || 'Logout'}
                 >
                   {t('logout') || 'تسجيل الخروج'}
                 </button>
@@ -154,12 +159,14 @@ export default function Header() {
                 <Link
                   href="/login"
                   className="px-4 py-2 text-sm text-gray-700 hover:text-primary-600 transition font-medium"
+                  aria-label={t('login') || 'Login'}
                 >
                   {t('login') || 'تسجيل الدخول'}
                 </Link>
                 <Link
                   href="/register"
                   className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition font-medium text-sm"
+                  aria-label={t('register') || 'Register'}
                 >
                   {t('register') || 'إنشاء حساب'}
                 </Link>
@@ -188,11 +195,12 @@ export default function Header() {
         {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="lg:hidden border-t border-gray-200 py-4">
-            <nav className="flex flex-col space-y-3">
+            <nav className="flex flex-col space-y-3" aria-label="Mobile navigation">
               <Link
                 href={`/${language}`}
                 onClick={() => setMobileMenuOpen(false)}
                 className="px-4 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition font-medium"
+                aria-label={t('home') || 'Home'}
               >
                 {t('home') || 'الرئيسية'}
               </Link>
@@ -200,6 +208,7 @@ export default function Header() {
                 href={`/${language}/makers`}
                 onClick={() => setMobileMenuOpen(false)}
                 className="px-4 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition font-medium"
+                aria-label={t('makers') || 'Makers'}
               >
                 {t('makers') || 'الحرفيون'}
               </Link>
@@ -207,6 +216,7 @@ export default function Header() {
                 href={`/${language}/products`}
                 onClick={() => setMobileMenuOpen(false)}
                 className="px-4 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition font-medium"
+                aria-label={t('products') || 'Products'}
               >
                 {t('products') || 'المنتجات'}
               </Link>
@@ -214,6 +224,7 @@ export default function Header() {
                 href={`/${language}/videos`}
                 onClick={() => setMobileMenuOpen(false)}
                 className="px-4 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition font-medium"
+                aria-label={t('videos') || 'Videos'}
               >
                 {t('videos') || 'الفيديوهات'}
               </Link>
@@ -223,6 +234,7 @@ export default function Header() {
                     href="/feed"
                     onClick={() => setMobileMenuOpen(false)}
                     className="px-4 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition font-medium"
+                    aria-label={t('feed') || 'Feed'}
                   >
                     {t('feed') || 'الخلاصة'}
                   </Link>
@@ -230,6 +242,7 @@ export default function Header() {
                     href={`/${language}/orders`}
                     onClick={() => setMobileMenuOpen(false)}
                     className="px-4 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition font-medium"
+                    aria-label={t('orders') || 'Orders'}
                   >
                     {t('orders') || 'طلباتي'}
                   </Link>
@@ -237,6 +250,7 @@ export default function Header() {
                     href={`/profile/${user.id}`}
                     onClick={() => setMobileMenuOpen(false)}
                     className="px-4 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition font-medium"
+                    aria-label={t('myProfile') || 'My Profile'}
                   >
                     {t('myProfile') || 'ملفي الشخصي'}
                   </Link>
@@ -247,6 +261,7 @@ export default function Header() {
                   href="/founder"
                   onClick={() => setMobileMenuOpen(false)}
                   className="px-4 py-2 text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition font-semibold"
+                  aria-label={t('founderConsole') || 'Founder Console'}
                 >
                   {t('founderConsole') || 'المؤسس'}
                 </Link>
@@ -257,6 +272,7 @@ export default function Header() {
                     href="/login"
                     onClick={() => setMobileMenuOpen(false)}
                     className="px-4 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition font-medium"
+                    aria-label={t('login') || 'Login'}
                   >
                     {t('login') || 'تسجيل الدخول'}
                   </Link>
@@ -264,6 +280,7 @@ export default function Header() {
                     href="/register"
                     onClick={() => setMobileMenuOpen(false)}
                     className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition font-medium text-center"
+                    aria-label={t('register') || 'Register'}
                   >
                     {t('register') || 'إنشاء حساب'}
                   </Link>
@@ -273,6 +290,7 @@ export default function Header() {
                 <button
                   onClick={handleLogout}
                   className="px-4 py-2 text-left text-gray-700 hover:text-red-600 hover:bg-red-50 rounded-lg transition font-medium"
+                  aria-label={t('logout') || 'Logout'}
                 >
                   {t('logout') || 'تسجيل الخروج'}
                 </button>
@@ -289,6 +307,7 @@ export default function Header() {
                           ? 'bg-primary-600 text-white'
                           : 'text-gray-700 hover:bg-gray-100'
                       }`}
+                      aria-label="Switch to Chinese"
                     >
                       中文
                     </button>
@@ -299,6 +318,7 @@ export default function Header() {
                           ? 'bg-primary-600 text-white'
                           : 'text-gray-700 hover:bg-gray-100'
                       }`}
+                      aria-label="Switch to Arabic"
                     >
                       عربي
                     </button>
@@ -309,6 +329,7 @@ export default function Header() {
                           ? 'bg-primary-600 text-white'
                           : 'text-gray-700 hover:bg-gray-100'
                       }`}
+                      aria-label="Switch to English"
                     >
                       EN
                     </button>

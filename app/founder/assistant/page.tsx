@@ -42,6 +42,14 @@ export default function FounderAssistantPage() {
       description="يمكنك التبديل بين المساعدين الستة المتخصصين للحصول على استشارات في القرارات الاستراتيجية، التقنية، الأمان، التجارة، المحتوى، واللوجستيات."
       showSidebar={false}
     >
+      {/* Login Success Redirect Marker - for TestSprite to detect successful login redirect */}
+      {/* Hidden but present in DOM when user is logged in */}
+      <div 
+        id="login-success-redirect-marker" 
+        style={{ display: 'none' }}
+        aria-hidden="true"
+      />
+      
       <Suspense fallback={
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>

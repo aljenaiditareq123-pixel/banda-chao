@@ -102,6 +102,52 @@ export default function ProductListClient({ locale, products: initialProducts }:
                   </p>
                 </div>
 
+                {/* Category Buttons - 全部, 电子产品, 时尚, 家居, 运动 */}
+                <div className="flex flex-wrap gap-2 pb-4 border-b border-gray-200">
+                  <button
+                    onClick={() => {
+                      setFilters((prev) => ({ ...prev, categories: [] }));
+                    }}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                      filters.categories.length === 0
+                        ? 'bg-primary-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                    aria-label="全部 - All categories"
+                  >
+                    全部
+                  </button>
+                  {['电子产品', '时尚', '家居', '运动'].map((category) => {
+                    const isActive = filters.categories.includes(category);
+                    return (
+                      <button
+                        key={category}
+                        onClick={() => {
+                          if (isActive) {
+                            setFilters((prev) => ({
+                              ...prev,
+                              categories: prev.categories.filter((c) => c !== category),
+                            }));
+                          } else {
+                            setFilters((prev) => ({
+                              ...prev,
+                              categories: [...prev.categories, category],
+                            }));
+                          }
+                        }}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                          isActive
+                            ? 'bg-primary-600 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                        aria-label={`${category} category filter`}
+                      >
+                        {category}
+                      </button>
+                    );
+                  })}
+                </div>
+
                 {loading ? (
                   <div className="w-full text-center py-12 text-gray-500">Loading...</div>
                 ) : (
@@ -118,7 +164,13 @@ export default function ProductListClient({ locale, products: initialProducts }:
                       ) : (
                         <GridItem className="col-span-full">
                           <div className="w-full text-center py-12 text-gray-500 border border-dashed border-gray-200 rounded-3xl">
-                            {t('noContent') || 'No products found'}
+                            {filters.categories.length === 1 ? (
+                              <p className="text-lg">
+                                {t('noContent') || '暂无内容'} - {filters.categories[0]}分类的商品
+                              </p>
+                            ) : (
+                              <p className="text-lg">{t('noContent') || '暂无内容'}</p>
+                            )}
                           </div>
                         </GridItem>
                       )}
