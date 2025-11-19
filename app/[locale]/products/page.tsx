@@ -1,16 +1,22 @@
 import ProductListClient from '@/components/products/ProductListClient';
 import { Product } from '@/types';
-import { PRODUCTS_ENDPOINT, normalizeProduct } from '@/lib/product-utils';
+import { normalizeProduct } from '@/lib/product-utils';
+import { getApiBaseUrl } from '@/lib/api-utils';
 
 interface LocaleProductsPageProps {
   params: {
     locale: string;
   };
+  searchParams?: {
+    category?: string;
+    page?: string;
+  };
 }
 
 async function fetchAllProducts(): Promise<Product[]> {
   try {
-    const response = await fetch(PRODUCTS_ENDPOINT, {
+    const apiBaseUrl = getApiBaseUrl();
+    const response = await fetch(`${apiBaseUrl}/products`, {
       next: { revalidate: 60 },
     });
 

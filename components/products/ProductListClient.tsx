@@ -27,6 +27,17 @@ export default function ProductListClient({ locale, products: initialProducts }:
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
 
+  // Extract unique categories from products
+  const availableCategories = Array.from(
+    new Set(initialProducts.map((p) => p.category).filter(Boolean))
+  ) as string[];
+
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   useEffect(() => {
     if (locale === 'zh' || locale === 'ar' || locale === 'en') {
       setLanguage(locale);
@@ -70,7 +81,13 @@ export default function ProductListClient({ locale, products: initialProducts }:
 
   useEffect(() => {
     applyFilters();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters, initialProducts]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters]);
 
   const handleFilterChange = (newFilters: FilterState) => {
     setFilters(newFilters);
@@ -102,22 +119,23 @@ export default function ProductListClient({ locale, products: initialProducts }:
                   </p>
                 </div>
 
-                {/* Category Buttons - 全部, 电子产品, 时尚, 家居, 运动 */}
+                {/* Category Quick Filter Buttons */}
                 <div className="flex flex-wrap gap-2 pb-4 border-b border-gray-200">
                   <button
                     onClick={() => {
                       setFilters((prev) => ({ ...prev, categories: [] }));
+                      setCurrentPage(1);
                     }}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
                       filters.categories.length === 0
                         ? 'bg-primary-600 text-white'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
-                    aria-label="全部 - All categories"
+                    aria-label={t('allCategories') || 'All categories'}
                   >
-                    全部
+                    {t('allCategories') || 'All'}
                   </button>
-                  {['电子产品', '时尚', '家居', '运动'].map((category) => {
+                  {availableCategories.map((category) => {
                     const isActive = filters.categories.includes(category);
                     return (
                       <button
@@ -134,6 +152,7 @@ export default function ProductListClient({ locale, products: initialProducts }:
                               categories: [...prev.categories, category],
                             }));
                           }
+                          setCurrentPage(1);
                         }}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
                           isActive
@@ -153,14 +172,12 @@ export default function ProductListClient({ locale, products: initialProducts }:
                 ) : (
                   <>
                     <Grid columns={{ base: 1, sm: 2, md: 3, lg: 3 }} gap="gap-6">
-                      {filteredProducts.length > 0 ? (
-                        filteredProducts
-                          .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-                          .map((product) => (
-                            <GridItem key={product.id}>
-                              <ProductCard product={product} href={`/${locale}/products/${product.id}`} />
-                            </GridItem>
-                          ))
+                      {paginatedProducts.length > 0 ? (
+                        paginatedProducts.map((product) => (
+                          <GridItem key={product.id}>
+                            <ProductCard product={product} href={`/${locale}/products/${product.id}`} />
+                          </GridItem>
+                        ))
                       ) : (
                         <GridItem className="col-span-full">
                           <div className="w-full text-center py-12 text-gray-500 border border-dashed border-gray-200 rounded-3xl">
@@ -175,6 +192,60 @@ export default function ProductListClient({ locale, products: initialProducts }:
                         </GridItem>
                       )}
                     </Grid>
+
+                    {/* Pagination */}
+                    {filteredProducts.length > itemsPerPage && (
+                      <div className="flex items-center justify-center gap-2 pt-8 border-t border-gray-200">
+                        <button
+                          onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                          disabled={currentPage === 1}
+                          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                          aria-label="Previous page"
+                        >
+                          {t('previous') || 'Previous'}
+                        </button>
+                        
+                        <div className="flex items-center gap-1">
+                          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                            let pageNum: number;
+                            if (totalPages <= 5) {
+                              pageNum = i + 1;
+                            } else if (currentPage <= 3) {
+                              pageNum = i + 1;
+                            } else if (currentPage >= totalPages - 2) {
+                              pageNum = totalPages - 4 + i;
+                            } else {
+                              pageNum = currentPage - 2 + i;
+                            }
+                            
+                            return (
+                              <button
+                                key={pageNum}
+                                onClick={() => setCurrentPage(pageNum)}
+                                className={`px-4 py-2 text-sm font-medium rounded-lg transition ${
+                                  currentPage === pageNum
+                                    ? 'bg-primary-600 text-white'
+                                    : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                                }`}
+                                aria-label={`Page ${pageNum}`}
+                                aria-current={currentPage === pageNum ? 'page' : undefined}
+                              >
+                                {pageNum}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        
+                        <button
+                          onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                          disabled={currentPage === totalPages}
+                          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                          aria-label="Next page"
+                        >
+                          {t('next') || 'Next'}
+                        </button>
+                      </div>
+                    )}
                   </>
                 )}
               </div>
