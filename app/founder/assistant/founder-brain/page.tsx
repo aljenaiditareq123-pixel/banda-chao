@@ -41,6 +41,8 @@ export default function FounderBrainPage() {
       title="الباندا المؤسس"
       description="يرسم القرارات المصيرية ويحوّل الرؤية إلى خطط تنفيذية واضحة."
       showSidebar={false}
+      showAssistantNav={true}
+      currentAssistantId="founder"
     >
       <Suspense fallback={
         <div className="flex items-center justify-center py-12">

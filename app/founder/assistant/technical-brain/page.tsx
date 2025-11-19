@@ -41,6 +41,8 @@ export default function TechnicalBrainPage() {
       title="الباندا التقني"
       description="يضمن جاهزية البنية التحتية ويقترح حلولاً تقنية قابلة للتوسع."
       showSidebar={false}
+      showAssistantNav={true}
+      currentAssistantId="tech"
     >
       <Suspense fallback={
         <div className="flex items-center justify-center py-12">

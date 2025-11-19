@@ -41,6 +41,8 @@ export default function MarketingBrainPage() {
       title="باندا التجارة"
       description="يركّز على نمو الإيرادات وتجربة عميل متكاملة من أول زيارة حتى الدفع."
       showSidebar={false}
+      showAssistantNav={true}
+      currentAssistantId="commerce"
     >
       <Suspense fallback={
         <div className="flex items-center justify-center py-12">

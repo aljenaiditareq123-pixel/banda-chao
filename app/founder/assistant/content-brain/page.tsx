@@ -41,6 +41,8 @@ export default function ContentBrainPage() {
       title="باندا المحتوى"
       description="يبني سرداً جذاباً يحفّز المشاركة ويزيد ولاء المجتمع."
       showSidebar={false}
+      showAssistantNav={true}
+      currentAssistantId="content"
     >
       <Suspense fallback={
         <div className="flex items-center justify-center py-12">

@@ -41,6 +41,8 @@ export default function SecurityBrainPage() {
       title="الباندا الحارس"
       description="يراقب الثغرات، يحمي الحسابات، ويصون البيانات المالية الحساسة."
       showSidebar={false}
+      showAssistantNav={true}
+      currentAssistantId="guard"
     >
       <Suspense fallback={
         <div className="flex items-center justify-center py-12">

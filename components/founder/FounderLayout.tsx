@@ -2,10 +2,13 @@
 
 import { ReactNode } from 'react';
 import FounderSidebarNav from './FounderSidebarNav';
+import AssistantNav from './AssistantNav';
 
 interface FounderLayoutProps {
   children: ReactNode;
   showSidebar?: boolean;
+  showAssistantNav?: boolean;
+  currentAssistantId?: string;
   title?: string;
   description?: string;
 }
@@ -13,6 +16,8 @@ interface FounderLayoutProps {
 export default function FounderLayout({
   children,
   showSidebar = true,
+  showAssistantNav = false,
+  currentAssistantId,
   title,
   description,
 }: FounderLayoutProps) {
@@ -39,6 +44,13 @@ export default function FounderLayout({
               <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sticky top-8">
                 <FounderSidebarNav />
               </div>
+            </aside>
+          )}
+
+          {/* Assistant Navigation */}
+          {showAssistantNav && (
+            <aside className="lg:w-64 flex-shrink-0">
+              <AssistantNav currentAssistantId={currentAssistantId} className="sticky top-8" />
             </aside>
           )}
 

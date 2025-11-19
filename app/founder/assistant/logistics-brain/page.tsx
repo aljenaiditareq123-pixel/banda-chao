@@ -41,6 +41,8 @@ export default function LogisticsBrainPage() {
       title="باندا اللوجستيات"
       description="يضبط المخزون، التوصيل، وسلاسل الإمداد لضمان تجربة بلا تأخير."
       showSidebar={false}
+      showAssistantNav={true}
+      currentAssistantId="logistics"
     >
       <Suspense fallback={
         <div className="flex items-center justify-center py-12">
