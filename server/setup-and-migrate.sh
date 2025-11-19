@@ -12,8 +12,8 @@ DATABASE_URL="postgresql://postgres:postgres@localhost:5432/banda_chao?schema=pu
 JWT_SECRET="secret-key"
 JWT_EXPIRES_IN="7d"
 FRONTEND_URL="http://localhost:3000"
-GOOGLE_CLIENT_ID=""
-GOOGLE_CLIENT_SECRET=""
+# Note: GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET should come from environment variables
+# Do not set them here to avoid overriding production values
 EOF
 echo "✅ .env file created/updated"
 
