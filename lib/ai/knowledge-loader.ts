@@ -16,6 +16,7 @@ export interface AssistantKnowledge {
   commerce: string;    // Commerce Panda - التجارة والتسويق
   content: string;     // Content Panda - المحتوى
   logistics: string;   // Logistics Panda - اللوجستيات
+  philosophical: string; // Philosopher Panda - المعمارية والتنسيق
 }
 
 /**
@@ -31,9 +32,19 @@ export function loadKnowledgeBase(assistantKey: string): string {
       'commerce': 'commerce',
       'content': 'content',
       'logistics': 'logistics',
+      'philosophical': 'philosopher',
     };
     
     const fileName = fileMap[assistantKey] || assistantKey;
+    // For philosopher, use docs/pandas/PHILOSOPHER_PANDA.md
+    if (assistantKey === 'philosophical') {
+      const filePath = path.join(process.cwd(), 'docs/pandas/PHILOSOPHER_PANDA.md');
+      if (fs.existsSync(filePath)) {
+        const content = fs.readFileSync(filePath, 'utf-8');
+        console.log(`[Knowledge Loader] Loaded ${assistantKey}: ${content.length} characters`);
+        return content;
+      }
+    }
     const filePath = path.join(KNOWLEDGE_BASE_DIR, `${fileName}-panda.md`);
     
     console.log(`[Knowledge Loader] Loading: ${assistantKey} -> ${fileName}-panda.md`);
@@ -86,6 +97,7 @@ export function loadAllKnowledgeBases(): AssistantKnowledge {
     commerce: loadKnowledgeBase('commerce'),
     content: loadKnowledgeBase('content'),
     logistics: loadKnowledgeBase('logistics'),
+    philosophical: loadKnowledgeBase('philosophical'),
   };
 }
 

@@ -8,7 +8,8 @@ type AssistantId =
   | 'guard'
   | 'commerce'
   | 'content'
-  | 'logistics';
+  | 'logistics'
+  | 'philosopher';
 
 type MessageRole = 'founder' | 'assistant';
 
@@ -183,6 +184,27 @@ const assistants: AssistantProfile[] = [
         'border-slate-300 bg-slate-500/25 text-slate-50 shadow-[0_0_16px_rgba(71,85,105,0.45)]',
     },
   },
+  {
+    id: 'philosopher',
+    label: 'الباندا الفيلسوف',
+    endpoint: '/api/chat',
+    overline: 'العقل المعماري الأعلى',
+    title: 'الباندا الفيلسوف المعماري',
+    description: 'مراقب معماري ومشرف على جميع الباندات. يفكر في الصورة الكبيرة والتنسيق بين الأنظمة.',
+    placeholder: 'اطرح أسئلة عن مستقبل المنصة، المعمارية، والتنسيق بين الباندات المختلفة.',
+    loadingText: 'الباندا الفيلسوف يفكر في المعمارية والتنسيق...',
+    openingMessage:
+      'مرحباً، أنا الباندا الفيلسوف المعماري - العقل المعماري الأعلى لمنصة Banda Chao. أنا أشرف على جميع الباندات الأخرى وأفكر في الصورة الكبيرة. كيف يمكنني مساعدتك في اتخاذ قرارات معمارية متوازنة؟',
+    theme: {
+      headerGradient: 'bg-gradient-to-l from-indigo-700 via-purple-600 to-indigo-500',
+      overlineColor: 'text-indigo-100',
+      assistantBubble:
+        'bg-indigo-50/90 text-indigo-900 shadow-[0_24px_48px_-28px_rgba(99,102,241,0.75)]',
+      loadingBadge: 'bg-indigo-50 text-indigo-700',
+      tabActive:
+        'border-indigo-300 bg-indigo-500/25 text-indigo-50 shadow-[0_0_16px_rgba(99,102,241,0.45)]',
+    },
+  },
 ];
 
 const assistantMap = assistants.reduce<Record<AssistantId, AssistantProfile>>((acc, assistant) => {
@@ -222,6 +244,11 @@ const assistantSuggestions: Record<AssistantId, string[]> = {
     'كيف أشرح للحرفيين ببساطة ماذا يحدث عندما يأتي طلب جديد؟',
     'ما هي البيانات التي يجب أن نضيفها لاحقاً لدعم تتبع الشحن؟',
   ],
+  philosopher: [
+    'قيم خطة V3 للمنصة من منظور معماري طويل الأمد.',
+    'انتقد طريقة توزيع المسؤوليات بين الباندات المختلفة.',
+    'اعطني خارطة طريق 6 أشهر بناءً على ما نملكه حالياً.',
+  ],
 };
 
 // Assistant metadata for handover functionality
@@ -254,6 +281,10 @@ const assistantMeta: Record<AssistantId, AssistantMeta> = {
   logistics: {
     label: 'باندا اللوجستيات',
     handoverTargets: ['founder', 'commerce'],
+  },
+  philosopher: {
+    label: 'الباندا الفيلسوف',
+    handoverTargets: ['founder', 'tech', 'guard', 'commerce', 'content', 'logistics'],
   },
 };
 
@@ -441,6 +472,48 @@ const FounderAIAssistant: React.FC<FounderAIAssistantProps> = ({ initialAssistan
                 commerce: 'أنت باندا التجارة لمنصة Panda Chao. أنت متخصص في المبيعات والتسويق. عندما يطلب منك الباندا المؤسس شيئاً، استجب فوراً.',
                 content: 'أنت باندا المحتوى لمنصة Panda Chao. أنت متخصص في إنشاء المحتوى والقصص. عندما يطلب منك الباندا المؤسس شيئاً، استجب فوراً.',
                 logistics: 'أنت باندا اللوجستيات لمنصة Panda Chao. أنت متخصص في العمليات والشحن. عندما يطلب منك الباندا المؤسس شيئاً، استجب فوراً.',
+                philosopher: `أنت الباندا الفيلسوف المعماري لمنصة Banda Chao.
+
+🎯 هويتك:
+- أنت العقل المعماري الأعلى للمنصة
+- أنت مشرف على جميع الباندات الأخرى (Founder, Technical, Security, Logistics, Social)
+- تفكر في "الصورة الكبيرة" والتنسيق بين الأنظمة
+
+💼 مسؤولياتك:
+1. **مراقبة معمارية**: تراجع القرارات الكبيرة من منظور معماري
+2. **تنسيق استراتيجي**: توجه الباندات الخمسة عند الحاجة
+3. **تفكير طويل الأمد**: تقترح تحسينات طويلة الأمد وترسم خارطة طريق معمارية
+4. **إشراف وتوجيه**: تراقب القرارات المقترحة من باقي الباندات وتعطي توصيات متوازنة
+
+🔍 معرفتك:
+- تقرأ ذاكرتك الخاصة: docs/pandas/PHILOSOPHER_PANDA.md
+- تستفيد من ذاكرة الباندات الأخرى لفهم السياق الكامل
+- تفهم المبادئ المعمارية: البساطة + القوة، قابلية التوسع، الأمان أولاً
+
+💬 أسلوبك:
+- تفكر في التوازن: الأمان / الأداء / البساطة / التجربة / المستقبل
+- تعطي خطة ورؤية، لا تطبق تغييرات مباشرة في الكود
+- تفضل الإجابات الهيكلية (نقاط، خطوات، مراحل)
+- توازن بين الأولويات ولا تفضل جانباً على حساب الآخر
+
+🎯 متى تقول "نعم الآن":
+- يحل مشكلة حقيقية وفورية
+- التعقيد معقول
+- يمكن البدء بـ MVP بسيط
+- يدعم النمو الحالي
+
+⏸️ متى تقول "ليس الآن":
+- الفائدة غير واضحة حالياً
+- التعقيد أكبر من الفائدة
+- نحتاج ميزات أخرى أولاً
+- هناك أولويات أهم
+
+🔄 متى تقول "نحتاج إعادة تصميم":
+- الحل الحالي لا يدعم النمو
+- التعقيد غير ضروري
+- هناك طريقة أفضل وأبسط
+
+عندما يسألك المؤسس عن شيء معماري أو استراتيجي، فكر كمعماري حكيم - أنت ترى الصورة الكاملة وتوازن بين جميع الجوانب.`,
               };
 
               // Build API URL - use NEXT_PUBLIC_API_URL if endpoint is relative
@@ -457,7 +530,7 @@ const FounderAIAssistant: React.FC<FounderAIAssistantProps> = ({ initialAssistan
                 body: JSON.stringify({ 
                   message: messageText,
                   systemPrompt: systemPrompts[currentId],
-                  assistantType: currentId === 'founder' ? 'vision' : currentId === 'tech' ? 'technical' : currentId === 'guard' ? 'security' : currentId,
+                  assistantType: currentId === 'founder' ? 'vision' : currentId === 'tech' ? 'technical' : currentId === 'guard' ? 'security' : currentId === 'philosopher' ? 'philosophical' : currentId,
                 }),
               });
 
@@ -910,6 +983,69 @@ When you answer:
 - Propose realistic flows that the backend can eventually support with the current Order model.
 - Suggest what fields, statuses, and APIs might be needed next (without diving into code – that's for the TECH panda).
 - Focus on clarity and predictability for both makers and buyers.`,
+
+          philosopher: `You are the PHILOSOPHER ARCHITECT PANDA ("الباندا الفيلسوف المعماري") for the Banda Chao project.
+
+Your role:
+- You are the highest-level AI architect and supervisor of the Banda Chao ecosystem.
+- You supervise and evaluate the decisions of the Founder, Technical, Security, Logistics, and Social pandas.
+- You think in terms of architecture, long-term strategy, and systemic impact.
+- You read and leverage the memory file (docs/pandas/PHILOSOPHER_PANDA.md) plus other panda memories when needed.
+
+Key responsibilities:
+1. **Architectural Oversight**: Review major decisions from an architectural perspective.
+2. **Strategic Coordination**: Guide the five pandas when needed, determine when each should intervene.
+3. **Long-Term Thinking**: Propose long-term improvements and coordinate between agents.
+4. **Supervision**: Monitor decisions proposed by other pandas and provide balanced recommendations.
+
+Evaluation criteria:
+When reviewing any new proposal, consider:
+- Security: Does this increase security risks?
+- Performance: Does this improve or harm performance?
+- Simplicity: Can we achieve the same goal more simply?
+- User Impact: How does this affect user experience?
+- Maker Impact: How does this affect makers?
+- Future Impact: Does this support long-term growth?
+
+Decision framework:
+- ✅ "Yes, Now": Solves a real immediate problem, complexity is reasonable, can start with simple MVP, supports current growth.
+- ⏸️ "Not Now": Benefit unclear, complexity > benefit, need other features first, resources unavailable, higher priorities exist.
+- 🔄 "Need Redesign": Current solution doesn't support growth, unnecessary complexity, better simpler way exists, creates technical debt.
+
+Principles:
+1. **Progressive Complexity**: Start simple, monitor usage, evolve gradually as needed.
+2. **Reversibility**: Choose decisions that can be reversed later, avoid technology lock-in, maintain flexibility.
+3. **Balance**: Balance security with experience, performance with simplicity, features with time.
+4. **Priorities**: Focus on what solves real problems, avoid features no one uses, gather feedback before building big features.
+5. **Sustainability**: Think about long-term costs, maintenance, scalability.
+
+Important behaviors:
+- You do NOT make direct code changes - you provide plans and vision, leave implementation to Technical Panda.
+- You encourage documentation and architecture diagrams.
+- You prefer structured answers (points, steps, phases).
+- You balance priorities - do not favor one aspect over others.
+- You think about coordination: when should Security Panda intervene? When Technical Panda? When is the decision for Founder Panda?
+
+When the user asks "which panda should handle X?", you route responsibilities conceptually:
+- Technical decisions → Technical Panda
+- Security risks → Security Panda
+- Order/checkout flow → Logistics Panda
+- Community/content → Social Panda
+- Overall strategy/priority → Founder Panda + you as supervisor
+
+You never override the human founder; you are an advisor.
+
+Your style:
+- Provide calm, thoughtful, well-structured answers.
+- Default to Arabic when the user writes in Arabic; otherwise answer in the user's language.
+- Avoid changing specific code unless explicitly asked; focus on reasoning, patterns, and recommendations.
+- When evaluating proposals, think about the big picture and long-term tradeoffs.
+
+Remember:
+- Do NOT invent fake facts about real persons.
+- Do NOT output passwords, tokens, or raw secrets.
+- Do NOT ask the user for API keys.
+- If unsure, say "I don't know" instead of hallucinating.`,
         };
 
         // Build API URL - use NEXT_PUBLIC_API_URL if endpoint is relative
@@ -926,7 +1062,7 @@ When you answer:
           body: JSON.stringify({ 
             message: draft,
             systemPrompt: systemPrompts[assistantId],
-            assistantType: assistantId === 'founder' ? 'vision' : assistantId === 'tech' ? 'technical' : assistantId === 'guard' ? 'security' : assistantId,
+                  assistantType: assistantId === 'founder' ? 'vision' : assistantId === 'tech' ? 'technical' : assistantId === 'guard' ? 'security' : assistantId === 'philosopher' ? 'philosophical' : assistantId,
           }),
         });
 
@@ -1000,6 +1136,15 @@ When you answer:
         'content->commerce': 'صغنا محتوى جذاب. كيف نستخدمه لزيادة التحويل:\n\n',
         'logistics->founder': 'حددنا تحديات عملياتية. أريد قرارك الاستراتيجي:\n\n',
         'logistics->commerce': 'حسّنا التدفق العملياتي. كيف نستخدمه لتحسين التجربة التجارية:\n\n',
+        'founder->philosopher': 'ناقشنا قراراً استراتيجياً مع الباندا المؤسس. أريد تقييمك المعماري له:\n\n',
+        'philosopher->founder': 'قيمت قراراً من منظور معماري. أريد قرارك الاستراتيجي النهائي:\n\n',
+        'philosopher->tech': 'قيمت قراراً معماري. أريد خطة تقنية متوازنة:\n\n',
+        'philosopher->guard': 'قيمت قراراً معماري. أريد تقييمك الأمني:\n\n',
+        'tech->philosopher': 'صممنا حلولاً تقنية. أريد تقييمك المعماري لها:\n\n',
+        'guard->philosopher': 'اكتشفنا مخاطر أمنية. أريد توصياتك المعمارية:\n\n',
+        'commerce->philosopher': 'حللنا فرص تجارية. أريد تقييمك المعماري:\n\n',
+        'content->philosopher': 'صغنا محتوى جذاب. أريد توصياتك المعمارية:\n\n',
+        'logistics->philosopher': 'حددنا تحديات عملياتية. أريد تقييمك المعماري:\n\n',
       };
       
       const handoverKey = `${source}->${target}`;
@@ -1063,7 +1208,7 @@ When you answer:
             مركز مساعدي المؤسس
           </h1>
           <p className="text-gray-600 text-lg">
-            يمكنك التبديل بين المساعدين الستة المتخصصين للحصول على استشارات في مختلف المجالات
+            يمكنك التبديل بين المساعدين السبعة المتخصصين للحصول على استشارات في مختلف المجالات
           </p>
         </div>
 
@@ -1095,7 +1240,8 @@ When you answer:
                          assistant.id === 'guard' ? '🛡️' :
                          assistant.id === 'commerce' ? '📊' :
                          assistant.id === 'content' ? '✍️' :
-                         assistant.id === 'logistics' ? '📦' : '🐼'}
+                         assistant.id === 'logistics' ? '📦' :
+                         assistant.id === 'philosopher' ? '🎓' : '🐼'}
                       </span>
                       <div className="flex-1">
                         <div className={`font-semibold ${isActive ? 'text-white' : 'text-gray-900'}`}>

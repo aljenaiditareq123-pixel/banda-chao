@@ -65,13 +65,14 @@ Banda Chao is a social-commerce platform that connects craftspeople (makers) wit
 
 ### 6. Founder Dashboard
 - Overview statistics (users, makers, products, videos)
-- 6 specialized AI assistants:
+- 7 specialized AI assistants:
   - Founder Panda (strategic decisions)
   - Technical Panda (infrastructure)
   - Security Panda (security & privacy)
   - Commerce Panda (sales & growth)
   - Content Panda (narrative & copywriting)
   - Logistics Panda (operations & fulfillment)
+  - Philosopher Architect Panda (architectural oversight & coordination)
 
 ### 7. Internationalization
 - Support for 3 languages: Chinese (zh), Arabic (ar), English (en)

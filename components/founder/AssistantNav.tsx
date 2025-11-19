@@ -59,6 +59,15 @@ const assistants = [
     emoji: '🚚',
     gradient: 'from-slate-600 to-slate-700',
   },
+  {
+    id: 'philosopher',
+    label: 'Philosopher Architect Panda',
+    labelZh: '哲学家架构熊猫',
+    labelAr: 'الباندا الفيلسوف المعماري',
+    route: '/founder/assistant/philosopher-brain',
+    emoji: '🎓',
+    gradient: 'from-indigo-600 to-indigo-700',
+  },
 ];
 
 interface AssistantNavProps {
