@@ -67,7 +67,15 @@ export default function Header() {
             {/* Language Switcher - Hidden on mobile */}
             <div className="hidden sm:flex items-center space-x-1 border border-gray-300 rounded-lg px-2 py-1">
               <button
-                onClick={() => setLanguage('zh')}
+                onClick={() => {
+                  setLanguage('zh');
+                  // Preserve current route when switching language
+                  const currentPath = window.location.pathname;
+                  const newPath = currentPath.replace(/^\/(zh|ar|en)/, '/zh') || '/zh';
+                  if (currentPath !== newPath) {
+                    router.push(newPath);
+                  }
+                }}
                 className={`px-2 py-1 text-xs rounded transition ${
                   language === 'zh'
                     ? 'bg-primary-600 text-white'
@@ -79,7 +87,15 @@ export default function Header() {
                 中文
               </button>
               <button
-                onClick={() => setLanguage('ar')}
+                onClick={() => {
+                  setLanguage('ar');
+                  // Preserve current route when switching language
+                  const currentPath = window.location.pathname;
+                  const newPath = currentPath.replace(/^\/(zh|ar|en)/, '/ar') || '/ar';
+                  if (currentPath !== newPath) {
+                    router.push(newPath);
+                  }
+                }}
                 className={`px-2 py-1 text-xs rounded transition ${
                   language === 'ar'
                     ? 'bg-primary-600 text-white'
@@ -91,7 +107,15 @@ export default function Header() {
                 عربي
               </button>
               <button
-                onClick={() => setLanguage('en')}
+                onClick={() => {
+                  setLanguage('en');
+                  // Preserve current route when switching language
+                  const currentPath = window.location.pathname;
+                  const newPath = currentPath.replace(/^\/(zh|ar|en)/, '/en') || '/en';
+                  if (currentPath !== newPath) {
+                    router.push(newPath);
+                  }
+                }}
                 className={`px-2 py-1 text-xs rounded transition ${
                   language === 'en'
                     ? 'bg-primary-600 text-white'
@@ -312,7 +336,15 @@ export default function Header() {
                       中文
                     </button>
                     <button
-                      onClick={() => setLanguage('ar')}
+                      onClick={() => {
+                        setLanguage('ar');
+                        const currentPath = window.location.pathname;
+                        const newPath = currentPath.replace(/^\/(zh|ar|en)/, '/ar') || '/ar';
+                        if (currentPath !== newPath) {
+                          router.push(newPath);
+                          setMobileMenuOpen(false);
+                        }
+                      }}
                       className={`px-3 py-1 text-xs rounded transition ${
                         language === 'ar'
                           ? 'bg-primary-600 text-white'
@@ -323,7 +355,15 @@ export default function Header() {
                       عربي
                     </button>
                     <button
-                      onClick={() => setLanguage('en')}
+                      onClick={() => {
+                        setLanguage('en');
+                        const currentPath = window.location.pathname;
+                        const newPath = currentPath.replace(/^\/(zh|ar|en)/, '/en') || '/en';
+                        if (currentPath !== newPath) {
+                          router.push(newPath);
+                          setMobileMenuOpen(false);
+                        }
+                      }}
                       className={`px-3 py-1 text-xs rounded transition ${
                         language === 'en'
                           ? 'bg-primary-600 text-white'
