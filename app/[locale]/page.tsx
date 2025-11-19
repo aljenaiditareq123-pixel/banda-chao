@@ -3,6 +3,7 @@ import { Product, Maker, Video } from '@/types';
 import { normalizeProduct } from '@/lib/product-utils';
 import { normalizeMaker } from '@/lib/maker-utils';
 import { getApiBaseUrl } from '@/lib/api-utils';
+import { fetchJsonWithRetry } from '@/lib/fetch-with-retry';
 
 interface LocalePageProps {
   params: {
@@ -13,17 +14,13 @@ interface LocalePageProps {
 async function fetchLatestProducts(): Promise<Product[]> {
   try {
     const apiBaseUrl = getApiBaseUrl();
-    const response = await fetch(`${apiBaseUrl}/products`, {
+    const json = await fetchJsonWithRetry(`${apiBaseUrl}/products`, {
       next: { revalidate: 60 },
+      maxRetries: 2, // Reduce retries for homepage to avoid delays
+      retryDelay: 500, // Faster retry for better UX
     });
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch products: ${response.status}`);
-    }
-
-    const json = await response.json();
     const items = Array.isArray(json.data) ? json.data : [];
-
     return items.slice(0, 8).map(normalizeProduct);
   } catch (error) {
     console.error('[HomePage] Failed to load products from backend:', error);
@@ -34,18 +31,13 @@ async function fetchLatestProducts(): Promise<Product[]> {
 async function fetchFeaturedMakers(): Promise<Maker[]> {
   try {
     const apiBaseUrl = getApiBaseUrl();
-    const response = await fetch(`${apiBaseUrl}/makers`, {
+    const json = await fetchJsonWithRetry(`${apiBaseUrl}/makers`, {
       next: { revalidate: 120 },
+      maxRetries: 2,
+      retryDelay: 500,
     });
 
-    if (!response.ok) {
-      console.error(`[HomePage] Failed to fetch makers: ${response.status}`);
-      return [];
-    }
-
-    const json = await response.json();
     const items = Array.isArray(json.data) ? json.data : [];
-
     return items.slice(0, 6).map(normalizeMaker);
   } catch (error) {
     console.error('[HomePage] Failed to load makers from backend:', error);
@@ -56,18 +48,13 @@ async function fetchFeaturedMakers(): Promise<Maker[]> {
 async function fetchFeaturedVideos(): Promise<Video[]> {
   try {
     const apiBaseUrl = getApiBaseUrl();
-    const response = await fetch(`${apiBaseUrl}/videos?limit=6`, {
+    const json = await fetchJsonWithRetry(`${apiBaseUrl}/videos?limit=6`, {
       next: { revalidate: 120 },
+      maxRetries: 2,
+      retryDelay: 500,
     });
 
-    if (!response.ok) {
-      console.error(`[HomePage] Failed to fetch videos: ${response.status}`);
-      return [];
-    }
-
-    const json = await response.json();
     const items = Array.isArray(json.data) ? json.data : [];
-
     return items.slice(0, 6).map((video: any) => ({
       id: video.id,
       userId: video.userId,

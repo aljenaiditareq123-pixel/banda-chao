@@ -2,6 +2,7 @@ import MakersPageClient from './page-client';
 import { Maker } from '@/types';
 import { normalizeMaker } from '@/lib/maker-utils';
 import { getApiBaseUrl } from '@/lib/api-utils';
+import { fetchJsonWithRetry } from '@/lib/fetch-with-retry';
 
 interface LocaleMakersPageProps {
   params: {
@@ -19,15 +20,12 @@ async function fetchAllMakers(search?: string): Promise<Maker[]> {
       ? `${apiBaseUrl}/makers?search=${encodeURIComponent(search)}`
       : `${apiBaseUrl}/makers`;
 
-    const response = await fetch(url, {
+    const json = await fetchJsonWithRetry(url, {
       next: { revalidate: 120 },
+      maxRetries: 2,
+      retryDelay: 1000,
     });
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch makers: ${response.status}`);
-    }
-
-    const json = await response.json();
     const items = Array.isArray(json.data) ? json.data : [];
     return items.map(normalizeMaker);
   } catch (error) {

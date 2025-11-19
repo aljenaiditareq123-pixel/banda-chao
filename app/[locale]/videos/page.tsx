@@ -1,6 +1,7 @@
 import VideosPageClient from './page-client';
 import { Video } from '@/types';
 import { getApiBaseUrl } from '@/lib/api-utils';
+import { fetchJsonWithRetry } from '@/lib/fetch-with-retry';
 
 interface LocaleVideosPageProps {
   params: {
@@ -12,13 +13,21 @@ async function fetchAllVideos(): Promise<{ short: Video[]; long: Video[] }> {
   try {
     const apiBaseUrl = getApiBaseUrl();
     
-    const [shortRes, longRes] = await Promise.all([
-      fetch(`${apiBaseUrl}/videos?type=short&limit=20`, {
+    // Add small delay between requests to avoid overwhelming backend
+    const [shortJson, longJson] = await Promise.all([
+      fetchJsonWithRetry(`${apiBaseUrl}/videos?type=short&limit=20`, {
         next: { revalidate: 60 },
+        maxRetries: 2,
+        retryDelay: 1000,
       }),
-      fetch(`${apiBaseUrl}/videos?type=long&limit=20`, {
-        next: { revalidate: 60 },
-      }),
+      // Delay second request by 200ms to avoid hitting rate limit
+      new Promise((resolve) => setTimeout(resolve, 200)).then(() =>
+        fetchJsonWithRetry(`${apiBaseUrl}/videos?type=long&limit=20`, {
+          next: { revalidate: 60 },
+          maxRetries: 2,
+          retryDelay: 1000,
+        })
+      ),
     ]);
 
     const formatVideo = (video: any): Video => ({
@@ -35,9 +44,6 @@ async function fetchAllVideos(): Promise<{ short: Video[]; long: Video[] }> {
       createdAt: video.createdAt,
       type: video.type as 'short' | 'long',
     });
-
-    const shortJson = await shortRes.json();
-    const longJson = await longRes.json();
     
     const shortVideos = (shortJson.data?.data || shortJson.data || []).map(formatVideo);
     const longVideos = (longJson.data?.data || longJson.data || []).map(formatVideo);
