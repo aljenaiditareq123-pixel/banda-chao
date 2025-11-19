@@ -18,13 +18,13 @@ async function fetchMaker(makerId: string): Promise<Maker | null> {
   try {
     // First try as slug
     let response = await fetch(`${apiBaseUrl}/makers/slug/${makerId}`, {
-      next: { revalidate: 120 },
+      next: { revalidate: 600 }, // 10 minutes cache (aligned with makers page)
     });
 
     // If 404, try as ID
     if (response.status === 404) {
       response = await fetch(`${apiBaseUrl}/makers/${makerId}`, {
-        next: { revalidate: 120 },
+        next: { revalidate: 600 }, // 10 minutes cache
       });
     }
 
@@ -48,8 +48,9 @@ async function fetchMaker(makerId: string): Promise<Maker | null> {
 async function fetchMakerProducts(makerId: string): Promise<Product[]> {
   try {
     const apiBaseUrl = getApiBaseUrl();
-    const response = await fetch(`${apiBaseUrl}/products?makerId=${encodeURIComponent(makerId)}`, {
-      next: { revalidate: 60 },
+    // Note: Backend doesn't support makerId filter yet, so we fetch limited products and filter client-side
+    const response = await fetch(`${apiBaseUrl}/products?limit=100`, {
+      next: { revalidate: 300 }, // 5 minutes cache
     });
 
     if (!response.ok) {
@@ -70,10 +71,10 @@ async function fetchMakerProducts(makerId: string): Promise<Product[]> {
 
 async function fetchMakerVideos(makerId: string): Promise<Video[]> {
   try {
-    // Fetch all videos and filter by userId (makerId)
+    // Fetch limited videos and filter by userId (makerId)
     const apiBaseUrl = getApiBaseUrl();
     const response = await fetch(`${apiBaseUrl}/videos?limit=50`, {
-      next: { revalidate: 60 },
+      next: { revalidate: 300 }, // 5 minutes cache
     });
 
     if (!response.ok) {
@@ -110,15 +111,20 @@ async function fetchMakerVideos(makerId: string): Promise<Video[]> {
 export default async function LocaleMakerPage({ params }: LocaleMakerPageProps) {
   const { locale, makerId } = params;
 
-  const [maker, products, videos] = await Promise.all([
-    fetchMaker(makerId),
-    fetchMakerProducts(makerId),
-    fetchMakerVideos(makerId),
-  ]);
-
+  // Stagger requests to avoid overwhelming backend (aligned with new pattern)
+  const maker = await fetchMaker(makerId);
+  
   if (!maker) {
     notFound();
   }
+
+  // Small delay before fetching products
+  await new Promise(resolve => setTimeout(resolve, 100));
+  const products = await fetchMakerProducts(makerId);
+
+  // Another small delay before fetching videos
+  await new Promise(resolve => setTimeout(resolve, 100));
+  const videos = await fetchMakerVideos(makerId);
 
   return <MakerDetailClient locale={locale} maker={maker} products={products} videos={videos} />;
 }

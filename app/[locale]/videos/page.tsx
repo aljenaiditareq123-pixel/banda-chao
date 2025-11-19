@@ -13,22 +13,21 @@ async function fetchAllVideos(): Promise<{ short: Video[]; long: Video[] }> {
   try {
     const apiBaseUrl = getApiBaseUrl();
     
-    // Add small delay between requests to avoid overwhelming backend
-    const [shortJson, longJson] = await Promise.all([
-      fetchJsonWithRetry(`${apiBaseUrl}/videos?type=short&limit=20`, {
-        next: { revalidate: 300 }, // 5 minutes cache
-        maxRetries: 2,
-        retryDelay: 1000,
-      }),
-      // Delay second request by 300ms to avoid hitting rate limit
-      new Promise((resolve) => setTimeout(resolve, 300)).then(() =>
-        fetchJsonWithRetry(`${apiBaseUrl}/videos?type=long&limit=20`, {
-          next: { revalidate: 300 }, // 5 minutes cache
-          maxRetries: 2,
-          retryDelay: 1000,
-        })
-      ),
-    ]);
+    // Fully stagger requests to avoid overwhelming backend (aligned with new pattern)
+    const shortJson = await fetchJsonWithRetry(`${apiBaseUrl}/videos?type=short&limit=20`, {
+      next: { revalidate: 300 }, // 5 minutes cache
+      maxRetries: 2,
+      retryDelay: 1000,
+    });
+    
+    // Delay second request by 200ms to avoid hitting rate limit
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    const longJson = await fetchJsonWithRetry(`${apiBaseUrl}/videos?type=long&limit=20`, {
+      next: { revalidate: 300 }, // 5 minutes cache
+      maxRetries: 2,
+      retryDelay: 1000,
+    });
 
     const formatVideo = (video: any): Video => ({
       id: video.id,

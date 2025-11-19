@@ -17,8 +17,8 @@ async function fetchAllMakers(search?: string): Promise<Maker[]> {
   try {
     const apiBaseUrl = getApiBaseUrl();
     const url = search
-      ? `${apiBaseUrl}/makers?search=${encodeURIComponent(search)}`
-      : `${apiBaseUrl}/makers`;
+      ? `${apiBaseUrl}/makers?search=${encodeURIComponent(search)}&limit=100`
+      : `${apiBaseUrl}/makers?limit=100`;
 
     const json = await fetchJsonWithRetry(url, {
       next: { revalidate: 600 }, // 10 minutes cache

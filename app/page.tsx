@@ -5,14 +5,17 @@ import { getApiBaseUrl } from '@/lib/api-utils';
 import { Product, Maker, Video } from '@/types';
 import { redirect } from 'next/navigation';
 
+import { fetchJsonWithRetry } from '@/lib/fetch-with-retry';
+
 async function fetchProducts(): Promise<Product[]> {
   try {
     const apiBaseUrl = getApiBaseUrl();
-    const response = await fetch(`${apiBaseUrl}/products`, { next: { revalidate: 60 } });
+    const json = await fetchJsonWithRetry(`${apiBaseUrl}/products?limit=8`, {
+      next: { revalidate: 300 }, // 5 minutes cache
+      maxRetries: 1,
+      retryDelay: 1000,
+    });
 
-    if (!response.ok) throw new Error('Failed to fetch products');
-
-    const json = await response.json();
     const items = Array.isArray(json.data) ? json.data : [];
     return items.slice(0, 8).map(normalizeProduct);
   } catch { return []; }
@@ -21,9 +24,12 @@ async function fetchProducts(): Promise<Product[]> {
 async function fetchMakers(): Promise<Maker[]> {
   try {
     const apiBaseUrl = getApiBaseUrl();
-    const response = await fetch(`${apiBaseUrl}/makers`, { next: { revalidate: 120 } });
-    if (!response.ok) throw new Error('Failed to fetch makers');
-    const json = await response.json();
+    const json = await fetchJsonWithRetry(`${apiBaseUrl}/makers?limit=6`, {
+      next: { revalidate: 600 }, // 10 minutes cache
+      maxRetries: 1,
+      retryDelay: 1000,
+    });
+    
     const items = Array.isArray(json.data) ? json.data : [];
     return items.slice(0, 6).map(normalizeMaker);
   } catch { return []; }
@@ -32,9 +38,12 @@ async function fetchMakers(): Promise<Maker[]> {
 async function fetchVideos(): Promise<Video[]> {
   try {
     const apiBaseUrl = getApiBaseUrl();
-    const response = await fetch(`${apiBaseUrl}/videos?limit=6`, { next: { revalidate: 120 } });
-    if (!response.ok) throw new Error('Failed to fetch videos');
-    const json = await response.json();
+    const json = await fetchJsonWithRetry(`${apiBaseUrl}/videos?limit=6`, {
+      next: { revalidate: 600 }, // 10 minutes cache
+      maxRetries: 1,
+      retryDelay: 1000,
+    });
+    
     const items = Array.isArray(json.data) ? json.data : [];
     return items.slice(0, 6).map((video: any) => ({
       id: video.id,
@@ -55,11 +64,13 @@ async function fetchVideos(): Promise<Video[]> {
 
 export default async function Page({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
   if (searchParams?.['no-redirect'] === 'true') {
-    const [products, makers, videos] = await Promise.all([
-      fetchProducts(),
-      fetchMakers(),
-      fetchVideos(),
-    ]);
+    // Stagger requests to avoid overwhelming backend (aligned with new pattern)
+    const products = await fetchProducts();
+    await new Promise(resolve => setTimeout(resolve, 100));
+    const makers = await fetchMakers();
+    await new Promise(resolve => setTimeout(resolve, 100));
+    const videos = await fetchVideos();
+    
     return <main className="p-6"><HomePageClient locale="en" products={products} makers={makers} videos={videos} /></main>;
   }
 

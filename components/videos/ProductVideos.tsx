@@ -25,13 +25,14 @@ export default function ProductVideos({ productId }: ProductVideosProps) {
       setLoading(true);
       setError(null);
 
-      // Fetch all videos and filter by productId
-      // Note: This assumes the backend supports filtering by productId
-      // If not, you may need to add a new endpoint: GET /videos?productId=xxx
-      const [shortResponse, longResponse] = await Promise.all([
-        videosAPI.getVideos('short'),
-        videosAPI.getVideos('long'),
-      ]);
+      // Stagger requests to avoid overwhelming backend (aligned with rate limiting strategy)
+      // Fetch short videos first with limit
+      const shortResponse = await videosAPI.getVideos('short', 1, 50);
+      
+      // Small delay before fetching long videos
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      const longResponse = await videosAPI.getVideos('long', 1, 50);
 
       const allShortVideos = shortResponse.data?.data || shortResponse.data || [];
       const allLongVideos = longResponse.data?.data || longResponse.data || [];

@@ -189,13 +189,14 @@ export const postsAPI = {
 
 // Products API
 export const productsAPI = {
-  getProducts: (category?: string, params?: { minPrice?: number; maxPrice?: number; makerIds?: string }) =>
+  getProducts: (category?: string, params?: { minPrice?: number; maxPrice?: number; makerIds?: string; limit?: number }) =>
     api.get('/products', { 
       params: { 
         ...(category && { category }),
         ...(params?.minPrice !== undefined && { minPrice: params.minPrice }),
         ...(params?.maxPrice !== undefined && { maxPrice: params.maxPrice }),
         ...(params?.makerIds && { makerIds: params.makerIds }),
+        ...(params?.limit !== undefined && { limit: params.limit }),
       } 
     }),
   getProduct: (id: string) => api.get(`/products/${id}`),

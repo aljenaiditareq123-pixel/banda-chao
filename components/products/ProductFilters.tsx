@@ -59,8 +59,9 @@ export default function ProductFilters({ onFilterChange, initialFilters, product
     try {
       setLoading(true);
       
-      // Fetch limited products to extract unique categories and makers
-      const response = await productsAPI.getProducts();
+      // Fetch limited products to extract unique categories and makers (fallback only)
+      // This should rarely execute as products prop should be provided by parent
+      const response = await productsAPI.getProducts(undefined, { limit: 100 });
       const fetchedProducts = response.data?.data || response.data || [];
 
       // Extract unique categories

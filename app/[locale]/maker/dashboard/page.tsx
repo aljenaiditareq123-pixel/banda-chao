@@ -107,13 +107,17 @@ function MakerDashboardContent({ params }: MakerDashboardPageProps) {
     try {
       setLoading(true);
       
-      // Fetch user's videos
-      const videosResponse = await videosAPI.getVideos();
+      // Stagger requests to avoid overwhelming backend (aligned with rate limiting strategy)
+      // Fetch user's videos with limit
+      const videosResponse = await videosAPI.getVideos(undefined, 1, 100);
       const videosData = videosResponse.data?.data || videosResponse.data || [];
       setVideos(videosData.filter((v: Video) => v.userId === user.id));
       
-      // Fetch user's products
-      const productsResponse = await productsAPI.getProducts();
+      // Small delay before fetching products
+      await new Promise(resolve => setTimeout(resolve, 150));
+      
+      // Fetch user's products with limit
+      const productsResponse = await productsAPI.getProducts(undefined, { limit: 100 });
       const productsData = productsResponse.data?.data || productsResponse.data || [];
       setProducts(productsData.filter((p: Product) => p.userId === user.id));
     } catch (error) {
