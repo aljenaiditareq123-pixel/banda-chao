@@ -38,12 +38,11 @@ const httpServer = createServer(app);
 
 // CORS allowed origins
 const allowedOrigins = [
+  'http://localhost:3000',
   'https://banda-chao-frontend.onrender.com',
   'https://banda-chao.vercel.app',
-  'http://localhost:3000',
-  // Allow environment variable to add additional origins
-  ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [])
-];
+  process.env.FRONTEND_URL,
+].filter(Boolean) as string[];
 
 // Initialize Socket.IO
 const io = new Server(httpServer, {
@@ -56,27 +55,12 @@ const io = new Server(httpServer, {
 });
 
 // Middleware
+// CORS must be configured before routes
 app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      // Log blocked origin for debugging (only in development)
-      if (process.env.NODE_ENV === 'development') {
-        console.warn(`[CORS] Blocked origin: ${origin}`);
-        console.warn(`[CORS] Allowed origins: ${allowedOrigins.join(', ')}`);
-      }
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: allowedOrigins,
+  methods: 'GET,POST,PUT,DELETE,PATCH,OPTIONS',
+  allowedHeaders: 'Content-Type, Authorization',
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  exposedHeaders: ['Content-Range', 'X-Content-Range'],
-  maxAge: 86400 // 24 hours
 }));
 app.use(morgan('dev'));
 app.use(express.json());

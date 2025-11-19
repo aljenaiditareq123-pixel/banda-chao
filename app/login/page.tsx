@@ -26,6 +26,12 @@ function LoginForm() {
       setLoading(true);
       setError(null);
 
+      // Optional: Check if NEXT_PUBLIC_GOOGLE_CLIENT_ID is set (for future direct OAuth support)
+      // Currently, we use backend OAuth endpoint, so this is just for validation
+      const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+      const redirectUrl = process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URL || 
+        'https://banda-chao-frontend.onrender.com/auth/callback?provider=google';
+
       // Get API base URL using centralized helper
       const API_BASE_URL = getApiBaseUrl();
 

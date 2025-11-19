@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { getApiBaseUrl } from '@/lib/api-utils';
 
 function RegisterForm() {
   const [email, setEmail] = useState('');
@@ -30,36 +31,60 @@ function RegisterForm() {
       setLoading(true);
       setError(null);
 
-      // Get API base URL - NEXT_PUBLIC_API_URL already includes /api/v1
-      const getApiBaseUrl = (): string => {
-        if (typeof window === 'undefined') {
-          // Server-side
-          if (process.env.NEXT_PUBLIC_API_URL) {
-            return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '');
-          }
-          return 'https://banda-chao-backend.onrender.com/api/v1';
-        }
-        // Client-side
-        if (process.env.NEXT_PUBLIC_API_URL) {
-          return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '');
-        }
-        return 'https://banda-chao-backend.onrender.com/api/v1';
-      };
+      // Optional: Check if NEXT_PUBLIC_GOOGLE_CLIENT_ID is set (for future direct OAuth support)
+      // Currently, we use backend OAuth endpoint, so this is just for validation
+      const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+      const redirectUrl = process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URL || 
+        'https://banda-chao-frontend.onrender.com/auth/callback?provider=google';
 
+      // Get API base URL using centralized helper
       const API_BASE_URL = getApiBaseUrl();
 
-      // Get Google OAuth URL
-      const response = await fetch(`${API_BASE_URL}/oauth/google`);
-      const data = await response.json();
+      // Get Google OAuth URL with timeout and better error handling
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
-      if (data.authUrl) {
-        // Redirect to Google OAuth
-        window.location.href = data.authUrl;
-      } else {
-        setError(t('registerGoogleError'));
+      try {
+        const response = await fetch(`${API_BASE_URL}/oauth/google`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          signal: controller.signal,
+        });
+        
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          const errorMessage = errorData.message || errorData.error || `خطأ في الاتصال بالخادم (${response.status})`;
+          throw new Error(errorMessage);
+        }
+
+        const data = await response.json();
+
+        if (data.authUrl) {
+          // Redirect to Google OAuth
+          window.location.href = data.authUrl;
+        } else {
+          throw new Error(t('registerGoogleError') || 'فشل الحصول على رابط Google OAuth');
+        }
+      } catch (fetchError: any) {
+        clearTimeout(timeoutId);
+        
+        if (fetchError.name === 'AbortError') {
+          throw new Error('انتهت مهلة الاتصال. يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.');
+        }
+        
+        if (fetchError.message) {
+          throw fetchError;
+        }
+        
+        throw new Error(t('registerGoogleError') || 'فشل تسجيل الدخول عبر Google. يرجى المحاولة مرة أخرى.');
       }
     } catch (error: any) {
-      setError(t('registerGoogleError'));
+      console.error('[Register] Google OAuth error:', error);
+      setError(error.message || t('registerGoogleError') || 'فشل تسجيل الدخول عبر Google. يرجى المحاولة مرة أخرى.');
       setLoading(false);
     }
   };
