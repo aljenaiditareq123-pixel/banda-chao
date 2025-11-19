@@ -1,14 +1,15 @@
 import { redirect } from 'next/navigation';
 
 /**
- * Redirect non-locale products route to default locale route
+ * Redirect non-locale makers route to default locale route
  * Defaults to Arabic locale (ar)
  * 
  * Supported redirects:
- * - /products -> /ar/products
+ * - /makers -> /ar/makers
  * 
  * Future: Detect user's preferred locale from Accept-Language header
  */
-export default function ProductsPage() {
-  redirect('/ar/products');
+export default function MakersPage() {
+  redirect('/ar/makers');
 }
+

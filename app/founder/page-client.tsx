@@ -8,6 +8,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import AssistantCard from "@/components/founder/AssistantCard";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { getApiBaseUrl } from "@/lib/api-utils";
+import { fetchJsonWithRetry } from "@/lib/fetch-with-retry";
 
 interface DashboardStats {
   users: number;
@@ -48,43 +49,36 @@ export default function FounderPageClient() {
 
       // Stagger requests to avoid overwhelming backend (Render Free tier rate limiting)
       // Fetch users first, then stagger others with small delays
-      const usersRes = await fetch(`${apiBaseUrl}/users?limit=1`).catch(() => ({ ok: false }));
+      // Use fetchJsonWithRetry for consistent error handling
+      const usersJson = await fetchJsonWithRetry(`${apiBaseUrl}/users?limit=1`, {
+        maxRetries: 1,
+        retryDelay: 500,
+      }).catch(() => ({ data: [], pagination: { total: 0 } }));
       
       await new Promise(resolve => setTimeout(resolve, 150));
-      const makersRes = await fetch(`${apiBaseUrl}/makers?limit=1`).catch(() => ({ ok: false }));
+      const makersJson = await fetchJsonWithRetry(`${apiBaseUrl}/makers?limit=1`, {
+        maxRetries: 1,
+        retryDelay: 500,
+      }).catch(() => ({ data: [], total: 0, pagination: { total: 0 } }));
       
       await new Promise(resolve => setTimeout(resolve, 150));
-      const productsRes = await fetch(`${apiBaseUrl}/products?limit=1`).catch(() => ({ ok: false }));
+      const productsJson = await fetchJsonWithRetry(`${apiBaseUrl}/products?limit=1`, {
+        maxRetries: 1,
+        retryDelay: 500,
+      }).catch(() => ({ data: [], total: 0, pagination: { total: 0 } }));
       
       await new Promise(resolve => setTimeout(resolve, 150));
-      const videosRes = await fetch(`${apiBaseUrl}/videos?limit=1`).catch(() => ({ ok: false }));
+      const videosJson = await fetchJsonWithRetry(`${apiBaseUrl}/videos?limit=1`, {
+        maxRetries: 1,
+        retryDelay: 500,
+      }).catch(() => ({ data: [], total: 0, pagination: { total: 0 } }));
 
       const statsData: DashboardStats = {
-        users: 0,
-        makers: 0,
-        products: 0,
-        videos: 0,
+        users: usersJson.pagination?.total || usersJson.data?.length || 0,
+        makers: makersJson.pagination?.total || makersJson.total || makersJson.data?.length || 0,
+        products: productsJson.pagination?.total || productsJson.total || productsJson.data?.length || 0,
+        videos: videosJson.pagination?.total || videosJson.total || videosJson.data?.length || 0,
       };
-
-      if (usersRes.ok && usersRes instanceof Response) {
-        const usersData = await usersRes.json();
-        statsData.users = usersData.pagination?.total || usersData.data?.length || 0;
-      }
-
-      if (makersRes.ok && makersRes instanceof Response) {
-        const makersData = await makersRes.json();
-        statsData.makers = makersData.data?.length || 0;
-      }
-
-      if (productsRes.ok && productsRes instanceof Response) {
-        const productsData = await productsRes.json();
-        statsData.products = productsData.data?.length || 0;
-      }
-
-      if (videosRes.ok && videosRes instanceof Response) {
-        const videosData = await videosRes.json();
-        statsData.videos = videosData.pagination?.total || videosData.data?.length || 0;
-      }
 
       setStats(statsData);
     } catch (error) {

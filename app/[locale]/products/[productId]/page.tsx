@@ -3,6 +3,7 @@ import ProductDetailClient from '@/components/products/ProductDetailClient';
 import { Product } from '@/types';
 import { normalizeProduct } from '@/lib/product-utils';
 import { getApiBaseUrl } from '@/lib/api-utils';
+import { fetchJsonWithRetry } from '@/lib/fetch-with-retry';
 
 interface LocaleProductDetailPageProps {
   params: {
@@ -11,22 +12,24 @@ interface LocaleProductDetailPageProps {
   };
 }
 
+/**
+ * Fetch product by ID
+ * Uses fetchJsonWithRetry for consistent error handling and retry logic
+ */
 async function fetchProduct(productId: string): Promise<Product | null> {
   try {
     const apiBaseUrl = getApiBaseUrl();
-    const response = await fetch(`${apiBaseUrl}/products/${productId}`, {
-      next: { revalidate: 60 },
+    const json = await fetchJsonWithRetry(`${apiBaseUrl}/products/${productId}`, {
+      next: { revalidate: 60 }, // 1 minute cache
+      maxRetries: 2,
+      retryDelay: 1000,
     });
 
-    if (response.status === 404) {
+    // If error or not found
+    if (json.error || !json.data) {
       return null;
     }
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch product: ${response.status}`);
-    }
-
-    const json = await response.json();
     const item = json.data ?? json;
     return normalizeProduct(item);
   } catch (error) {

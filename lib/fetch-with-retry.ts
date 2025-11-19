@@ -1,12 +1,23 @@
 /**
  * Fetch with retry logic for 429 (Too Many Requests) errors
  * Handles Render Free tier rate limiting by retrying with exponential backoff
+ * 
+ * Supports Next.js cache options via `next` property
  */
+
+interface NextCacheOptions {
+  next?: {
+    revalidate?: number | false;
+    tags?: string[];
+  };
+}
 
 interface FetchWithRetryOptions extends RequestInit {
   maxRetries?: number;
   retryDelay?: number;
   retryOnStatus?: number[];
+  // Next.js cache options
+  next?: NextCacheOptions['next'];
 }
 
 /**

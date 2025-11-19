@@ -333,7 +333,7 @@ function CheckoutContent({ params }: CheckoutPageProps) {
 
 export default function LocaleCheckoutPage({ params }: CheckoutPageProps) {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute locale={params.locale}>
       <CheckoutContent params={params} />
     </ProtectedRoute>
   );

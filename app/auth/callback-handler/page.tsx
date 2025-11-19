@@ -4,6 +4,7 @@ import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { getApiBaseUrl } from '@/lib/api-utils';
+import { fetchJsonWithRetry } from '@/lib/fetch-with-retry';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,17 +24,18 @@ function CallbackHandlerContent() {
       // Also set cookie for server-side access (7 days expiry)
       document.cookie = `auth_token=${token}; path=/; max-age=${60 * 60 * 24 * 7}; ${process.env.NODE_ENV === 'production' ? 'secure; ' : ''}samesite=lax`;
 
-      // Fetch user info using centralized API helper
+      // Fetch user info using centralized API helper with retry logic
       const apiBaseUrl = getApiBaseUrl();
-      fetch(`${apiBaseUrl}/users/me`, {
+      fetchJsonWithRetry(`${apiBaseUrl}/users/me`, {
         headers: {
           'Authorization': `Bearer ${token}`
-        }
+        },
+        maxRetries: 2,
+        retryDelay: 1000,
       })
-        .then(res => res.json())
         .then(data => {
           const userData = data.user || data;
-          if (userData) {
+          if (userData && !userData.error) {
             setUser({
               id: userData.id,
               email: userData.email,
@@ -42,8 +44,10 @@ function CallbackHandlerContent() {
               role: userData.role || 'USER', // Default to 'USER' if role is missing
               createdAt: userData.createdAt,
             });
+            router.push(next);
+          } else {
+            throw new Error(userData.error || 'Failed to fetch user data');
           }
-          router.push(next);
         })
         .catch(error => {
           console.error('Failed to fetch user:', error);
