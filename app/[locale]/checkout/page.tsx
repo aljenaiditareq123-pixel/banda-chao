@@ -218,12 +218,35 @@ function CheckoutContent({ params }: CheckoutPageProps) {
 
                   setError(null);
 
+                  // Validate cart items
+                  const hasInvalidItems = items.some(
+                    (item) =>
+                      !item.product.id ||
+                      !item.product.price ||
+                      item.product.price <= 0 ||
+                      item.quantity <= 0 ||
+                      item.quantity > 99
+                  );
+
+                  if (hasInvalidItems) {
+                    setError(t('checkoutCartInvalid') ?? 'Some items in your cart are invalid. Please refresh and try again.');
+                    return;
+                  }
+
+                  // Validate form fields
                   const isFormValid = Object.values(formValues).every(
                     (value) => value.trim().length > 0
                   );
 
                   if (!isFormValid) {
                     setError(t('checkoutFormInvalid') ?? 'Please complete all shipping fields.');
+                    return;
+                  }
+
+                  // Additional validation: phone number format (basic)
+                  const phoneRegex = /^[\d\s\-\+\(\)]+$/;
+                  if (!phoneRegex.test(formValues.phone.trim())) {
+                    setError(t('checkoutPhoneInvalid') ?? 'Please enter a valid phone number.');
                     return;
                   }
 
@@ -235,15 +258,21 @@ function CheckoutContent({ params }: CheckoutPageProps) {
                         productId: item.product.id,
                         quantity: item.quantity,
                       })),
-                      shippingName: formValues.fullName,
-                      shippingAddress: formValues.street,
-                      shippingCity: formValues.city,
-                      shippingCountry: formValues.country,
-                      shippingPhone: formValues.phone,
+                      shippingName: formValues.fullName.trim(),
+                      shippingAddress: `${formValues.street.trim()}, ${formValues.city.trim()}`,
+                      shippingCity: formValues.city.trim(),
+                      shippingCountry: formValues.country.trim(),
+                      shippingPhone: formValues.phone.trim(),
                     };
 
                     const response = await ordersAPI.createOrder(orderData);
-                    const order = response.data.data;
+                    
+                    // Handle different response structures
+                    const order = response.data?.data || response.data?.order || response.data;
+
+                    if (!order || !order.id) {
+                      throw new Error('Invalid order response from server');
+                    }
 
                     // Clear cart after successful order
                     clearCart();
@@ -252,12 +281,30 @@ function CheckoutContent({ params }: CheckoutPageProps) {
                     router.push(`/${locale}/order/success?orderId=${order.id}`);
                   } catch (checkoutError: any) {
                     console.error('[Checkout] Failed to create order:', checkoutError);
-                    const message =
-                      checkoutError.response?.data?.error ||
-                      checkoutError.response?.data?.message ||
-                      checkoutError.message ||
-                      t('checkoutErrorGeneric') ||
-                      'Unable to create order. Please try again.';
+                    
+                    // Extract error message with better fallback
+                    let message = t('checkoutErrorGeneric') || 'Unable to create order. Please try again.';
+                    
+                    if (checkoutError.response?.data) {
+                      const errorData = checkoutError.response.data;
+                      message = errorData.error || errorData.message || message;
+                      
+                      // Handle specific error codes
+                      if (checkoutError.response.status === 400) {
+                        message = errorData.error || t('checkoutErrorValidation') || 'Invalid order data. Please check your cart and shipping information.';
+                      } else if (checkoutError.response.status === 401) {
+                        message = t('checkoutErrorAuth') || 'Please log in to complete your order.';
+                      } else if (checkoutError.response.status === 403) {
+                        message = t('checkoutErrorForbidden') || 'You do not have permission to create this order.';
+                      } else if (checkoutError.response.status === 409) {
+                        message = errorData.error || t('checkoutErrorConflict') || 'This order conflicts with existing data. Please refresh and try again.';
+                      } else if (checkoutError.response.status >= 500) {
+                        message = t('checkoutErrorServer') || 'Server error. Please try again later.';
+                      }
+                    } else if (checkoutError.message) {
+                      message = checkoutError.message;
+                    }
+                    
                     setError(message);
                   } finally {
                     setIsSubmitting(false);
