@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { getApiBaseUrl } from '@/lib/api-utils';
 
 function LoginForm() {
   const [email, setEmail] = useState('');
@@ -25,41 +26,54 @@ function LoginForm() {
       setLoading(true);
       setError(null);
 
-      // Get API base URL - NEXT_PUBLIC_API_URL already includes /api/v1
-      const getApiBaseUrl = (): string => {
-        if (typeof window === 'undefined') {
-          // Server-side
-          if (process.env.NEXT_PUBLIC_API_URL) {
-            return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '');
-          }
-          return 'https://banda-chao-backend.onrender.com/api/v1';
-        }
-        // Client-side
-        if (process.env.NEXT_PUBLIC_API_URL) {
-          return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '');
-        }
-        return 'https://banda-chao-backend.onrender.com/api/v1';
-      };
-
+      // Get API base URL using centralized helper
       const API_BASE_URL = getApiBaseUrl();
 
-      // Get Google OAuth URL
-      const response = await fetch(`${API_BASE_URL}/oauth/google`);
-      
-      if (!response.ok) {
-        throw new Error('Google OAuth غير متاح حالياً. يرجى استخدام البريد الإلكتروني وكلمة المرور.');
-      }
+      // Get Google OAuth URL with timeout and better error handling
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
-      const data = await response.json();
+      try {
+        const response = await fetch(`${API_BASE_URL}/oauth/google`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          signal: controller.signal,
+        });
+        
+        clearTimeout(timeoutId);
 
-      if (data.authUrl) {
-        // Redirect to Google OAuth
-        window.location.href = data.authUrl;
-      } else {
-        throw new Error('Google OAuth غير متاح حالياً. يرجى استخدام البريد الإلكتروني وكلمة المرور.');
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          const errorMessage = errorData.message || errorData.error || `خطأ في الاتصال بالخادم (${response.status})`;
+          throw new Error(errorMessage);
+        }
+
+        const data = await response.json();
+
+        if (data.authUrl) {
+          // Redirect to Google OAuth
+          window.location.href = data.authUrl;
+        } else {
+          throw new Error('لم يتم الحصول على رابط Google OAuth. يرجى المحاولة مرة أخرى.');
+        }
+      } catch (fetchError: any) {
+        clearTimeout(timeoutId);
+        
+        if (fetchError.name === 'AbortError') {
+          throw new Error('انتهت مهلة الاتصال. يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.');
+        }
+        
+        if (fetchError.message) {
+          throw fetchError;
+        }
+        
+        throw new Error('لا يمكن الاتصال بالخادم. يرجى التحقق من اتصالك بالإنترنت أو المحاولة لاحقاً.');
       }
     } catch (error: any) {
-      setError(error.message || 'Google OAuth غير متاح حالياً. يرجى استخدام البريد الإلكتروني وكلمة المرور.');
+      console.error('[Login] Google OAuth error:', error);
+      setError(error.message || 'فشل تسجيل الدخول عبر Google. يرجى استخدام البريد الإلكتروني وكلمة المرور.');
       setLoading(false);
     }
   };
