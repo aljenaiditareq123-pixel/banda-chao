@@ -28,63 +28,42 @@ function RegisterForm() {
 
   const handleGoogleSignup = async () => {
     try {
-      setLoading(true);
       setError(null);
-
-      // Optional: Check if NEXT_PUBLIC_GOOGLE_CLIENT_ID is set (for future direct OAuth support)
-      // Currently, we use backend OAuth endpoint, so this is just for validation
-      const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-      const redirectUrl = process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URL || 
-        'https://banda-chao-frontend.onrender.com/auth/callback?provider=google';
+      setLoading(true);
 
       // Get API base URL using centralized helper
-      const API_BASE_URL = getApiBaseUrl();
+      const baseUrl = getApiBaseUrl();
 
-      // Get Google OAuth URL with timeout and better error handling
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      // Call backend OAuth endpoint - backend will handle all validation
+      const res = await fetch(`${baseUrl}/oauth/google`, {
+        method: 'GET',
+        credentials: 'include',
+      });
 
-      try {
-        const response = await fetch(`${API_BASE_URL}/oauth/google`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          signal: controller.signal,
-        });
-        
-        clearTimeout(timeoutId);
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          const errorMessage = errorData.message || errorData.error || `خطأ في الاتصال بالخادم (${response.status})`;
-          throw new Error(errorMessage);
+      if (!res.ok) {
+        let message = 'Google OAuth failed';
+        try {
+          const data = await res.json();
+          if (data?.message) message = data.message;
+          else if (data?.error) message = data.error;
+        } catch {
+          // ignore JSON parse errors
         }
-
-        const data = await response.json();
-
-        if (data.authUrl) {
-          // Redirect to Google OAuth
-          window.location.href = data.authUrl;
-        } else {
-          throw new Error(t('registerGoogleError') || 'فشل الحصول على رابط Google OAuth');
-        }
-      } catch (fetchError: any) {
-        clearTimeout(timeoutId);
-        
-        if (fetchError.name === 'AbortError') {
-          throw new Error('انتهت مهلة الاتصال. يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.');
-        }
-        
-        if (fetchError.message) {
-          throw fetchError;
-        }
-        
-        throw new Error(t('registerGoogleError') || 'فشل تسجيل الدخول عبر Google. يرجى المحاولة مرة أخرى.');
+        throw new Error(message);
       }
-    } catch (error: any) {
-      console.error('[Register] Google OAuth error:', error);
-      setError(error.message || t('registerGoogleError') || 'فشل تسجيل الدخول عبر Google. يرجى المحاولة مرة أخرى.');
+
+      const data = await res.json();
+
+      // Backend returns { authUrl, callbackUrl }
+      if (data?.authUrl) {
+        window.location.href = data.authUrl;
+      } else {
+        throw new Error('Google OAuth URL not returned from backend');
+      }
+    } catch (err: any) {
+      console.error('[Register] Google OAuth error:', err);
+      setError(err?.message || t('registerGoogleError') || 'Google OAuth error');
+    } finally {
       setLoading(false);
     }
   };
