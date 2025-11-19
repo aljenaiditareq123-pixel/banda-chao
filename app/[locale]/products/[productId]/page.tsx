@@ -1,7 +1,8 @@
 import { notFound } from 'next/navigation';
 import ProductDetailClient from '@/components/products/ProductDetailClient';
 import { Product } from '@/types';
-import { PRODUCTS_ENDPOINT, normalizeProduct } from '@/lib/product-utils';
+import { normalizeProduct } from '@/lib/product-utils';
+import { getApiBaseUrl } from '@/lib/api-utils';
 
 interface LocaleProductDetailPageProps {
   params: {
@@ -12,7 +13,8 @@ interface LocaleProductDetailPageProps {
 
 async function fetchProduct(productId: string): Promise<Product | null> {
   try {
-    const response = await fetch(`${PRODUCTS_ENDPOINT}/${productId}`, {
+    const apiBaseUrl = getApiBaseUrl();
+    const response = await fetch(`${apiBaseUrl}/products/${productId}`, {
       next: { revalidate: 60 },
     });
 

@@ -87,31 +87,53 @@ export default function ProductDetailClient({ locale, product }: ProductDetailCl
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
           {/* Image Gallery */}
           <div className="space-y-6">
-            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="aspect-square w-full bg-gray-100 flex items-center justify-center">
-                <img
-                  src={mainImage}
-                  alt={product.name}
-                  className="h-full w-full object-cover"
-                />
+            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden group">
+              <div className="aspect-square w-full bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center relative overflow-hidden">
+                {product.images && product.images.length > 0 ? (
+                  <img
+                    src={mainImage}
+                    alt={product.name}
+                    className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = MAIN_IMAGE_PLACEHOLDER;
+                    }}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-100 to-primary-200">
+                    <span className="text-6xl" aria-hidden="true">📦</span>
+                  </div>
+                )}
               </div>
             </div>
-            <div className="grid grid-cols-4 gap-4">
-              {thumbnails.map((thumb, index) => (
-                <div
-                  key={`${thumb}-${index}`}
-                  className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
-                >
-                  <div className="aspect-square bg-gray-100 flex items-center justify-center">
-                    <img
-                      src={thumb}
-                      alt={`${product.name} preview ${index + 1}`}
-                      className="h-full w-full object-cover"
-                    />
+            {thumbnails.length > 1 && (
+              <div className="grid grid-cols-4 gap-4">
+                {thumbnails.map((thumb, index) => (
+                  <div
+                    key={`${thumb}-${index}`}
+                    className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden cursor-pointer hover:border-primary-400 transition-colors"
+                  >
+                    <div className="aspect-square bg-gray-100 flex items-center justify-center">
+                      {product.images && product.images[index] ? (
+                        <img
+                          src={thumb}
+                          alt={`${product.name} preview ${index + 1}`}
+                          className="h-full w-full object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = THUMB_PLACEHOLDERS[index] || THUMB_PLACEHOLDERS[0];
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gray-50">
+                          <span className="text-2xl" aria-hidden="true">📷</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Product Details */}
@@ -129,31 +151,38 @@ export default function ProductDetailClient({ locale, product }: ProductDetailCl
 
             <div className="space-y-4">
               <p className="text-sm font-medium text-gray-700 uppercase tracking-wide">
-                {t('productDetailQuantity')}
+                {t('productDetailQuantity') || 'Quantity'}
               </p>
-              <div className="inline-flex items-center rounded-full border border-gray-200 overflow-hidden">
+              <div className="inline-flex items-center rounded-full border-2 border-gray-300 overflow-hidden shadow-sm">
                 <button
                   type="button"
                   onClick={decreaseQuantity}
-                  className="px-4 py-2 text-lg font-semibold text-gray-600 hover:bg-gray-100 transition"
-                  aria-label={t('productDetailQuantity')}
+                  disabled={quantity <= 1}
+                  className="px-4 py-2 text-lg font-semibold text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                  aria-label={t('decreaseQuantity') || 'Decrease quantity'}
                 >
                   −
                 </button>
-                <span className="px-4 py-2 text-base font-medium text-gray-900" aria-live="polite">
+                <span className="px-6 py-2 text-base font-medium text-gray-900 min-w-[3rem] text-center" aria-live="polite">
                   {quantity}
                 </span>
                 <button
                   type="button"
                   onClick={increaseQuantity}
-                  className="px-4 py-2 text-lg font-semibold text-gray-600 hover:bg-gray-100 transition"
-                  aria-label={t('productDetailQuantity')}
+                  disabled={quantity >= 99}
+                  className="px-4 py-2 text-lg font-semibold text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                  aria-label={t('increaseQuantity') || 'Increase quantity'}
                 >
                   +
                 </button>
               </div>
-              <Button className="px-6 py-3 text-base" onClick={handleAddToCart}>
-                {t('productDetailAddToCart')}
+              <Button 
+                variant="primary" 
+                className="w-full px-6 py-3 text-base font-semibold shadow-lg hover:shadow-xl transition-all" 
+                onClick={handleAddToCart}
+                aria-label={t('productDetailAddToCart') || 'Add to cart'}
+              >
+                {t('productDetailAddToCart') || 'Add to Cart'}
               </Button>
               {product.externalLink && (
                 <a
