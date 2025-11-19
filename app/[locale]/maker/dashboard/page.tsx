@@ -10,6 +10,9 @@ import VideoUpload from '@/components/videos/VideoUpload';
 import Button from '@/components/Button';
 import { videosAPI, productsAPI, makersAPI } from '@/lib/api';
 import { Video, Product, Maker } from '@/types';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import EmptyState from '@/components/ui/EmptyState';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 interface MakerDashboardPageProps {
   params: {
@@ -18,6 +21,14 @@ interface MakerDashboardPageProps {
 }
 
 export default function MakerDashboardPage({ params }: MakerDashboardPageProps) {
+  return (
+    <ProtectedRoute>
+      <MakerDashboardContent params={params} />
+    </ProtectedRoute>
+  );
+}
+
+function MakerDashboardContent({ params }: MakerDashboardPageProps) {
   const { locale } = params;
   const { user, loading: authLoading } = useAuth();
   const { t, setLanguage } = useLanguage();
@@ -230,14 +241,10 @@ export default function MakerDashboardPage({ params }: MakerDashboardPageProps) 
     return (
       <Layout showHeader={false}>
         <div className="min-h-screen flex items-center justify-center">
-          <div className="text-gray-500">加载中...</div>
+          <LoadingSpinner size="lg" />
         </div>
       </Layout>
     );
-  }
-
-  if (!user) {
-    return null;
   }
 
   return (
@@ -573,22 +580,24 @@ export default function MakerDashboardPage({ params }: MakerDashboardPageProps) 
                   setUploadType('short');
                   setShowVideoUpload(true);
                 }}
-                className="bg-white rounded-xl border-2 border-dashed border-gray-300 p-8 text-center hover:border-primary-600 hover:bg-primary-50 transition"
+                className="bg-white rounded-xl border-2 border-dashed border-gray-300 p-8 text-center hover:border-primary-600 hover:bg-primary-50 transition cursor-pointer"
+                aria-label={t('uploadShortVideo') || 'Upload Short Video'}
               >
-                <div className="text-4xl mb-3">🎬</div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">上传短视频</h3>
-                <p className="text-sm text-gray-600">最多60秒，用于吸引注意力</p>
+                <div className="text-4xl mb-3" aria-hidden="true">🎬</div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('uploadShortVideo') || 'Upload Short Video'}</h3>
+                <p className="text-sm text-gray-600">{t('shortVideoDescription') || 'Up to 60 seconds, for attention-grabbing content'}</p>
               </button>
               <button
                 onClick={() => {
                   setUploadType('long');
                   setShowVideoUpload(true);
                 }}
-                className="bg-white rounded-xl border-2 border-dashed border-gray-300 p-8 text-center hover:border-primary-600 hover:bg-primary-50 transition"
+                className="bg-white rounded-xl border-2 border-dashed border-gray-300 p-8 text-center hover:border-primary-600 hover:bg-primary-50 transition cursor-pointer"
+                aria-label={t('uploadLongVideo') || 'Upload Long Video'}
               >
-                <div className="text-4xl mb-3">📹</div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">上传长视频</h3>
-                <p className="text-sm text-gray-600">最多10分钟，用于记录制作过程</p>
+                <div className="text-4xl mb-3" aria-hidden="true">📹</div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('uploadLongVideo') || 'Upload Long Video'}</h3>
+                <p className="text-sm text-gray-600">{t('longVideoDescription') || 'Up to 10 minutes, for documenting the making process'}</p>
               </button>
             </div>
           )}
@@ -598,7 +607,7 @@ export default function MakerDashboardPage({ params }: MakerDashboardPageProps) 
             <div className="mb-8">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold text-gray-900">
-                  {uploadType === 'short' ? '上传短视频' : '上传长视频'}
+                  {uploadType === 'short' ? t('uploadShortVideo') : t('uploadLongVideo') || 'Upload Video'}
                 </h2>
                 <Button
                   variant="text"
@@ -606,8 +615,9 @@ export default function MakerDashboardPage({ params }: MakerDashboardPageProps) 
                     setShowVideoUpload(false);
                     setUploadType(null);
                   }}
+                  aria-label={t('cancel') || 'Cancel'}
                 >
-                  取消
+                  {t('cancel') || 'Cancel'}
                 </Button>
               </div>
               <VideoUpload
@@ -623,21 +633,40 @@ export default function MakerDashboardPage({ params }: MakerDashboardPageProps) 
 
           {/* Videos List */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">我的视频</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-gray-900">{t('myVideos') || 'My Videos'}</h2>
+              {videos.length > 0 && (
+                <Link
+                  href={`/${locale}/videos`}
+                  className="text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors"
+                >
+                  {t('viewAll') || 'View All'} →
+                </Link>
+              )}
+            </div>
             {videos.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">还没有上传视频</p>
+              <EmptyState
+                icon="🎬"
+                title={t('noVideosYet') || 'No videos yet'}
+                description={t('uploadYourFirstVideo') || 'Upload your first video to get started'}
+              />
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {videos.map((video) => (
-                  <div
+                {videos.slice(0, 6).map((video) => (
+                  <Link
                     key={video.id}
-                    className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition"
+                    href={`/${locale}/videos/${video.id}`}
+                    className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition block"
                   >
                     <div className="aspect-video bg-gray-100 relative">
                       <img
-                        src={video.thumbnail}
+                        src={video.thumbnail || 'https://via.placeholder.com/640x360?text=Video'}
                         alt={video.title}
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = 'https://via.placeholder.com/640x360?text=Video';
+                        }}
                       />
                       <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
                         {Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, '0')}
@@ -648,11 +677,11 @@ export default function MakerDashboardPage({ params }: MakerDashboardPageProps) 
                         {video.title}
                       </h3>
                       <div className="flex items-center justify-between text-sm text-gray-500">
-                        <span>{video.type === 'short' ? '短视频' : '长视频'}</span>
-                        <span>{video.views} 次观看</span>
+                        <span>{video.type === 'short' ? t('shortVideos') || 'Short' : t('longVideos') || 'Long'}</span>
+                        <span>{video.views || 0} {t('views') || 'views'}</span>
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}
@@ -660,15 +689,30 @@ export default function MakerDashboardPage({ params }: MakerDashboardPageProps) 
 
           {/* Products List */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">我的产品</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-gray-900">{t('myProducts') || 'My Products'}</h2>
+              {products.length > 0 && (
+                <Link
+                  href={`/${locale}/products`}
+                  className="text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors"
+                >
+                  {t('viewAll') || 'View All'} →
+                </Link>
+              )}
+            </div>
             {products.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">还没有添加产品</p>
+              <EmptyState
+                icon="📦"
+                title={t('noProductsYet') || 'No products yet'}
+                description={t('addYourFirstProduct') || 'Add your first product to get started'}
+              />
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {products.map((product) => (
-                  <div
+                {products.slice(0, 8).map((product) => (
+                  <Link
                     key={product.id}
-                    className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition"
+                    href={`/${locale}/products/${product.id}`}
+                    className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition block"
                   >
                     <div className="aspect-square bg-gray-100">
                       {product.images && product.images.length > 0 ? (
@@ -676,10 +720,14 @@ export default function MakerDashboardPage({ params }: MakerDashboardPageProps) 
                           src={product.images[0]}
                           alt={product.name}
                           className="w-full h-full object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                          }}
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <span className="text-4xl">📦</span>
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-100 to-primary-200">
+                          <span className="text-4xl" aria-hidden="true">📦</span>
                         </div>
                       )}
                     </div>
@@ -688,10 +736,15 @@ export default function MakerDashboardPage({ params }: MakerDashboardPageProps) 
                         {product.name}
                       </h3>
                       <p className="text-sm font-bold text-primary-600">
-                        {product.price ? `¥${product.price.toFixed(2)}` : '价格待定'}
+                        {product.price
+                          ? new Intl.NumberFormat(locale === 'ar' ? 'ar-EG' : locale === 'zh' ? 'zh-CN' : 'en-US', {
+                              style: 'currency',
+                              currency: locale === 'ar' ? 'AED' : locale === 'en' ? 'USD' : 'CNY',
+                            }).format(product.price)
+                          : t('priceTBD') || 'Price TBD'}
                       </p>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}
