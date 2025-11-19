@@ -7,6 +7,8 @@ import ProductCard from '@/components/ProductCard';
 import ProductFilters, { FilterState } from '@/components/products/ProductFilters';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Product } from '@/types';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import EmptyState from '@/components/ui/EmptyState';
 
 interface ProductListClientProps {
   locale: string;
@@ -168,7 +170,9 @@ export default function ProductListClient({ locale, products: initialProducts }:
                 </div>
 
                 {loading ? (
-                  <div className="w-full text-center py-12 text-gray-500">Loading...</div>
+                  <div className="w-full py-16">
+                    <LoadingSpinner size="lg" className="mx-auto" />
+                  </div>
                 ) : (
                   <>
                     <Grid columns={{ base: 1, sm: 2, md: 3, lg: 3 }} gap="gap-6">
@@ -180,15 +184,19 @@ export default function ProductListClient({ locale, products: initialProducts }:
                         ))
                       ) : (
                         <GridItem className="col-span-full">
-                          <div className="w-full text-center py-12 text-gray-500 border border-dashed border-gray-200 rounded-3xl">
-                            {filters.categories.length === 1 ? (
-                              <p className="text-lg">
-                                {t('noContent') || '暂无内容'} - {filters.categories[0]}分类的商品
-                              </p>
-                            ) : (
-                              <p className="text-lg">{t('noContent') || '暂无内容'}</p>
-                            )}
-                          </div>
+                          <EmptyState
+                            icon="📦"
+                            title={
+                              filters.categories.length === 1
+                                ? `${t('noContent') || '暂无内容'} - ${filters.categories[0]}分类的商品`
+                                : t('noContent') || '暂无内容'
+                            }
+                            description={
+                              filters.categories.length === 1
+                                ? t('noProductsInCategory') || 'This category has no products yet.'
+                                : t('noProductsDescription') || 'No products available at the moment.'
+                            }
+                          />
                         </GridItem>
                       )}
                     </Grid>

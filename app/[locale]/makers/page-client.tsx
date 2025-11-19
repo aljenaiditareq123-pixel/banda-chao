@@ -9,6 +9,8 @@ import { makersAPI } from '@/lib/api';
 import Layout from '@/components/Layout';
 import { Grid, GridItem } from '@/components/Grid';
 import Button from '@/components/Button';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import EmptyState from '@/components/ui/EmptyState';
 
 const AVATAR_PLACEHOLDER = 'https://via.placeholder.com/200x200?text=Maker';
 const COVER_PLACEHOLDER = 'https://via.placeholder.com/800x400?text=Maker+Cover';
@@ -183,8 +185,8 @@ export default function MakersPageClient({ locale, initialMakers, initialSearch 
           {/* Loading State */}
           {isLoading && filteredMakers.length === 0 && (
             <div className="bg-white rounded-xl shadow-sm p-12 text-center border border-gray-200">
-              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mb-4"></div>
-              <p className="text-gray-600">{t('loadingMakers') || 'جاري تحميل الحرفيين...'}</p>
+              <LoadingSpinner size="lg" className="mx-auto mb-4" />
+              <p className="text-gray-600">{t('loadingMakers') || 'Loading makers...'}</p>
             </div>
           )}
 
@@ -263,25 +265,15 @@ export default function MakersPageClient({ locale, initialMakers, initialSearch 
               })}
             </div>
           ) : !isLoading ? (
-            <div className="bg-white rounded-xl shadow-sm p-12 text-center border border-gray-200">
-              <div className="text-6xl mb-4">🔍</div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                {t('noMakersFound') || 'لم يتم العثور على حرفيين'}
-              </h3>
-              <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                {t('tryDifferentSearch') || 'جرب بحثاً مختلفاً أو قم بتغيير الفلاتر'}
-              </p>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setSearchQuery('');
-                  setSelectedLocation('');
-                  handleSearch('');
-                }}
-              >
-                {t('clearFilters') || 'مسح الفلاتر'}
-              </Button>
-            </div>
+            <EmptyState
+              icon="🔍"
+              title={t('noMakersFound') || 'No makers found'}
+              description={t('tryDifferentSearch') || 'Try a different search or change filters'}
+              action={{
+                label: t('clearFilters') || 'Clear filters',
+                href: `/${locale}/makers`,
+              }}
+            />
           ) : null}
         </div>
       </div>

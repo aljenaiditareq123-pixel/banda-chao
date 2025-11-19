@@ -6,6 +6,7 @@ import { Grid, GridItem } from '@/components/Grid';
 import VideoCard from '@/components/VideoCard';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Video } from '@/types';
+import EmptyState from '@/components/ui/EmptyState';
 
 interface VideosPageClientProps {
   locale: string;
@@ -114,31 +115,19 @@ export default function VideosPageClient({ locale, shortVideos, longVideos }: Vi
             ))}
           </Grid>
         ) : (
-          <div className="text-center py-20 bg-white rounded-2xl border-2 border-gray-200 shadow-sm">
-            <div className="text-6xl mb-4">🎬</div>
-            <p className="text-xl font-semibold text-gray-700 mb-2">
-              {emptyState.title}
-            </p>
-            <p className="text-gray-500 mb-6">
-              {emptyState.description}
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                href={`/${locale}/makers`}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition font-medium"
-              >
-                <span>👥</span>
-                <span>{t('browseMakers') || 'تصفح الحرفيين'}</span>
-              </Link>
-              <Link
-                href={`/${locale}/products`}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-white text-primary-700 border-2 border-primary-200 rounded-xl hover:bg-primary-50 transition font-medium"
-              >
-                <span>📦</span>
-                <span>{t('browseProducts') || 'تصفح المنتجات'}</span>
-              </Link>
-            </div>
-          </div>
+          <EmptyState
+            icon="🎬"
+            title={emptyState.title}
+            description={emptyState.description}
+            action={
+              activeTab === 'all'
+                ? {
+                    label: t('browseProducts') || 'Browse Products',
+                    href: `/${locale}/products`,
+                  }
+                : undefined
+            }
+          />
         )}
       </div>
     </div>

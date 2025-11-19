@@ -31,13 +31,15 @@ export default function HomePageClient({ locale, products, makers, videos }: Hom
 
   if (!mounted) {
     return (
-      <div className="space-y-8">
-        <div className="animate-pulse">
-          <div className="h-96 bg-gray-200 rounded-lg mb-8"></div>
-          <div className="h-8 bg-gray-200 rounded w-64 mb-4"></div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-64 bg-gray-200 rounded-lg"></div>
+      <div className="space-y-16 pb-16">
+        <div className="relative bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800 rounded-3xl overflow-hidden shadow-2xl min-h-[500px] flex items-center animate-pulse">
+          <div className="w-full h-full bg-gray-300 opacity-50"></div>
+        </div>
+        <div className="space-y-6">
+          <div className="h-8 bg-gray-200 rounded w-64 animate-pulse"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="h-64 bg-gray-200 rounded-xl animate-pulse"></div>
             ))}
           </div>
         </div>
