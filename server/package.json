@@ -10,7 +10,10 @@
     "start:dev": "npx prisma db push --accept-data-loss && node dist/index.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:studio": "prisma studio"
+    "prisma:migrate:deploy": "prisma migrate deploy --schema=./prisma/schema.prisma",
+    "prisma:studio": "prisma studio",
+    "postinstall": "prisma generate --schema=./prisma/schema.prisma",
+    "prebuild": "prisma migrate deploy --schema=./prisma/schema.prisma || echo 'Migration failed or already applied, continuing build...'"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
