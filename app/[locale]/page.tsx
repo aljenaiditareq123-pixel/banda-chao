@@ -14,10 +14,10 @@ interface LocalePageProps {
 async function fetchLatestProducts(): Promise<Product[]> {
   try {
     const apiBaseUrl = getApiBaseUrl();
-    const json = await fetchJsonWithRetry(`${apiBaseUrl}/products`, {
-      next: { revalidate: 60 },
-      maxRetries: 2, // Reduce retries for homepage to avoid delays
-      retryDelay: 500, // Faster retry for better UX
+    const json = await fetchJsonWithRetry(`${apiBaseUrl}/products?limit=8`, {
+      next: { revalidate: 300 }, // 5 minutes cache
+      maxRetries: 1, // Only 1 retry for homepage
+      retryDelay: 1000,
     });
 
     const items = Array.isArray(json.data) ? json.data : [];
@@ -31,10 +31,10 @@ async function fetchLatestProducts(): Promise<Product[]> {
 async function fetchFeaturedMakers(): Promise<Maker[]> {
   try {
     const apiBaseUrl = getApiBaseUrl();
-    const json = await fetchJsonWithRetry(`${apiBaseUrl}/makers`, {
-      next: { revalidate: 120 },
-      maxRetries: 2,
-      retryDelay: 500,
+    const json = await fetchJsonWithRetry(`${apiBaseUrl}/makers?limit=6`, {
+      next: { revalidate: 600 }, // 10 minutes cache
+      maxRetries: 1,
+      retryDelay: 1000,
     });
 
     const items = Array.isArray(json.data) ? json.data : [];
@@ -49,9 +49,9 @@ async function fetchFeaturedVideos(): Promise<Video[]> {
   try {
     const apiBaseUrl = getApiBaseUrl();
     const json = await fetchJsonWithRetry(`${apiBaseUrl}/videos?limit=6`, {
-      next: { revalidate: 120 },
-      maxRetries: 2,
-      retryDelay: 500,
+      next: { revalidate: 600 }, // 10 minutes cache
+      maxRetries: 1,
+      retryDelay: 1000,
     });
 
     const items = Array.isArray(json.data) ? json.data : [];
@@ -77,11 +77,18 @@ async function fetchFeaturedVideos(): Promise<Video[]> {
 
 export default async function LocaleHomePage({ params }: LocalePageProps) {
   const { locale } = params;
-  const [products, makers, videos] = await Promise.all([
-    fetchLatestProducts(),
-    fetchFeaturedMakers(),
-    fetchFeaturedVideos(),
-  ]);
+  
+  // Stagger requests to avoid overwhelming backend (Render Free tier rate limiting)
+  // Fetch products first, then makers after 100ms, then videos after 200ms
+  const products = await fetchLatestProducts();
+  
+  // Small delay to avoid hitting rate limit
+  await new Promise(resolve => setTimeout(resolve, 100));
+  const makers = await fetchFeaturedMakers();
+  
+  // Another small delay
+  await new Promise(resolve => setTimeout(resolve, 100));
+  const videos = await fetchFeaturedVideos();
 
   return <HomePageClient locale={locale} products={products} makers={makers} videos={videos} />;
 }

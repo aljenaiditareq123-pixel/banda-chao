@@ -102,7 +102,7 @@ export default function ProductListClient({ locale, products: initialProducts }:
           <div className="flex flex-col lg:flex-row gap-10">
 
             <aside className="lg:w-72 flex-shrink-0">
-              <ProductFilters onFilterChange={handleFilterChange} />
+              <ProductFilters onFilterChange={handleFilterChange} products={initialProducts} />
             </aside>
 
             <section className="flex-1">

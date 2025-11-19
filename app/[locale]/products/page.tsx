@@ -17,8 +17,8 @@ interface LocaleProductsPageProps {
 async function fetchAllProducts(): Promise<Product[]> {
   try {
     const apiBaseUrl = getApiBaseUrl();
-    const json = await fetchJsonWithRetry(`${apiBaseUrl}/products`, {
-      next: { revalidate: 60 },
+    const json = await fetchJsonWithRetry(`${apiBaseUrl}/products?limit=100`, {
+      next: { revalidate: 300 }, // 5 minutes cache
       maxRetries: 2,
       retryDelay: 1000,
     });

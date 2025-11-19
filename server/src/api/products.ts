@@ -7,30 +7,53 @@ const router = Router();
 // Get all products
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const { category } = req.query;
+    const { category, limit } = req.query;
+    const limitNum = limit ? parseInt(limit as string, 10) : 50; // Default 50, max 100
+    const takeLimit = Math.min(limitNum, 100); // Cap at 100 to prevent excessive queries
 
     const where = category ? { category: category as string } : {};
 
-    const products = await prisma.product.findMany({
-      where,
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            profilePicture: true
+    const [products, total] = await Promise.all([
+      prisma.product.findMany({
+        where,
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          imageUrl: true,
+          externalLink: true,
+          price: true,
+          category: true,
+          userId: true,
+          createdAt: true,
+          updatedAt: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              profilePicture: true
+            }
           }
-        }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    });
+        },
+        orderBy: {
+          createdAt: 'desc'
+        },
+        take: takeLimit, // Limit results
+      }),
+      prisma.product.count({ where })
+    ]);
+
+    // Add cache headers for CDN/proxy caching (5 minutes)
+    res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
 
     // Return consistent format with videos API
     res.json({
       data: products,
-      total: products.length
+      total,
+      pagination: {
+        limit: takeLimit,
+        total
+      }
     });
   } catch (error: any) {
     console.error('Get products error:', error);

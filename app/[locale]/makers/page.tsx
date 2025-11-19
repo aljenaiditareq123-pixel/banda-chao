@@ -21,7 +21,7 @@ async function fetchAllMakers(search?: string): Promise<Maker[]> {
       : `${apiBaseUrl}/makers`;
 
     const json = await fetchJsonWithRetry(url, {
-      next: { revalidate: 120 },
+      next: { revalidate: 600 }, // 10 minutes cache
       maxRetries: 2,
       retryDelay: 1000,
     });

@@ -17,7 +17,19 @@ router.get('/', async (req: Request, res: Response) => {
     const [videos, total] = await Promise.all([
       prisma.video.findMany({
         where,
-        include: {
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          videoUrl: true,
+          thumbnailUrl: true,
+          duration: true,
+          views: true,
+          likes: true,
+          type: true,
+          userId: true,
+          createdAt: true,
+          updatedAt: true,
           user: {
             select: {
               id: true,
@@ -34,6 +46,9 @@ router.get('/', async (req: Request, res: Response) => {
       }),
       prisma.video.count({ where })
     ]);
+
+    // Add cache headers for CDN/proxy caching (5 minutes)
+    res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
 
     res.json({
       data: videos,
@@ -57,7 +72,19 @@ router.get('/:id', async (req: Request, res: Response) => {
 
     const video = await prisma.video.findUnique({
       where: { id },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        videoUrl: true,
+        thumbnailUrl: true,
+        duration: true,
+        views: true,
+        likes: true,
+        type: true,
+        userId: true,
+        createdAt: true,
+        updatedAt: true,
         user: {
           select: {
             id: true,

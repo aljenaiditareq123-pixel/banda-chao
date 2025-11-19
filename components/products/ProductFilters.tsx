@@ -13,9 +13,10 @@ export interface FilterState {
 interface ProductFiltersProps {
   onFilterChange: (filters: FilterState) => void;
   initialFilters?: FilterState;
+  products?: any[]; // Optional products prop to avoid fetching (flexible type to accept Product[] or any product-like structure)
 }
 
-export default function ProductFilters({ onFilterChange, initialFilters }: ProductFiltersProps) {
+export default function ProductFilters({ onFilterChange, initialFilters, products }: ProductFiltersProps) {
   const { t, language } = useLanguage();
   const [categories, setCategories] = useState<string[]>(initialFilters?.categories || []);
   const [priceRange, setPriceRange] = useState<{ min: number | null; max: number | null }>(
@@ -24,33 +25,54 @@ export default function ProductFilters({ onFilterChange, initialFilters }: Produ
   const [makers, setMakers] = useState<string[]>(initialFilters?.makers || []);
   const [availableCategories, setAvailableCategories] = useState<string[]>([]);
   const [availableMakers, setAvailableMakers] = useState<Array<{ id: string; name: string }>>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const isRTL = language === 'ar';
 
-  // Fetch available categories and makers
+  // Extract categories and makers from products prop (if provided) or fetch from API
   useEffect(() => {
-    fetchFilterOptions();
-  }, []);
+    if (products && products.length > 0) {
+      // Use products prop to extract categories and makers (no API call needed)
+      const uniqueCategories = Array.from(
+        new Set(products.map((p) => p.category).filter(Boolean))
+      ) as string[];
+      setAvailableCategories(uniqueCategories);
+
+      const uniqueMakers = Array.from(
+        new Set(
+          products
+            .map((p) => ({
+              id: p.maker?.id || p.userId,
+              name: p.maker?.name || p.user?.name || 'Unknown',
+            }))
+            .filter((m) => m.id && m.name !== 'Unknown')
+        )
+      ) as Array<{ id: string; name: string }>;
+      setAvailableMakers(uniqueMakers);
+    } else {
+      // Fallback: fetch from API only if products prop is not provided
+      fetchFilterOptions();
+    }
+  }, [products]);
 
   const fetchFilterOptions = async () => {
     try {
       setLoading(true);
       
-      // Fetch all products to extract unique categories and makers
+      // Fetch limited products to extract unique categories and makers
       const response = await productsAPI.getProducts();
-      const products = response.data?.data || response.data || [];
+      const fetchedProducts = response.data?.data || response.data || [];
 
       // Extract unique categories
       const uniqueCategories = Array.from(
-        new Set(products.map((p: any) => p.category).filter(Boolean))
+        new Set(fetchedProducts.map((p: any) => p.category).filter(Boolean))
       ) as string[];
       setAvailableCategories(uniqueCategories);
 
       // Extract unique makers (from userId or maker relation)
       const uniqueMakers = Array.from(
         new Set(
-          products
+          fetchedProducts
             .map((p: any) => ({
               id: p.maker?.id || p.userId,
               name: p.maker?.name || p.user?.name || 'Unknown',

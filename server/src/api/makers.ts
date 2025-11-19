@@ -39,7 +39,9 @@ async function ensureUniqueSlug(baseSlug: string, excludeMakerId?: string): Prom
  */
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const { search, location } = req.query;
+    const { search, location, limit } = req.query;
+    const limitNum = limit ? parseInt(limit as string, 10) : 50; // Default 50, max 100
+    const takeLimit = Math.min(limitNum, 100); // Cap at 100 to prevent excessive queries
 
     const where: any = {};
 
@@ -54,23 +56,36 @@ router.get('/', async (req: Request, res: Response) => {
     // Note: location filtering can be added if location field exists in Maker model
     // For now, we'll skip it as it's not in the current schema
 
-    const makers = await prisma.maker.findMany({
-      where,
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            profilePicture: true,
-            createdAt: true,
+    const [makers, total] = await Promise.all([
+      prisma.maker.findMany({
+        where,
+        select: {
+          id: true,
+          slug: true,
+          name: true,
+          bio: true,
+          story: true,
+          profilePictureUrl: true,
+          coverPictureUrl: true,
+          createdAt: true,
+          updatedAt: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              profilePicture: true,
+              createdAt: true,
+            },
           },
         },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: takeLimit, // Limit results
+      }),
+      prisma.maker.count({ where })
+    ]);
 
     // Format response to include essential maker info + user info
     const formattedMakers = makers.map((maker) => ({
@@ -92,9 +107,16 @@ router.get('/', async (req: Request, res: Response) => {
       },
     }));
 
+    // Add cache headers for CDN/proxy caching (10 minutes)
+    res.setHeader('Cache-Control', 'public, s-maxage=600, stale-while-revalidate=1200');
+
     res.json({
       data: formattedMakers,
-      total: formattedMakers.length,
+      total,
+      pagination: {
+        limit: takeLimit,
+        total
+      }
     });
   } catch (error: any) {
     console.error('[Makers API] Get makers error:', error);

@@ -46,12 +46,18 @@ export default function FounderPageClient() {
       setStatsLoading(true);
       const apiBaseUrl = getApiBaseUrl();
 
-      const [usersRes, makersRes, productsRes, videosRes] = await Promise.all([
-        fetch(`${apiBaseUrl}/users?limit=1`).catch(() => ({ ok: false })),
-        fetch(`${apiBaseUrl}/makers`).catch(() => ({ ok: false })),
-        fetch(`${apiBaseUrl}/products`).catch(() => ({ ok: false })),
-        fetch(`${apiBaseUrl}/videos`).catch(() => ({ ok: false })),
-      ]);
+      // Stagger requests to avoid overwhelming backend (Render Free tier rate limiting)
+      // Fetch users first, then stagger others with small delays
+      const usersRes = await fetch(`${apiBaseUrl}/users?limit=1`).catch(() => ({ ok: false }));
+      
+      await new Promise(resolve => setTimeout(resolve, 150));
+      const makersRes = await fetch(`${apiBaseUrl}/makers?limit=1`).catch(() => ({ ok: false }));
+      
+      await new Promise(resolve => setTimeout(resolve, 150));
+      const productsRes = await fetch(`${apiBaseUrl}/products?limit=1`).catch(() => ({ ok: false }));
+      
+      await new Promise(resolve => setTimeout(resolve, 150));
+      const videosRes = await fetch(`${apiBaseUrl}/videos?limit=1`).catch(() => ({ ok: false }));
 
       const statsData: DashboardStats = {
         users: 0,
