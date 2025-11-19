@@ -36,11 +36,17 @@ function LoginForm() {
       });
 
       if (!res.ok) {
-        let message = 'Google OAuth failed';
+        let message = 'تسجيل الدخول عبر Google غير متاح حالياً';
         try {
           const data = await res.json();
-          if (data?.message) message = data.message;
-          else if (data?.error) message = data.error;
+          // Show user-friendly message for configuration errors
+          if (data?.message?.includes('GOOGLE_CLIENT_ID') || data?.error?.includes('GOOGLE_CLIENT_ID')) {
+            message = 'تسجيل الدخول عبر Google غير متاح حالياً. يرجى استخدام تسجيل الدخول بالبريد الإلكتروني.';
+          } else if (data?.message) {
+            message = data.message;
+          } else if (data?.error) {
+            message = data.error;
+          }
         } catch {
           // ignore JSON parse errors
         }
