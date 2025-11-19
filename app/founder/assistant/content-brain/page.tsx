@@ -1,42 +1,20 @@
 'use client';
 
-import { Suspense, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
+import { Suspense } from 'react';
+import FounderRoute from '@/components/FounderRoute';
 import FounderLayout from '@/components/founder/FounderLayout';
 import FounderAIAssistant from '@/components/FounderAIAssistant';
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * Content Brain Page - Content Panda Assistant
+ * 
+ * Protected by FounderRoute wrapper (client-side) and app/founder/layout.tsx (server-side)
+ */
 export default function ContentBrainPage() {
-  const router = useRouter();
-  const { user, loading } = useAuth();
-
-  useEffect(() => {
-    if (loading) return;
-
-    if (!user) {
-      router.replace('/login');
-      return;
-    }
-
-    if (user.role !== 'FOUNDER') {
-      router.replace('/');
-    }
-  }, [user, loading, router]);
-
-  if (loading || !user || user.role !== 'FOUNDER') {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 text-sm">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
+    <FounderRoute locale="en">
     <FounderLayout
       title="باندا المحتوى"
       description="يبني سرداً جذاباً يحفّز المشاركة ويزيد ولاء المجتمع."
@@ -70,5 +48,6 @@ export default function ContentBrainPage() {
         </div>
       </Suspense>
     </FounderLayout>
+    </FounderRoute>
   );
 }

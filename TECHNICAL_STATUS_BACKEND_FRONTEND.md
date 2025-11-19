@@ -445,6 +445,123 @@ npm run build   # TypeScript compilation
 
 ---
 
+---
+
+## 8. Founder Page Protection & Authentication
+
+### ✅ Status: Fully Implemented (Multi-layer Protection)
+
+### Overview:
+
+Founder pages (`/founder/**`) are protected with **dual-layer protection**:
+1. **Server-side protection** (via `app/founder/layout.tsx`)
+2. **Client-side protection** (via `FounderRoute` component)
+
+### Protection Architecture:
+
+**Layer 1: Server-Side Protection** (`app/founder/layout.tsx`):
+- Uses `requireFounder()` from `lib/auth-server.ts`
+- Checks authentication via cookies (server-side)
+- Validates user role: `user.role === 'FOUNDER'` OR `user.email === FOUNDER_EMAIL`
+- Redirects to `/login?redirect=/founder` if not authenticated
+- Redirects to `/` if authenticated but not founder
+
+**Layer 2: Client-Side Protection** (`components/FounderRoute.tsx`):
+- Wraps all `/founder/**` pages
+- Checks `AuthContext` for user authentication and role
+- Provides consistent UX with loading states
+- Handles three scenarios (see below)
+
+### Access Scenarios:
+
+**Scenario 1: User Not Authenticated**
+- **Action:** Redirects to `/[locale]/login?redirect=/founder`
+- **Example:** `/founder` → `/en/login?redirect=/founder`
+- **User Experience:** User sees login page, after login returns to `/founder`
+
+**Scenario 2: User Authenticated But NOT FOUNDER**
+- **Action:** Redirects to `/[locale]` (home page)
+- **Example:** Regular user tries `/founder` → `/en`
+- **User Experience:** User is silently redirected to home (no error shown)
+- **TODO:** Future enhancement could show message "This page is only for the founder"
+
+**Scenario 3: User Authenticated AND Is FOUNDER**
+- **Action:** Access granted, page renders normally
+- **Example:** Founder with `role: 'FOUNDER'` → Can access all `/founder/**` pages
+- **User Experience:** Full access to founder dashboard, assistants, etc.
+
+### FOUNDER Role Determination:
+
+**Backend Logic** (`server/src/api/auth.ts`, `server/src/api/oauth.ts`):
+1. **Database Check:** User has `role: 'FOUNDER'` in database
+2. **Email Match:** User's email matches `FOUNDER_EMAIL` environment variable
+   - If email matches but role doesn't → Backend automatically updates role to `FOUNDER`
+3. **OAuth Login:** Google OAuth checks email and sets role accordingly
+
+**Frontend Logic** (`contexts/AuthContext.tsx`):
+- User object includes `role: 'FOUNDER' | 'USER'`
+- Role is fetched from `/api/v1/users/me` endpoint
+- Defaults to `'USER'` if role is missing (defensive programming)
+
+### Implementation Files:
+
+**Protected Components:**
+- `components/FounderRoute.tsx` - Client-side protection wrapper
+- `components/ProtectedRoute.tsx` - General authenticated route protection
+
+**Founder Pages:**
+- `app/founder/page.tsx` - Main founder dashboard (uses `FounderRoute`)
+- `app/founder/page-client.tsx` - Client component (no auth checks, handled by wrapper)
+- `app/founder/assistant/page.tsx` - AI assistants center (uses `FounderRoute`)
+- `app/founder/assistant/*.tsx` - Individual assistant pages (protected by layout)
+
+**Server Utilities:**
+- `lib/auth-server.ts` - Server-side authentication utilities (`requireFounder()`)
+- `server/src/utils/roles.ts` - Role determination logic (`isFounderEmail()`)
+- `server/src/config/env.ts` - Environment variable management (`FOUNDER_EMAIL`)
+
+### Known Considerations:
+
+**Cookies vs localStorage:**
+- Server-side protection relies on cookies (for SSR)
+- Client-side protection relies on `AuthContext` (uses localStorage + cookies)
+- Both are set during login for consistency
+
+**Race Conditions:**
+- `FounderRoute` waits for `loading` to complete before checking auth
+- Prevents premature redirects during auth state initialization
+
+**Environment Variable:**
+- `FOUNDER_EMAIL` must be set in backend environment variables
+- If not set, only database `role` check applies
+- Recommended: Set `FOUNDER_EMAIL=aljenaiditareq123@gmail.com` in backend `.env`
+
+### Testing Founder Access:
+
+**To test locally:**
+1. Ensure user has `role: 'FOUNDER'` in database
+2. OR ensure user's email matches `FOUNDER_EMAIL` in backend `.env`
+3. Login with founder credentials
+4. Navigate to `/founder` → Should show dashboard
+5. Navigate to `/founder/assistant` → Should show assistants center
+
+**To test non-founder access:**
+1. Login with regular user (not founder)
+2. Navigate to `/founder` → Should redirect to `/en` (home page)
+
+**To test unauthenticated access:**
+1. Logout or clear auth tokens
+2. Navigate to `/founder` → Should redirect to `/en/login?redirect=/founder`
+
+### Future Enhancements:
+
+- [ ] Add role-based permission system for more granular access control
+- [ ] Show user-friendly message when non-founder tries to access founder pages
+- [ ] Consider consolidating server-side and client-side checks if needed
+- [ ] Add audit logging for founder page access attempts
+
+---
+
 **Last Updated:** 2025-01-20
 **Status:** ✅ All systems operational and tested
 

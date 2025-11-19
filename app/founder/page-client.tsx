@@ -26,21 +26,12 @@ export default function FounderPageClient() {
   const [statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => {
-    if (loading) return;
-
-    if (!user) {
-      router.replace("/login");
-      return;
+    // Auth check is now handled by FounderRoute wrapper
+    // Only fetch stats if user is authenticated and is FOUNDER
+    if (!loading && user && user.role === 'FOUNDER') {
+      fetchStats();
     }
-
-    if (user.role !== "FOUNDER") {
-      router.replace("/");
-      return;
-    }
-
-    // Fetch dashboard stats
-    fetchStats();
-  }, [user, loading, router]);
+  }, [user, loading]);
 
   const fetchStats = async () => {
     try {
@@ -88,13 +79,9 @@ export default function FounderPageClient() {
     }
   };
 
-  if (loading || !user || user.role !== "FOUNDER") {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
-  }
+  // Note: Auth check is handled by FounderRoute wrapper in app/founder/page.tsx
+  // This component only renders if user is authenticated and is FOUNDER
+  // No need for additional auth checks here
 
   const assistants = [
     {
