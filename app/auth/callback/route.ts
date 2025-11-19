@@ -1,15 +1,8 @@
 import { NextResponse } from 'next/server';
 import axios from 'axios';
+import { getApiBaseUrl } from '@/lib/api-utils';
 
 export const dynamic = 'force-dynamic';
-
-// Get API base URL - NEXT_PUBLIC_API_URL already includes /api/v1
-const getApiBaseUrl = (): string => {
-  if (process.env.NEXT_PUBLIC_API_URL) {
-    return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '');
-  }
-  return 'https://banda-chao-backend.onrender.com/api/v1';
-};
 
 const API_BASE_URL = getApiBaseUrl();
 

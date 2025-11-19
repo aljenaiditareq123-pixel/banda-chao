@@ -1,5 +1,7 @@
 'use client';
 
+import { getApiBaseUrl } from '@/lib/api-utils';
+
 export default function TestBasicPage() {
   return (
     <div style={{ padding: '50px', backgroundColor: '#f0f0f0', minHeight: '100vh' }}>
@@ -14,7 +16,8 @@ export default function TestBasicPage() {
         <button 
           onClick={async () => {
             try {
-              const res = await fetch('https://banda-chao-backend.onrender.com/api/v1/videos?type=short&limit=5');
+              const apiBaseUrl = getApiBaseUrl();
+              const res = await fetch(`${apiBaseUrl}/videos?type=short&limit=5`);
               const data = await res.json();
               alert(`نجح! عدد الفيديوهات: ${data.data?.length || 0}`);
             } catch (err: any) {

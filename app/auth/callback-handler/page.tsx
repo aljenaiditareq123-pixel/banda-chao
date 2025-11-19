@@ -3,6 +3,7 @@
 import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { getApiBaseUrl } from '@/lib/api-utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,8 +23,8 @@ function CallbackHandlerContent() {
       // Also set cookie for server-side access (7 days expiry)
       document.cookie = `auth_token=${token}; path=/; max-age=${60 * 60 * 24 * 7}; ${process.env.NODE_ENV === 'production' ? 'secure; ' : ''}samesite=lax`;
 
-      // Fetch user info - NEXT_PUBLIC_API_URL already includes /api/v1
-      const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://banda-chao-backend.onrender.com/api/v1').replace(/\/$/, '');
+      // Fetch user info using centralized API helper
+      const apiBaseUrl = getApiBaseUrl();
       fetch(`${apiBaseUrl}/users/me`, {
         headers: {
           'Authorization': `Bearer ${token}`

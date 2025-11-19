@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { getApiBaseUrl } from '@/lib/api-utils';
 
 export default function StatusPage() {
   const [status, setStatus] = useState<any>({
@@ -13,12 +14,14 @@ export default function StatusPage() {
   useEffect(() => {
     const testAPIs = async () => {
       try {
+        const apiBaseUrl = getApiBaseUrl();
+        
         // Test Videos API
-        const videosRes = await fetch('https://banda-chao-backend.onrender.com/api/v1/videos?type=short&limit=5');
+        const videosRes = await fetch(`${apiBaseUrl}/videos?type=short&limit=5`);
         const videosData = await videosRes.json();
         
         // Test Products API
-        const productsRes = await fetch('https://banda-chao-backend.onrender.com/api/v1/products');
+        const productsRes = await fetch(`${apiBaseUrl}/products`);
         const productsData = await productsRes.json();
         
         setStatus({
