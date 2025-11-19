@@ -169,6 +169,11 @@ export default function Header() {
                     </div>
                   )}
                   <span className="hidden lg:inline text-sm font-medium">{user.name || t('myAccount')}</span>
+                  {user.role === 'FOUNDER' && (
+                    <span className="ml-2 rounded-full bg-emerald-600 px-2 py-1 text-xs text-white font-semibold" title="Founder Account">
+                      Founder
+                    </span>
+                  )}
                 </Link>
                 <button
                   onClick={handleLogout}

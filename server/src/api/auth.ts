@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../utils/prisma';
-import { getUserRoleFromEmail } from '../utils/roles';
+import { getUserRoleFromEmail, isFounderEmail } from '../utils/roles';
 
 const router = Router();
 
@@ -119,8 +119,17 @@ router.post('/login', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    // Use role from database (fallback to calculation if missing for backward compatibility)
-    const role = user.role || getUserRoleFromEmail(user.email);
+    // Ensure founder email always has FOUNDER role
+    // If email matches FOUNDER_EMAIL, force role to FOUNDER (even if DB has different role)
+    const role = isFounderEmail(user.email) ? 'FOUNDER' : (user.role || getUserRoleFromEmail(user.email));
+    
+    // If user is founder but DB doesn't have FOUNDER role, update it
+    if (isFounderEmail(user.email) && user.role !== 'FOUNDER') {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { role: 'FOUNDER' }
+      });
+    }
 
     // Generate JWT token
     const jwtSecret: string = process.env.JWT_SECRET || 'your-secret-key';

@@ -121,7 +121,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
       
       if (typeof window !== 'undefined') {
+        // Store token in localStorage for client-side access
         localStorage.setItem('auth_token', authToken);
+        
+        // Also set cookie for server-side access (7 days expiry)
+        document.cookie = `auth_token=${authToken}; path=/; max-age=${60 * 60 * 24 * 7}; ${process.env.NODE_ENV === 'production' ? 'secure; ' : ''}samesite=lax`;
       }
       setToken(authToken);
       setUser(loggedInUser);
@@ -155,7 +159,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
       
       if (typeof window !== 'undefined') {
+        // Store token in localStorage for client-side access
         localStorage.setItem('auth_token', authToken);
+        
+        // Also set cookie for server-side access (7 days expiry)
+        document.cookie = `auth_token=${authToken}; path=/; max-age=${60 * 60 * 24 * 7}; ${process.env.NODE_ENV === 'production' ? 'secure; ' : ''}samesite=lax`;
       }
       setToken(authToken);
       setUser(registeredUser);
@@ -168,7 +176,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = () => {
     if (typeof window !== 'undefined') {
+      // Remove token from localStorage
       localStorage.removeItem('auth_token');
+      
+      // Also clear cookie for server-side access
+      document.cookie = 'auth_token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT';
     }
     setToken(null);
     setUser(null);

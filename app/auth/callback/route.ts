@@ -35,13 +35,21 @@ export async function GET(request: Request) {
 
       const { user, token } = response.data;
 
-      // Store token in cookie or localStorage (via redirect to client-side handler)
-      // For now, redirect to a client-side page that will handle token storage
+      // Store token in cookie for server-side access (7 days expiry)
       const redirectUrl = new URL(`${origin}/auth/callback-handler`);
       redirectUrl.searchParams.set('token', token);
       redirectUrl.searchParams.set('next', next);
       
-      return NextResponse.redirect(redirectUrl.toString());
+      const responseWithCookie = NextResponse.redirect(redirectUrl.toString());
+      responseWithCookie.cookies.set('auth_token', token, {
+        httpOnly: false, // Allow client-side access for backward compatibility
+        secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 7, // 7 days
+        path: '/',
+      });
+      
+      return responseWithCookie;
     } catch (error: any) {
       console.error('OAuth callback error:', error);
       return NextResponse.redirect(`${origin}/login?error=oauth_failed&message=${encodeURIComponent(error.response?.data?.error || 'OAuth failed')}`);

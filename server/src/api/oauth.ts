@@ -1,7 +1,8 @@
 import { Router, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../utils/prisma';
-import { getUserRoleFromEmail } from '../utils/roles';
+import { getUserRoleFromEmail, isFounderEmail } from '../utils/roles';
+import { FOUNDER_EMAIL } from '../config/env';
 
 const router = Router();
 
@@ -120,6 +121,9 @@ router.post('/google/callback', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Email not provided by Google' });
     }
 
+    // Check if this is the founder email
+    const isFounder = isFounderEmail(email);
+
     // Check if user exists, if not create new user
     let existingUser = await prisma.user.findUnique({
       where: { email }
@@ -134,18 +138,18 @@ router.post('/google/callback', async (req: Request, res: Response) => {
       createdAt: Date;
     } | null = null;
 
-    // Calculate user role before creating/updating user
-    const role = getUserRoleFromEmail(email);
+    // Calculate user role: FOUNDER if email matches FOUNDER_EMAIL, otherwise calculate from email
+    const role = isFounder ? 'FOUNDER' : getUserRoleFromEmail(email);
 
     if (!existingUser) {
-      // Create new user
+      // Create new user with FOUNDER role if email matches FOUNDER_EMAIL
       const newUser = await prisma.user.create({
         data: {
           email,
           name: name || email.split('@')[0],
           profilePicture: picture || null,
           password: '', // OAuth users don't have passwords
-          role
+          role: isFounder ? 'FOUNDER' : 'USER'
         },
         select: {
           id: true,
@@ -159,11 +163,24 @@ router.post('/google/callback', async (req: Request, res: Response) => {
       
       user = newUser;
     } else {
-      // Update user profile picture if available
+      // If this is the founder email, ensure role is FOUNDER
+      const updateData: { profilePicture?: string; role?: 'FOUNDER' | 'USER' } = {};
+      
+      // Update profile picture if available
       if (picture && picture !== existingUser.profilePicture) {
+        updateData.profilePicture = picture;
+      }
+      
+      // Always set role to FOUNDER if email matches FOUNDER_EMAIL
+      if (isFounder && existingUser.role !== 'FOUNDER') {
+        updateData.role = 'FOUNDER';
+      }
+      
+      // Only update if there are changes
+      if (Object.keys(updateData).length > 0) {
         const updatedUser = await prisma.user.update({
           where: { id: existingUser.id },
-          data: { profilePicture: picture },
+          data: updateData,
           select: {
             id: true,
             email: true,
@@ -191,7 +208,11 @@ router.post('/google/callback', async (req: Request, res: Response) => {
         if (!fetchedUser) {
           return res.status(500).json({ error: 'Failed to retrieve user' });
         }
-        user = fetchedUser;
+        // Ensure role is FOUNDER if email matches (even if not updated)
+        user = {
+          ...fetchedUser,
+          role: isFounder ? 'FOUNDER' : fetchedUser.role
+        };
       }
     }
 
@@ -200,8 +221,8 @@ router.post('/google/callback', async (req: Request, res: Response) => {
       return res.status(500).json({ error: 'Failed to create or retrieve user' });
     }
 
-    // Use role from database (fallback to calculation if missing for backward compatibility)
-    const finalRole = user.role || getUserRoleFromEmail(user.email);
+    // Ensure founder email always has FOUNDER role
+    const finalRole = isFounderEmail(user.email) ? 'FOUNDER' : (user.role || getUserRoleFromEmail(user.email));
 
     const jwtSecret: string = process.env.JWT_SECRET || 'your-secret-key';
     const rawExpiresIn = process.env.JWT_EXPIRES_IN;

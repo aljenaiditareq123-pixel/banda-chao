@@ -16,8 +16,11 @@ function CallbackHandlerContent() {
     const next = searchParams.get('next') || '/';
 
     if (token) {
-      // Store token
+      // Store token in localStorage for client-side access
       localStorage.setItem('auth_token', token);
+      
+      // Also set cookie for server-side access (7 days expiry)
+      document.cookie = `auth_token=${token}; path=/; max-age=${60 * 60 * 24 * 7}; ${process.env.NODE_ENV === 'production' ? 'secure; ' : ''}samesite=lax`;
 
       // Fetch user info - NEXT_PUBLIC_API_URL already includes /api/v1
       const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://banda-chao-backend.onrender.com/api/v1').replace(/\/$/, '');
