@@ -58,30 +58,36 @@ export default function HomePageClient({ locale, products, makers, videos }: Hom
       )}
 
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800 rounded-3xl overflow-hidden shadow-2xl">
+      <section className="relative bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800 rounded-3xl overflow-hidden shadow-2xl min-h-[500px] flex items-center">
         <div className="absolute inset-0 bg-black/10"></div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
-            {t('homeHeroTitle') || 'منصة Banda Chao للحرفيين والمحتوى'}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-0 left-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
+        </div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 text-center w-full">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
+            {t('homeHeroTitle') || t('homeHeroHeadline') || 'Banda Chao Platform for Makers'}
           </h1>
-          <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-3xl mx-auto leading-relaxed">
-            {t('homeHeroDescription') || 'اكتشف منتجات يدوية فريدة، شاهد فيديوهات الحرفيين، وتواصل مع مجتمع من المبدعين'}
+          <p className="text-lg md:text-xl lg:text-2xl text-white/90 mb-10 max-w-3xl mx-auto leading-relaxed">
+            {t('homeHeroDescription') || 'Discover unique handmade products, watch maker videos, and connect with a community of creators'}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Link 
               href={`/${locale}/videos`}
-              aria-label={t('watchShortVideos') || '观看短视频'}
+              aria-label={t('watchShortVideos') || 'Watch Short Videos'}
+              className="inline-block"
             >
-              <Button variant="primary" className="px-8 py-4 text-lg font-semibold bg-white text-primary-700 hover:bg-gray-100">
-                {t('watchShortVideos') || '观看短视频'}
+              <Button variant="primary" className="px-8 py-4 text-lg font-semibold bg-white text-primary-700 hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl transform hover:scale-105">
+                {t('watchShortVideos') || 'Watch Short Videos'}
               </Button>
             </Link>
             <Link 
               href={`/${locale}/products`}
-              aria-label={t('browseProducts') || '浏览商品'}
+              aria-label={t('browseProducts') || 'Browse Products'}
+              className="inline-block"
             >
-              <Button variant="outline" className="px-8 py-4 text-lg font-semibold border-2 border-white text-white hover:bg-white/10">
-                {t('browseProducts') || '浏览商品'}
+              <Button variant="outline" className="px-8 py-4 text-lg font-semibold border-2 border-white text-white hover:bg-white/10 transition-all backdrop-blur-sm">
+                {t('browseProducts') || 'Browse Products'}
               </Button>
             </Link>
           </div>
@@ -197,7 +203,7 @@ export default function HomePageClient({ locale, products, makers, videos }: Hom
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {videos.slice(0, 6).map((video) => (
-              <VideoCard key={video.id} video={video} />
+              <VideoCard key={video.id} video={video} locale={locale} />
             ))}
           </div>
         </section>

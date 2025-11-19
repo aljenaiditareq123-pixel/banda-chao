@@ -3,9 +3,10 @@ import { Video } from '@/types';
 
 interface VideoCardProps {
   video: Video;
+  locale?: string;
 }
 
-export default function VideoCard({ video }: VideoCardProps) {
+export default function VideoCard({ video, locale = 'zh' }: VideoCardProps) {
   const formatViews = (views: number) => {
     if (views >= 1000000) {
       return `${(views / 1000000).toFixed(1)}M`;
@@ -23,7 +24,7 @@ export default function VideoCard({ video }: VideoCardProps) {
   };
 
   return (
-    <Link href={`/videos/${video.id}`} className="block group">
+    <Link href={`/${locale}/videos/${video.id}`} className="block group">
       <div className="bg-white rounded-xl border-2 border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden">
         <div className="relative aspect-video bg-gray-200 overflow-hidden">
           <img
