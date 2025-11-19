@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import Layout from '@/components/Layout';
 import Button from '@/components/Button';
 import ProductCard from '@/components/ProductCard';
@@ -229,9 +230,11 @@ export default function MakerDetailClient({ locale, maker, products, videos = []
                 )}
                 {products.length > 8 && (
                   <div className="mt-6 text-center">
-                    <Button variant="outline" onClick={() => window.location.href = `/${locale}/products?maker=${maker.id}`}>
-                      {t('viewAllProducts') || 'عرض كل منتجات الحرفي'}
-                    </Button>
+                    <Link href={`/${locale}/products`}>
+                      <Button variant="outline">
+                        {t('viewAllProducts') || 'View all maker products'}
+                      </Button>
+                    </Link>
                   </div>
                 )}
               </>
@@ -240,7 +243,7 @@ export default function MakerDetailClient({ locale, maker, products, videos = []
                 {videos.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                     {videos.slice(0, 6).map((video) => (
-                      <VideoCard key={video.id} video={video} />
+                      <VideoCard key={video.id} video={video} locale={locale} />
                     ))}
                   </div>
                 ) : (
@@ -251,9 +254,11 @@ export default function MakerDetailClient({ locale, maker, products, videos = []
                 )}
                 {videos.length > 6 && (
                   <div className="mt-6 text-center">
-                    <Button variant="outline" onClick={() => window.location.href = `/${locale}/videos?maker=${maker.id}`}>
-                      {t('viewAllVideos') || 'عرض كل فيديوهات الحرفي'}
-                    </Button>
+                    <Link href={`/${locale}/videos`}>
+                      <Button variant="outline">
+                        {t('viewAllVideos') || 'View all maker videos'}
+                      </Button>
+                    </Link>
                   </div>
                 )}
               </>

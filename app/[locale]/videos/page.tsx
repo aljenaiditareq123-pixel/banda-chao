@@ -1,6 +1,6 @@
 import VideosPageClient from './page-client';
 import { Video } from '@/types';
-import { videosAPI } from '@/lib/api';
+import { getApiBaseUrl } from '@/lib/api-utils';
 
 interface LocaleVideosPageProps {
   params: {
@@ -10,9 +10,15 @@ interface LocaleVideosPageProps {
 
 async function fetchAllVideos(): Promise<{ short: Video[]; long: Video[] }> {
   try {
+    const apiBaseUrl = getApiBaseUrl();
+    
     const [shortRes, longRes] = await Promise.all([
-      videosAPI.getVideos('short', 1, 20),
-      videosAPI.getVideos('long', 1, 20),
+      fetch(`${apiBaseUrl}/videos?type=short&limit=20`, {
+        next: { revalidate: 60 },
+      }),
+      fetch(`${apiBaseUrl}/videos?type=long&limit=20`, {
+        next: { revalidate: 60 },
+      }),
     ]);
 
     const formatVideo = (video: any): Video => ({
@@ -30,8 +36,11 @@ async function fetchAllVideos(): Promise<{ short: Video[]; long: Video[] }> {
       type: video.type as 'short' | 'long',
     });
 
-    const shortVideos = (shortRes.data?.data || []).map(formatVideo);
-    const longVideos = (longRes.data?.data || []).map(formatVideo);
+    const shortJson = await shortRes.json();
+    const longJson = await longRes.json();
+    
+    const shortVideos = (shortJson.data?.data || shortJson.data || []).map(formatVideo);
+    const longVideos = (longJson.data?.data || longJson.data || []).map(formatVideo);
 
     return { short: shortVideos, long: longVideos };
   } catch (error) {

@@ -109,7 +109,7 @@ export default function VideosPageClient({ locale, shortVideos, longVideos }: Vi
           <Grid columns={{ base: 1, sm: 2, md: 3 }} gap="gap-6">
             {videos.map((video) => (
               <GridItem key={video.id}>
-                <VideoCard video={video} />
+                <VideoCard video={video} locale={locale} />
               </GridItem>
             ))}
           </Grid>

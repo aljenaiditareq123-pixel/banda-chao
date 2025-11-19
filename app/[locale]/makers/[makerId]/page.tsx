@@ -47,7 +47,8 @@ async function fetchMaker(makerId: string): Promise<Maker | null> {
 
 async function fetchMakerProducts(makerId: string): Promise<Product[]> {
   try {
-    const response = await fetch(`${PRODUCTS_ENDPOINT}?makerId=${encodeURIComponent(makerId)}`, {
+    const apiBaseUrl = getApiBaseUrl();
+    const response = await fetch(`${apiBaseUrl}/products?makerId=${encodeURIComponent(makerId)}`, {
       next: { revalidate: 60 },
     });
 
