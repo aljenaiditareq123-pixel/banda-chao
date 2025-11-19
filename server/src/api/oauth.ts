@@ -20,6 +20,12 @@ router.get('/google', async (req: Request, res: Response) => {
     const googleClientId = process.env.GOOGLE_CLIENT_ID;
     
     if (!googleClientId) {
+      // Log missing env vars for debugging (without exposing actual values)
+      console.error('[OAuth] Missing Google env vars', {
+        hasClientId: !!googleClientId,
+        endpoint: 'GET /api/v1/oauth/google'
+      });
+      
       return res.status(500).json({ 
         error: 'Google OAuth not configured',
         message: 'GOOGLE_CLIENT_ID environment variable is not set'
@@ -63,6 +69,13 @@ router.post('/google/callback', async (req: Request, res: Response) => {
     const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
 
     if (!googleClientId || !googleClientSecret) {
+      // Log missing env vars for debugging (without exposing actual values)
+      console.error('[OAuth] Missing Google env vars', {
+        hasClientId: !!googleClientId,
+        hasClientSecret: !!googleClientSecret,
+        endpoint: 'POST /api/v1/oauth/google/callback'
+      });
+      
       return res.status(500).json({ 
         error: 'Google OAuth not configured',
         message: 'GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET environment variables are not set'
