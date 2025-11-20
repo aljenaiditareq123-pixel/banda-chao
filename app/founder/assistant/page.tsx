@@ -1,45 +1,23 @@
-'use client';
-
-import { Suspense } from 'react';
-import FounderRoute from '@/components/FounderRoute';
-import FounderLayout from '@/components/founder/FounderLayout';
-import FounderAIAssistant from '@/components/FounderAIAssistant';
+import FounderAssistantPageClient from './page-client';
 
 export const dynamic = 'force-dynamic';
 
 /**
  * Founder Assistant Page - AI Assistants Center
  * 
- * Protected by FounderRoute wrapper which handles:
- * - Unauthenticated users → Redirects to /[locale]/login?redirect=/founder/assistant
- * - Non-FOUNDER users → Redirects to /[locale] (home page)
- * - FOUNDER users → Allows access
+ * Pure Server Component - no client-side logic, hooks, or data fetching.
+ * All client-side logic is delegated to FounderAssistantPageClient.
+ * 
+ * Protection:
+ * - Server-side: app/founder/layout.tsx uses requireFounder() to check cookies
+ * - Client-side: FounderRoute component in page-client.tsx checks AuthContext for role === 'FOUNDER'
+ * 
+ * Access Scenarios:
+ * 1. Not authenticated → Redirects to /[locale]/login?redirect=/founder/assistant
+ * 2. Authenticated but NOT FOUNDER → Redirects to /[locale] (home page)
+ * 3. Authenticated AND FOUNDER → Shows founder assistant page
  */
 export default function FounderAssistantPage() {
-  return (
-    <FounderRoute locale="en">
-      <FounderLayout
-        title="مركز مساعدي المؤسس"
-        description="يمكنك التبديل بين المساعدين الستة المتخصصين للحصول على استشارات في القرارات الاستراتيجية، التقنية، الأمان، التجارة، المحتوى، واللوجستيات."
-        showSidebar={false}
-      >
-        {/* Login Success Redirect Marker - for TestSprite to detect successful login redirect */}
-        {/* Hidden but present in DOM when user is logged in */}
-        <div 
-          id="login-success-redirect-marker" 
-          style={{ display: 'none' }}
-          aria-hidden="true"
-        />
-        
-        <Suspense fallback={
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-          </div>
-        }>
-          <FounderAIAssistant />
-        </Suspense>
-      </FounderLayout>
-    </FounderRoute>
-  );
+  return <FounderAssistantPageClient />;
 }
 

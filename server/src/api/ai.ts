@@ -5,6 +5,21 @@ import { getAssistantProfile, mapAssistantId } from '../lib/assistantProfiles';
 const router = Router();
 
 /**
+ * GET /api/v1/ai/health
+ * 
+ * Health check endpoint for AI service
+ */
+router.get('/health', (req: Request, res: Response) => {
+  const hasApiKey = !!process.env.GEMINI_API_KEY;
+  res.json({
+    status: 'ok',
+    service: 'AI Assistant',
+    apiKeyConfigured: hasApiKey,
+    timestamp: new Date().toISOString(),
+  });
+});
+
+/**
  * POST /api/v1/ai/assistant
  * 
  * Send a message to an AI assistant and get a response
@@ -17,7 +32,9 @@ const router = Router();
  * 
  * Response:
  * {
- *   reply: string
+ *   reply: string,
+ *   assistant: string,
+ *   timestamp: string
  * }
  */
 router.post('/assistant', async (req: Request, res: Response) => {
