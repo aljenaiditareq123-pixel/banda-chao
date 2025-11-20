@@ -562,6 +562,177 @@ Founder pages (`/founder/**`) are protected with **dual-layer protection**:
 
 ---
 
+## 9. Founder Seed - Database Setup
+
+### ✅ Status: Fully Implemented
+
+### Overview:
+
+A dedicated seed script (`server/src/seed/create-founder.ts`) allows creating or updating the founder user in the database. This script is **idempotent** - safe to run multiple times without creating duplicate users.
+
+### Features:
+
+**Location:** `server/src/seed/create-founder.ts`
+
+**Key Features:**
+- Creates or updates founder user with `role: 'FOUNDER'`
+- Uses `upsert` for idempotent operation (safe to run multiple times)
+- Reads environment variables:
+  - `FOUNDER_EMAIL` (defaults to `founder@banda-chao.com`)
+  - `FOUNDER_PASSWORD` (defaults to `Founder123!`)
+  - `FOUNDER_NAME` (optional, defaults to `'Banda Chao Founder'`)
+- Hashes password using `bcryptjs` (10 salt rounds)
+- Updates role to `FOUNDER` even if user already exists
+- Optional password update if `FOUNDER_PASSWORD` is provided
+
+### Local Development Setup:
+
+**Step 1: Build the project**
+```bash
+cd server
+npm run build
+```
+
+**Step 2: Run the founder seed**
+```bash
+npm run seed:founder
+```
+
+**Expected Output:**
+```
+🌱 Starting founder seed...
+📧 Email: founder@banda-chao.com (or FOUNDER_EMAIL from env)
+✅ Founder user ensured successfully!
+   ID: [uuid]
+   Email: founder@banda-chao.com
+   Name: Banda Chao Founder
+   Role: FOUNDER
+   ⚠️  Using default password (Founder123!) - change in production!
+
+📝 You can now login at /login with:
+   Email: founder@banda-chao.com
+   Password: Founder123! (default - change in production)
+```
+
+**Step 3: Verify in database**
+- Check `users` table for user with `email = FOUNDER_EMAIL` and `role = 'FOUNDER'`
+- Password should be hashed (not plain text)
+
+**Step 4: Login**
+1. Go to `http://localhost:3000/login?redirect=/founder`
+2. Use credentials:
+   - Email: `founder@banda-chao.com` (or `FOUNDER_EMAIL` from env)
+   - Password: `Founder123!` (or `FOUNDER_PASSWORD` from env)
+3. After login, you should be redirected to `/founder`
+
+### Production Setup on Render:
+
+**Step 1: Open Render Web Shell**
+1. Go to Render Dashboard → Your Backend Service → "Shell" tab
+2. Or use: `render shell <service-name>`
+
+**Step 2: Navigate to server directory**
+```bash
+cd /opt/render/project/src/server
+```
+
+**Step 3: Run the founder seed**
+```bash
+npm run seed:founder
+```
+
+**Alternative (if npm script doesn't work):**
+```bash
+node dist/seed/create-founder.js
+```
+
+**Expected Output:** Same as local development
+
+**Step 4: Set Environment Variables (if not already set)**
+
+In Render Dashboard → Backend Service → Environment Variables:
+
+| Key | Value | Description |
+|-----|-------|-------------|
+| `FOUNDER_EMAIL` | `aljenaiditareq123@gmail.com` | Founder's email address |
+| `FOUNDER_PASSWORD` | `[your-secure-password]` | Founder's password (change from default) |
+| `FOUNDER_NAME` | `Banda Chao Founder` | Optional: Founder's display name |
+
+**Important:** 
+- Change `FOUNDER_PASSWORD` from default `Founder123!` in production
+- Never commit actual passwords to version control
+- Use strong, unique passwords in production
+
+**Step 5: Verify Access**
+1. Go to `https://banda-chao-frontend.onrender.com/login?redirect=/founder`
+2. Login with `FOUNDER_EMAIL` and `FOUNDER_PASSWORD`
+3. Should redirect to `/founder` after successful login
+
+### Script Details:
+
+**Package.json Script:**
+```json
+{
+  "scripts": {
+    "seed:founder": "node dist/seed/create-founder.js"
+  }
+}
+```
+
+**Build Path:**
+- Source: `server/src/seed/create-founder.ts`
+- Compiled: `server/dist/seed/create-founder.js` (after `npm run build`)
+
+**Dependencies:**
+- `@prisma/client` - Prisma ORM client
+- `bcryptjs` - Password hashing (already in dependencies)
+- `dotenv` - Environment variable loading (already in dependencies)
+
+### Security Notes:
+
+**Password Handling:**
+- Passwords are hashed using `bcryptjs` (10 salt rounds) before storing
+- Default password (`Founder123!`) is for development only
+- In production, always set `FOUNDER_PASSWORD` environment variable
+- Never log actual passwords (only indicates if default is used)
+
+**Idempotent Operation:**
+- Script uses `upsert` - safe to run multiple times
+- If user exists: updates `role` to `FOUNDER` (in case it was changed)
+- If user doesn't exist: creates new user with `role: 'FOUNDER'`
+- If `FOUNDER_PASSWORD` is provided: updates password hash
+
+**Environment Variables:**
+- `FOUNDER_EMAIL` - Required for identifying founder (should match backend auth logic)
+- `FOUNDER_PASSWORD` - Optional (defaults to `Founder123!` if not set)
+- `FOUNDER_NAME` - Optional (defaults to `'Banda Chao Founder'`)
+
+### Troubleshooting:
+
+**Error: "Cannot find module '@prisma/client'"**
+- Run: `npm install` in `server/` directory
+- Or: `npx prisma generate` to generate Prisma client
+
+**Error: "Cannot find module 'bcryptjs'"**
+- Run: `npm install bcryptjs` in `server/` directory
+
+**Error: "Cannot connect to database"**
+- Check `DATABASE_URL` environment variable is set correctly
+- Ensure database is accessible from Render (if running on Render)
+- Check database migrations are applied: `npm run prisma:migrate:deploy`
+
+**User created but role is still 'USER'**
+- Run seed again: `npm run seed:founder`
+- Check environment variable `FOUNDER_EMAIL` matches user's email
+- Manually verify in database: `SELECT email, role FROM users WHERE email = 'founder@banda-chao.com';`
+
+**Password doesn't work after seed**
+- Check if `FOUNDER_PASSWORD` was set correctly
+- If using default password, ensure no extra spaces: `Founder123!`
+- Re-run seed with correct password: `FOUNDER_PASSWORD=your-password npm run seed:founder`
+
+---
+
 **Last Updated:** 2025-01-20
 **Status:** ✅ All systems operational and tested
 
