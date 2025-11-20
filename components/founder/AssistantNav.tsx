@@ -73,9 +73,13 @@ const assistants = [
 interface AssistantNavProps {
   currentAssistantId?: string;
   className?: string;
+  /**
+   * Callback when assistant is selected (for console layout)
+   */
+  onAssistantSelect?: (assistantId: string) => void;
 }
 
-export default function AssistantNav({ currentAssistantId, className = '' }: AssistantNavProps) {
+export default function AssistantNav({ currentAssistantId, className = '', onAssistantSelect }: AssistantNavProps) {
   const pathname = usePathname();
   const { t, language } = useLanguage();
 
@@ -85,27 +89,41 @@ export default function AssistantNav({ currentAssistantId, className = '' }: Ass
     return assistant.label;
   };
 
+  const handleAssistantClick = (assistantId: string, e: React.MouseEvent) => {
+    if (onAssistantSelect) {
+      e.preventDefault();
+      onAssistantSelect(assistantId);
+    }
+    // Otherwise, let Link handle navigation
+  };
+
+  const getSubtitle = (id: string) => {
+    const subtitles: Record<string, string> = {
+      founder: 'قائد الرؤية العليا',
+      tech: 'مهندس البنية والأنظمة',
+      guard: 'درع الأمن والسرية',
+      commerce: 'استراتيجي المبيعات',
+      content: 'صوت العلامة وقصتها',
+      logistics: 'منسق العمليات',
+      philosopher: 'المراقب المعماري',
+    };
+    return subtitles[id] || '';
+  };
+
   return (
-    <div className={`bg-white rounded-xl border border-gray-200 shadow-sm p-4 ${className}`}>
-      <div className="mb-4">
-        <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2">
-          {t('assistants') || 'Assistants'}
-        </h3>
-        <Link
-          href="/founder/assistant"
-          className="text-xs text-primary-600 hover:text-primary-700 transition-colors"
-        >
-          {t('assistantsCenter') || '← Back to Assistants Center'}
-        </Link>
-      </div>
-      <nav className="space-y-2" aria-label="Assistant navigation">
-        {assistants.map((assistant) => {
-          const isActive = currentAssistantId === assistant.id || pathname === assistant.route;
+    <nav className={`space-y-2 ${className}`} aria-label="Assistant navigation">
+      {assistants.map((assistant) => {
+        const isActive = currentAssistantId === assistant.id || pathname === assistant.route;
+        const subtitle = getSubtitle(assistant.id);
+        
+        // If onAssistantSelect is provided, render as button (handled by onClick)
+        // Otherwise, render as Link (default behavior)
+        if (onAssistantSelect) {
           return (
-            <Link
+            <button
               key={assistant.id}
-              href={assistant.route}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${
+              onClick={(e) => handleAssistantClick(assistant.id, e)}
+              className={`w-full text-right flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
                 isActive
                   ? `bg-gradient-to-r ${assistant.gradient} text-white shadow-md`
                   : 'text-gray-700 hover:bg-gray-100'
@@ -113,20 +131,53 @@ export default function AssistantNav({ currentAssistantId, className = '' }: Ass
               aria-label={getLabel(assistant)}
               aria-current={isActive ? 'page' : undefined}
             >
-              <span className="text-xl" aria-hidden="true">
+              <span className="text-2xl" aria-hidden="true">
                 {assistant.emoji}
               </span>
-              <span className="text-sm font-medium flex-1">{getLabel(assistant)}</span>
+              <div className="flex-1 text-right">
+                <div className="text-sm font-medium">{getLabel(assistant)}</div>
+                {subtitle && (
+                  <div className={`text-xs mt-1 ${isActive ? 'opacity-75' : 'text-gray-500'}`}>
+                    {subtitle}
+                  </div>
+                )}
+              </div>
               {isActive && (
                 <span className="text-xs opacity-75" aria-hidden="true">
                   ●
                 </span>
               )}
-            </Link>
+            </button>
           );
-        })}
-      </nav>
-    </div>
+        }
+
+        return (
+          <Link
+            key={assistant.id}
+            href={assistant.route}
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+              isActive
+                ? `bg-gradient-to-r ${assistant.gradient} text-white shadow-md`
+                : 'text-gray-700 hover:bg-gray-100'
+            }`}
+            aria-label={getLabel(assistant)}
+            aria-current={isActive ? 'page' : undefined}
+          >
+            <span className="text-2xl" aria-hidden="true">
+              {assistant.emoji}
+            </span>
+            <div className="flex-1">
+              <div className="text-sm font-medium">{getLabel(assistant)}</div>
+            </div>
+            {isActive && (
+              <span className="text-xs opacity-75" aria-hidden="true">
+                ●
+              </span>
+            )}
+          </Link>
+        );
+      })}
+    </nav>
   );
 }
 

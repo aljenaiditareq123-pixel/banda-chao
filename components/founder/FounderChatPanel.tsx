@@ -1,0 +1,423 @@
+'use client';
+
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { getApiBaseUrl } from '@/lib/api-utils';
+
+type AssistantId =
+  | 'founder'
+  | 'tech'
+  | 'guard'
+  | 'commerce'
+  | 'content'
+  | 'logistics'
+  | 'philosopher';
+
+type AssistantIdString = string; // For flexibility
+
+type MessageRole = 'founder' | 'assistant';
+
+type ChatMessage = {
+  id: string;
+  role: MessageRole;
+  text: string;
+  createdAt: string;
+};
+
+type AssistantProfile = {
+  id: AssistantId;
+  label: string;
+  endpoint: string;
+  title: string;
+  description: string;
+  placeholder: string;
+  loadingText: string;
+  openingMessage: string;
+  headerGradient: string;
+  assistantBubble: string;
+};
+
+const assistantsMap: Record<AssistantId, AssistantProfile> = {
+  founder: {
+    id: 'founder',
+    label: 'الباندا المؤسس',
+    endpoint: '/api/chat',
+    title: 'الباندا المؤسس',
+    description: 'يرسم القرارات المصيرية ويحوّل الرؤية إلى خطط تنفيذية واضحة.',
+    placeholder: 'ما هي المبادرة أو التحدي الاستراتيجي الذي ترغب في تسريعه الآن؟',
+    loadingText: 'الباندا المؤسس يعيد صياغة خريطة القرارات...',
+    openingMessage: 'مرحباً أيها المؤسس، أنا الباندا المؤسس - نسختك الإلكترونية. أنا أعرف كل شيء عن المشروع من اليوم الأول حتى الآن. كيف يمكنني مساعدتك اليوم؟',
+    headerGradient: 'bg-gradient-to-l from-rose-600 via-amber-500 to-rose-500',
+    assistantBubble: 'bg-rose-50/90 text-rose-900 shadow-[0_24px_48px_-28px_rgba(225,29,72,0.75)]',
+  },
+  tech: {
+    id: 'tech',
+    label: 'الباندا التقني',
+    endpoint: '/api/technical-panda',
+    title: 'الباندا التقني',
+    description: 'يضمن جاهزية البنية التحتية ويقترح حلولاً تقنية قابلة للتوسع.',
+    placeholder: 'أي جانب تقني أو بنية تحتية يحتاج إلى مراجعة عاجلة؟',
+    loadingText: 'الباندا التقني يختبر البنية ويحدد نقاط التحسين...',
+    openingMessage: 'مرحباً، هنا الباندا التقني. دعنا نرفع جاهزية المنصة ونؤمّن أساساً قوياً للتوسع القادم.',
+    headerGradient: 'bg-gradient-to-l from-sky-700 via-cyan-600 to-sky-500',
+    assistantBubble: 'bg-sky-50/90 text-sky-900 shadow-[0_24px_48px_-28px_rgba(14,116,144,0.75)]',
+  },
+  guard: {
+    id: 'guard',
+    label: 'الباندا الحارس',
+    endpoint: '/api/chat',
+    title: 'الباندا الحارس',
+    description: 'يراقب الثغرات، يحمي الحسابات، ويصون البيانات المالية الحساسة.',
+    placeholder: 'صف الخطر الأمني أو السياسة التي تحتاج إلى تدعيم فوري.',
+    loadingText: 'الباندا الحارس يقيم التهديدات ويحصّن الدفاعات...',
+    openingMessage: 'تحية من الباندا الحارس. سأراجع المخاطر الحالية ونبني سياسة حماية محكمة للبيانات.',
+    headerGradient: 'bg-gradient-to-l from-emerald-700 via-emerald-600 to-emerald-500',
+    assistantBubble: 'bg-emerald-50/90 text-emerald-900 shadow-[0_24px_48px_-28px_rgba(16,185,129,0.75)]',
+  },
+  commerce: {
+    id: 'commerce',
+    label: 'باندا التجارة',
+    endpoint: '/api/chat',
+    title: 'باندا التجارة',
+    description: 'يركّز على نمو الإيرادات وتجربة عميل متكاملة من أول زيارة حتى الدفع.',
+    placeholder: 'ما هو التحدي التجاري أو مؤشرات التحويل التي تريد تعزيزها؟',
+    loadingText: 'باندا التجارة يحلل مسار الشراء ويقترح خطوات التحسين...',
+    openingMessage: 'مرحباً، أنا باندا التجارة. لنحدد أسرع مسار لزيادة المبيعات وتحسين التحويل.',
+    headerGradient: 'bg-gradient-to-l from-orange-600 via-amber-500 to-yellow-500',
+    assistantBubble: 'bg-amber-50/90 text-amber-900 shadow-[0_24px_48px_-28px_rgba(217,119,6,0.75)]',
+  },
+  content: {
+    id: 'content',
+    label: 'باندا المحتوى',
+    endpoint: '/api/chat',
+    title: 'باندا المحتوى',
+    description: 'يبني سرداً جذاباً يحفّز المشاركة ويزيد ولاء المجتمع.',
+    placeholder: 'ما هو النص أو المحتوى الذي تحتاج مساعدة في صياغته؟',
+    loadingText: 'باندا المحتوى يكتب المحتوى المناسب...',
+    openingMessage: 'مرحباً، أنا باندا المحتوى. سأساعدك في بناء سرد جذاب يحفّز المشاركة.',
+    headerGradient: 'bg-gradient-to-l from-fuchsia-600 via-purple-500 to-violet-500',
+    assistantBubble: 'bg-fuchsia-50/90 text-fuchsia-900 shadow-[0_24px_48px_-28px_rgba(168,85,247,0.75)]',
+  },
+  logistics: {
+    id: 'logistics',
+    label: 'باندا اللوجستيات',
+    endpoint: '/api/chat',
+    title: 'باندا اللوجستيات',
+    description: 'يضبط المخزون، التوصيل، وسلاسل الإمداد لضمان تجربة بلا تأخير.',
+    placeholder: 'ما هو التحدي اللوجستي الذي تواجهه حالياً؟',
+    loadingText: 'باندا اللوجستيات يحلل العمليات ويقترح الحلول...',
+    openingMessage: 'مرحباً، أنا باندا اللوجستيات. سأساعدك في ضبط المخزون والتوصيل.',
+    headerGradient: 'bg-gradient-to-l from-slate-700 via-slate-600 to-slate-500',
+    assistantBubble: 'bg-slate-50/90 text-slate-900 shadow-[0_24px_48px_-28px_rgba(71,85,105,0.75)]',
+  },
+  philosopher: {
+    id: 'philosopher',
+    label: 'الباندا الفيلسوف المعماري',
+    endpoint: '/api/chat',
+    title: 'الباندا الفيلسوف المعماري',
+    description: 'مراقب معماري ومشرف على جميع الباندات. يفكر في الصورة الكبيرة والتنسيق بين الأنظمة.',
+    placeholder: 'ما هو القرار المعماري الذي تحتاج مراجعة شاملة له؟',
+    loadingText: 'الباندا الفيلسوف يفكر في المعمارية والتنسيق...',
+    openingMessage: 'مرحباً، أنا الباندا الفيلسوف المعماري. سأساعدك في التفكير المعماري طويل الأمد.',
+    headerGradient: 'bg-gradient-to-l from-indigo-600 via-purple-500 to-indigo-500',
+    assistantBubble: 'bg-indigo-50/90 text-indigo-900 shadow-[0_24px_48px_-28px_rgba(99,102,241,0.75)]',
+  },
+};
+
+interface FounderChatPanelProps {
+  assistantId: AssistantId | AssistantIdString;
+}
+
+/**
+ * Founder Chat Panel - Central chat interface with selected assistant
+ * 
+ * Features:
+ * - Chat messages display
+ * - Input field with voice input
+ * - Send button
+ * - Loading states
+ */
+export default function FounderChatPanel({ assistantId }: FounderChatPanelProps) {
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [draft, setDraft] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<any>(null);
+  
+  const assistant = assistantsMap[assistantId as AssistantId] || null;
+
+  // Initialize messages with opening message
+  useEffect(() => {
+    if (assistant && messages.length === 0) {
+      setMessages([{
+        id: `${assistantId}-opening-${Date.now()}`,
+        role: 'assistant',
+        text: assistant.openingMessage,
+        createdAt: new Date().toISOString(),
+      }]);
+    }
+  }, [assistantId, assistant]);
+
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Initialize Speech Recognition
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
+      const SpeechRecognition = (window as any).webkitSpeechRecognition;
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'ar-SA';
+
+      recognition.onstart = () => {
+        setIsListening(true);
+      };
+
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setIsListening(false);
+        if (transcript.trim()) {
+          setDraft(transcript);
+        }
+      };
+
+      recognition.onerror = (event: any) => {
+        console.error('Speech recognition error:', event);
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current = recognition;
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch (e) {
+          // Ignore errors
+        }
+      }
+    };
+  }, []);
+
+  const toggleListening = () => {
+    if (!recognitionRef.current) {
+      alert('ميزة التعرف على الصوت غير مدعومة في متصفحك. يرجى استخدام Chrome أو Edge.');
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      try {
+        recognitionRef.current.start();
+      } catch (error) {
+        console.error('Error starting recognition:', error);
+        alert('خطأ في بدء التسجيل الصوتي. تأكد من السماح بالوصول إلى الميكروفون.');
+      }
+    }
+  };
+
+  const handleSubmit = async (e?: React.FormEvent<HTMLFormElement>) => {
+    if (e) {
+      e.preventDefault();
+    }
+
+    if (!assistant) return;
+
+    const textToSend = draft.trim();
+    if (!textToSend || loading) return;
+
+    const founderMessage: ChatMessage = {
+      id: `${assistantId}-founder-${Date.now()}`,
+      role: 'founder',
+      text: textToSend,
+      createdAt: new Date().toISOString(),
+    };
+
+    setMessages(prev => [...prev, founderMessage]);
+    setDraft('');
+    setLoading(true);
+
+    try {
+      // Use centralized API helper
+      const apiBaseUrl = getApiBaseUrl();
+      
+      const response = await fetch(`${apiBaseUrl}/ai/assistant`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          assistant: assistantId,
+          message: textToSend,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP ${response.status}: Failed to get response`);
+      }
+
+      const data = await response.json();
+      const assistantMessage: ChatMessage = {
+        id: `${assistantId}-assistant-${Date.now()}`,
+        role: 'assistant',
+        text: data.reply || data.response || 'عذراً، لم أتمكن من توليد رد.',
+        createdAt: new Date().toISOString(),
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
+    } catch (error: any) {
+      console.error('Error:', error);
+      const errorMessage: ChatMessage = {
+        id: `${assistantId}-error-${Date.now()}`,
+        role: 'assistant',
+        text: error?.message?.includes('GEMINI_API_KEY') 
+          ? '❌ لم يتم تكوين خدمة AI. يرجى التحقق من إعدادات الخادم.'
+          : error?.message || '❌ عذراً، حدث خطأ. يرجى المحاولة مرة أخرى.',
+        createdAt: new Date().toISOString(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!assistant) {
+    return (
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 flex items-center justify-center min-h-[600px]">
+        <div className="text-center">
+          <span className="text-6xl mb-4 block" aria-hidden="true">🐼</span>
+          <p className="text-gray-600">مساعد غير صالح</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm h-full flex flex-col min-h-[600px]">
+      {/* Header */}
+      <div className={`${assistant.headerGradient} p-6 rounded-t-2xl`}>
+        <div className="flex items-center gap-4">
+          <span className="text-3xl" aria-hidden="true">
+            {assistantId === 'founder' && '🐼'}
+            {assistantId === 'tech' && '💻'}
+            {assistantId === 'guard' && '🛡️'}
+            {assistantId === 'commerce' && '📊'}
+            {assistantId === 'content' && '✍️'}
+            {assistantId === 'logistics' && '📦'}
+            {assistantId === 'philosopher' && '🎓'}
+          </span>
+          <div>
+            <h2 className="text-xl font-bold text-white mb-1">
+              {assistant.title}
+            </h2>
+            <p className="text-sm text-white/90">
+              {assistant.description}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Messages Area */}
+      <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50">
+        {messages.map((message) => (
+          <div
+            key={message.id}
+            className={`flex ${message.role === 'founder' ? 'justify-end' : 'justify-start'}`}
+          >
+            <div
+              className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                message.role === 'founder'
+                  ? 'bg-primary-600 text-white'
+                  : `${assistant.assistantBubble}`
+              }`}
+            >
+              <p className="text-sm whitespace-pre-wrap" dir="rtl">
+                {message.text}
+              </p>
+              <p className={`text-xs mt-2 ${message.role === 'founder' ? 'text-white/70' : 'text-gray-600'}`}>
+                {new Date(message.createdAt).toLocaleTimeString('ar-SA', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </p>
+            </div>
+          </div>
+        ))}
+        
+        {loading && (
+          <div className="flex justify-start">
+            <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${assistant.assistantBubble}`}>
+              <div className="flex items-center gap-2">
+                <LoadingSpinner size="sm" />
+                <p className="text-sm text-gray-600">{assistant.loadingText}</p>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Input Form */}
+      <form onSubmit={handleSubmit} className="p-6 border-t border-gray-200 bg-white rounded-b-2xl">
+        <div className="relative">
+          <textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder={isListening ? 'جاري الاستماع... تحدث الآن' : assistant.placeholder}
+            className="w-full min-h-[100px] resize-none rounded-xl border-2 border-gray-300 bg-gray-50 px-4 py-3 pr-14 text-sm text-gray-900 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-200 transition-colors"
+            disabled={loading || isListening}
+            dir="rtl"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSubmit();
+              }
+            }}
+          />
+          {/* Voice Input Button */}
+          {recognitionRef.current && (
+            <button
+              type="button"
+              onClick={toggleListening}
+              className={`absolute left-3 top-3 p-2 rounded-lg transition ${
+                isListening
+                  ? 'bg-red-600 text-white animate-pulse'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+              title={isListening ? 'إيقاف الاستماع' : 'بدء التحدث'}
+              disabled={loading}
+            >
+              <span className="text-xl">{isListening ? '🔴' : '🎤'}</span>
+            </button>
+          )}
+        </div>
+        <div className="flex items-center justify-between mt-4">
+          <p className="text-xs text-gray-500">
+            سيتم توليد رد من {assistant.label}
+          </p>
+          <button
+            type="submit"
+            className={`${assistant.headerGradient} text-white px-6 py-2 rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed`}
+            disabled={loading || isListening || !draft.trim()}
+          >
+            {loading ? 'جاري المعالجة...' : 'إرسال'}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
