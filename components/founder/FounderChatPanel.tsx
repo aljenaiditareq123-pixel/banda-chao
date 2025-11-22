@@ -5,64 +5,20 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { getApiBaseUrl } from '@/lib/api-utils';
 import { apiCall, handleApiError } from '@/lib/api-error-handler';
 
-// Founder Panda v2 Types
-type FounderOperatingMode = 
-  | 'STRATEGY_MODE'
-  | 'PRODUCT_MODE' 
-  | 'TECH_MODE'
-  | 'MARKETING_MODE'
-  | 'CHINA_MODE';
-
-type FounderSlashCommand = 
-  | '/plan'
-  | '/tasks'
-  | '/risks'
-  | '/roadmap'
-  | '/script'
-  | '/email';
-
-interface FounderSession {
-  id: string;
-  title: string;
-  summary: string;
-  tasks: string[] | null;
-  mode: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-type AssistantId =
-  | 'founder'
-  | 'tech'
-  | 'guard'
-  | 'commerce'
-  | 'content'
-  | 'logistics'
-  | 'philosopher';
-
-type AssistantIdString = string; // For flexibility
-
-type MessageRole = 'founder' | 'assistant';
-
-type ChatMessage = {
-  id: string;
-  role: MessageRole;
-  text: string;
-  createdAt: string;
-};
-
-type AssistantProfile = {
-  id: AssistantId;
-  label: string;
-  endpoint: string;
-  title: string;
-  description: string;
-  placeholder: string;
-  loadingText: string;
-  openingMessage: string;
-  headerGradient: string;
-  assistantBubble: string;
-};
+import {
+  type FounderOperatingMode,
+  type FounderSlashCommand,
+  type FounderSession,
+  type AssistantId,
+  type MessageRole,
+  type ChatMessage,
+  type AssistantProfile,
+  type SlashCommand,
+  type ModeConfig,
+  type FounderChatPanelProps,
+  type ApiResponse,
+  type FounderSessionsResponse
+} from '@/types/founder';
 
 const assistantsMap: Record<AssistantId, AssistantProfile> = {
   founder: {
@@ -151,10 +107,7 @@ const assistantsMap: Record<AssistantId, AssistantProfile> = {
   },
 };
 
-interface FounderChatPanelProps {
-  assistantId: AssistantId | AssistantIdString;
-  currentMode?: FounderOperatingMode;
-}
+// Props interface moved to types file
 
 /**
  * Founder Chat Panel - Central chat interface with selected assistant
@@ -185,7 +138,7 @@ export default function FounderChatPanel({ assistantId, currentMode: externalMod
     : `founder_panda_history_${assistantId}`;
 
   // Operating mode configurations
-  const modeConfigs = {
+  const modeConfigs: Record<FounderOperatingMode, ModeConfig> = {
     STRATEGY_MODE: { label: 'استراتيجي', icon: '🎯', color: 'bg-blue-500' },
     PRODUCT_MODE: { label: 'منتج', icon: '🛠️', color: 'bg-green-500' },
     TECH_MODE: { label: 'تقني', icon: '💻', color: 'bg-purple-500' },
@@ -194,7 +147,7 @@ export default function FounderChatPanel({ assistantId, currentMode: externalMod
   };
 
   // Slash commands
-  const slashCommands = [
+  const slashCommands: SlashCommand[] = [
     { command: '/plan', label: 'خطة تنفيذية', description: 'إنشاء خطة تنفيذية مفصلة' },
     { command: '/tasks', label: 'قائمة مهام', description: 'توليد قائمة مهام قابلة للتنفيذ' },
     { command: '/risks', label: 'تحليل المخاطر', description: 'تحليل المخاطر واستراتيجيات التخفيف' },
@@ -477,11 +430,19 @@ export default function FounderChatPanel({ assistantId, currentMode: externalMod
 
         setMessages(prev => [...prev, assistantMessage]);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[FounderChatPanel] Error:', error);
       
-      // Use enhanced error handling
-      const userFriendlyMessage = handleApiError(error);
+      // Enhanced error handling with better typing
+      let userFriendlyMessage = 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.';
+      
+      if (error instanceof Error) {
+        userFriendlyMessage = handleApiError(error);
+      } else if (typeof error === 'string') {
+        userFriendlyMessage = error;
+      } else if (error && typeof error === 'object' && 'message' in error) {
+        userFriendlyMessage = handleApiError(error as Error);
+      }
       
       const errorMessage: ChatMessage = {
         id: `${assistantId}-error-${Date.now()}`,

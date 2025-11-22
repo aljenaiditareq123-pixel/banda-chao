@@ -1,16 +1,40 @@
-/**
- * Input Validation Middleware
- * Provides comprehensive input validation and sanitization
- */
+import type { Request, Response, NextFunction } from "express";
+import sanitizeHtml from "sanitize-html";
+import validator from "validator";
 
-import { Request, Response, NextFunction } from 'express';
-import * as validator from 'validator';
-import { JSDOM } from 'jsdom';
+export function sanitizeInput(input: unknown): string {
+  if (typeof input !== "string") return "";
+  let sanitized = sanitizeHtml(input, {
+    allowedTags: [],
+    allowedAttributes: {},
+  });
+  sanitized = validator.escape(sanitized);
+  sanitized = sanitized.trim().replace(/\s+/g, " ");
+  return sanitized;
+}
 
-// Create DOMPurify instance for server-side use
-const window = new JSDOM('').window;
-const DOMPurify = require('isomorphic-dompurify')(window);
+function sanitizeObjectDeep(obj: any): any {
+  if (obj == null) return obj;
+  if (typeof obj === "string") return sanitizeInput(obj);
+  if (Array.isArray(obj)) return obj.map(sanitizeObjectDeep);
+  if (typeof obj === "object") {
+    const result: any = {};
+    for (const key of Object.keys(obj)) {
+      result[key] = sanitizeObjectDeep(obj[key]);
+    }
+    return result;
+  }
+  return obj;
+}
 
+export function sanitizeRequest(req: Request, _res: Response, next: NextFunction) {
+  if (req.body) req.body = sanitizeObjectDeep(req.body);
+  if (req.query) req.query = sanitizeObjectDeep(req.query);
+  if (req.params) req.params = sanitizeObjectDeep(req.params);
+  next();
+}
+
+// Additional validation interfaces and classes for backward compatibility
 export interface ValidationRule {
   field: string;
   required?: boolean;
@@ -39,9 +63,6 @@ class InputValidator {
     this.rules = rules;
   }
 
-  /**
-   * Validates request body against defined rules
-   */
   validate(data: any): { isValid: boolean; errors: ValidationError[]; sanitized: any } {
     this.errors = [];
     const sanitized: any = {};
@@ -63,7 +84,6 @@ class InputValidator {
   }
 
   private validateField(rule: ValidationRule, value: any): any {
-    // Check if field is required
     if (rule.required && (value === undefined || value === null || value === '')) {
       this.errors.push({
         field: rule.field,
@@ -73,12 +93,10 @@ class InputValidator {
       return undefined;
     }
 
-    // Allow empty values if not required
     if (!rule.required && (value === undefined || value === null || value === '')) {
       return rule.allowEmpty ? value : undefined;
     }
 
-    // Type validation
     if (rule.type) {
       const typeValidation = this.validateType(rule, value);
       if (typeValidation.error) {
@@ -92,7 +110,6 @@ class InputValidator {
       value = typeValidation.value;
     }
 
-    // Length validation for strings
     if (typeof value === 'string') {
       if (rule.minLength && value.length < rule.minLength) {
         this.errors.push({
@@ -113,7 +130,6 @@ class InputValidator {
       }
     }
 
-    // Numeric range validation
     if (typeof value === 'number') {
       if (rule.min !== undefined && value < rule.min) {
         this.errors.push({
@@ -134,7 +150,6 @@ class InputValidator {
       }
     }
 
-    // Pattern validation
     if (rule.pattern && typeof value === 'string') {
       if (!rule.pattern.test(value)) {
         this.errors.push({
@@ -146,7 +161,6 @@ class InputValidator {
       }
     }
 
-    // Custom validation
     if (rule.custom) {
       const customResult = rule.custom(value);
       if (customResult !== true) {
@@ -159,9 +173,9 @@ class InputValidator {
       }
     }
 
-    // Sanitization
+    // Use Node-safe sanitizer
     if (rule.sanitize && typeof value === 'string') {
-      value = this.sanitizeString(value);
+      value = sanitizeInput(value);
     }
 
     return value;
@@ -221,24 +235,8 @@ class InputValidator {
         return { value };
     }
   }
-
-  private sanitizeString(value: string): string {
-    // Remove HTML tags and potentially dangerous content
-    let sanitized = DOMPurify.sanitize(value, { ALLOWED_TAGS: [] });
-    
-    // Trim whitespace
-    sanitized = sanitized.trim();
-    
-    // Remove excessive whitespace
-    sanitized = sanitized.replace(/\s+/g, ' ');
-    
-    return sanitized;
-  }
 }
 
-/**
- * Creates validation middleware
- */
 export function validateInput(rules: ValidationRule[]) {
   return (req: Request, res: Response, next: NextFunction) => {
     const validator = new InputValidator(rules);
@@ -252,17 +250,12 @@ export function validateInput(rules: ValidationRule[]) {
       });
     }
 
-    // Replace request body with sanitized data
     req.body = result.sanitized;
     next();
   };
 }
 
-/**
- * Pre-defined validation rules for common use cases
- */
-
-// AI Assistant validation
+// Pre-defined validation rules for backward compatibility
 export const aiAssistantValidation = validateInput([
   {
     field: 'assistant',
@@ -282,7 +275,6 @@ export const aiAssistantValidation = validateInput([
   },
 ]);
 
-// User registration validation
 export const userRegistrationValidation = validateInput([
   {
     field: 'email',
@@ -314,7 +306,6 @@ export const userRegistrationValidation = validateInput([
   },
 ]);
 
-// Product creation validation
 export const productValidation = validateInput([
   {
     field: 'title',
@@ -348,7 +339,6 @@ export const productValidation = validateInput([
   },
 ]);
 
-// Comment validation
 export const commentValidation = validateInput([
   {
     field: 'content',
@@ -360,7 +350,6 @@ export const commentValidation = validateInput([
   },
 ]);
 
-// Search validation
 export const searchValidation = validateInput([
   {
     field: 'query',

@@ -25,35 +25,35 @@ export default function SidebarNavigation({
       id: 'chat',
       label: 'Panda Chat',
       icon: '🐼',
-      href: '/founder/assistant',
+      href: '/ar/founder/assistant',
       description: 'AI Assistant Chat'
     },
     {
       id: 'strategy',
       label: 'Strategy & KPIs',
       icon: '📊',
-      href: '/founder/analytics',
+      href: '/ar/founder/analytics',
       description: 'Strategic Overview'
     },
     {
       id: 'sessions',
       label: 'Sessions',
       icon: '📚',
-      href: '/founder/sessions',
+      href: '/ar/founder/sessions',
       description: 'Saved Conversations'
     },
     {
       id: 'documents',
       label: 'Documents',
       icon: '📄',
-      href: '/founder/documents',
+      href: '/ar/founder/documents',
       description: 'Core Documents'
     },
     {
       id: 'settings',
       label: 'System Settings',
       icon: '⚙️',
-      href: '/founder/settings',
+      href: '/ar/founder/settings',
       description: 'Configuration'
     }
   ];
