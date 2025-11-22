@@ -77,16 +77,7 @@ export default function HomePageClient({ locale, products, makers, videos }: Hom
           <p className="text-lg md:text-xl lg:text-2xl text-white/90 mb-10 max-w-3xl mx-auto leading-relaxed">
             {t('homeHeroDescription') || 'A social-commerce platform that connects independent artisans from China, the Arab world, and beyond with buyers worldwide, in a fair, safe, and AI-powered marketplace.'}
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Link 
-              href={`/${locale}/products`}
-              aria-label={t('homeHeroCTA') || 'Explore the marketplace'}
-              className="inline-block"
-            >
-              <Button variant="primary" className="px-8 py-4 text-lg font-semibold bg-white text-primary-700 hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl transform hover:scale-105">
-                {t('homeHeroCTA') || 'Explore the marketplace'}
-              </Button>
-            </Link>
+          <div className="flex justify-center items-center">
             <Link 
               href={`/${locale}/videos`}
               aria-label={t('watchVideos') || 'Watch videos'}
