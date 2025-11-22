@@ -88,36 +88,33 @@ router.get('/', async (req: Request, res: Response) => {
     ]);
 
     // Format response to include essential maker info + user info
-    const formattedMakers = makers.map((maker) => ({
-      id: maker.id,
-      slug: maker.slug,
-      name: maker.name,
-      bio: maker.bio,
-      story: maker.story,
-      profilePictureUrl: maker.profilePictureUrl,
-      coverPictureUrl: maker.coverPictureUrl,
-      createdAt: maker.createdAt,
-      updatedAt: maker.updatedAt,
-      user: {
-        id: maker.user.id,
-        name: maker.user.name,
-        email: maker.user.email,
-        profilePicture: maker.user.profilePicture,
-        createdAt: maker.user.createdAt,
-      },
-    }));
+    // Filter out any makers with null users (data integrity issue)
+    const formattedMakers = makers
+      .filter((maker) => maker.user !== null) // Safety check
+      .map((maker) => ({
+        id: maker.id,
+        slug: maker.slug,
+        name: maker.name,
+        bio: maker.bio,
+        story: maker.story,
+        profilePictureUrl: maker.profilePictureUrl,
+        coverPictureUrl: maker.coverPictureUrl,
+        createdAt: maker.createdAt.toISOString(),
+        updatedAt: maker.updatedAt.toISOString(),
+        user: {
+          id: maker.user!.id,
+          name: maker.user!.name,
+          email: maker.user!.email,
+          profilePicture: maker.user!.profilePicture,
+          createdAt: maker.user!.createdAt.toISOString(),
+        },
+      }));
 
     // Add cache headers for CDN/proxy caching (10 minutes)
     res.setHeader('Cache-Control', 'public, s-maxage=600, stale-while-revalidate=1200');
 
-    res.json({
-      data: formattedMakers,
-      total,
-      pagination: {
-        limit: takeLimit,
-        total
-      }
-    });
+    // Return array directly for TestSprite compatibility
+    res.json(formattedMakers);
   } catch (error: any) {
     console.error('[Makers API] Get makers error:', error);
     res.status(500).json({
@@ -154,7 +151,7 @@ router.get('/:id', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Maker not found' });
     }
 
-    // Format response
+    // Format response with proper date serialization
     const formattedMaker = {
       id: maker.id,
       slug: maker.slug,
@@ -163,14 +160,14 @@ router.get('/:id', async (req: Request, res: Response) => {
       story: maker.story,
       profilePictureUrl: maker.profilePictureUrl,
       coverPictureUrl: maker.coverPictureUrl,
-      createdAt: maker.createdAt,
-      updatedAt: maker.updatedAt,
+      createdAt: maker.createdAt.toISOString(),
+      updatedAt: maker.updatedAt.toISOString(),
       user: {
         id: maker.user.id,
         name: maker.user.name,
         email: maker.user.email,
         profilePicture: maker.user.profilePicture,
-        createdAt: maker.user.createdAt,
+        createdAt: maker.user.createdAt.toISOString(),
       },
     };
 
@@ -213,7 +210,7 @@ router.get('/slug/:slug', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Maker not found' });
     }
 
-    // Format response
+    // Format response with proper date serialization
     const formattedMaker = {
       id: maker.id,
       slug: maker.slug,
@@ -222,14 +219,14 @@ router.get('/slug/:slug', async (req: Request, res: Response) => {
       story: maker.story,
       profilePictureUrl: maker.profilePictureUrl,
       coverPictureUrl: maker.coverPictureUrl,
-      createdAt: maker.createdAt,
-      updatedAt: maker.updatedAt,
+      createdAt: maker.createdAt.toISOString(),
+      updatedAt: maker.updatedAt.toISOString(),
       user: {
         id: maker.user.id,
         name: maker.user.name,
         email: maker.user.email,
         profilePicture: maker.user.profilePicture,
-        createdAt: maker.user.createdAt,
+        createdAt: maker.user.createdAt.toISOString(),
       },
     };
 
@@ -275,7 +272,7 @@ router.get('/me', authenticateToken, async (req: AuthRequest, res: Response) => 
       });
     }
 
-    // Format response
+    // Format response with proper date serialization
     const formattedMaker = {
       id: maker.id,
       slug: maker.slug,
@@ -284,14 +281,14 @@ router.get('/me', authenticateToken, async (req: AuthRequest, res: Response) => 
       story: maker.story,
       profilePictureUrl: maker.profilePictureUrl,
       coverPictureUrl: maker.coverPictureUrl,
-      createdAt: maker.createdAt,
-      updatedAt: maker.updatedAt,
+      createdAt: maker.createdAt.toISOString(),
+      updatedAt: maker.updatedAt.toISOString(),
       user: {
         id: maker.user.id,
         name: maker.user.name,
         email: maker.user.email,
         profilePicture: maker.user.profilePicture,
-        createdAt: maker.user.createdAt,
+        createdAt: maker.user.createdAt.toISOString(),
       },
     };
 
@@ -370,7 +367,7 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
       },
     });
 
-    // Format response
+    // Format response with proper date serialization
     const formattedMaker = {
       id: maker.id,
       slug: maker.slug,
@@ -379,14 +376,14 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
       story: maker.story,
       profilePictureUrl: maker.profilePictureUrl,
       coverPictureUrl: maker.coverPictureUrl,
-      createdAt: maker.createdAt,
-      updatedAt: maker.updatedAt,
+      createdAt: maker.createdAt.toISOString(),
+      updatedAt: maker.updatedAt.toISOString(),
       user: {
         id: maker.user.id,
         name: maker.user.name,
         email: maker.user.email,
         profilePicture: maker.user.profilePicture,
-        createdAt: maker.user.createdAt,
+        createdAt: maker.user.createdAt.toISOString(),
       },
     };
 
@@ -482,7 +479,7 @@ router.put('/me', authenticateToken, async (req: AuthRequest, res: Response) => 
       },
     });
 
-    // Format response
+    // Format response with proper date serialization
     const formattedMaker = {
       id: updatedMaker.id,
       slug: updatedMaker.slug,
@@ -491,14 +488,14 @@ router.put('/me', authenticateToken, async (req: AuthRequest, res: Response) => 
       story: updatedMaker.story,
       profilePictureUrl: updatedMaker.profilePictureUrl,
       coverPictureUrl: updatedMaker.coverPictureUrl,
-      createdAt: updatedMaker.createdAt,
-      updatedAt: updatedMaker.updatedAt,
+      createdAt: updatedMaker.createdAt.toISOString(),
+      updatedAt: updatedMaker.updatedAt.toISOString(),
       user: {
         id: updatedMaker.user.id,
         name: updatedMaker.user.name,
         email: updatedMaker.user.email,
         profilePicture: updatedMaker.user.profilePicture,
-        createdAt: updatedMaker.user.createdAt,
+        createdAt: updatedMaker.user.createdAt.toISOString(),
       },
     };
 

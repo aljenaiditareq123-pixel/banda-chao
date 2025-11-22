@@ -24,6 +24,7 @@ import paymentRoutes from './api/payments';
 import founderRoutes from './api/founder';
 import founderSessionRoutes from './api/founder-sessions';
 import moderationRoutes from './api/moderation';
+import devRoutes from './api/dev';
 
 // Load environment variables
 dotenv.config();
@@ -79,9 +80,11 @@ const io = new Server(httpServer, {
 
 // SIMPLE AND RELIABLE GLOBAL CORS - Applied to ALL routes
 app.use((req: Request, res: Response, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+  // Set CORS headers explicitly for all responses
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
   
   // Handle preflight OPTIONS requests
   if (req.method === "OPTIONS") {
@@ -139,6 +142,7 @@ app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/founder', founderRoutes);
 app.use('/api/v1/founder/sessions', founderSessionRoutes);
 app.use('/api/v1/moderation', moderationRoutes);
+app.use('/api/v1/dev', devRoutes);
 
 // 404 handler (CORS headers added by global middleware)
 app.use((req: Request, res: Response) => {

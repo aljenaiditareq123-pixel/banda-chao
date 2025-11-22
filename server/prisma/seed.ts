@@ -12,6 +12,7 @@ async function main() {
   await prisma.post.deleteMany();
   await prisma.video.deleteMany();
   await prisma.product.deleteMany();
+  await prisma.maker.deleteMany();
   await prisma.user.deleteMany();
 
   // Create 5 users
@@ -312,12 +313,60 @@ async function main() {
     },
   ];
 
-  for (let i = 0; i < productData.length; i++) {
-    const product = productData[i];
-    const user = users[i % users.length];
-    await prisma.product.create({
+  // Create makers for first 3 users
+  console.log('🎨 Creating makers...');
+  const makerData = [
+    {
+      name: '张明手作',
+      bio: '来自云南的手工艺人，专注于传统竹编和木工技艺',
+      story: '我从小跟随祖父学习传统手工艺，每一件作品都承载着对传统文化的热爱。希望通过这个平台，让更多人了解传统手工艺的魅力。',
+      profilePictureUrl: 'https://i.pravatar.cc/200?u=maker1',
+      coverPictureUrl: 'https://picsum.photos/800/400?random=maker1',
+    },
+    {
+      name: '李华工作室',
+      bio: '独立设计师，专注于现代家居用品设计',
+      story: '作为一名独立设计师，我相信好的设计应该既美观又实用。我的作品融合了现代美学与传统工艺，希望能为你的生活增添一份美好。',
+      profilePictureUrl: 'https://i.pravatar.cc/200?u=maker2',
+      coverPictureUrl: 'https://picsum.photos/800/400?random=maker2',
+    },
+    {
+      name: '王芳手作坊',
+      bio: '陶瓷艺术家，专注于手工陶瓷制品',
+      story: '陶瓷是我生命中的一部分。每一件作品都经过精心制作，从选料到烧制，都倾注了我的心血。希望这些作品能为你带来温暖和美好。',
+      profilePictureUrl: 'https://i.pravatar.cc/200?u=maker3',
+      coverPictureUrl: 'https://picsum.photos/800/400?random=maker3',
+    },
+  ];
+
+  const makers = [];
+  for (let i = 0; i < Math.min(makerData.length, users.length); i++) {
+    const makerInfo = makerData[i];
+    const user = users[i];
+    const slug = makerInfo.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    
+    const maker = await prisma.maker.create({
       data: {
         userId: user.id,
+        name: makerInfo.name,
+        slug: `${slug}-${user.id}`,
+        bio: makerInfo.bio,
+        story: makerInfo.story,
+        profilePictureUrl: makerInfo.profilePictureUrl,
+        coverPictureUrl: makerInfo.coverPictureUrl,
+      },
+    });
+    makers.push(maker);
+    console.log(`✅ Created maker: ${makerInfo.name} for user ${user.name}`);
+  }
+
+  for (let i = 0; i < productData.length; i++) {
+    const product = productData[i];
+    // Assign products to makers if available, otherwise to users
+    const owner = makers[i % makers.length] || users[i % users.length];
+    await prisma.product.create({
+      data: {
+        userId: owner.userId || owner.id,
         name: product.name,
         description: product.description,
         price: product.price,
@@ -354,6 +403,7 @@ async function main() {
   console.log('🎉 Database seeding completed successfully!');
   console.log(`📊 Summary:`);
   console.log(`   - Users: ${users.length}`);
+  console.log(`   - Makers: ${makers.length}`);
   console.log(`   - Videos: 13 (8 short, 5 long)`);
   console.log(`   - Products: ${productData.length}`);
   console.log(`   - Categories: 电子产品 (6), 时尚 (5), 家居 (5), 运动 (5)`);

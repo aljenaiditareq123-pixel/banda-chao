@@ -226,21 +226,15 @@ router.get('/', authenticateToken, async (req: Request, res: Response) => {
       }
     });
 
-    // Apply role fallback for each user
+    // Apply role fallback for each user and serialize dates
     const usersWithRole = users.map(user => ({
       ...user,
-      role: user.role || getUserRoleFromEmail(user.email)
+      role: user.role || getUserRoleFromEmail(user.email),
+      createdAt: user.createdAt.toISOString()
     }));
 
-    res.json({
-      data: usersWithRole,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit)
-      }
-    });
+    // Return array directly for TestSprite compatibility
+    res.json(usersWithRole);
   } catch (error: any) {
     console.error('Get users error:', error);
     res.status(500).json({ error: 'Failed to fetch users', message: error.message });

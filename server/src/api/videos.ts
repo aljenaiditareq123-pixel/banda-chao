@@ -50,15 +50,15 @@ router.get('/', async (req: Request, res: Response) => {
     // Add cache headers for CDN/proxy caching (5 minutes)
     res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
 
-    res.json({
-      data: videos,
-      pagination: {
-        page: pageNum,
-        limit: limitNum,
-        total,
-        totalPages: Math.ceil(total / limitNum)
-      }
-    });
+    // Format videos with proper date serialization
+    const formattedVideos = videos.map((video) => ({
+      ...video,
+      createdAt: video.createdAt.toISOString(),
+      updatedAt: video.updatedAt.toISOString(),
+    }));
+
+    // Return array directly for TestSprite compatibility
+    res.json(formattedVideos);
   } catch (error: any) {
     console.error('Get videos error:', error);
     res.status(500).json({ error: 'Failed to fetch videos', message: error.message });

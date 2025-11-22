@@ -57,8 +57,12 @@ export const authenticateToken = (
       }
     }
 
-    // If still no token found, return 401
+    // If still no token found, return 401 with CORS headers
     if (!token) {
+      // Ensure CORS headers are set even for error responses
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+      res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
       return res.status(401).json({ 
         error: 'Access token required',
         message: 'Please provide a valid token in the Authorization header as "Bearer <token>" or in cookies'
@@ -73,11 +77,17 @@ export const authenticateToken = (
         // Use 401 Unauthorized for authentication failures (invalid/expired tokens)
         // This matches TestSprite expectations and HTTP standards
         if (err) {
+          res.setHeader("Access-Control-Allow-Origin", "*");
+          res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+          res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
           return res.status(401).json({ error: 'Invalid or expired token' });
         }
 
         // Ensure decoded object exists and contains userId
         if (!decoded || !decoded.userId) {
+          res.setHeader("Access-Control-Allow-Origin", "*");
+          res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+          res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
           return res.status(401).json({ error: 'Token payload is invalid' });
         }
 
@@ -89,6 +99,9 @@ export const authenticateToken = (
         if (req.userId) {
           next();
         } else {
+          res.setHeader("Access-Control-Allow-Origin", "*");
+          res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+          res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
           return res.status(401).json({ error: 'Failed to authenticate user' });
         }
       }
@@ -96,6 +109,9 @@ export const authenticateToken = (
   } catch (error: any) {
     // Catch any unexpected errors (e.g., JWT_SECRET issues)
     console.error('Authentication middleware error:', error);
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
     return res.status(500).json({ error: 'Internal server error during authentication' });
   }
 };

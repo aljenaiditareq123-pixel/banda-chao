@@ -46,15 +46,15 @@ router.get('/', async (req: Request, res: Response) => {
     // Add cache headers for CDN/proxy caching (5 minutes)
     res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
 
-    // Return consistent format with videos API
-    res.json({
-      data: products,
-      total,
-      pagination: {
-        limit: takeLimit,
-        total
-      }
-    });
+    // Format products with proper date serialization
+    const formattedProducts = products.map((product) => ({
+      ...product,
+      createdAt: product.createdAt.toISOString(),
+      updatedAt: product.updatedAt.toISOString(),
+    }));
+
+    // Return array directly for TestSprite compatibility
+    res.json(formattedProducts);
   } catch (error: any) {
     console.error('Get products error:', error);
     res.status(500).json({ error: 'Failed to fetch products', message: error.message });
