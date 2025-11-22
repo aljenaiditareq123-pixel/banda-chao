@@ -72,7 +72,7 @@ export default function HomePageClient({ locale, products, makers, videos }: Hom
         </div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 text-center w-full">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
-            {t('homeHeroTitle') || t('homeHeroHeadline') || 'Banda Chao — A Fair Home for Global Makers'}
+            {t('homeHeroHeadline') || t('homeHeroTitle') || 'Banda Chao — A Fair Home for Global Makers'}
           </h1>
           <p className="text-lg md:text-xl lg:text-2xl text-white/90 mb-10 max-w-3xl mx-auto leading-relaxed">
             {t('homeHeroDescription') || 'A social-commerce platform that connects independent artisans from China, the Arab world, and beyond with buyers worldwide, in a fair, safe, and AI-powered marketplace.'}
