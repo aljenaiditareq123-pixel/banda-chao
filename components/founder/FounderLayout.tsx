@@ -1,6 +1,8 @@
 'use client';
 
 import { ReactNode } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { cn } from '@/lib/utils';
 import FounderSidebarNav from './FounderSidebarNav';
 import AssistantNav from './AssistantNav';
 
@@ -21,23 +23,33 @@ export default function FounderLayout({
   title,
   description,
 }: FounderLayoutProps) {
+  const { language } = useLanguage();
+  const isRTL = language === 'ar';
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         {(title || description) && (
-          <div className="mb-8">
+          <div className={cn('mb-8', isRTL && 'rtl-text-right')}>
             {title && (
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">{title}</h1>
+              <h1 className={cn('text-3xl font-bold text-gray-900 mb-2', isRTL && 'rtl-text-right')}>
+                {title}
+              </h1>
             )}
             {description && (
-              <p className="text-gray-600 text-lg max-w-3xl">{description}</p>
+              <p className={cn('text-gray-600 text-lg max-w-3xl', isRTL && 'rtl-text-right')}>
+                {description}
+              </p>
             )}
           </div>
         )}
 
-        {/* Main Layout */}
-        <div className="flex flex-col lg:flex-row gap-8">
+        {/* Main Layout - RTL aware */}
+        <div className={cn(
+          'flex flex-col lg:flex-row gap-8',
+          isRTL && 'rtl-flip-row'
+        )}>
           {/* Sidebar */}
           {showSidebar && (
             <aside className="lg:w-64 flex-shrink-0">

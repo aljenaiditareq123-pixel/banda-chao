@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
  */
 export default function ContentBrainPage() {
   return (
-    <FounderRoute locale="en">
+    <FounderRoute locale="ar">
     <FounderLayout
       title="باندا المحتوى"
       description="يبني سرداً جذاباً يحفّز المشاركة ويزيد ولاء المجتمع."

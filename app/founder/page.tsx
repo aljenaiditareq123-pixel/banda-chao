@@ -21,7 +21,7 @@ import FounderRoute from "@/components/FounderRoute";
  */
 export default function FounderPage() {
   return (
-    <FounderRoute locale="en">
+    <FounderRoute locale="ar">
       <FounderPageClient />
     </FounderRoute>
   );

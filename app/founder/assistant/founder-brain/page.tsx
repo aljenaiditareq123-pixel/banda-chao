@@ -16,7 +16,7 @@ export const dynamic = 'force-dynamic';
  */
 export default function FounderBrainPage() {
   return (
-    <FounderRoute locale="en">
+    <FounderRoute locale="ar">
     <FounderLayout
       title="الباندا المؤسس"
       description="يرسم القرارات المصيرية ويحوّل الرؤية إلى خطط تنفيذية واضحة."

@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
  */
 export default function TechnicalBrainPage() {
   return (
-    <FounderRoute locale="en">
+    <FounderRoute locale="ar">
     <FounderLayout
       title="الباندا التقني"
       description="يضمن جاهزية البنية التحتية ويقترح حلولاً تقنية قابلة للتوسع."

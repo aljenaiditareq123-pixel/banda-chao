@@ -13,13 +13,19 @@ export default function LanguageDirection() {
     }
 
     try {
-      // Set document direction based on language
-      if (language === 'ar') {
+      const isRTL = language === 'ar';
+      
+      // Set document direction and language
+      if (isRTL) {
         document.documentElement.setAttribute('dir', 'rtl');
         document.documentElement.setAttribute('lang', 'ar');
+        document.body.classList.add('rtl');
+        document.body.classList.remove('ltr');
       } else {
         document.documentElement.setAttribute('dir', 'ltr');
         document.documentElement.setAttribute('lang', language === 'zh' ? 'zh-CN' : 'en');
+        document.body.classList.add('ltr');
+        document.body.classList.remove('rtl');
       }
     } catch (error) {
       // document may not be available - ignore

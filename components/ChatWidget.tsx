@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import ChatBubble from '@/components/ChatBubble';
 import ChatWindow, { ChatMessage } from '@/components/ChatWindow';
+import { apiCall, handleApiError } from '@/lib/api-error-handler';
 
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
@@ -69,14 +70,16 @@ export default function ChatWidget() {
           text: replyText,
         },
       ]);
-    } catch (error) {
+    } catch (error: any) {
       console.error('[ChatWidget] Failed to fetch AI response:', error);
+      
+      const userFriendlyMessage = handleApiError(error);
       setMessages((prev) => [
         ...prev,
         {
           id: `assistant-error-${Date.now()}`,
           sender: 'assistant',
-          text: 'Sorry, Panda Chat encountered an issue. Please try again in a moment.',
+          text: `❌ ${userFriendlyMessage}`,
         },
       ]);
     } finally {

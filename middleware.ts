@@ -18,8 +18,17 @@ import { NextResponse, type NextRequest } from 'next/server'
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Redirect locale-prefixed founder routes to Arabic-only founder routes
+  // /en/founder/* → /founder/*
+  // /zh/founder/* → /founder/*
+  // /ar/founder/* → /founder/*
+  if (pathname.match(/^\/(en|zh|ar)\/founder/)) {
+    const newPath = pathname.replace(/^\/(en|zh|ar)\/founder/, '/founder');
+    return NextResponse.redirect(new URL(newPath, request.url));
+  }
+
   // Skip middleware for:
-  // - Founder pages (no auth needed)
+  // - Founder pages (no auth needed, handled by app/founder/layout.tsx)
   // - API routes (handled by Next.js API routes or Express backend)
   // - Static assets (_next/static, _next/image, favicon, images)
   if (

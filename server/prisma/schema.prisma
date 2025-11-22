@@ -42,6 +42,7 @@ model User {
   following        Follow[] @relation("Follower")
   notifications    Notification[]
   maker            Maker?
+  reports          Report[]
 
   @@map("users")
 }
@@ -234,10 +235,12 @@ model CommentLike {
 
 enum OrderStatus {
   PENDING
+  PAID
   PROCESSING
   SHIPPED
   DELIVERED
   CANCELLED
+  FAILED
 }
 
 model Order {
@@ -245,11 +248,12 @@ model Order {
   userId      String      @map("user_id")
   status      OrderStatus @default(PENDING)
   totalAmount Float
-  shippingAddress String   @map("shipping_address")
-  shippingCity    String   @map("shipping_city")
-  shippingCountry String   @map("shipping_country")
+  stripeId    String?     @map("stripe_id") // Stripe checkout session ID
+  shippingAddress String?  @map("shipping_address")
+  shippingCity    String?  @map("shipping_city")
+  shippingCountry String?  @map("shipping_country")
   shippingPhone   String?  @map("shipping_phone")
-  shippingName    String   @map("shipping_name")
+  shippingName    String?  @map("shipping_name")
   createdAt   DateTime    @default(now()) @map("created_at")
   updatedAt   DateTime    @updatedAt @map("updated_at")
   
@@ -260,6 +264,7 @@ model Order {
   @@index([userId])
   @@index([status])
   @@index([createdAt])
+  @@index([stripeId])
   @@map("orders")
 }
 
@@ -267,8 +272,8 @@ model OrderItem {
   id        String   @id @default(uuid())
   orderId   String   @map("order_id")
   productId String   @map("product_id")
-  quantity  Int
-  price     Float    // Price at time of order (snapshot)
+  quantity  Int      @default(1)
+  price     Float    // Price at time of order (snapshot) - in smallest currency unit (cents/fils)
   createdAt DateTime @default(now()) @map("created_at")
   
   // Relations
@@ -313,5 +318,38 @@ model Notification {
   @@index([userId])
   @@index([isRead])
   @@map("notifications")
+}
+
+model Report {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  targetId  String   @map("target_id")
+  targetType String  @map("target_type") // PRODUCT | MAKER | POST | VIDEO | COMMENT
+  reason    String
+  resolved  Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([targetId, targetType])
+  @@index([resolved])
+  @@map("reports")
+}
+
+model FounderSession {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  title     String
+  summary   String
+  tasks     String?  // JSON string of tasks array
+  founderId String   @map("founder_id")
+  mode      String?  // Operating mode when session was created
+
+  @@index([founderId])
+  @@index([createdAt])
+  @@map("founder_sessions")
 }
 

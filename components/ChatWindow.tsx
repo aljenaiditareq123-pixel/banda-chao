@@ -1,5 +1,7 @@
 'use client';
 
+import { useLanguage } from '@/contexts/LanguageContext';
+import { cn } from '@/lib/utils';
 import Button from '@/components/Button';
 import Input from '@/components/Input';
 
@@ -28,13 +30,23 @@ export default function ChatWindow({
   onChangeInput,
   onSend,
 }: ChatWindowProps) {
+  // Always call hooks at the top level (before any early returns)
+  const { language } = useLanguage();
+  const isRTL = language === 'ar';
+
   if (!isOpen) {
     return null;
   }
 
   return (
-    <div className="fixed bottom-24 right-6 z-40 w-full max-w-sm bg-white rounded-3xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden">
-      <header className="flex items-center justify-between px-5 py-4 bg-[#2E7D32] text-white">
+    <div className={cn(
+      'fixed bottom-24 z-40 w-full max-w-sm bg-white rounded-3xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden',
+      isRTL ? 'rtl-bottom-button' : 'right-6'
+    )}>
+      <header className={cn(
+        'flex items-center justify-between px-5 py-4 bg-[#2E7D32] text-white',
+        isRTL && 'rtl-flip-row'
+      )}>
         <div>
           <h2 className="text-lg font-semibold">Panda Chat</h2>
           <p className="text-xs opacity-80">Your personal shopping assistant</p>

@@ -91,7 +91,7 @@ export default function NotificationsBell() {
     } else if (notification.type === 'order_status' && notification.data?.orderId) {
       router.push(`/${language}/orders`);
     } else if (notification.type === 'follow' && notification.data?.followerId) {
-      router.push(`/profile/${notification.data.followerId}`);
+      router.push(`/${language}/profile/${notification.data.followerId}`);
     }
 
     setIsOpen(false);
@@ -205,4 +205,6 @@ export default function NotificationsBell() {
     </div>
   );
 }
+
+
 

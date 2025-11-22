@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { productsAPI } from '@/lib/api';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useSafeLanguage } from '@/hooks/useSafeLanguage';
 
 const ITEMS_PER_PAGE = 12;
 
@@ -37,7 +37,7 @@ export default function ProductsPageClient() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [totalProducts, setTotalProducts] = useState(0);
-  const { t } = useLanguage();
+  const { t } = useSafeLanguage();
 
   useEffect(() => {
     loadProducts();

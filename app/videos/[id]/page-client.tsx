@@ -7,13 +7,13 @@ import VideoCard from '@/components/VideoCard';
 import Comments from '@/components/Comments';
 import LikeButton from '@/components/LikeButton';
 import EditDeleteButtons from '@/components/EditDeleteButtons';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useSafeLanguage } from '@/hooks/useSafeLanguage';
 import Link from 'next/link';
 
 export default function VideoDetailPageClient() {
   const params = useParams();
   const videoId = params.id as string;
-  const { t } = useLanguage();
+  const { t } = useSafeLanguage();
   const [video, setVideo] = useState<any>(null);
   const [relatedVideos, setRelatedVideos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

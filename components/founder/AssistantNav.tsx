@@ -9,7 +9,7 @@ const assistants = [
     id: 'founder',
     label: 'Founder Panda',
     labelZh: '创始人熊猫',
-    labelAr: 'الباندا المؤسس',
+    labelAr: 'باندا المؤسس',
     route: '/founder/assistant/founder-brain',
     emoji: '🐼',
     gradient: 'from-rose-600 to-rose-700',
@@ -18,7 +18,7 @@ const assistants = [
     id: 'tech',
     label: 'Technical Panda',
     labelZh: '技术熊猫',
-    labelAr: 'الباندا التقني',
+    labelAr: 'باندا التقني',
     route: '/founder/assistant/technical-brain',
     emoji: '💻',
     gradient: 'from-sky-600 to-sky-700',
@@ -27,7 +27,7 @@ const assistants = [
     id: 'guard',
     label: 'Security Panda',
     labelZh: '安全熊猫',
-    labelAr: 'الباندا الحارس',
+    labelAr: 'باندا الحارس',
     route: '/founder/assistant/security-brain',
     emoji: '🛡️',
     gradient: 'from-amber-600 to-amber-700',
@@ -45,7 +45,7 @@ const assistants = [
     id: 'content',
     label: 'Content Panda',
     labelZh: '内容熊猫',
-    labelAr: 'الباندا المحتوى',
+    labelAr: 'باندا المحتوى',
     route: '/founder/assistant/content-brain',
     emoji: '🎨',
     gradient: 'from-violet-600 to-violet-700',
@@ -54,7 +54,7 @@ const assistants = [
     id: 'logistics',
     label: 'Logistics Panda',
     labelZh: '物流熊猫',
-    labelAr: 'الباندا اللوجستي',
+    labelAr: 'باندا اللوجستيات',
     route: '/founder/assistant/logistics-brain',
     emoji: '🚚',
     gradient: 'from-slate-600 to-slate-700',
@@ -67,6 +67,15 @@ const assistants = [
     route: '/founder/assistant/philosopher-brain',
     emoji: '🎓',
     gradient: 'from-indigo-600 to-indigo-700',
+  },
+  {
+    id: 'international_finance_panda',
+    label: 'International Finance Panda',
+    labelZh: '国际金融熊猫',
+    labelAr: 'الباندا المالي الدولي',
+    route: '/founder/assistant/finance-brain',
+    emoji: '💰',
+    gradient: 'from-green-600 to-green-700',
   },
 ];
 
@@ -106,6 +115,8 @@ export default function AssistantNav({ currentAssistantId, className = '', onAss
       content: 'صوت العلامة وقصتها',
       logistics: 'منسق العمليات',
       philosopher: 'المراقب المعماري',
+      international_finance_panda: 'مستشار المدفوعات العالمية',
+      finance: 'مستشار المدفوعات العالمية', // Alias
     };
     return subtitles[id] || '';
   };
@@ -123,18 +134,18 @@ export default function AssistantNav({ currentAssistantId, className = '', onAss
             <button
               key={assistant.id}
               onClick={(e) => handleAssistantClick(assistant.id, e)}
-              className={`w-full text-right flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
                 isActive
                   ? `bg-gradient-to-r ${assistant.gradient} text-white shadow-md`
                   : 'text-gray-700 hover:bg-gray-100'
-              }`}
+              } ${language === 'ar' ? 'flex-row-reverse text-right' : ''}`}
               aria-label={getLabel(assistant)}
               aria-current={isActive ? 'page' : undefined}
             >
               <span className="text-2xl" aria-hidden="true">
                 {assistant.emoji}
               </span>
-              <div className="flex-1 text-right">
+              <div className={`flex-1 ${language === 'ar' ? 'text-right' : ''}`}>
                 <div className="text-sm font-medium">{getLabel(assistant)}</div>
                 {subtitle && (
                   <div className={`text-xs mt-1 ${isActive ? 'opacity-75' : 'text-gray-500'}`}>
@@ -159,14 +170,14 @@ export default function AssistantNav({ currentAssistantId, className = '', onAss
               isActive
                 ? `bg-gradient-to-r ${assistant.gradient} text-white shadow-md`
                 : 'text-gray-700 hover:bg-gray-100'
-            }`}
+            } ${language === 'ar' ? 'flex-row-reverse text-right' : ''}`}
             aria-label={getLabel(assistant)}
             aria-current={isActive ? 'page' : undefined}
           >
             <span className="text-2xl" aria-hidden="true">
               {assistant.emoji}
             </span>
-            <div className="flex-1">
+            <div className={`flex-1 ${language === 'ar' ? 'text-right' : ''}`}>
               <div className="text-sm font-medium">{getLabel(assistant)}</div>
             </div>
             {isActive && (

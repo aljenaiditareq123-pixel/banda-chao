@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCart } from '@/contexts/CartContext';
@@ -10,10 +10,14 @@ import NotificationsBell from '@/components/notifications/NotificationsBell';
 
 export default function Header() {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, loading, logout } = useAuth();
   const { language, setLanguage, t } = useLanguage();
   const { totalItems } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // Hide language switcher on founder pages (Arabic-only)
+  const isFounderPage = pathname?.startsWith('/founder');
 
   const handleLogout = () => {
     logout();
@@ -53,18 +57,22 @@ export default function Header() {
                 <Link href={`/${language}/orders`} className="text-gray-700 hover:text-primary-600 transition font-medium" aria-label={t('orders') || 'Orders'}>
                   {t('orders') || 'طلباتي'}
                 </Link>
+                <Link href={`/${language}/maker/dashboard`} className="text-gray-700 hover:text-primary-600 transition font-medium" aria-label={t('makerDashboard') || 'Maker Dashboard'}>
+                  {t('makerDashboard') || 'لوحة الحرفي'}
+                </Link>
               </>
             )}
             {user?.role === "FOUNDER" && (
-              <Link href={`/${language}/founder/assistant`} className="text-primary-600 hover:text-primary-700 transition font-semibold" aria-label={t('founderConsole') || 'Founder Console'}>
-                {t('founderConsole') || 'المؤسس'}
+              <Link href="/founder/assistant" className="text-primary-600 hover:text-primary-700 transition font-semibold" aria-label="المؤسس">
+                المؤسس
               </Link>
             )}
           </nav>
 
           {/* User Actions */}
           <div className="flex items-center space-x-3 md:space-x-4">
-            {/* Language Switcher - Hidden on mobile */}
+            {/* Language Switcher - Hidden on mobile and on founder pages (Arabic-only) */}
+            {!isFounderPage && (
             <div className="hidden sm:flex items-center space-x-1 border border-gray-300 rounded-lg px-2 py-1">
               <button
                 onClick={() => {
@@ -127,6 +135,7 @@ export default function Header() {
                 EN
               </button>
             </div>
+            )}
 
             {/* Cart */}
             <Link
@@ -153,7 +162,7 @@ export default function Header() {
             ) : user ? (
               <div className="hidden md:flex items-center space-x-3">
                 <Link
-                  href={`/profile/${user.id}`}
+                  href={`/${language}/profile/${user.id}`}
                   className="flex items-center space-x-2 text-gray-700 hover:text-primary-600 transition"
                   aria-label={t('myAccount') || 'My Account'}
                 >
@@ -276,7 +285,7 @@ export default function Header() {
                     {t('orders') || 'طلباتي'}
                   </Link>
                   <Link
-                    href={`/profile/${user.id}`}
+                    href={`/${language}/profile/${user.id}`}
                     onClick={() => setMobileMenuOpen(false)}
                     className="px-4 py-2 text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition font-medium"
                     aria-label={t('myProfile') || 'My Profile'}
@@ -324,7 +333,8 @@ export default function Header() {
                   {t('logout') || 'تسجيل الخروج'}
                 </button>
               )}
-              {/* Mobile Language Switcher */}
+              {/* Mobile Language Switcher - Hidden on founder pages (Arabic-only) */}
+              {!isFounderPage && (
               <div className="px-4 py-2 border-t border-gray-200 mt-2 pt-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-700">{t('language') || 'اللغة'}:</span>
@@ -381,6 +391,7 @@ export default function Header() {
                   </div>
                 </div>
               </div>
+              )}
             </nav>
           </div>
         )}

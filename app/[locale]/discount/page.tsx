@@ -16,3 +16,5 @@ export default function LocaleDiscountPage({ params, searchParams }: LocaleDisco
   return <DiscountPageClient locale={locale} initialCode={code} />;
 }
 
+
+

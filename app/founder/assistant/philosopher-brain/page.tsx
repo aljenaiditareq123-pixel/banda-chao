@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
  */
 export default function PhilosopherBrainPage() {
   return (
-    <FounderRoute locale="en">
+    <FounderRoute locale="ar">
     <FounderLayout
       title="الباندا الفيلسوف المعماري"
       description="مراقب معماري ومشرف على جميع الباندات. يفكر في الصورة الكبيرة والتنسيق بين الأنظمة."

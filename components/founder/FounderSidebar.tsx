@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { cn } from '@/lib/utils';
 import { getApiBaseUrl } from '@/lib/api-utils';
 import { fetchJsonWithRetry } from '@/lib/fetch-with-retry';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
@@ -24,7 +26,9 @@ interface DashboardStats {
  * - Quick action links
  */
 export default function FounderSidebar() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const { token } = useAuth();
+  const isRTL = language === 'ar';
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
 
@@ -35,42 +39,86 @@ export default function FounderSidebar() {
   const fetchStats = async () => {
     try {
       setStatsLoading(true);
+      
+      // Check if user is authenticated
+      if (!token) {
+        console.log('[FounderSidebar] No token available, skipping stats fetch');
+        setStats({
+          users: 0,
+          makers: 0,
+          products: 0,
+          videos: 0,
+        });
+        return;
+      }
+
       const apiBaseUrl = getApiBaseUrl();
 
-      // Stagger requests to avoid overwhelming backend
-      const usersJson = await fetchJsonWithRetry(`${apiBaseUrl}/users?limit=1`, {
-        maxRetries: 1,
-        retryDelay: 500,
-      }).catch(() => ({ data: [], pagination: { total: 0 } }));
+      // Use the founder analytics endpoint with authentication
+      const analyticsJson = await fetchJsonWithRetry(`${apiBaseUrl}/founder/analytics`, {
+        maxRetries: 2,
+        retryDelay: 1000,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      }).catch((error) => {
+        console.error('[FounderSidebar] Failed to fetch founder analytics:', error);
+        
+        // If 401, user is not authorized as founder
+        if (error.status === 401) {
+          console.log('[FounderSidebar] User not authorized as founder');
+          return null;
+        }
+        
+        // For other errors, return empty stats
+        return {
+          summary: {
+            totalUsers: 0,
+            totalMakers: 0,
+            totalProducts: 0,
+            totalVideos: 0,
+          }
+        };
+      });
 
-      await new Promise(resolve => setTimeout(resolve, 150));
-      const makersJson = await fetchJsonWithRetry(`${apiBaseUrl}/makers?limit=1`, {
-        maxRetries: 1,
-        retryDelay: 500,
-      }).catch(() => ({ data: [], total: 0, pagination: { total: 0 } }));
-
-      await new Promise(resolve => setTimeout(resolve, 150));
-      const productsJson = await fetchJsonWithRetry(`${apiBaseUrl}/products?limit=1`, {
-        maxRetries: 1,
-        retryDelay: 500,
-      }).catch(() => ({ data: [], total: 0, pagination: { total: 0 } }));
-
-      await new Promise(resolve => setTimeout(resolve, 150));
-      const videosJson = await fetchJsonWithRetry(`${apiBaseUrl}/videos?limit=1`, {
-        maxRetries: 1,
-        retryDelay: 500,
-      }).catch(() => ({ data: [], total: 0, pagination: { total: 0 } }));
+      if (!analyticsJson) {
+        // User is not a founder, show zeros
+        setStats({
+          users: 0,
+          makers: 0,
+          products: 0,
+          videos: 0,
+        });
+        return;
+      }
 
       const statsData: DashboardStats = {
-        users: usersJson.pagination?.total || usersJson.data?.length || 0,
-        makers: makersJson.pagination?.total || makersJson.total || makersJson.data?.length || 0,
-        products: productsJson.pagination?.total || productsJson.total || productsJson.data?.length || 0,
-        videos: videosJson.pagination?.total || videosJson.total || videosJson.data?.length || 0,
+        users: analyticsJson.summary?.totalUsers || 0,
+        makers: analyticsJson.summary?.totalMakers || 0,
+        products: analyticsJson.summary?.totalProducts || 0,
+        videos: analyticsJson.summary?.totalVideos || 0,
+        orders: analyticsJson.summary?.totalOrders || 0,
       };
+
+      // Debug logging (only in development)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[FounderSidebar] Analytics fetched:', {
+          analyticsJson,
+          statsData,
+        });
+      }
 
       setStats(statsData);
     } catch (error) {
-      console.error('Failed to fetch dashboard stats:', error);
+      console.error('[FounderSidebar] Failed to fetch dashboard stats:', error);
+      // Set default stats on error
+      setStats({
+        users: 0,
+        makers: 0,
+        products: 0,
+        videos: 0,
+      });
     } finally {
       setStatsLoading(false);
     }
@@ -79,11 +127,11 @@ export default function FounderSidebar() {
   return (
     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sticky top-8">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-xl font-bold text-gray-900 mb-2">
+      <div className={cn('mb-6', isRTL && 'rtl-text-right')}>
+        <h1 className={cn('text-xl font-bold text-gray-900 mb-2', isRTL && 'rtl-text-right')}>
           مركز القيادة للمؤسس
         </h1>
-        <p className="text-sm text-gray-600">
+        <p className={cn('text-sm text-gray-600', isRTL && 'rtl-text-right')}>
           نظرة عامة على أداء المنصة
         </p>
       </div>
@@ -92,10 +140,12 @@ export default function FounderSidebar() {
       <div className="space-y-3 mb-6">
         {/* Users Stat */}
         <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <p className="text-xs text-blue-600 mb-1">{t('totalUsers') || 'إجمالي المستخدمين'}</p>
-              <p className="text-2xl font-bold text-blue-900">
+          <div className={cn('flex items-center justify-between', isRTL && 'rtl-flip-row')}>
+            <div className={cn('flex-1', isRTL && 'rtl-text-right')}>
+              <p className={cn('text-xs text-blue-600 mb-1', isRTL && 'rtl-text-right')}>
+                {t('totalUsers') || 'إجمالي المستخدمين'}
+              </p>
+              <p className={cn('text-2xl font-bold text-blue-900', isRTL && 'rtl-text-right')}>
                 {statsLoading ? (
                   <LoadingSpinner size="sm" />
                 ) : (
@@ -109,10 +159,12 @@ export default function FounderSidebar() {
 
         {/* Makers Stat */}
         <div className="bg-purple-50 rounded-lg p-4 border border-purple-100">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <p className="text-xs text-purple-600 mb-1">{t('totalMakers') || 'إجمالي الحرفيين'}</p>
-              <p className="text-2xl font-bold text-purple-900">
+          <div className={cn('flex items-center justify-between', isRTL && 'rtl-flip-row')}>
+            <div className={cn('flex-1', isRTL && 'rtl-text-right')}>
+              <p className={cn('text-xs text-purple-600 mb-1', isRTL && 'rtl-text-right')}>
+                {t('totalMakers') || 'إجمالي الحرفيين'}
+              </p>
+              <p className={cn('text-2xl font-bold text-purple-900', isRTL && 'rtl-text-right')}>
                 {statsLoading ? (
                   <LoadingSpinner size="sm" />
                 ) : (
@@ -126,10 +178,12 @@ export default function FounderSidebar() {
 
         {/* Products Stat */}
         <div className="bg-green-50 rounded-lg p-4 border border-green-100">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <p className="text-xs text-green-600 mb-1">{t('totalProducts') || 'إجمالي المنتجات'}</p>
-              <p className="text-2xl font-bold text-green-900">
+          <div className={cn('flex items-center justify-between', isRTL && 'rtl-flip-row')}>
+            <div className={cn('flex-1', isRTL && 'rtl-text-right')}>
+              <p className={cn('text-xs text-green-600 mb-1', isRTL && 'rtl-text-right')}>
+                {t('totalProducts') || 'إجمالي المنتجات'}
+              </p>
+              <p className={cn('text-2xl font-bold text-green-900', isRTL && 'rtl-text-right')}>
                 {statsLoading ? (
                   <LoadingSpinner size="sm" />
                 ) : (
@@ -143,10 +197,12 @@ export default function FounderSidebar() {
 
         {/* Videos Stat */}
         <div className="bg-red-50 rounded-lg p-4 border border-red-100">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <p className="text-xs text-red-600 mb-1">{t('totalVideos') || 'إجمالي الفيديوهات'}</p>
-              <p className="text-2xl font-bold text-red-900">
+          <div className={cn('flex items-center justify-between', isRTL && 'rtl-flip-row')}>
+            <div className={cn('flex-1', isRTL && 'rtl-text-right')}>
+              <p className={cn('text-xs text-red-600 mb-1', isRTL && 'rtl-text-right')}>
+                {t('totalVideos') || 'إجمالي الفيديوهات'}
+              </p>
+              <p className={cn('text-2xl font-bold text-red-900', isRTL && 'rtl-text-right')}>
                 {statsLoading ? (
                   <LoadingSpinner size="sm" />
                 ) : (
@@ -161,40 +217,77 @@ export default function FounderSidebar() {
 
       {/* Quick Links */}
       <div className="space-y-2">
-        <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-3">
+        <h3 className={cn(
+          'text-sm font-semibold text-gray-700 uppercase tracking-wider mb-3',
+          isRTL && 'rtl-text-right'
+        )}>
           روابط سريعة
         </h3>
         
         <Link
-          href="/ar/makers"
-          className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+          href={`/${language}/makers`}
+          className={cn(
+            'flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors',
+            isRTL && 'rtl-flip-row'
+          )}
         >
           <span className="text-xl" aria-hidden="true">👥</span>
-          <span className="text-sm font-medium">الحرفيين</span>
+          <span className={cn('text-sm font-medium', isRTL && 'rtl-text-right')}>الحرفيين</span>
         </Link>
 
         <Link
-          href="/ar/products"
-          className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+          href={`/${language}/products`}
+          className={cn(
+            'flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors',
+            isRTL && 'rtl-flip-row'
+          )}
         >
           <span className="text-xl" aria-hidden="true">📦</span>
-          <span className="text-sm font-medium">المنتجات</span>
+          <span className={cn('text-sm font-medium', isRTL && 'rtl-text-right')}>المنتجات</span>
         </Link>
 
         <Link
-          href="/ar/videos"
-          className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+          href={`/${language}/videos`}
+          className={cn(
+            'flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors',
+            isRTL && 'rtl-flip-row'
+          )}
         >
           <span className="text-xl" aria-hidden="true">🎬</span>
-          <span className="text-sm font-medium">الفيديوهات</span>
+          <span className={cn('text-sm font-medium', isRTL && 'rtl-text-right')}>الفيديوهات</span>
         </Link>
 
         <Link
-          href="/ar/orders"
-          className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+          href={`/${language}/orders`}
+          className={cn(
+            'flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors',
+            isRTL && 'rtl-flip-row'
+          )}
         >
           <span className="text-xl" aria-hidden="true">📋</span>
-          <span className="text-sm font-medium">الطلبات</span>
+          <span className={cn('text-sm font-medium', isRTL && 'rtl-text-right')}>الطلبات</span>
+        </Link>
+
+        <Link
+          href="/founder/analytics"
+          className={cn(
+            'flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors',
+            isRTL && 'rtl-flip-row'
+          )}
+        >
+          <span className="text-xl" aria-hidden="true">📊</span>
+          <span className={cn('text-sm font-medium', isRTL && 'rtl-text-right')}>التحليلات</span>
+        </Link>
+
+        <Link
+          href="/founder/moderation"
+          className={cn(
+            'flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors',
+            isRTL && 'rtl-flip-row'
+          )}
+        >
+          <span className="text-xl" aria-hidden="true">🛡️</span>
+          <span className={cn('text-sm font-medium', isRTL && 'rtl-text-right')}>الإشراف</span>
         </Link>
       </div>
     </div>

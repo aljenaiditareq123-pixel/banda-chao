@@ -1,7 +1,7 @@
 import { Product } from '@/types';
 import { getApiBaseUrl } from './api-utils';
 
-const FALLBACK_BACKEND_URL = 'https://banda-chao-backend.onrender.com';
+const FALLBACK_BACKEND_URL = 'https://banda-chao.onrender.com';
 
 /**
  * Gets the backend base URL without /api/v1 suffix

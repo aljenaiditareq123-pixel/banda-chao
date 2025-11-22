@@ -1,0 +1,21 @@
+<svg width="192" height="192" viewBox="0 0 192 192" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#dc2626;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#991b1b;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background with rounded corners -->
+  <rect width="192" height="192" rx="24" ry="24" fill="url(#bgGradient)"/>
+  
+  <!-- Main text "BC" -->
+  <text x="96" y="110" font-family="Arial, sans-serif" font-size="80" font-weight="bold" 
+        text-anchor="middle" fill="white">BC</text>
+  
+  <!-- Panda emoji representation -->
+  <circle cx="96" cy="150" r="12" fill="white"/>
+  <circle cx="88" cy="145" r="4" fill="black"/>
+  <circle cx="104" cy="145" r="4" fill="black"/>
+  <circle cx="96" cy="150" r="2" fill="black"/>
+</svg>

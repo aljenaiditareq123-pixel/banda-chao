@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
  */
 export default function SecurityBrainPage() {
   return (
-    <FounderRoute locale="en">
+    <FounderRoute locale="ar">
     <FounderLayout
       title="الباندا الحارس"
       description="يراقب الثغرات، يحمي الحسابات، ويصون البيانات المالية الحساسة."

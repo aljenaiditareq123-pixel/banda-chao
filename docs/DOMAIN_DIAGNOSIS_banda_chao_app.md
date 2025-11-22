@@ -97,3 +97,5 @@ Based on `NXDOMAIN` from automated checks and the screenshots:
 - Automated queries returned `NXDOMAIN` for `banda-chao.app` at the time of analysis. This suggests either the nameservers are not set or DNS propagation hasn’t finished. Given your screenshot showing a live Vercel project at `www.banda-chao.app`, the apex likely needs an A record (or the nameservers must be corrected).
 
 
+
+

@@ -2,7 +2,16 @@
 
 import { Suspense, useState } from 'react';
 import FounderRoute from '@/components/FounderRoute';
-import FounderConsoleLayout from '@/components/founder/FounderConsoleLayout';
+import FounderCommandCenterLayout from '@/components/founder/FounderCommandCenterLayout';
+import FounderChatPanel from '@/components/founder/FounderChatPanel';
+import ModeSelector from '@/components/founder/ModeSelector';
+
+type FounderOperatingMode = 
+  | 'STRATEGY_MODE'
+  | 'PRODUCT_MODE' 
+  | 'TECH_MODE'
+  | 'MARKETING_MODE'
+  | 'CHINA_MODE';
 
 /**
  * Founder Assistant Page Client Component
@@ -20,14 +29,10 @@ import FounderConsoleLayout from '@/components/founder/FounderConsoleLayout';
  * All data fetching and side effects are handled by client components.
  */
 export default function FounderAssistantPageClient() {
-  const [selectedAssistantId, setSelectedAssistantId] = useState<string | undefined>(undefined);
-
-  const handleAssistantSelect = (assistantId: string) => {
-    setSelectedAssistantId(assistantId);
-  };
+  const [currentMode, setCurrentMode] = useState<FounderOperatingMode>('STRATEGY_MODE');
 
   return (
-    <FounderRoute locale="en">
+    <FounderRoute locale="ar">
       {/* Login Success Redirect Marker - for TestSprite to detect successful login redirect */}
       {/* Hidden but present in DOM when user is logged in */}
       <div 
@@ -41,10 +46,25 @@ export default function FounderAssistantPageClient() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
         </div>
       }>
-        <FounderConsoleLayout
-          selectedAssistantId={selectedAssistantId}
-          onAssistantSelect={handleAssistantSelect}
-        />
+        <FounderCommandCenterLayout currentPage="assistant">
+          <div className="h-full flex flex-col">
+            {/* Mode Selector */}
+            <div className="mb-6">
+              <ModeSelector
+                currentMode={currentMode}
+                onModeChange={setCurrentMode}
+              />
+            </div>
+            
+            {/* Main Chat Interface */}
+            <div className="flex-1 min-h-0">
+              <FounderChatPanel 
+                assistantId="founder"
+                currentMode={currentMode}
+              />
+            </div>
+          </div>
+        </FounderCommandCenterLayout>
       </Suspense>
     </FounderRoute>
   );

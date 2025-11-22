@@ -106,3 +106,5 @@
   Server starting... { node: 'v20.x', env: 'production', port: 3001 }
   ```
 - Avoid printing secrets or full connection strings in logs.
+
+

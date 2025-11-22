@@ -279,3 +279,5 @@ const currentMessages = dialogs[activeAssistantId] ?? [];  // ✅ يأخذ من 
 
 **آخر تحديث:** 2025-11-15
 
+
+

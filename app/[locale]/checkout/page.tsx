@@ -9,7 +9,8 @@ import Layout from '@/components/Layout';
 import Input from '@/components/Input';
 import { useCart } from '@/contexts/CartContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { ordersAPI } from '@/lib/api';
+import { paymentsAPI } from '@/lib/api';
+import { loadStripe, Stripe } from '@stripe/stripe-js';
 
 interface CheckoutPageProps {
   params: {
@@ -253,37 +254,45 @@ function CheckoutContent({ params }: CheckoutPageProps) {
                   setIsSubmitting(true);
 
                   try {
-                    const orderData = {
-                      items: items.map((item) => ({
+                    // Create Stripe checkout session
+                    const response = await paymentsAPI.createCheckoutSession(
+                      items.map((item) => ({
                         productId: item.product.id,
                         quantity: item.quantity,
-                      })),
-                      shippingName: formValues.fullName.trim(),
-                      shippingAddress: `${formValues.street.trim()}, ${formValues.city.trim()}`,
-                      shippingCity: formValues.city.trim(),
-                      shippingCountry: formValues.country.trim(),
-                      shippingPhone: formValues.phone.trim(),
-                    };
+                      }))
+                    );
 
-                    const response = await ordersAPI.createOrder(orderData);
-                    
-                    // Handle different response structures
-                    const order = response.data?.data || response.data?.order || response.data;
+                    const { sessionId } = response.data;
 
-                    if (!order || !order.id) {
-                      throw new Error('Invalid order response from server');
+                    if (!sessionId) {
+                      throw new Error('No session ID returned from server');
                     }
 
-                    // Clear cart after successful order
-                    clearCart();
+                    // Initialize Stripe
+                    const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+                    if (!stripePublishableKey) {
+                      throw new Error('Stripe publishable key not configured. Please set NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY in environment variables.');
+                    }
 
-                    // Redirect to success page with order ID
-                    router.push(`/${locale}/order/success?orderId=${order.id}`);
+                    const stripe: Stripe | null = await loadStripe(stripePublishableKey);
+                    if (!stripe) {
+                      throw new Error('Failed to load Stripe. Please check your publishable key.');
+                    }
+
+                    // Redirect to Stripe Checkout
+                    // @ts-ignore - redirectToCheckout is available but types might be outdated
+                    const checkoutResult = await stripe.redirectToCheckout({
+                      sessionId,
+                    });
+
+                    if (checkoutResult?.error) {
+                      throw new Error(checkoutResult.error.message || 'Failed to redirect to payment');
+                    }
                   } catch (checkoutError: any) {
-                    console.error('[Checkout] Failed to create order:', checkoutError);
+                    console.error('[Checkout] Failed to create checkout session:', checkoutError);
                     
                     // Extract error message with better fallback
-                    let message = t('checkoutErrorGeneric') || 'Unable to create order. Please try again.';
+                    let message = t('checkoutErrorGeneric') || 'Unable to proceed to payment. Please try again.';
                     
                     if (checkoutError.response?.data) {
                       const errorData = checkoutError.response.data;
@@ -291,13 +300,9 @@ function CheckoutContent({ params }: CheckoutPageProps) {
                       
                       // Handle specific error codes
                       if (checkoutError.response.status === 400) {
-                        message = errorData.error || t('checkoutErrorValidation') || 'Invalid order data. Please check your cart and shipping information.';
+                        message = errorData.error || t('checkoutErrorValidation') || 'Invalid cart data. Please check your cart.';
                       } else if (checkoutError.response.status === 401) {
                         message = t('checkoutErrorAuth') || 'Please log in to complete your order.';
-                      } else if (checkoutError.response.status === 403) {
-                        message = t('checkoutErrorForbidden') || 'You do not have permission to create this order.';
-                      } else if (checkoutError.response.status === 409) {
-                        message = errorData.error || t('checkoutErrorConflict') || 'This order conflicts with existing data. Please refresh and try again.';
                       } else if (checkoutError.response.status >= 500) {
                         message = t('checkoutErrorServer') || 'Server error. Please try again later.';
                       }
@@ -320,7 +325,7 @@ function CheckoutContent({ params }: CheckoutPageProps) {
                     {t('processingPayment') ?? 'جاري المعالجة...'}
                   </>
                 ) : (
-                  t('proceedToPayment') ?? 'تأكيد الطلب'
+                  t('proceedToPayment') ?? 'Proceed to Payment'
                 )}
               </Button>
             </aside>

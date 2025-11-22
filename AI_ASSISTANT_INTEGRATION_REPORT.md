@@ -538,3 +538,5 @@ curl -X POST https://banda-chao-backend.onrender.com/api/v1/ai/assistant \
 
 **التكامل جاهز للاستخدام! 🚀**
 
+
+

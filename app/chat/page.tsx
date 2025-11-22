@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useSafeLanguage } from '@/hooks/useSafeLanguage';
 import { messagesAPI } from '@/lib/api';
 import { connectSocket, socketHelpers, disconnectSocket } from '@/lib/socket';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -45,7 +45,7 @@ export default function ChatPage() {
 
 function ChatContent() {
   const { user, token } = useAuth();
-  const { t } = useLanguage();
+  const { t } = useSafeLanguage();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);

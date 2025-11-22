@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
  */
 export default function LogisticsBrainPage() {
   return (
-    <FounderRoute locale="en">
+    <FounderRoute locale="ar">
     <FounderLayout
       title="باندا اللوجستيات"
       description="يضبط المخزون، التوصيل، وسلاسل الإمداد لضمان تجربة بلا تأخير."

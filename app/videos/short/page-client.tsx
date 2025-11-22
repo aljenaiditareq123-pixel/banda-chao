@@ -5,7 +5,7 @@ import VideoCard from "@/components/VideoCard";
 import Link from "next/link";
 import { videosAPI } from "@/lib/api";
 import { useSearchParams } from 'next/navigation';
-import { useLanguage } from "@/contexts/LanguageContext";
+import { useSafeLanguage } from "@/hooks/useSafeLanguage";
 
 const ITEMS_PER_PAGE = 12;
 
@@ -17,7 +17,7 @@ export default function ShortVideosPageClient() {
   const [totalVideos, setTotalVideos] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { t } = useLanguage();
+  const { t } = useSafeLanguage();
 
   useEffect(() => {
     fetchVideos();

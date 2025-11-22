@@ -149,3 +149,5 @@ If you prefer not to use the seed script, you can manually create products:
 
 3. **Use seed script only in staging/test environments**, not production with real user data.
 
+
+

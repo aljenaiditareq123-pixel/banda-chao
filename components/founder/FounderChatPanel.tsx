@@ -3,6 +3,33 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { getApiBaseUrl } from '@/lib/api-utils';
+import { apiCall, handleApiError } from '@/lib/api-error-handler';
+
+// Founder Panda v2 Types
+type FounderOperatingMode = 
+  | 'STRATEGY_MODE'
+  | 'PRODUCT_MODE' 
+  | 'TECH_MODE'
+  | 'MARKETING_MODE'
+  | 'CHINA_MODE';
+
+type FounderSlashCommand = 
+  | '/plan'
+  | '/tasks'
+  | '/risks'
+  | '/roadmap'
+  | '/script'
+  | '/email';
+
+interface FounderSession {
+  id: string;
+  title: string;
+  summary: string;
+  tasks: string[] | null;
+  mode: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
 
 type AssistantId =
   | 'founder'
@@ -126,6 +153,7 @@ const assistantsMap: Record<AssistantId, AssistantProfile> = {
 
 interface FounderChatPanelProps {
   assistantId: AssistantId | AssistantIdString;
+  currentMode?: FounderOperatingMode;
 }
 
 /**
@@ -137,27 +165,175 @@ interface FounderChatPanelProps {
  * - Send button
  * - Loading states
  */
-export default function FounderChatPanel({ assistantId }: FounderChatPanelProps) {
+export default function FounderChatPanel({ assistantId, currentMode: externalMode }: FounderChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState('');
   const [loading, setLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [currentMode, setCurrentMode] = useState<FounderOperatingMode>(externalMode || 'STRATEGY_MODE');
+  const [sessions, setSessions] = useState<FounderSession[]>([]);
+  const [showSessions, setShowSessions] = useState(false);
+  const [sessionSummary, setSessionSummary] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
   
   const assistant = assistantsMap[assistantId as AssistantId] || null;
 
-  // Initialize messages with opening message
-  useEffect(() => {
-    if (assistant && messages.length === 0) {
-      setMessages([{
-        id: `${assistantId}-opening-${Date.now()}`,
-        role: 'assistant',
-        text: assistant.openingMessage,
-        createdAt: new Date().toISOString(),
-      }]);
+  // LocalStorage key for chat history (founder-only)
+  const storageKey = assistantId === 'founder' 
+    ? 'founder_panda_history' // Dedicated key for founder panda
+    : `founder_panda_history_${assistantId}`;
+
+  // Operating mode configurations
+  const modeConfigs = {
+    STRATEGY_MODE: { label: 'استراتيجي', icon: '🎯', color: 'bg-blue-500' },
+    PRODUCT_MODE: { label: 'منتج', icon: '🛠️', color: 'bg-green-500' },
+    TECH_MODE: { label: 'تقني', icon: '💻', color: 'bg-purple-500' },
+    MARKETING_MODE: { label: 'تسويق', icon: '📢', color: 'bg-orange-500' },
+    CHINA_MODE: { label: 'الصين', icon: '🇨🇳', color: 'bg-red-500' }
+  };
+
+  // Slash commands
+  const slashCommands = [
+    { command: '/plan', label: 'خطة تنفيذية', description: 'إنشاء خطة تنفيذية مفصلة' },
+    { command: '/tasks', label: 'قائمة مهام', description: 'توليد قائمة مهام قابلة للتنفيذ' },
+    { command: '/risks', label: 'تحليل المخاطر', description: 'تحليل المخاطر واستراتيجيات التخفيف' },
+    { command: '/roadmap', label: 'خريطة طريق', description: 'خريطة طريق لـ 1-3 أشهر' },
+    { command: '/script', label: 'نص تسويقي', description: 'كتابة نص تسويقي أو محتوى' },
+    { command: '/email', label: 'بريد مهني', description: 'صياغة بريد إلكتروني مهني' }
+  ];
+
+  // Load chat history from localStorage
+  const loadChatHistory = useCallback(() => {
+    if (typeof window === 'undefined') return [];
+    
+    try {
+      const stored = localStorage.getItem(storageKey);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        // Validate the structure
+        if (Array.isArray(parsed)) {
+          return parsed.filter((msg: any) => 
+            msg && typeof msg.id === 'string' && typeof msg.text === 'string'
+          );
+        }
+      }
+    } catch (error) {
+      console.warn('[FounderChatPanel] Failed to load chat history:', error);
     }
-  }, [assistantId, assistant]);
+    return [];
+  }, [storageKey]);
+
+  // Save chat history to localStorage
+  const saveChatHistory = useCallback((messages: ChatMessage[]) => {
+    if (typeof window === 'undefined') return;
+    
+    try {
+      // Only save last 50 messages to avoid localStorage size limits
+      const messagesToSave = messages.slice(-50);
+      localStorage.setItem(storageKey, JSON.stringify(messagesToSave));
+    } catch (error) {
+      console.warn('[FounderChatPanel] Failed to save chat history:', error);
+    }
+  }, [storageKey]);
+
+  // Clear chat history
+  const clearChatHistory = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    
+    try {
+      localStorage.removeItem(storageKey);
+      // Reset to opening message only
+      if (assistant) {
+        const openingMessage: ChatMessage = {
+          id: `${assistantId}-opening-${Date.now()}`,
+          role: 'assistant',
+          text: assistant.openingMessage,
+          createdAt: new Date().toISOString(),
+        };
+        setMessages([openingMessage]);
+      }
+    } catch (error) {
+      console.warn('[FounderChatPanel] Failed to clear chat history:', error);
+    }
+  }, [storageKey, assistant, assistantId]);
+
+  // Save session summary
+  const saveSessionSummary = useCallback(async () => {
+    if (assistantId !== 'founder' || !sessionSummary) return;
+    
+    try {
+      const apiBaseUrl = getApiBaseUrl();
+      const recentMessages = messages.slice(-10); // Last 10 messages
+      const title = `Session ${new Date().toLocaleDateString('ar-SA')}`;
+      
+      await apiCall(`${apiBaseUrl}/founder/sessions`, {
+        method: 'POST',
+        body: JSON.stringify({
+          title,
+          summary: sessionSummary,
+          mode: currentMode,
+          tasks: [] // Could extract tasks from conversation
+        }),
+      });
+      
+      setSessionSummary('');
+      loadSessions(); // Refresh sessions list
+    } catch (error) {
+      console.error('[FounderChatPanel] Failed to save session:', error);
+    }
+  }, [assistantId, sessionSummary, messages, currentMode, loadSessions]);
+
+  // Initialize messages with chat history or opening message
+  useEffect(() => {
+    if (assistant) {
+      const history = loadChatHistory();
+      if (history.length > 0) {
+        setMessages(history);
+      } else {
+        // No history, start with opening message
+        const openingMessage: ChatMessage = {
+          id: `${assistantId}-opening-${Date.now()}`,
+          role: 'assistant',
+          text: assistant.openingMessage,
+          createdAt: new Date().toISOString(),
+        };
+        setMessages([openingMessage]);
+      }
+    }
+  }, [assistantId, assistant, loadChatHistory]);
+
+  // Save messages to localStorage whenever messages change
+  useEffect(() => {
+    if (messages.length > 0) {
+      saveChatHistory(messages);
+    }
+  }, [messages, saveChatHistory]);
+
+  // Load recent sessions for founder panda
+  const loadSessions = useCallback(async () => {
+    if (assistantId !== 'founder') return;
+    
+    try {
+      const apiBaseUrl = getApiBaseUrl();
+      const data = await apiCall(`${apiBaseUrl}/founder/sessions?limit=5`, {
+        method: 'GET',
+      });
+      
+      if (data.success) {
+        setSessions(data.data.sessions);
+      }
+    } catch (error) {
+      console.warn('[FounderChatPanel] Failed to load sessions:', error);
+    }
+  }, [assistantId]);
+
+  // Load sessions on mount for founder panda
+  useEffect(() => {
+    if (assistantId === 'founder') {
+      loadSessions();
+    }
+  }, [assistantId, loadSessions]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -249,42 +425,68 @@ export default function FounderChatPanel({ assistantId }: FounderChatPanelProps)
     setLoading(true);
 
     try {
-      // Use centralized API helper
       const apiBaseUrl = getApiBaseUrl();
       
-      const response = await fetch(`${apiBaseUrl}/ai/assistant`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          assistant: assistantId,
-          message: textToSend,
-        }),
-      });
+      // Use special Founder Panda endpoint for founder assistant
+      if (assistantId === 'founder') {
+        // Detect slash command
+        const slashCommand = slashCommands.find(cmd => textToSend.startsWith(cmd.command));
+        
+        const data = await apiCall(`${apiBaseUrl}/ai/founder`, {
+          method: 'POST',
+          body: JSON.stringify({
+            message: textToSend,
+            context: {
+              timestamp: new Date().toISOString(),
+              assistantId: 'founder'
+            },
+            mode: currentMode,
+            slashCommand: slashCommand?.command
+          }),
+        });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP ${response.status}: Failed to get response`);
+        const assistantMessage: ChatMessage = {
+          id: `${assistantId}-assistant-${Date.now()}`,
+          role: 'assistant',
+          text: data.data?.response || data.response || 'عذراً، لم أتمكن من توليد رد.',
+          createdAt: new Date().toISOString(),
+        };
+
+        setMessages(prev => [...prev, assistantMessage]);
+        
+        // Handle session summary if provided
+        if (data.data?.sessionSummary) {
+          setSessionSummary(data.data.sessionSummary);
+        }
+      } else {
+        // Use regular assistant endpoint for other assistants
+        const data = await apiCall(`${apiBaseUrl}/ai/assistant`, {
+          method: 'POST',
+          body: JSON.stringify({
+            assistant: assistantId,
+            message: textToSend,
+          }),
+        });
+
+        const assistantMessage: ChatMessage = {
+          id: `${assistantId}-assistant-${Date.now()}`,
+          role: 'assistant',
+          text: data.reply || data.response || 'عذراً، لم أتمكن من توليد رد.',
+          createdAt: new Date().toISOString(),
+        };
+
+        setMessages(prev => [...prev, assistantMessage]);
       }
-
-      const data = await response.json();
-      const assistantMessage: ChatMessage = {
-        id: `${assistantId}-assistant-${Date.now()}`,
-        role: 'assistant',
-        text: data.reply || data.response || 'عذراً، لم أتمكن من توليد رد.',
-        createdAt: new Date().toISOString(),
-      };
-
-      setMessages(prev => [...prev, assistantMessage]);
     } catch (error: any) {
-      console.error('Error:', error);
+      console.error('[FounderChatPanel] Error:', error);
+      
+      // Use enhanced error handling
+      const userFriendlyMessage = handleApiError(error);
+      
       const errorMessage: ChatMessage = {
         id: `${assistantId}-error-${Date.now()}`,
         role: 'assistant',
-        text: error?.message?.includes('GEMINI_API_KEY') 
-          ? '❌ لم يتم تكوين خدمة AI. يرجى التحقق من إعدادات الخادم.'
-          : error?.message || '❌ عذراً، حدث خطأ. يرجى المحاولة مرة أخرى.',
+        text: `❌ ${userFriendlyMessage}`,
         createdAt: new Date().toISOString(),
       };
       setMessages(prev => [...prev, errorMessage]);
@@ -308,25 +510,75 @@ export default function FounderChatPanel({ assistantId }: FounderChatPanelProps)
     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm h-full flex flex-col min-h-[600px]">
       {/* Header */}
       <div className={`${assistant.headerGradient} p-6 rounded-t-2xl`}>
-        <div className="flex items-center gap-4">
-          <span className="text-3xl" aria-hidden="true">
-            {assistantId === 'founder' && '🐼'}
-            {assistantId === 'tech' && '💻'}
-            {assistantId === 'guard' && '🛡️'}
-            {assistantId === 'commerce' && '📊'}
-            {assistantId === 'content' && '✍️'}
-            {assistantId === 'logistics' && '📦'}
-            {assistantId === 'philosopher' && '🎓'}
-          </span>
-          <div>
-            <h2 className="text-xl font-bold text-white mb-1">
-              {assistant.title}
-            </h2>
-            <p className="text-sm text-white/90">
-              {assistant.description}
-            </p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <span className="text-3xl" aria-hidden="true">
+              {assistantId === 'founder' && '🐼'}
+              {assistantId === 'tech' && '💻'}
+              {assistantId === 'guard' && '🛡️'}
+              {assistantId === 'commerce' && '📊'}
+              {assistantId === 'content' && '✍️'}
+              {assistantId === 'logistics' && '📦'}
+              {assistantId === 'philosopher' && '🎓'}
+            </span>
+            <div>
+              <h2 className="text-xl font-bold text-white mb-1">
+                {assistant.title}
+                {assistantId === 'founder' && (
+                  <span className="text-xs bg-white/20 px-2 py-1 rounded ml-2">
+                    v2.0
+                  </span>
+                )}
+              </h2>
+              <p className="text-sm text-white/90">
+                {assistant.description}
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            {/* Sessions Button (Founder only) */}
+            {assistantId === 'founder' && (
+              <button
+                onClick={() => setShowSessions(!showSessions)}
+                className="text-white/80 hover:text-white hover:bg-white/20 p-2 rounded-lg transition-colors"
+                title="الجلسات المحفوظة"
+                disabled={loading}
+              >
+                <span className="text-lg">📚</span>
+              </button>
+            )}
+            
+            {/* Clear Chat Button */}
+            <button
+              onClick={clearChatHistory}
+              className="text-white/80 hover:text-white hover:bg-white/20 p-2 rounded-lg transition-colors"
+              title="مسح المحادثة"
+              disabled={loading}
+            >
+              <span className="text-lg">🗑️</span>
+            </button>
           </div>
         </div>
+        
+        {/* Operating Mode Selector (Founder only) */}
+        {assistantId === 'founder' && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {Object.entries(modeConfigs).map(([mode, config]) => (
+              <button
+                key={mode}
+                onClick={() => setCurrentMode(mode as FounderOperatingMode)}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                  currentMode === mode
+                    ? 'bg-white text-gray-900'
+                    : 'bg-white/20 text-white hover:bg-white/30'
+                }`}
+              >
+                {config.icon} {config.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Messages Area */}
@@ -369,6 +621,71 @@ export default function FounderChatPanel({ assistantId }: FounderChatPanelProps)
         
         <div ref={messagesEndRef} />
       </div>
+
+      {/* Sessions Panel (Founder only) */}
+      {assistantId === 'founder' && showSessions && (
+        <div className="border-t border-gray-200 bg-gray-50 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-medium text-gray-900">الجلسات الأخيرة</h3>
+            {sessionSummary && (
+              <button
+                onClick={saveSessionSummary}
+                className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
+              >
+                حفظ الجلسة
+              </button>
+            )}
+          </div>
+          <div className="space-y-2 max-h-32 overflow-y-auto">
+            {sessions.length > 0 ? (
+              sessions.map((session) => (
+                <div
+                  key={session.id}
+                  className="text-xs bg-white p-2 rounded border cursor-pointer hover:bg-gray-50"
+                  onClick={() => {
+                    // Could implement session loading here
+                    console.log('Load session:', session.id);
+                  }}
+                >
+                  <div className="font-medium">{session.title}</div>
+                  <div className="text-gray-600 truncate">{session.summary}</div>
+                  <div className="text-gray-400 mt-1">
+                    {new Date(session.createdAt).toLocaleDateString('ar-SA')}
+                    {session.mode && (
+                      <span className="ml-2 px-1 bg-gray-200 rounded text-xs">
+                        {modeConfigs[session.mode as FounderOperatingMode]?.label}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-xs text-gray-500">لا توجد جلسات محفوظة</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Slash Commands (Founder only) */}
+      {assistantId === 'founder' && draft.startsWith('/') && (
+        <div className="border-t border-gray-200 bg-gray-50 p-4">
+          <h3 className="text-sm font-medium text-gray-900 mb-2">الأوامر السريعة</h3>
+          <div className="grid grid-cols-2 gap-2">
+            {slashCommands
+              .filter(cmd => cmd.command.startsWith(draft) || draft === '/')
+              .map((cmd) => (
+                <button
+                  key={cmd.command}
+                  onClick={() => setDraft(cmd.command + ' ')}
+                  className="text-left p-2 bg-white rounded border hover:bg-gray-50 text-xs"
+                >
+                  <div className="font-medium">{cmd.command}</div>
+                  <div className="text-gray-600">{cmd.description}</div>
+                </button>
+              ))}
+          </div>
+        </div>
+      )}
 
       {/* Input Form */}
       <form onSubmit={handleSubmit} className="p-6 border-t border-gray-200 bg-white rounded-b-2xl">

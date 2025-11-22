@@ -27,7 +27,7 @@ const getApiBaseUrl = (): string => {
     if (process.env.NODE_ENV === 'development') {
       return 'http://localhost:3001/api/v1';
     }
-    return 'https://banda-chao-backend.onrender.com/api/v1';
+    return 'https://banda-chao.onrender.com/api/v1';
   }
 
   // Client-side: use environment variable, localhost check, or fallback
@@ -289,6 +289,27 @@ export const ordersAPI = {
   getOrders: () => api.get('/orders'),
   
   getOrder: (id: string) => api.get(`/orders/${id}`),
+};
+
+// Payments API
+export const paymentsAPI = {
+  createCheckoutSession: (items: Array<{ productId: string; quantity: number }>) =>
+    api.post('/payments/create-checkout-session', { items }),
+};
+
+// Founder Analytics API (FOUNDER only)
+export const founderAPI = {
+  getAnalytics: () => api.get('/founder/analytics'),
+};
+
+// Moderation API (FOUNDER only)
+export const moderationAPI = {
+  getReports: (params?: { resolved?: boolean; targetType?: string; limit?: number; offset?: number }) =>
+    api.get('/moderation/reports', { params }),
+  resolveReport: (reportId: string, resolved?: boolean) =>
+    api.post('/moderation/resolve', { reportId, resolved }),
+  hideContent: (targetId: string, targetType: string, hidden?: boolean) =>
+    api.post('/moderation/hide', { targetId, targetType, hidden }),
 };
 
 // Posts Likes API

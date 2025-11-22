@@ -4,7 +4,7 @@ import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useSafeLanguage } from '@/hooks/useSafeLanguage';
 import { getApiBaseUrl } from '@/lib/api-utils';
 
 function LoginForm() {
@@ -16,7 +16,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login, user } = useAuth();
-  const { language } = useLanguage();
+  const { language } = useSafeLanguage();
   
   // Get redirect parameter from URL, default to home page
   const redirectTo = searchParams.get('redirect') || `/${language || 'ar'}`;

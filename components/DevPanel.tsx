@@ -1,5 +1,8 @@
 'use client';
 
+import { useLanguage } from '@/contexts/LanguageContext';
+import { cn } from '@/lib/utils';
+
 const commitSha = process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA;
 const vercelUrl = process.env.NEXT_PUBLIC_VERCEL_URL;
 
@@ -14,6 +17,10 @@ function shouldShowPanel() {
 }
 
 export default function DevPanel() {
+  // Always call hooks at the top level (before any early returns)
+  const { language } = useLanguage();
+  const isRTL = language === 'ar';
+
   if (!shouldShowPanel()) {
     return null;
   }
@@ -22,7 +29,10 @@ export default function DevPanel() {
   const displayUrl = vercelUrl ? `https://${vercelUrl.replace(/^https?:\/\//, '')}` : null;
 
   return (
-    <div className="fixed bottom-6 left-6 z-40 bg-black/70 text-white text-xs leading-relaxed px-3 py-2 rounded-xl shadow-lg backdrop-blur">
+    <div className={cn(
+      'fixed bottom-6 z-40 bg-black/70 text-white text-xs leading-relaxed px-3 py-2 rounded-xl shadow-lg backdrop-blur',
+      isRTL ? 'rtl-bottom-left-button' : 'left-6'
+    )}>
       <div>Deployment: {shortSha}</div>
       {displayUrl ? (
         <div className="truncate max-w-[200px]">

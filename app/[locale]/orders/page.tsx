@@ -11,3 +11,5 @@ export default function LocaleOrdersPage({ params }: LocaleOrdersPageProps) {
   return <OrdersPageClient locale={locale} />;
 }
 
+
+

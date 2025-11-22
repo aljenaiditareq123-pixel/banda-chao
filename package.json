@@ -17,6 +17,7 @@
     "pre-launch": "tsx scripts/run-pre-launch-checks.ts"
   },
   "dependencies": {
+    "@stripe/stripe-js": "^8.5.2",
     "axios": "^1.6.2",
     "next": "^14.2.5",
     "react": "^18.3.1",

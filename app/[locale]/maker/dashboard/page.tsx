@@ -13,6 +13,7 @@ import { Video, Product, Maker } from '@/types';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import EmptyState from '@/components/ui/EmptyState';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import MakerOnboardingChecklist from '@/components/makers/MakerOnboardingChecklist';
 
 interface MakerDashboardPageProps {
   params: {
@@ -264,6 +265,16 @@ function MakerDashboardContent({ params }: MakerDashboardPageProps) {
               {t('manageYourMakerProfile') || 'إدارة ملفك الحرفي ومحتواك'}
             </p>
           </div>
+
+          {/* Maker Onboarding Checklist */}
+          {maker && (
+            <MakerOnboardingChecklist
+              locale={locale}
+              maker={maker}
+              products={products}
+              videos={videos}
+            />
+          )}
 
           {/* Maker Profile Status */}
           {maker ? (

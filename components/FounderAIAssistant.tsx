@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { apiCall, handleApiError } from '@/lib/api-error-handler';
 
 type AssistantId =
   | 'founder'
@@ -9,7 +10,8 @@ type AssistantId =
   | 'commerce'
   | 'content'
   | 'logistics'
-  | 'philosopher';
+  | 'philosopher'
+  | 'international_finance_panda';
 
 type MessageRole = 'founder' | 'assistant';
 
@@ -185,6 +187,24 @@ const assistants: AssistantProfile[] = [
     },
   },
   {
+    id: 'international_finance_panda',
+    label: 'International Finance Panda',
+    endpoint: '/api/v1/ai/assistant',
+    overline: 'المدفوعات العالمية',
+    title: 'الباندا المالي الدولي',
+    description: 'يضمن الامتثال المالي والمالي العالمي مع تحسين هياكل الدفع.',
+    placeholder: 'اسأل عن Stripe، PayPal، VAT، التصدير، الامتثال...',
+    loadingText: 'الباندا المالي الدولي يفكر...',
+    openingMessage: 'مرحباً! أنا الباندا المالي الدولي. سأساعدك في كل ما يتعلق بالمدفوعات العالمية، الامتثال المالي، والهياكل المالية لـ Banda Chao. كيف يمكنني مساعدتك اليوم؟',
+    theme: {
+      headerGradient: 'from-green-600 to-green-700',
+      overlineColor: 'text-green-600',
+      assistantBubble: 'bg-green-50 border-green-200',
+      loadingBadge: 'bg-green-100 text-green-700',
+      tabActive: 'bg-green-600',
+    },
+  },
+  {
     id: 'philosopher',
     label: 'الباندا الفيلسوف',
     endpoint: '/api/chat',
@@ -244,6 +264,11 @@ const assistantSuggestions: Record<AssistantId, string[]> = {
     'كيف أشرح للحرفيين ببساطة ماذا يحدث عندما يأتي طلب جديد؟',
     'ما هي البيانات التي يجب أن نضيفها لاحقاً لدعم تتبع الشحن؟',
   ],
+  international_finance_panda: [
+    'كيف أتكامل مع Stripe للدفع؟',
+    'ما هي متطلبات VAT في الإمارات؟',
+    'كيف أتعامل مع المدفوعات الدولية؟',
+  ],
   philosopher: [
     'قيم خطة V3 للمنصة من منظور معماري طويل الأمد.',
     'انتقد طريقة توزيع المسؤوليات بين الباندات المختلفة.',
@@ -281,6 +306,10 @@ const assistantMeta: Record<AssistantId, AssistantMeta> = {
   logistics: {
     label: 'باندا اللوجستيات',
     handoverTargets: ['founder', 'commerce'],
+  },
+  international_finance_panda: {
+    label: 'الباندا المالي الدولي',
+    handoverTargets: ['founder', 'tech', 'commerce'],
   },
   philosopher: {
     label: 'الباندا الفيلسوف',
@@ -472,6 +501,7 @@ const FounderAIAssistant: React.FC<FounderAIAssistantProps> = ({ initialAssistan
                 commerce: 'أنت باندا التجارة لمنصة Panda Chao. أنت متخصص في المبيعات والتسويق. عندما يطلب منك الباندا المؤسس شيئاً، استجب فوراً.',
                 content: 'أنت باندا المحتوى لمنصة Panda Chao. أنت متخصص في إنشاء المحتوى والقصص. عندما يطلب منك الباندا المؤسس شيئاً، استجب فوراً.',
                 logistics: 'أنت باندا اللوجستيات لمنصة Panda Chao. أنت متخصص في العمليات والشحن. عندما يطلب منك الباندا المؤسس شيئاً، استجب فوراً.',
+                international_finance_panda: 'أنت الباندا المالي الدولي لمنصة Banda Chao. أنت متخصص في المدفوعات العالمية، الامتثال المالي، والهياكل المالية. عندما يطلب منك الباندا المؤسس شيئاً، استجب فوراً.',
                 philosopher: `أنت الباندا الفيلسوف المعماري لمنصة Banda Chao.
 
 🎯 هويتك:
@@ -522,21 +552,14 @@ const FounderAIAssistant: React.FC<FounderAIAssistantProps> = ({ initialAssistan
                 ? assistant.endpoint
                 : `${apiBaseUrl}${assistant.endpoint}`;
 
-              const response = await fetch(apiUrl, {
+              const response = await apiCall(apiUrl, {
                 method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
                 body: JSON.stringify({ 
                   message: messageText,
                   systemPrompt: systemPrompts[currentId],
                   assistantType: currentId === 'founder' ? 'vision' : currentId === 'tech' ? 'technical' : currentId === 'guard' ? 'security' : currentId === 'philosopher' ? 'philosophical' : currentId,
                 }),
               });
-
-              if (!response.ok) {
-                throw new Error(`حدث خطأ غير متوقع (${response.status})`);
-              }
 
               const data = (await response.json()) as { reply?: string; response?: string };
 
@@ -551,10 +574,12 @@ const FounderAIAssistant: React.FC<FounderAIAssistantProps> = ({ initialAssistan
                 ...prev,
                 [currentId]: [...prev[currentId], assistantMessage],
               }));
-            } catch (err) {
+            } catch (err: any) {
+              console.error('[FounderAIAssistant] Error:', err);
+              const userFriendlyMessage = handleApiError(err);
               setErrors((prev) => ({
                 ...prev,
-                [currentId]: 'تعذر الحصول على استشارة من هذا المساعد الآن. حاول مجدداً خلال لحظات.',
+                [currentId]: userFriendlyMessage,
               }));
             } finally {
               setLoadingAssistantId((prev) => (prev === currentId ? null : prev));
@@ -984,6 +1009,46 @@ When you answer:
 - Suggest what fields, statuses, and APIs might be needed next (without diving into code – that's for the TECH panda).
 - Focus on clarity and predictability for both makers and buyers.`,
 
+          international_finance_panda: `You are the International Finance Panda ("الباندا المالي الدولي") for the Banda Chao project.
+
+Your role:
+- Think like an international finance advisor specializing in global payments and financial compliance.
+- Help the founder make financially safe, legally compliant, and globally optimized decisions.
+
+Areas of expertise:
+- Global payments: Stripe, PayPal, Alipay, WeChat Pay, UnionPay
+- UAE corporate structure: RAKEZ, Free Zones, Emirates VAT rules (5%)
+- Chinese export compliance: Export rules, real-name reporting, supplier verification
+- Marketplace vs Merchant of Record: Differences and strategic decisions
+- Cross-border logistics and customs: EU/US/UAE rules
+- B2B supplier payouts: Payment structures for suppliers and makers
+- Currency handling: Currency conversions, exchange rate risks
+- Financial modeling for Banda Chao: Financial analysis and decision support
+- Risk management: Fraud prevention, financial risk management
+- Legal considerations: Tax, compliance, regulatory matters
+
+Project financial context:
+- Banda Chao is a social e-commerce platform connecting makers (craftspeople) with visitors/buyers globally.
+- Current integration:
+  - Stripe integration: Checkout session creation, webhook handling
+  - Order model: Contains stripeId, status (PENDING, PAID, FAILED)
+  - International order support: Global payment processing
+- Corporate structure: UAE-based company, operating globally
+
+Your style:
+- Focus on legal compliance first: "Is this legal and safe?"
+- Second: "How can we optimize financial efficiency?"
+- Propose safe and optimized structures that follow international best practices
+- Explain legal and financial complexities in clear, practical terms
+
+When you answer:
+- Always reference the current structure (Stripe integration, Order model, etc.).
+- Propose safe and legally compliant financial structures
+- Highlight financial and legal risks
+- Suggest gradual and safe improvements instead of radical changes
+- If something is unclear, propose reasonable assumptions and say so clearly
+- Focus on practical solutions that support Banda Chao's global growth`,
+
           philosopher: `You are the PHILOSOPHER ARCHITECT PANDA ("الباندا الفيلسوف المعماري") for the Banda Chao project.
 
 Your role:
@@ -1054,23 +1119,14 @@ Remember:
           ? assistant.endpoint
           : `${apiBaseUrl}${assistant.endpoint}`;
 
-        const response = await fetch(apiUrl, {
+        const data = await apiCall(apiUrl, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
           body: JSON.stringify({ 
             message: draft,
             systemPrompt: systemPrompts[assistantId],
-                  assistantType: assistantId === 'founder' ? 'vision' : assistantId === 'tech' ? 'technical' : assistantId === 'guard' ? 'security' : assistantId === 'philosopher' ? 'philosophical' : assistantId,
+            assistantType: assistantId === 'founder' ? 'vision' : assistantId === 'tech' ? 'technical' : assistantId === 'guard' ? 'security' : assistantId === 'philosopher' ? 'philosophical' : assistantId,
           }),
-        });
-
-        if (!response.ok) {
-          throw new Error(`حدث خطأ غير متوقع (${response.status})`);
-        }
-
-        const data = (await response.json()) as { reply?: string; response?: string };
+        }) as { reply?: string; response?: string };
 
         const assistantMessage: ChatMessage = {
           id: `${assistantId}-assistant-${Date.now()}`,
@@ -1273,7 +1329,9 @@ Remember:
                      activeAssistantId === 'guard' ? '🛡️' :
                      activeAssistantId === 'commerce' ? '📊' :
                      activeAssistantId === 'content' ? '✍️' :
-                     activeAssistantId === 'logistics' ? '📦' : '🐼'}
+                     activeAssistantId === 'logistics' ? '📦' :
+                     activeAssistantId === 'philosopher' ? '🎓' :
+                     activeAssistantId === 'international_finance_panda' ? '💰' : '🐼'}
                   </span>
                   <div className="flex-1">
                     <p className={`text-xs font-semibold tracking-widest ${currentAssistant.theme.overlineColor} mb-1`}>

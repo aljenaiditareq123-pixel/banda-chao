@@ -9,13 +9,19 @@ export const dynamic = 'force-dynamic';
 /**
  * Founder Layout - Protected Layout for all /founder/** routes
  * Only accessible to users with FOUNDER role or FOUNDER_EMAIL
+ * 
+ * IMPORTANT: Founder Console is Arabic-only for the Arabic founder
+ * - Always uses Arabic (ar) locale
+ * - Always uses RTL layout
+ * - No language switcher shown
  */
 export default async function FounderLayout({ children }: { children: ReactNode }) {
   // Check if user is founder - redirects if not
   await requireFounder();
 
+  // Force Arabic locale for all founder pages
   return (
-    <Providers>
+    <Providers initialLocale="ar" showHeader={false} showFooter={false} showChatWidget={false}>
       {children}
     </Providers>
   );

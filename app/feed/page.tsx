@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useSafeLanguage } from '@/hooks/useSafeLanguage';
 import { postsAPI, postsLikesAPI } from '@/lib/api';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Link from 'next/link';
@@ -235,7 +235,7 @@ function FeedContent() {
     });
   };
 
-  const { t } = useLanguage();
+  const { t } = useSafeLanguage();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 py-8 md:py-12">

@@ -9,6 +9,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Product, Maker, Video } from '@/types';
 import Button from '@/components/Button';
+import OnboardingSection from './OnboardingSection';
 
 interface HomePageClientProps {
   locale: string;
@@ -49,6 +50,9 @@ export default function HomePageClient({ locale, products, makers, videos }: Hom
 
   return (
     <div className="space-y-16 pb-16">
+      {/* Onboarding Section */}
+      <OnboardingSection locale={locale} />
+
       {/* Login Success Redirect Marker - for TestSprite to detect successful login redirect */}
       {/* Hidden but present in DOM when user is logged in */}
       {user && (

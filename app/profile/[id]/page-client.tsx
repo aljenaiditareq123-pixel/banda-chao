@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useSafeLanguage } from '@/hooks/useSafeLanguage';
 import { usersAPI, postsAPI, productsAPI, followAPI } from '@/lib/api';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -36,7 +36,7 @@ interface Product {
 
 export default function ProfilePageClient({ userId }: { userId: string }) {
   const { user: currentUser } = useAuth();
-  const { t } = useLanguage();
+  const { t } = useSafeLanguage();
   const [profile, setProfile] = useState<User | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [products, setProducts] = useState<Product[]>([]);

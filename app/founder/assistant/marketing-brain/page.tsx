@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
  */
 export default function MarketingBrainPage() {
   return (
-    <FounderRoute locale="en">
+    <FounderRoute locale="ar">
     <FounderLayout
       title="باندا التجارة"
       description="يركّز على نمو الإيرادات وتجربة عميل متكاملة من أول زيارة حتى الدفع."

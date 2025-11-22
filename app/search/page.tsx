@@ -6,12 +6,12 @@ import Link from 'next/link';
 import VideoCard from '@/components/VideoCard';
 import ProductCard from '@/components/ProductCard';
 import Layout from '@/components/Layout';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useSafeLanguage } from '@/hooks/useSafeLanguage';
 
 type TabType = 'all' | 'products' | 'videos';
 
 export default function SearchPage() {
-  const { t, language } = useLanguage();
+  const { t, language } = useSafeLanguage();
   const [query, setQuery] = useState('');
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [searchResults, setSearchResults] = useState<{

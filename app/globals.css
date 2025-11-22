@@ -27,44 +27,123 @@ body {
 }
 
 /* RTL Support for Arabic */
-[dir="rtl"] {
+body.rtl {
   direction: rtl;
   text-align: right;
 }
 
-[dir="rtl"] .flex {
+/* Global RTL direction - ensure consistency */
+[dir="rtl"],
+body.rtl {
+  direction: rtl;
+  text-align: right;
+}
+
+/* Helper: Flip flex row direction for RTL */
+body.rtl .rtl-flip-row,
+[dir="rtl"] .rtl-flip-row {
   flex-direction: row-reverse;
 }
 
+/* Helper: Text alignment */
+body.rtl .rtl-text-right,
+[dir="rtl"] .rtl-text-right {
+  text-align: right;
+}
+
+body.rtl .rtl-text-left,
+[dir="rtl"] .rtl-text-left {
+  text-align: left;
+}
+
+/* Helper: Padding fixes */
+body.rtl .rtl-pl-4,
+[dir="rtl"] .rtl-pl-4 {
+  padding-right: 1rem;
+  padding-left: 0;
+}
+
+body.rtl .rtl-pr-4,
+[dir="rtl"] .rtl-pr-4 {
+  padding-left: 1rem;
+  padding-right: 0;
+}
+
+body.rtl .rtl-ml-4,
+[dir="rtl"] .rtl-ml-4 {
+  margin-right: 1rem;
+  margin-left: 0;
+}
+
+body.rtl .rtl-mr-4,
+[dir="rtl"] .rtl-mr-4 {
+  margin-left: 1rem;
+  margin-right: 0;
+}
+
+/* Floating buttons - position fixes for RTL */
+body.rtl .rtl-bottom-button,
+[dir="rtl"] .rtl-bottom-button {
+  right: auto !important;
+  left: 1.5rem;
+}
+
+body.rtl .rtl-bottom-left-button,
+[dir="rtl"] .rtl-bottom-left-button {
+  left: auto !important;
+  right: 1.5rem;
+}
+
+/* Ensure DevPanel appears on correct side in RTL */
+body.rtl .rtl-bottom-left-button {
+  left: auto !important;
+  right: 1.5rem;
+}
+
+/* Grid layout helpers */
+body.rtl .rtl-grid-reverse,
+[dir="rtl"] .rtl-grid-reverse {
+  direction: rtl;
+}
+
+/* Spacing utilities - RTL aware */
+body.rtl .space-x-4 > * + *,
 [dir="rtl"] .space-x-4 > * + * {
   margin-left: 0;
   margin-right: 1rem;
 }
 
+body.rtl .space-x-2 > * + *,
 [dir="rtl"] .space-x-2 > * + * {
   margin-left: 0;
   margin-right: 0.5rem;
 }
 
+body.rtl .space-x-8 > * + *,
 [dir="rtl"] .space-x-8 > * + * {
   margin-left: 0;
   margin-right: 2rem;
 }
 
+/* Legacy margin/padding fixes */
+body.rtl .ml-2,
 [dir="rtl"] .ml-2 {
   margin-left: 0;
   margin-right: 0.5rem;
 }
 
+body.rtl .mr-2,
 [dir="rtl"] .mr-2 {
   margin-left: 0.5rem;
   margin-right: 0;
 }
 
+body.rtl .text-left,
 [dir="rtl"] .text-left {
   text-align: right;
 }
 
+body.rtl .text-right,
 [dir="rtl"] .text-right {
   text-align: left;
 }

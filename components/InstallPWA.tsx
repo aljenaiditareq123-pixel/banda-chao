@@ -1,8 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { cn } from '@/lib/utils';
 
 export default function InstallPWA() {
+  const { language } = useLanguage();
+  const isRTL = language === 'ar';
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstallButton, setShowInstallButton] = useState(false);
 
@@ -56,9 +60,15 @@ export default function InstallPWA() {
   }
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:max-w-sm z-50">
+    <div className={cn(
+      'fixed bottom-4 right-4 left-4 md:left-auto md:max-w-sm z-50',
+      isRTL && 'md:right-auto md:left-4'
+    )}>
       <div className="bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-lg shadow-lg p-4">
-        <div className="flex items-center justify-between">
+        <div className={cn(
+          'flex items-center justify-between',
+          isRTL && 'rtl-flip-row'
+        )}>
           <div className="flex-1">
             <h3 className="font-semibold mb-1">📱 تثبيت التطبيق</h3>
             <p className="text-sm opacity-90">
