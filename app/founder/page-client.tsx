@@ -36,14 +36,14 @@ export default function FounderPageClient() {
                   Welcome back, Tariq!
                 </h1>
                 <p className="text-white/90">
-                  Ready to build the world's first neutral social commerce platform?
+                  Ready to build the world&apos;s first neutral social commerce platform?
                 </p>
               </div>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-white/10 rounded-lg p-3">
-                <p className="text-sm opacity-90">Today's Focus</p>
+                <p className="text-sm opacity-90">Today&apos;s Focus</p>
                 <p className="font-semibold">China Market Strategy</p>
               </div>
               <div className="bg-white/10 rounded-lg p-3">

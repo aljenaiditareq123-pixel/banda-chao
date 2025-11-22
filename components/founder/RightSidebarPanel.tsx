@@ -191,7 +191,7 @@ Next Steps:
       <div className="p-4 border-t border-gray-200 dark:border-slate-700">
         <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-slate-800 dark:to-slate-700 rounded-lg p-3">
           <div className="flex items-center justify-between text-xs">
-            <span className="text-gray-600 dark:text-gray-300">Today's Activity</span>
+            <span className="text-gray-600 dark:text-gray-300">Today&apos;s Activity</span>
             <span className="font-medium text-gray-900 dark:text-white">12 interactions</span>
           </div>
           <div className="flex items-center justify-between text-xs mt-1">

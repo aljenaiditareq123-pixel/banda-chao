@@ -211,6 +211,24 @@ export default function FounderChatPanel({ assistantId, currentMode: externalMod
     }
   }, [storageKey, assistant, assistantId]);
 
+  // Load recent sessions for founder panda
+  const loadSessions = useCallback(async () => {
+    if (assistantId !== 'founder') return;
+    
+    try {
+      const apiBaseUrl = getApiBaseUrl();
+      const data = await apiCall(`${apiBaseUrl}/founder/sessions?limit=5`, {
+        method: 'GET',
+      });
+      
+      if (data.success) {
+        setSessions(data.data.sessions);
+      }
+    } catch (error) {
+      console.warn('[FounderChatPanel] Failed to load sessions:', error);
+    }
+  }, [assistantId]);
+
   // Save session summary
   const saveSessionSummary = useCallback(async () => {
     if (assistantId !== 'founder' || !sessionSummary) return;
@@ -262,24 +280,6 @@ export default function FounderChatPanel({ assistantId, currentMode: externalMod
       saveChatHistory(messages);
     }
   }, [messages, saveChatHistory]);
-
-  // Load recent sessions for founder panda
-  const loadSessions = useCallback(async () => {
-    if (assistantId !== 'founder') return;
-    
-    try {
-      const apiBaseUrl = getApiBaseUrl();
-      const data = await apiCall(`${apiBaseUrl}/founder/sessions?limit=5`, {
-        method: 'GET',
-      });
-      
-      if (data.success) {
-        setSessions(data.data.sessions);
-      }
-    } catch (error) {
-      console.warn('[FounderChatPanel] Failed to load sessions:', error);
-    }
-  }, [assistantId]);
 
   // Load sessions on mount for founder panda
   useEffect(() => {

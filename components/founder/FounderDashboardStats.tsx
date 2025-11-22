@@ -124,7 +124,7 @@ export default function FounderDashboardStats() {
       change: '+12.5%',
       trend: 'up' as const,
       icon: '👥',
-      accentColor: 'blue'
+      accentColor: 'blue' as const
     },
     {
       title: 'Active Makers',
@@ -133,7 +133,7 @@ export default function FounderDashboardStats() {
       change: '+8.2%',
       trend: 'up' as const,
       icon: '🎨',
-      accentColor: 'green'
+      accentColor: 'green' as const
     },
     {
       title: 'Total Products',
@@ -142,7 +142,7 @@ export default function FounderDashboardStats() {
       change: '+15.7%',
       trend: 'up' as const,
       icon: '📦',
-      accentColor: 'purple'
+      accentColor: 'purple' as const
     },
     {
       title: 'Total Videos',
@@ -151,7 +151,7 @@ export default function FounderDashboardStats() {
       change: '+22.1%',
       trend: 'up' as const,
       icon: '🎬',
-      accentColor: 'orange'
+      accentColor: 'orange' as const
     },
     {
       title: 'Monthly Revenue',
@@ -160,7 +160,7 @@ export default function FounderDashboardStats() {
       change: '+31.4%',
       trend: 'up' as const,
       icon: '💰',
-      accentColor: 'pink'
+      accentColor: 'pink' as const
     },
     {
       title: 'AI Interactions',
@@ -169,7 +169,7 @@ export default function FounderDashboardStats() {
       change: '+45.8%',
       trend: 'up' as const,
       icon: '🤖',
-      accentColor: 'indigo'
+      accentColor: 'indigo' as const
     }
   ];
 
