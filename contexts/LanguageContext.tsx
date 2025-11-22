@@ -857,10 +857,20 @@ export const LanguageProvider: React.FC<{
   );
 };
 
-export const useLanguage = () => {
+// Default context value used during prerendering or when no provider is present
+const defaultLanguageContext: LanguageContextType = {
+  language: 'en',
+  setLanguage: () => {
+    // No-op function for default context
+  },
+  t: (key: string) => key,
+};
+
+export const useLanguage = (): LanguageContextType => {
   const context = useContext(LanguageContext);
   if (context === undefined) {
-    throw new Error('useLanguage must be used within a LanguageProvider');
+    // Fallback used during prerendering or when no provider is present
+    return defaultLanguageContext;
   }
   return context;
 };
