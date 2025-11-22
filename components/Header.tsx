@@ -37,27 +37,27 @@ export default function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center space-x-6" aria-label="Main navigation">
-            <Link href={`/${language}`} className="text-gray-700 hover:text-primary-600 transition font-medium" aria-label={t('home') || 'Home'}>
+            <Link href={`/${language}`} className="text-gray-700 hover:text-primary-600 transition font-medium whitespace-nowrap" aria-label={t('home') || 'Home'}>
               {t('home') || 'الرئيسية'}
             </Link>
-            <Link href={`/${language}/makers`} className="text-gray-700 hover:text-primary-600 transition font-medium" aria-label={t('makers') || 'Makers'}>
+            <Link href={`/${language}/makers`} className="text-gray-700 hover:text-primary-600 transition font-medium whitespace-nowrap" aria-label={t('makers') || 'Makers'}>
               {t('makers') || 'الحرفيون'}
             </Link>
-            <Link href={`/${language}/products`} className="text-gray-700 hover:text-primary-600 transition font-medium" aria-label={t('products') || 'Products'}>
+            <Link href={`/${language}/products`} className="text-gray-700 hover:text-primary-600 transition font-medium whitespace-nowrap" aria-label={t('products') || 'Products'}>
               {t('products') || 'المنتجات'}
             </Link>
-            <Link href={`/${language}/videos`} className="text-gray-700 hover:text-primary-600 transition font-medium" aria-label={t('videos') || 'Videos'}>
+            <Link href={`/${language}/videos`} className="text-gray-700 hover:text-primary-600 transition font-medium whitespace-nowrap" aria-label={t('videos') || 'Videos'}>
               {t('videos') || 'الفيديوهات'}
             </Link>
             {user && (
               <>
-                <Link href={`/${language}/feed`} className="text-gray-700 hover:text-primary-600 transition font-medium" aria-label={t('feed') || 'Feed'}>
+                <Link href={`/${language}/feed`} className="text-gray-700 hover:text-primary-600 transition font-medium whitespace-nowrap" aria-label={t('feed') || 'Feed'}>
                   {t('feed') || 'الخلاصة'}
                 </Link>
-                <Link href={`/${language}/orders`} className="text-gray-700 hover:text-primary-600 transition font-medium" aria-label={t('orders') || 'Orders'}>
+                <Link href={`/${language}/orders`} className="text-gray-700 hover:text-primary-600 transition font-medium whitespace-nowrap" aria-label={t('orders') || 'Orders'}>
                   {t('orders') || 'طلباتي'}
                 </Link>
-                <Link href={`/${language}/maker/dashboard`} className="text-gray-700 hover:text-primary-600 transition font-medium" aria-label={t('makerDashboard') || 'Maker Dashboard'}>
+                <Link href={`/${language}/maker/dashboard`} className="text-gray-700 hover:text-primary-600 transition font-medium whitespace-nowrap" aria-label={t('makerDashboard') || 'Maker Dashboard'}>
                   {t('makerDashboard') || 'لوحة الحرفي'}
                 </Link>
               </>

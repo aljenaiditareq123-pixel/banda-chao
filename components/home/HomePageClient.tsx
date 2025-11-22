@@ -74,7 +74,7 @@ export default function HomePageClient({ locale, products, makers, videos }: Hom
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
             {t('homeHeroHeadline') || t('homeHeroTitle') || 'Banda Chao — A Fair Home for Global Makers'}
           </h1>
-          <p className="text-lg md:text-xl lg:text-2xl text-white/90 mb-10 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-lg md:text-xl lg:text-2xl text-white/90 mb-10 max-w-3xl mx-auto leading-relaxed whitespace-pre-line">
             {t('homeHeroDescription') || 'A social-commerce platform that connects independent artisans from China, the Arab world, and beyond with buyers worldwide, in a fair, safe, and AI-powered marketplace.'}
           </p>
           <div className="flex justify-center items-center">

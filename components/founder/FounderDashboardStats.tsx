@@ -108,11 +108,11 @@ export default function FounderDashboardStats() {
     const interval = setInterval(updateTime, 60000);
     
     // Simulate loading
-    const timeout = setTimeout(() => setIsLoading(false), 1000);
+    const timeoutId = setTimeout(() => setIsLoading(false), 1000);
 
     return () => {
       clearInterval(interval);
-      clearTimeout(timeout);
+      clearTimeout(timeoutId);
     };
   }, []);
 
@@ -229,32 +229,40 @@ export default function FounderDashboardStats() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl text-white p-6">
-        <div className="flex items-center justify-between rtl:flex-row-reverse">
-          <div className="rtl:text-right ltr:text-left">
-            <h1 className="text-xl font-bold mb-1">مركز القيادة</h1>
-            <p className="text-blue-100 text-sm">Founder Command Center</p>
+      {/* Hero Section - مركز القيادة */}
+      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-xl text-white p-6 shadow-lg">
+        <div className="flex items-center justify-between rtl:flex-row-reverse mb-4">
+          <div className="rtl:text-right ltr:text-left flex items-center gap-4">
+            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+              <span className="text-3xl">🐼</span>
+            </div>
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold mb-1">مركز القيادة للمؤسس</h1>
+              <p className="text-blue-100 text-sm md:text-base">Founder Command Center - Banda Chao</p>
+            </div>
           </div>
-          <div className="text-right rtl:text-left">
-            <p className="text-blue-100 text-xs">Current Time</p>
-            <p className="text-lg font-mono">{currentTime}</p>
+          <div className="text-right rtl:text-left bg-white/10 rounded-lg px-4 py-2 backdrop-blur-sm">
+            <p className="text-blue-100 text-xs mb-1">الوقت الحالي</p>
+            <p className="text-xl font-mono font-bold">{currentTime}</p>
           </div>
         </div>
         
         {/* Status Indicators */}
-        <div className="flex items-center gap-4 mt-4 pt-4 border-t border-white/20">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-4 pt-4 border-t border-white/20">
+          <div className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-1.5 backdrop-blur-sm">
             <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-            <span className="text-xs text-blue-100">Platform Online</span>
+            <span className="text-xs text-blue-100 font-medium">المنصة متصلة</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-1.5 backdrop-blur-sm">
             <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
-            <span className="text-xs text-blue-100">AI Processing</span>
+            <span className="text-xs text-blue-100 font-medium">معالجة الذكاء الاصطناعي</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-1.5 backdrop-blur-sm">
             <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-            <span className="text-xs text-blue-100">Real-time Sync</span>
+            <span className="text-xs text-blue-100 font-medium">مزامنة فورية</span>
+          </div>
+          <div className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-1.5 backdrop-blur-sm">
+            <span className="text-xs text-blue-100 font-medium">6 مساعدين نشطين</span>
           </div>
         </div>
       </div>
