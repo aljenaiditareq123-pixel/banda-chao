@@ -4,8 +4,12 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import validator from 'validator';
-import DOMPurify from 'isomorphic-dompurify';
+import * as validator from 'validator';
+import { JSDOM } from 'jsdom';
+
+// Create DOMPurify instance for server-side use
+const window = new JSDOM('').window;
+const DOMPurify = require('isomorphic-dompurify')(window);
 
 export interface ValidationRule {
   field: string;
