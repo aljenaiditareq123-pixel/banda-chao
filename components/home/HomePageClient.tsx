@@ -89,11 +89,11 @@ export default function HomePageClient({ locale, products, makers, videos }: Hom
             </Link>
             <Link 
               href={`/${locale}/videos`}
-              aria-label={t('watchVideos') || 'Watch Videos'}
+              aria-label={t('watchVideos') || 'Watch videos'}
               className="inline-block"
             >
               <Button variant="outline" className="px-8 py-4 text-lg font-semibold border-2 border-white text-white hover:bg-white/10 transition-all backdrop-blur-sm">
-                {t('watchVideos') || 'Watch Videos'}
+                {t('watchVideos') || 'Watch videos'}
               </Button>
             </Link>
           </div>
