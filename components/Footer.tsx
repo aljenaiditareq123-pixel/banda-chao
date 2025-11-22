@@ -66,7 +66,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="/feed" className="hover:text-white transition">
-                  {t('feed') || 'الخلاصة'}
+                  {t('community') || 'المجتمع'}
                 </Link>
               </li>
             </ul>
@@ -74,9 +74,9 @@ export default function Footer() {
 
           {/* About */}
           <div>
-            <h4 className="text-white font-semibold mb-4">{t('about') || 'عن المشروع'}</h4>
+            <h4 className="text-white font-semibold mb-4">{t('about') || 'عن باندتشاو'}</h4>
             <p className="text-sm mb-4 leading-relaxed">
-              {t('aboutDescription') || 'منصة تربط الحرفيين المبدعين مع محبي المنتجات الأصيلة'}
+              {t('aboutDescription') || 'منصة اجتماعية-تجارية تربط الحرفيين بالمشترين حول العالم، وتعزز العدالة، الثقة، والذكاء في التجارة الإبداعية.'}
             </p>
             <ul className="space-y-3 text-sm">
               <li>
@@ -86,7 +86,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="#" className="hover:text-white transition">
-                  {t('contact') || 'اتصل بنا'}
+                  {t('contact') || 'تواصل معنا'}
                 </Link>
               </li>
               <li>
@@ -96,7 +96,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="#" className="hover:text-white transition">
-                  {t('terms') || 'شروط الخدمة'}
+                  {t('terms') || 'الشروط والأحكام'}
                 </Link>
               </li>
             </ul>
@@ -105,7 +105,7 @@ export default function Footer() {
 
         <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm">
           <p>
-            &copy; {currentYear} Banda Chao. {t('allRightsReserved') || 'جميع الحقوق محفوظة.'}
+            {t('rightsReserved') || `© باندتشاو ${currentYear}. جميع الحقوق محفوظة.`}
           </p>
         </div>
       </div>

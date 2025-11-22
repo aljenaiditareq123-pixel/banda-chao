@@ -27,9 +27,9 @@ const assistantsMap: Record<AssistantId, AssistantProfile> = {
     endpoint: '/api/chat',
     title: 'الباندا المؤسس',
     description: 'يرسم القرارات المصيرية ويحوّل الرؤية إلى خطط تنفيذية واضحة.',
-    placeholder: 'ما هي المبادرة أو التحدي الاستراتيجي الذي ترغب في تسريعه الآن؟',
+    placeholder: 'ما هو التحدي الاستراتيجي الذي ترغب في مناقشته أو حله الآن؟',
     loadingText: 'الباندا المؤسس يعيد صياغة خريطة القرارات...',
-    openingMessage: 'مرحباً أيها المؤسس، أنا الباندا المؤسس - نسختك الإلكترونية. أنا أعرف كل شيء عن المشروع من اليوم الأول حتى الآن. كيف يمكنني مساعدتك اليوم؟',
+    openingMessage: 'مرحباً أيها المؤسس، أنا باندا المؤسس — سأساعدك في صياغة رؤية متماسكة وخطط واضحة لباندتشاو.',
     headerGradient: 'bg-gradient-to-l from-rose-600 via-amber-500 to-rose-500',
     assistantBubble: 'bg-rose-50/90 text-rose-900 shadow-[0_24px_48px_-28px_rgba(225,29,72,0.75)]',
   },
@@ -139,7 +139,7 @@ export default function FounderChatPanel({ assistantId, currentMode: externalMod
 
   // Operating mode configurations
   const modeConfigs: Record<FounderOperatingMode, ModeConfig> = {
-    STRATEGY_MODE: { label: 'استراتيجي', icon: '🎯', color: 'bg-blue-500' },
+    STRATEGY_MODE: { label: 'وضع التخطيط الاستراتيجي', icon: '🎯', color: 'bg-blue-500' },
     PRODUCT_MODE: { label: 'منتج', icon: '🛠️', color: 'bg-green-500' },
     TECH_MODE: { label: 'تقني', icon: '💻', color: 'bg-purple-500' },
     MARKETING_MODE: { label: 'تسويق', icon: '📢', color: 'bg-orange-500' },
@@ -684,7 +684,7 @@ export default function FounderChatPanel({ assistantId, currentMode: externalMod
         </div>
         <div className="flex items-center justify-between mt-4">
           <p className="text-xs text-gray-500">
-            سيتم توليد رد من {assistant.label}
+            سجّل قراراتك أو خططك هنا لتبقى واضحة في رحلة المؤسس.
           </p>
           <button
             type="submit"

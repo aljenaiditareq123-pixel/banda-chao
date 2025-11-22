@@ -101,36 +101,30 @@ export default function OnboardingSection({ locale }: OnboardingSectionProps) {
   // Full onboarding flow for new visitors
   const steps = [
     {
-      title: t('onboardingStep1Title') || 'ما هو Banda Chao؟',
-      description: t('onboardingStep1Description') || 'منصة اجتماعية تجارية تربط بين الحرفيين المبدعين والمشترين المهتمين بالمنتجات اليدوية والحرفية الفريدة.',
+      title: t('onboardingStep1Title') || 'What is Banda Chao?',
+      description: t('onboardingStep1Description') || 'Banda Chao is a social-commerce home for independent artisans, connecting makers with buyers who love handmade and artisanal products.',
       icon: '🎨',
       action: null,
     },
     {
-      title: t('onboardingStep2Title') || 'تصفح الحرفيين',
-      description: t('onboardingStep2Description') || 'اكتشف حرفيين موهوبين من مختلف المجالات، شاهد قصصهم، منتجاتهم، وفيديوهاتهم الإبداعية.',
-      icon: '👨‍🎨',
-      action: {
-        label: t('exploreMakers') || 'استكشف الحرفيين',
-        href: `/${locale}/makers`,
-      },
+      title: t('onboardingStep2Title') || 'Fair for Makers',
+      description: t('onboardingStep2Description') || 'We put makers first with transparent fees, simple tools to set fair prices, and direct access to global customers.',
+      icon: '⚖️',
+      action: null,
     },
     {
-      title: t('onboardingStep3Title') || 'استكشف المنتجات',
-      description: t('onboardingStep3Description') || 'تصفح مجموعة واسعة من المنتجات اليدوية الفريدة، من الأعمال الفنية إلى المنتجات الحرفية.',
-      icon: '🛍️',
+      title: t('onboardingStep3Title') || 'Safe for Buyers',
+      description: t('onboardingStep3Description') || 'Buy with confidence from verified makers, with clear shipping, reviews, and support when you need it.',
+      icon: '🛡️',
+      action: null,
+    },
+    {
+      title: t('onboardingStep4Title') || 'Powered by AI Pandas',
+      description: t('onboardingStep4Description') || 'Friendly AI assistants — the Banda Chao Pandas — help you plan, translate, and grow your business in multiple languages.',
+      icon: '🤖',
       action: {
-        label: t('browseProducts') || 'تصفح المنتجات',
+        label: t('getStarted') || 'Get Started',
         href: `/${locale}/products`,
-      },
-    },
-    {
-      title: t('onboardingStep4Title') || 'شاهد الفيديوهات واتبع المبدعين',
-      description: t('onboardingStep4Description') || 'استمتع بالفيديوهات القصيرة والطويلة، تابع الحرفيين المفضلين لديك، وكن جزءاً من المجتمع الإبداعي.',
-      icon: '🎬',
-      action: {
-        label: t('watchVideos') || 'شاهد الفيديوهات',
-        href: `/${locale}/videos`,
       },
     },
   ];

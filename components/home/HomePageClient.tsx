@@ -72,30 +72,68 @@ export default function HomePageClient({ locale, products, makers, videos }: Hom
         </div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 text-center w-full">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
-            {t('homeHeroTitle') || t('homeHeroHeadline') || 'Banda Chao Platform for Makers'}
+            {t('homeHeroTitle') || t('homeHeroHeadline') || 'Banda Chao — A Fair Home for Global Makers'}
           </h1>
           <p className="text-lg md:text-xl lg:text-2xl text-white/90 mb-10 max-w-3xl mx-auto leading-relaxed">
-            {t('homeHeroDescription') || 'Discover unique handmade products, watch maker videos, and connect with a community of creators'}
+            {t('homeHeroDescription') || 'A social-commerce platform that connects independent artisans from China, the Arab world, and beyond with buyers worldwide, in a fair, safe, and AI-powered marketplace.'}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Link 
-              href={`/${locale}/videos`}
-              aria-label={t('watchShortVideos') || 'Watch Short Videos'}
+              href={`/${locale}/products`}
+              aria-label={t('homeHeroCTA') || 'Explore the marketplace'}
               className="inline-block"
             >
               <Button variant="primary" className="px-8 py-4 text-lg font-semibold bg-white text-primary-700 hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl transform hover:scale-105">
-                {t('watchShortVideos') || 'Watch Short Videos'}
+                {t('homeHeroCTA') || 'Explore the marketplace'}
               </Button>
             </Link>
             <Link 
-              href={`/${locale}/products`}
-              aria-label={t('browseProducts') || 'Browse Products'}
+              href={`/${locale}/videos`}
+              aria-label={t('watchVideos') || 'Watch Videos'}
               className="inline-block"
             >
               <Button variant="outline" className="px-8 py-4 text-lg font-semibold border-2 border-white text-white hover:bg-white/10 transition-all backdrop-blur-sm">
-                {t('browseProducts') || 'Browse Products'}
+                {t('watchVideos') || 'Watch Videos'}
               </Button>
             </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Pillars Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+          {/* Pillar 1 */}
+          <div className="bg-white rounded-xl border border-gray-200 p-6 md:p-8 shadow-sm hover:shadow-md transition-shadow">
+            <div className="text-4xl mb-4">⚖️</div>
+            <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-3">
+              {t('pillar1Title') || 'Fair for Makers'}
+            </h3>
+            <p className="text-gray-600 leading-relaxed">
+              {t('pillar1Body') || 'Transparent fees, fair pricing tools, and direct access to global buyers — so makers keep more from every sale.'}
+            </p>
+          </div>
+
+          {/* Pillar 2 */}
+          <div className="bg-white rounded-xl border border-gray-200 p-6 md:p-8 shadow-sm hover:shadow-md transition-shadow">
+            <div className="text-4xl mb-4">🛡️</div>
+            <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-3">
+              {t('pillar2Title') || 'Safe for Buyers'}
+            </h3>
+            <p className="text-gray-600 leading-relaxed">
+              {t('pillar2Body') || 'Verified makers, clear shipping, and buyer protection features to build real trust across borders.'}
+            </p>
+          </div>
+
+          {/* Pillar 3 */}
+          <div className="bg-white rounded-xl border border-gray-200 p-6 md:p-8 shadow-sm hover:shadow-md transition-shadow">
+            <div className="text-4xl mb-4">🤖</div>
+            <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-3">
+              {t('pillar3Title') || 'Smart with AI Pandas'}
+            </h3>
+            <p className="text-gray-600 leading-relaxed">
+              {t('pillar3Body') || 'Built-in AI assistants ("Pandas") that help founders, makers, and buyers plan, translate, and grow with confidence.'}
+            </p>
           </div>
         </div>
       </section>
