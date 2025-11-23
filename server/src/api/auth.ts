@@ -84,77 +84,73 @@ router.post('/register', async (req: Request, res: Response) => {
   }
 });
 
-// Login
+// Helper function to generate JWT token
+function createJwtTokenForUser(user: { id: string; email: string; role: string }): string {
+  const jwtSecret: string = process.env.JWT_SECRET || 'your-secret-key';
+  const rawExpiresIn = process.env.JWT_EXPIRES_IN;
+  const expiresIn: string | number = rawExpiresIn && rawExpiresIn.trim().length > 0
+    ? rawExpiresIn.trim()
+    : '7d';
+  const payload = { userId: user.id, email: user.email, role: user.role };
+  return jwt.sign(payload, jwtSecret, { expiresIn } as jwt.SignOptions);
+}
+
+// Login - SIMPLIFIED: Only allow founder email
 router.post('/login', async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
+    const rawEmail = (req.body?.email ?? '').toString();
+    const email = rawEmail.trim().toLowerCase();
+    const HARDCODED_FOUNDER_EMAIL = 'aljenaiditareq123@gmail.com';
 
-    // Validation
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
+    console.log('[Auth] Login attempt', { email });
+
+    // Only allow founder login
+    if (email !== HARDCODED_FOUNDER_EMAIL) {
+      console.warn('[Auth] Non-founder login rejected', { email });
+      return res.status(401).json({ message: 'Invalid email or password' });
     }
 
-    // Find user
-    const user = await prisma.user.findUnique({
+    // Upsert founder user
+    // Note: Password field is required by Prisma schema, so we generate a temp one
+    const tempPassword = await bcrypt.hash(`founder-temp-${Date.now()}`, 10);
+    
+    const founderUser = await prisma.user.upsert({
       where: { email },
-      select: {
-        id: true,
-        email: true,
-        password: true,
-        name: true,
-        profilePicture: true,
-        role: true,
-        createdAt: true
+      update: { role: 'FOUNDER' },
+      create: {
+        email,
+        password: tempPassword, // Required by schema but won't be used
+        name: 'Founder',
+        role: 'FOUNDER'
       }
     });
 
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid email or password' });
-    }
-
-    // Verify password
-    const isValidPassword = await bcrypt.compare(password, user.password);
-
-    if (!isValidPassword) {
-      return res.status(401).json({ error: 'Invalid email or password' });
-    }
-
-    // Ensure founder email always has FOUNDER role
-    // If email matches FOUNDER_EMAIL, force role to FOUNDER (even if DB has different role)
-    const role = isFounderEmail(user.email) ? 'FOUNDER' : (user.role || getUserRoleFromEmail(user.email));
-    
-    // If user is founder but DB doesn't have FOUNDER role, update it
-    if (isFounderEmail(user.email) && user.role !== 'FOUNDER') {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { role: 'FOUNDER' }
-      });
-    }
-
     // Generate JWT token
-    const jwtSecret: string = process.env.JWT_SECRET || 'your-secret-key';
-    const rawExpiresIn = process.env.JWT_EXPIRES_IN;
-    const expiresIn: string | number = rawExpiresIn && rawExpiresIn.trim().length > 0
-      ? rawExpiresIn.trim()
-      : '7d';
-    const payload = { userId: user.id, email: user.email, role };
-    const token = jwt.sign(payload, jwtSecret, { expiresIn } as jwt.SignOptions);
+    const token = createJwtTokenForUser({
+      id: founderUser.id,
+      email: founderUser.email,
+      role: founderUser.role
+    });
 
-    res.json({
-      message: 'Login successful',
+    console.log('[Founder Login SIMPLE] Login successful', {
+      id: founderUser.id,
+      email: founderUser.email
+    });
+
+    return res.status(200).json({
+      success: true,
       user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        profilePicture: user.profilePicture,
-        role,
-        createdAt: user.createdAt
+        id: founderUser.id,
+        email: founderUser.email,
+        name: founderUser.name,
+        profilePicture: founderUser.profilePicture,
+        role: founderUser.role
       },
       token
     });
-  } catch (error: any) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: 'Failed to login', message: error.message });
+  } catch (err: any) {
+    console.error('[Auth] Login error', err);
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
 
