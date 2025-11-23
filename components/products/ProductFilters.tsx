@@ -38,17 +38,20 @@ export default function ProductFilters({ onFilterChange, initialFilters, product
       ) as string[];
       setAvailableCategories(uniqueCategories);
 
-      const uniqueMakers = Array.from(
-        new Set(
-          products
-            .map((p) => ({
-              id: p.maker?.id || p.userId,
-              name: p.maker?.name || p.user?.name || 'Unknown',
-            }))
-            .filter((m) => m.id && m.name !== 'Unknown')
-        )
-      ) as Array<{ id: string; name: string }>;
-      setAvailableMakers(uniqueMakers);
+      // Use Map to deduplicate makers by ID (Set doesn't work for objects)
+      const makersMap = new Map<string, { id: string; name: string }>();
+      products
+        .map((p) => ({
+          id: p.maker?.id || p.userId,
+          name: p.maker?.name || p.user?.name || 'Unknown',
+        }))
+        .filter((m) => m.id && m.name !== 'Unknown')
+        .forEach((maker) => {
+          if (!makersMap.has(maker.id)) {
+            makersMap.set(maker.id, maker);
+          }
+        });
+      setAvailableMakers(Array.from(makersMap.values()));
     } else {
       // Fallback: fetch from API only if products prop is not provided
       fetchFilterOptions();
@@ -70,18 +73,20 @@ export default function ProductFilters({ onFilterChange, initialFilters, product
       ) as string[];
       setAvailableCategories(uniqueCategories);
 
-      // Extract unique makers (from userId or maker relation)
-      const uniqueMakers = Array.from(
-        new Set(
-          fetchedProducts
-            .map((p: any) => ({
-              id: p.maker?.id || p.userId,
-              name: p.maker?.name || p.user?.name || 'Unknown',
-            }))
-            .filter((m: any) => m.id && m.name !== 'Unknown')
-        )
-      ) as Array<{ id: string; name: string }>;
-      setAvailableMakers(uniqueMakers);
+      // Extract unique makers (from userId or maker relation) - use Map to deduplicate by ID
+      const makersMap = new Map<string, { id: string; name: string }>();
+      fetchedProducts
+        .map((p: any) => ({
+          id: p.maker?.id || p.userId,
+          name: p.maker?.name || p.user?.name || 'Unknown',
+        }))
+        .filter((m: any) => m.id && m.name !== 'Unknown')
+        .forEach((maker: { id: string; name: string }) => {
+          if (!makersMap.has(maker.id)) {
+            makersMap.set(maker.id, maker);
+          }
+        });
+      setAvailableMakers(Array.from(makersMap.values()));
     } catch (error) {
       console.error('Failed to fetch filter options:', error);
     } finally {

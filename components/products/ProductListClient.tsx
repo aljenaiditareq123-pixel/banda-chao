@@ -15,6 +15,8 @@ interface ProductListClientProps {
   products: Product[];
 }
 
+type SortOption = 'default' | 'price-asc' | 'price-desc' | 'newest';
+
 export default function ProductListClient({ locale, products: initialProducts }: ProductListClientProps) {
   const { setLanguage, t } = useLanguage();
 
@@ -26,6 +28,8 @@ export default function ProductListClient({ locale, products: initialProducts }:
 
   const [loading, setLoading] = useState(false);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>(initialProducts);
+  const [sortedProducts, setSortedProducts] = useState<Product[]>(initialProducts);
+  const [sortOption, setSortOption] = useState<SortOption>('default');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
 
@@ -34,8 +38,43 @@ export default function ProductListClient({ locale, products: initialProducts }:
     new Set(initialProducts.map((p) => p.category).filter(Boolean))
   ) as string[];
 
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
-  const paginatedProducts = filteredProducts.slice(
+  // Sorting logic
+  useEffect(() => {
+    let sorted = [...filteredProducts];
+    
+    switch (sortOption) {
+      case 'price-asc':
+        sorted.sort((a, b) => {
+          const priceA = a.price ?? 0;
+          const priceB = b.price ?? 0;
+          return priceA - priceB;
+        });
+        break;
+      case 'price-desc':
+        sorted.sort((a, b) => {
+          const priceA = a.price ?? 0;
+          const priceB = b.price ?? 0;
+          return priceB - priceA;
+        });
+        break;
+      case 'newest':
+        sorted.sort((a, b) => {
+          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return dateB - dateA;
+        });
+        break;
+      default:
+        // Keep original order
+        break;
+    }
+    
+    setSortedProducts(sorted);
+    setCurrentPage(1); // Reset to first page when sorting changes
+  }, [filteredProducts, sortOption]);
+
+  const totalPages = Math.ceil(sortedProducts.length / itemsPerPage);
+  const paginatedProducts = sortedProducts.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -101,7 +140,7 @@ export default function ProductListClient({ locale, products: initialProducts }:
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row gap-10">
 
-            <aside className="lg:w-72 flex-shrink-0">
+            <aside className="lg:w-56 flex-shrink-0">
               <ProductFilters onFilterChange={handleFilterChange} products={initialProducts} />
             </aside>
 
@@ -115,11 +154,57 @@ export default function ProductListClient({ locale, products: initialProducts }:
                       <span>{t('loading') || 'Loading...'}</span>
                     ) : (
                       <span>
-                        {t('itemsCount')?.replace('{count}', filteredProducts.length.toString()) || `${filteredProducts.length} items`}
+                        {t('itemsCount')?.replace('{count}', sortedProducts.length.toString()) || `${sortedProducts.length} items`}
                       </span>
                     )}
                   </p>
                 </div>
+
+                {/* Sorting Bar - Only show for Chinese locale */}
+                {locale === 'zh' && (
+                  <div className="flex flex-wrap gap-2 pb-4 border-b border-gray-200">
+                    <button
+                      onClick={() => setSortOption('default')}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                        sortOption === 'default'
+                          ? 'bg-primary-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      综合排序
+                    </button>
+                    <button
+                      onClick={() => setSortOption('price-asc')}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                        sortOption === 'price-asc'
+                          ? 'bg-primary-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      价格从低到高
+                    </button>
+                    <button
+                      onClick={() => setSortOption('price-desc')}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                        sortOption === 'price-desc'
+                          ? 'bg-primary-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      价格从高到低
+                    </button>
+                    <button
+                      onClick={() => setSortOption('newest')}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                        sortOption === 'newest'
+                          ? 'bg-primary-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      最新上架
+                    </button>
+                  </div>
+                )}
 
                 {/* Category Quick Filter Buttons */}
                 <div className="flex flex-wrap gap-2 pb-4 border-b border-gray-200">
@@ -175,7 +260,7 @@ export default function ProductListClient({ locale, products: initialProducts }:
                   </div>
                 ) : (
                   <>
-                    <Grid columns={{ base: 1, sm: 2, md: 3, lg: 3 }} gap="gap-6">
+                    <Grid columns={{ base: 1, sm: 2, md: 3, lg: locale === 'zh' ? 4 : 3 }} gap="gap-6">
                       {paginatedProducts.length > 0 ? (
                         paginatedProducts.map((product) => (
                           <GridItem key={product.id}>
@@ -202,7 +287,7 @@ export default function ProductListClient({ locale, products: initialProducts }:
                     </Grid>
 
                     {/* Pagination */}
-                    {filteredProducts.length > itemsPerPage && (
+                    {sortedProducts.length > itemsPerPage && (
                       <div className="flex items-center justify-center gap-2 pt-8 border-t border-gray-200">
                         <button
                           onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}

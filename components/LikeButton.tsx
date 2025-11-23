@@ -9,13 +9,17 @@ interface LikeButtonProps {
   productId?: string;
   initialLikes: number;
   initialLiked?: boolean;
+  locale?: string;
 }
 
-export default function LikeButton({ videoId, productId, initialLikes, initialLiked }: LikeButtonProps) {
+export default function LikeButton({ videoId, productId, initialLikes, initialLiked, locale }: LikeButtonProps) {
   const { user } = useAuth();
   const [likes, setLikes] = useState(initialLikes);
   const [liked, setLiked] = useState(initialLiked || false);
   const [loading, setLoading] = useState(false);
+  const isZhLocale = locale === 'zh';
+  
+  const ariaLabel = isZhLocale ? (liked ? '取消收藏' : '收藏') : (liked ? 'Unlike' : 'Like');
 
   useEffect(() => {
     setLikes(initialLikes);
@@ -96,7 +100,8 @@ export default function LikeButton({ videoId, productId, initialLikes, initialLi
           ? 'bg-red-100 text-red-600 hover:bg-red-200'
           : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
       } disabled:opacity-50`}
-      aria-label={liked ? 'Unlike' : 'Like'}
+      aria-label={ariaLabel}
+      title={ariaLabel}
     >
       <span className="text-lg">{liked ? '❤️' : '🤍'}</span>
       <span>{likes}</span>

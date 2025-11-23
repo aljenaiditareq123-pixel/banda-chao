@@ -13,10 +13,26 @@ interface ProductCardProps {
   locale?: string;
 }
 
+/**
+ * Format Chinese product description with title and description separated by ｜
+ * Only used for zh locale
+ * Example: "多用途健身球" + "适合瑜伽和力量训练" -> "多用途健身球｜适合瑜伽和力量训练"
+ */
+function formatChineseDescription(title: string, description: string): string {
+  if (!description || !title) return title;
+  // Extract first short keyword/phrase from description (max 15 chars for better UI)
+  // Remove punctuation and extract meaningful phrase
+  const cleaned = description.trim().replace(/[，。！？,\.!?\n\r]/g, ' ').trim();
+  const shortDesc = cleaned.slice(0, 15).trim();
+  // Only add if we have meaningful content after cleaning
+  return shortDesc && shortDesc.length > 0 ? `${title}｜${shortDesc}` : title;
+}
+
 export default function ProductCard({ product, href, locale }: ProductCardProps) {
   const { t, language } = useLanguage();
   const [imageError, setImageError] = useState(false);
   const currentLocale = locale || language || 'zh';
+  const isZhLocale = currentLocale === 'zh';
 
   const formatPrice = (price: number | null | undefined): string => {
     if (price === null || price === undefined) {
@@ -29,6 +45,11 @@ export default function ProductCard({ product, href, locale }: ProductCardProps)
       maximumFractionDigits: 2,
     }).format(price);
   };
+
+  // Format product title/name for Chinese locale
+  const displayTitle = isZhLocale && product.description
+    ? formatChineseDescription(product.name || '', product.description || '')
+    : product.name;
 
   const hasImage = product.images && product.images.length > 0;
   const showPlaceholder = !hasImage || imageError;
@@ -55,7 +76,7 @@ export default function ProductCard({ product, href, locale }: ProductCardProps)
         </div>
         <div className="p-4">
           <h3 className="font-semibold text-gray-900 line-clamp-2 mb-2 group-hover:text-red-600 transition">
-            {product.name}
+            {displayTitle}
           </h3>
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center space-x-2">
@@ -69,10 +90,20 @@ export default function ProductCard({ product, href, locale }: ProductCardProps)
               )}
             </div>
             <div onClick={(e) => e.stopPropagation()}>
-              <LikeButton productId={product.id} initialLikes={product.rating || 0} />
+              <LikeButton productId={product.id} initialLikes={product.rating || 0} locale={locale} />
             </div>
           </div>
-          <p className="text-sm text-gray-600 line-clamp-2">{product.description}</p>
+          {/* Only show full description for non-Chinese locales */}
+          {!isZhLocale && product.description && (
+            <p className="text-sm text-gray-600 line-clamp-2">{product.description}</p>
+          )}
+          {/* Chinese locale: Show sales and rating info */}
+          {isZhLocale && (
+            <div className="flex items-center gap-4 text-xs text-gray-500 mt-2">
+              <span>销量: {(product as any).salesCount || 0}</span>
+              <span>评分: {product.rating > 0 ? product.rating.toFixed(1) : '5.0'}</span>
+            </div>
+          )}
         </div>
       </div>
     </Link>
