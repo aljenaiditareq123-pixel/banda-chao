@@ -51,7 +51,7 @@ router.get('/health', (req: Request, res: Response) => {
  *   timestamp: string
  * }
  */
-router.post('/assistant', aiRateLimit, aiAssistantValidation, async (req: Request, res: Response) => {
+router.post('/assistant', authenticateToken, aiRateLimit, aiAssistantValidation, async (req: Request, res: Response) => {
   try {
     const { assistant: assistantId, message } = req.body;
 
@@ -93,10 +93,10 @@ router.post('/assistant', aiRateLimit, aiAssistantValidation, async (req: Reques
     // Initialize Gemini AI client
     const genAI = new GoogleGenerativeAI(geminiApiKey);
     
-    // Map frontend assistant ID to backend profile ID
-    const profileId = mapAssistantId(assistantId);
+    // Map frontend assistant ID to backend profile ID (always 'founder' for now)
+    const profileId = mapAssistantId(assistantId || 'founder');
     
-    // Get assistant profile (system prompt)
+    // Get assistant profile (system prompt) - always returns founder profile
     const systemPrompt = getAssistantProfile(profileId);
     
     // Use configurable model name with fallback to gemini-1.5-flash

@@ -3,6 +3,7 @@ import { Maker } from '@/types';
 import { normalizeMaker } from '@/lib/maker-utils';
 import { getApiBaseUrl } from '@/lib/api-utils';
 import { fetchJsonWithRetry } from '@/lib/fetch-with-retry';
+import type { Metadata } from 'next';
 
 interface LocaleMakersPageProps {
   params: {
@@ -10,6 +11,25 @@ interface LocaleMakersPageProps {
   };
   searchParams?: {
     search?: string;
+  };
+}
+
+export async function generateMetadata({ params }: LocaleMakersPageProps): Promise<Metadata> {
+  const { locale } = params;
+  const validLocale = (locale === 'zh' || locale === 'ar' || locale === 'en') ? locale : 'zh';
+  const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://banda-chao-frontend.onrender.com';
+
+  const titles = {
+    zh: '手作人专区 — Banda Chao',
+    ar: 'Banda Chao - الحرفيون',
+    en: 'Banda Chao - Makers',
+  };
+
+  return {
+    title: titles[validLocale],
+    alternates: {
+      canonical: `${baseUrl}/${validLocale}/makers`,
+    },
   };
 }
 

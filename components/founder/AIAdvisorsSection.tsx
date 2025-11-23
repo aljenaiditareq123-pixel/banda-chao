@@ -18,47 +18,13 @@ interface AdvisorCard {
  * Luxury Gulf Founder Style
  */
 export default function AIAdvisorsSection() {
+  // Only show Founder Panda for now
   const advisors: AdvisorCard[] = [
     {
       id: 'founder',
       name: 'الباندا المؤسس',
-      role: 'مستشار استراتيجي',
-      description: 'يرسم القرارات المصيرية ويحوّل الرؤية إلى خطط تنفيذية',
-      status: 'online',
-    },
-    {
-      id: 'tech',
-      name: 'الباندا التقني',
-      role: 'مستشار تقني',
-      description: 'يضمن جاهزية البنية التحتية ويقترح حلولاً قابلة للتوسع',
-      status: 'online',
-    },
-    {
-      id: 'guard',
-      name: 'الباندا الحارس',
-      role: 'مستشار أمني',
-      description: 'يراقب الثغرات ويحمي البيانات المالية الحساسة',
-      status: 'online',
-    },
-    {
-      id: 'commerce',
-      name: 'باندا التجارة',
-      role: 'مستشار تجاري',
-      description: 'يركّز على نمو الإيرادات وتحسين تجربة العميل',
-      status: 'online',
-    },
-    {
-      id: 'content',
-      name: 'باندا المحتوى',
-      role: 'مستشار محتوى',
-      description: 'يبني سرداً جذاباً يحفّز المشاركة ويزيد ولاء المجتمع',
-      status: 'online',
-    },
-    {
-      id: 'logistics',
-      name: 'باندا اللوجستيات',
-      role: 'مستشار لوجستي',
-      description: 'يضبط المخزون والتوصيل لضمان تجربة بلا تأخير',
+      role: 'مستشارك الإلكتروني ورئيس المجلس الاستشاري',
+      description: 'يرسم القرارات المصيرية ويحوّل الرؤية إلى خطط تنفيذية واضحة. مساعدك الذكي في كل القرارات الاستراتيجية والتقنية والتجارية.',
       status: 'online',
     },
   ];
@@ -88,11 +54,11 @@ export default function AIAdvisorsSection() {
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
       <div className="mb-6">
-        <h3 className="text-xl font-bold text-slate-900 mb-1">مجلس الباندا الاستشاري</h3>
-        <p className="text-sm text-slate-500">المستشارون الذكيون لمساعدتك في اتخاذ القرارات الاستراتيجية</p>
+        <h3 className="text-xl font-bold text-slate-900 mb-1">مستشارك الإلكتروني</h3>
+        <p className="text-sm text-slate-500">مساعدك الذكي في كل القرارات الاستراتيجية والتقنية والتجارية</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
         {advisors.map((advisor) => (
           <Link
             key={advisor.id}
@@ -141,7 +107,7 @@ export default function AIAdvisorsSection() {
       {/* Footer note */}
       <div className="mt-6 pt-4 border-t border-slate-200">
         <p className="text-xs text-slate-500 text-center">
-          انقر على أي مستشار لبدء جلسة استشارية
+          انقر للبدء في جلسة استشارية مع الباندا المؤسس
         </p>
       </div>
     </div>

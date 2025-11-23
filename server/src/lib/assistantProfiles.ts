@@ -262,32 +262,19 @@ export const assistantProfiles: Record<string, string> = {
 
 /**
  * Get assistant profile by ID
+ * For now, always return founder profile regardless of input
  */
-export function getAssistantProfile(assistantId: string): string {
-  const profile = assistantProfiles[assistantId];
-  if (!profile) {
-    // Default to founder profile if not found
-    return assistantProfiles.founder || 'You are a helpful assistant.';
-  }
-  return profile;
+export function getAssistantProfile(assistantId?: string | null): string {
+  // Always return founder profile for now - all pandas use Founder Panda profile
+  return assistantProfiles.founder || 'You are a helpful assistant.';
 }
 
 /**
  * Map frontend assistant IDs to backend profile IDs
+ * For now, always return 'founder' regardless of input
  */
-export function mapAssistantId(assistantId: string): string {
-  const mapping: Record<string, string> = {
-    founder: 'founder',
-    tech: 'technical',
-    guard: 'guardian',
-    commerce: 'commerce',
-    content: 'content',
-    logistics: 'logistics',
-    philosopher: 'philosopher',
-    international_finance_panda: 'international_finance_panda',
-    finance: 'international_finance_panda', // Alias for convenience
-  };
-  
-  return mapping[assistantId] || assistantId;
+export function mapAssistantId(assistantId?: string | null): string {
+  // Always return 'founder' for now - all pandas map to Founder Panda
+  return 'founder';
 }
 

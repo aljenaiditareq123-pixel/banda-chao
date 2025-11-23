@@ -6,6 +6,7 @@ import FounderRoute from '@/components/FounderRoute';
 import FounderAssistantLayout from '@/components/founder/FounderAssistantLayout';
 import FounderChatPanel from '@/components/founder/FounderChatPanel';
 import ModeSelector from '@/components/founder/ModeSelector';
+import ChinaModeSuggestions from '@/components/founder/ChinaModeSuggestions';
 
 type FounderOperatingMode = 
   | 'STRATEGY_MODE'
@@ -31,10 +32,11 @@ type FounderOperatingMode =
  */
 function FounderAssistantContent() {
   const searchParams = useSearchParams();
-  const pandaParam = searchParams.get('panda');
-  const assistantId = (pandaParam || 'founder') as string;
+  // Always use 'founder' panda for now, ignore query param
+  const assistantId = 'founder';
   
   const [currentMode, setCurrentMode] = useState<FounderOperatingMode>('STRATEGY_MODE');
+  const [suggestionText, setSuggestionText] = useState<string>('');
 
   // Map assistant IDs to names and roles
   const assistantInfo: Record<string, { name: string; role: string }> = {
@@ -62,6 +64,17 @@ function FounderAssistantContent() {
               currentMode={currentMode}
               onModeChange={setCurrentMode}
             />
+            
+            {/* China Mode Quick Suggestions */}
+            {currentMode === 'CHINA_MODE' && (
+              <div className="mt-4">
+                <ChinaModeSuggestions
+                  onSuggestionClick={(text) => {
+                    setSuggestionText(text);
+                  }}
+                />
+              </div>
+            )}
           </div>
         )}
         
@@ -70,6 +83,8 @@ function FounderAssistantContent() {
           <FounderChatPanel 
             assistantId={assistantId}
             currentMode={currentMode}
+            suggestionText={suggestionText}
+            onSuggestionUsed={() => setSuggestionText('')}
           />
         </div>
       </div>

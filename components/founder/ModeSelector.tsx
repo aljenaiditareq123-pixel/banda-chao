@@ -24,34 +24,34 @@ export default function ModeSelector({
 
   const modeConfigs = {
     STRATEGY_MODE: { 
-      label: 'Strategic', 
+      label: 'الاستراتيجية', 
       icon: '🎯', 
       color: 'from-blue-500 to-blue-600',
-      description: 'Long-term planning and vision alignment'
+      description: 'التخطيط الاستراتيجي طويل الأمد ومحاذاة الرؤية'
     },
     PRODUCT_MODE: { 
-      label: 'Product', 
+      label: 'المنتج', 
       icon: '🛠️', 
       color: 'from-green-500 to-green-600',
-      description: 'Product development and features'
+      description: 'تطوير المنتج والميزات'
     },
     TECH_MODE: { 
-      label: 'Technical', 
+      label: 'التقنية', 
       icon: '💻', 
       color: 'from-purple-500 to-purple-600',
-      description: 'Technical architecture and implementation'
+      description: 'المعمارية التقنية والتنفيذ'
     },
     MARKETING_MODE: { 
-      label: 'Marketing', 
+      label: 'التسويق', 
       icon: '📢', 
       color: 'from-orange-500 to-orange-600',
-      description: 'Marketing strategy and content'
+      description: 'استراتيجية التسويق وإنشاء المحتوى'
     },
     CHINA_MODE: { 
-      label: 'China Focus', 
+      label: 'وضع الصين', 
       icon: '🇨🇳', 
       color: 'from-red-500 to-red-600',
-      description: 'China market entry and strategy'
+      description: 'مستشار لدخول السوق الصيني وكتابة نصوص صينية احترافية'
     }
   };
 
@@ -66,8 +66,8 @@ export default function ModeSelector({
       >
         <div className="flex items-center gap-3">
           <span className="text-xl">{currentConfig.icon}</span>
-          <div className="text-left">
-            <p className="font-semibold text-sm">{currentConfig.label} Mode</p>
+          <div className="text-right rtl:text-left">
+            <p className="font-semibold text-sm">{currentConfig.label}</p>
             <p className="text-xs opacity-90">{currentConfig.description}</p>
           </div>
         </div>
@@ -100,11 +100,11 @@ export default function ModeSelector({
                   }`}
                 >
                   <span className="text-lg">{config.icon}</span>
-                  <div className="text-left flex-1">
+                  <div className="text-right rtl:text-left flex-1">
                     <p className={`font-medium text-sm ${
                       isActive ? 'text-white' : 'text-gray-900 dark:text-white'
                     }`}>
-                      {config.label} Mode
+                      {config.label}
                     </p>
                     <p className={`text-xs ${
                       isActive ? 'text-white/90' : 'text-gray-500 dark:text-gray-400'

@@ -140,7 +140,7 @@ export default function HomePageClient({ locale, products, makers, videos }: Hom
               href={`/${locale}/makers`}
               className="text-primary-600 hover:text-primary-700 font-medium text-lg"
             >
-              {t('viewAll') || 'عرض الكل'} →
+              {locale === 'zh' ? (t('viewAllMakers') || '查看更多手作人') : (t('viewAll') || 'عرض الكل')} →
             </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -244,23 +244,25 @@ export default function HomePageClient({ locale, products, makers, videos }: Hom
         </section>
       )}
 
-      {/* Founder Section */}
-      <section className="bg-gradient-to-br from-primary-50 to-primary-100 rounded-2xl border-2 border-primary-200 p-8 md:p-12 text-center">
-        <div className="max-w-2xl mx-auto">
-          <div className="text-6xl mb-6">🐼</div>
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
-            {t('founderSectionTitle') || 'مركز القيادة للمؤسس'}
-          </h2>
-          <p className="text-lg text-gray-700 mb-6 leading-relaxed">
-            {t('founderSectionDescription') || 'للمؤسس: 6 مساعدين ذكاء اصطناعي متخصصين يساعدونك في القرارات الاستراتيجية، التقنية، الأمان، التجارة، المحتوى، واللوجستيات'}
-          </p>
-          <Link href="/founder">
-            <Button variant="primary" className="px-8 py-3 text-base font-semibold">
-              {t('goToFounderConsole') || 'اذهب إلى مركز المؤسس'}
-            </Button>
-          </Link>
-        </div>
-      </section>
+      {/* Founder Section - Hidden for Chinese locale */}
+      {locale !== 'zh' && (
+        <section className="bg-gradient-to-br from-primary-50 to-primary-100 rounded-2xl border-2 border-primary-200 p-8 md:p-12 text-center">
+          <div className="max-w-2xl mx-auto">
+            <div className="text-6xl mb-6">🐼</div>
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
+              {t('founderSectionTitle') || 'مركز القيادة للمؤسس'}
+            </h2>
+            <p className="text-lg text-gray-700 mb-6 leading-relaxed">
+              {t('founderSectionDescription') || 'للمؤسس: 6 مساعدين ذكاء اصطناعي متخصصين يساعدونك في القرارات الاستراتيجية، التقنية، الأمان، التجارة، المحتوى، واللوجستيات'}
+            </p>
+            <Link href="/founder">
+              <Button variant="primary" className="px-8 py-3 text-base font-semibold">
+                {t('goToFounderConsole') || 'اذهب إلى مركز المؤسس'}
+              </Button>
+            </Link>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

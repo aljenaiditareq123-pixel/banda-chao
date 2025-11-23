@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { getApiBaseUrl } from '@/lib/api-utils';
 import { apiCall } from '@/lib/api-error-handler';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface FounderSession {
   id: string;
@@ -20,6 +21,7 @@ interface SessionListProps {
 }
 
 export default function SessionList({ limit = 5, compact = false }: SessionListProps) {
+  const { token } = useAuth();
   const [sessions, setSessions] = useState<FounderSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,28 +29,44 @@ export default function SessionList({ limit = 5, compact = false }: SessionListP
   // Load sessions from API
   useEffect(() => {
     const loadSessions = async () => {
+      // Don't attempt to load if no token
+      if (!token) {
+        setLoading(false);
+        setError(null);
+        return;
+      }
+
       try {
         setLoading(true);
+        setError(null);
         const apiBaseUrl = getApiBaseUrl();
         const data = await apiCall(`${apiBaseUrl}/founder/sessions?limit=${limit}`, {
           method: 'GET',
+          headers: {
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
         });
         
         if (data.success) {
-          setSessions(data.data.sessions);
+          setSessions(data.data.sessions || []);
         } else {
           setError('Failed to load sessions');
         }
-      } catch (err) {
+      } catch (err: any) {
         console.warn('[SessionList] Failed to load sessions:', err);
-        setError('Unable to load sessions');
+        // Check if it's a 401 error
+        if (err?.status === 401) {
+          setError(null); // Don't show error for auth issues, just don't load sessions
+        } else {
+          setError('Unable to load sessions');
+        }
       } finally {
         setLoading(false);
       }
     };
 
     loadSessions();
-  }, [limit]);
+  }, [limit, token]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -109,10 +127,16 @@ export default function SessionList({ limit = 5, compact = false }: SessionListP
     );
   }
 
-  if (error) {
+  // Don't show error message - just show empty state if loading failed
+  // Error messages are handled gracefully (401 just means no sessions shown)
+  if (error && !token) {
+    // If no token, don't show error - just show empty state
     return (
-      <div className="text-center py-4">
-        <p className="text-sm text-gray-500 dark:text-gray-400">{error}</p>
+      <div className="text-center py-6">
+        <span className="text-3xl mb-2 block">📚</span>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          No sessions saved yet
+        </p>
       </div>
     );
   }

@@ -127,6 +127,8 @@ export interface FounderSessionsResponse {
 export interface FounderChatPanelProps {
   assistantId: AssistantId | string;
   currentMode?: FounderOperatingMode;
+  suggestionText?: string;
+  onSuggestionUsed?: () => void;
 }
 
 export interface FounderAssistantsSidebarProps {

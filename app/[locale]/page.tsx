@@ -4,10 +4,37 @@ import { normalizeProduct } from '@/lib/product-utils';
 import { normalizeMaker } from '@/lib/maker-utils';
 import { getApiBaseUrl } from '@/lib/api-utils';
 import { fetchJsonWithRetry } from '@/lib/fetch-with-retry';
+import type { Metadata } from 'next';
 
 interface LocalePageProps {
   params: {
     locale: string;
+  };
+}
+
+export async function generateMetadata({ params }: LocalePageProps): Promise<Metadata> {
+  const { locale } = params;
+  const validLocale = (locale === 'zh' || locale === 'ar' || locale === 'en') ? locale : 'zh';
+  const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://banda-chao-frontend.onrender.com';
+
+  const titles = {
+    zh: 'Banda Chao 手作平台 — 全球手作人的温暖之家',
+    ar: 'Banda Chao - منصة التجارة الاجتماعية',
+    en: 'Banda Chao - Social Commerce Platform',
+  };
+
+  const descriptions = {
+    zh: 'Banda Chao 是一个连接全球手作人与买家的温暖平台，让每一件原创好物被看到，让每一位手作人都被尊重。',
+    ar: 'Banda Chao - منصة هجينة تجمع بين التواصل الاجتماعي والتجارة الإلكترونية',
+    en: 'Banda Chao - A platform that combines social media with e-commerce',
+  };
+
+  return {
+    title: titles[validLocale],
+    description: descriptions[validLocale],
+    alternates: {
+      canonical: `${baseUrl}/${validLocale}`,
+    },
   };
 }
 

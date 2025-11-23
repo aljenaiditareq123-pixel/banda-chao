@@ -1,5 +1,6 @@
 import Providers from '@/components/Providers';
 import type { Metadata } from 'next';
+import Script from 'next/script';
 
 interface LocaleLayoutProps {
   children: React.ReactNode;
@@ -13,22 +14,28 @@ export async function generateMetadata({ params }: LocaleLayoutProps): Promise<M
   const validLocale = (locale === 'zh' || locale === 'ar' || locale === 'en') ? locale : 'zh';
 
   const titles = {
-    zh: 'Banda Chao - 社交电商平台',
+    zh: 'Banda Chao 手作平台 — 全球手作人的温暖之家',
     ar: 'Banda Chao - منصة التجارة الاجتماعية',
     en: 'Banda Chao - Social Commerce Platform',
   };
 
   const descriptions = {
-    zh: 'Banda Chao - 结合社交媒体与电子商务的平台，面向中国年轻工作者',
+    zh: 'Banda Chao 是一个连接全球手作人与买家的温暖平台，让每一件原创好物被看到，让每一位手作人都被尊重。',
     ar: 'Banda Chao - منصة هجينة تجمع بين التواصل الاجتماعي والتجارة الإلكترونية',
     en: 'Banda Chao - A platform that combines social media with e-commerce',
   };
 
   const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://banda-chao-frontend.onrender.com';
+  const keywords = {
+    zh: '手作, 匠人, 原创, 手工作品, 手工艺品, 手作平台, 手作人社区, Banda Chao',
+    ar: 'منصة, تجارة, اجتماعية, حرفيين',
+    en: 'social commerce, e-commerce, makers, handmade, artisans',
+  };
 
-  return {
+  const metadata: Metadata = {
     title: titles[validLocale],
     description: descriptions[validLocale],
+    keywords: keywords[validLocale].split(', '),
     alternates: {
       canonical: `${baseUrl}/${validLocale}`,
       languages: {
@@ -51,6 +58,21 @@ export async function generateMetadata({ params }: LocaleLayoutProps): Promise<M
       description: descriptions[validLocale],
     },
   };
+
+  // Add Baidu-specific meta tags for Chinese locale
+  if (validLocale === 'zh') {
+    metadata.other = {
+      'renderer': 'webkit',
+      'force-rendering': 'webkit',
+      'baidu-site-verification': 'TODO_ADD_CODE', // Replace with actual verification code when available from Baidu Webmaster Tools
+      'X-UA-Compatible': 'IE=Edge,chrome=1',
+      'itemprop:name': 'Banda Chao 手作平台',
+      'itemprop:description': '全球手作人的温暖之家',
+      'itemprop:image': `${baseUrl}/og-china.png`,
+    };
+  }
+
+  return metadata;
 }
 
 export default function LocaleLayout({ children, params }: LocaleLayoutProps) {
@@ -60,8 +82,57 @@ export default function LocaleLayout({ children, params }: LocaleLayoutProps) {
   const validLocale = (locale === 'zh' || locale === 'ar' || locale === 'en') ? locale : 'zh';
 
   return (
-    <Providers initialLocale={validLocale} showHeader={true} showChatWidget={true}>
-      {children}
-    </Providers>
+    <>
+      {/* Baidu-specific meta tags for Chinese pages - injected via metadata API */}
+      {validLocale === 'zh' && (
+        <Script
+          id="baidu-meta-tags"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              if (document.querySelector('meta[name="renderer"]') === null) {
+                const meta1 = document.createElement('meta');
+                meta1.name = 'renderer';
+                meta1.content = 'webkit';
+                document.getElementsByTagName('head')[0].appendChild(meta1);
+              }
+              if (document.querySelector('meta[http-equiv="X-UA-Compatible"]') === null) {
+                const meta2 = document.createElement('meta');
+                meta2.httpEquiv = 'X-UA-Compatible';
+                meta2.content = 'IE=Edge,chrome=1';
+                document.getElementsByTagName('head')[0].appendChild(meta2);
+              }
+              if (document.querySelector('meta[name="force-rendering"]') === null) {
+                const meta3 = document.createElement('meta');
+                meta3.name = 'force-rendering';
+                meta3.content = 'webkit';
+                document.getElementsByTagName('head')[0].appendChild(meta3);
+              }
+              if (document.querySelector('meta[name="keywords"]') === null) {
+                const meta4 = document.createElement('meta');
+                meta4.name = 'keywords';
+                meta4.content = '手作, 匠人, 原创, 手工作品, 手工艺品, 手作平台, 手作人社区, Banda Chao';
+                document.getElementsByTagName('head')[0].appendChild(meta4);
+              }
+              if (document.querySelector('meta[itemprop="name"]') === null) {
+                const meta5 = document.createElement('meta');
+                meta5.setAttribute('itemprop', 'name');
+                meta5.content = 'Banda Chao 手作平台';
+                document.getElementsByTagName('head')[0].appendChild(meta5);
+              }
+              if (document.querySelector('meta[itemprop="description"]') === null) {
+                const meta6 = document.createElement('meta');
+                meta6.setAttribute('itemprop', 'description');
+                meta6.content = '全球手作人的温暖之家';
+                document.getElementsByTagName('head')[0].appendChild(meta6);
+              }
+            `,
+          }}
+        />
+      )}
+      <Providers initialLocale={validLocale} showHeader={true} showChatWidget={true}>
+        {children}
+      </Providers>
+    </>
   );
 }

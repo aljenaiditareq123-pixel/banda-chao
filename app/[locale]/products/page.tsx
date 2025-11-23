@@ -3,6 +3,7 @@ import { Product } from '@/types';
 import { normalizeProduct } from '@/lib/product-utils';
 import { getApiBaseUrl } from '@/lib/api-utils';
 import { fetchJsonWithRetry } from '@/lib/fetch-with-retry';
+import type { Metadata } from 'next';
 
 interface LocaleProductsPageProps {
   params: {
@@ -11,6 +12,25 @@ interface LocaleProductsPageProps {
   searchParams?: {
     category?: string;
     page?: string;
+  };
+}
+
+export async function generateMetadata({ params }: LocaleProductsPageProps): Promise<Metadata> {
+  const { locale } = params;
+  const validLocale = (locale === 'zh' || locale === 'ar' || locale === 'en') ? locale : 'zh';
+  const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://banda-chao-frontend.onrender.com';
+
+  const titles = {
+    zh: '发现好物 — Banda Chao 商品',
+    ar: 'Banda Chao - المنتجات',
+    en: 'Banda Chao - Products',
+  };
+
+  return {
+    title: titles[validLocale],
+    alternates: {
+      canonical: `${baseUrl}/${validLocale}/products`,
+    },
   };
 }
 

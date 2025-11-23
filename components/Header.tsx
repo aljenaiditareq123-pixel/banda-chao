@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCart } from '@/contexts/CartContext';
 import NotificationsBell from '@/components/notifications/NotificationsBell';
+import { setPreferredLocale } from '@/lib/cookies';
 
 export default function Header() {
   const router = useRouter();
@@ -77,6 +78,8 @@ export default function Header() {
               <button
                 onClick={() => {
                   setLanguage('zh');
+                  // Set cookie preference
+                  setPreferredLocale('zh');
                   // Preserve current route when switching language
                   const currentPath = window.location.pathname;
                   const newPath = currentPath.replace(/^\/(zh|ar|en)/, '/zh') || '/zh';
@@ -97,6 +100,8 @@ export default function Header() {
               <button
                 onClick={() => {
                   setLanguage('ar');
+                  // Set cookie preference
+                  setPreferredLocale('ar');
                   // Preserve current route when switching language
                   const currentPath = window.location.pathname;
                   const newPath = currentPath.replace(/^\/(zh|ar|en)/, '/ar') || '/ar';
@@ -117,6 +122,8 @@ export default function Header() {
               <button
                 onClick={() => {
                   setLanguage('en');
+                  // Set cookie preference
+                  setPreferredLocale('en');
                   // Preserve current route when switching language
                   const currentPath = window.location.pathname;
                   const newPath = currentPath.replace(/^\/(zh|ar|en)/, '/en') || '/en';
@@ -342,6 +349,7 @@ export default function Header() {
                     <button
                       onClick={() => {
                         setLanguage('zh');
+                        setPreferredLocale('zh');
                         const currentPath = window.location.pathname;
                         const newPath = currentPath.replace(/^\/(zh|ar|en)/, '/zh') || '/zh';
                         if (currentPath !== newPath) {
@@ -361,6 +369,7 @@ export default function Header() {
                     <button
                       onClick={() => {
                         setLanguage('ar');
+                        setPreferredLocale('ar');
                         const currentPath = window.location.pathname;
                         const newPath = currentPath.replace(/^\/(zh|ar|en)/, '/ar') || '/ar';
                         if (currentPath !== newPath) {
@@ -380,6 +389,7 @@ export default function Header() {
                     <button
                       onClick={() => {
                         setLanguage('en');
+                        setPreferredLocale('en');
                         const currentPath = window.location.pathname;
                         const newPath = currentPath.replace(/^\/(zh|ar|en)/, '/en') || '/en';
                         if (currentPath !== newPath) {

@@ -12,6 +12,25 @@ interface LanguageContextType {
 
 export const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
+/**
+ * Translation System Structure
+ * 
+ * This file contains all UI translations for Banda Chao in three languages:
+ * - zh: Simplified Chinese (简体中文) - for mainland China users
+ * - ar: Arabic (العربية) - for Arabic-speaking users
+ * - en: English - default/fallback language
+ * 
+ * Usage:
+ * - Use `useLanguage()` hook to access translations
+ * - Call `t('key')` to get translated string
+ * - Founder Dashboard pages use hardcoded Arabic strings (not from this translation system)
+ * 
+ * Adding new keys:
+ * 1. Add the key to all three language objects (zh, ar, en)
+ * 2. Use descriptive, camelCase keys like 'productDetailAddToCart'
+ * 3. Keep translations natural and context-appropriate
+ */
+
 // Translations
 const translations: Record<Language, Record<string, string>> = {
   zh: {
@@ -73,14 +92,15 @@ const translations: Record<Language, Record<string, string>> = {
     'terms': '使用条款',
     'privacy': '隐私政策',
     'homeHeroHeadline': 'Banda Chao —— 全球手作人的温暖之家',
-    'homeHeroDescription': '在 Banda Chao，来自中国、阿拉伯世界和世界各地的手作人\n都能把自己的原创好物，带给真正懂它的买家。\n这里有公平透明的交易环境，温暖友好的社区氛围，\n还有智能的 AI 熊猫助手一路相伴，\n让每一件作品都被看见，让每一位匠人都被尊重。',
+    'homeHeroDescription': '在 Banda Chao，来自中国、阿拉伯地区和世界各地的手作人，都能将原创好物带给真正懂得欣赏的买家。这里有公平透明的交易环境、温暖友好的社区氛围，还有智能 AI 熊猫助手一路相伴。让每一件作品都被看见，让每一位匠人都被尊重。',
     'homeHeroTitle': 'Banda Chao —— 全球手作人的温暖之家',
-    'homeHeroCTA': '探索好物',
-    'watchVideos': '观看视频',
+    'homeHeroCTA': '开始逛逛',
+    'watchVideos': '开始逛逛',
     'featuredMakers': '本周精选匠人',
     'featuredProducts': '社区最新上架',
     'featuredVideos': '精选视频',
     'viewAll': '查看更多',
+    'viewAllMakers': '查看更多手作人',
     'founderSectionTitle': '创始人控制中心',
     'founderSectionDescription': '为创始人：6个专业AI助手帮助您进行战略决策、技术、安全、商务、内容和物流。',
     'goToFounderConsole': '前往创始人控制台',
@@ -168,11 +188,11 @@ const translations: Record<Language, Record<string, string>> = {
     'totalViews': '总浏览量',
     'totalLikes': '总点赞数',
     'pillar1Title': '对手作人更公平',
-    'pillar1Body': '透明合理的收费、简单易用的定价工具，直连全球买家，让每一件作品的价值都被真正认可。',
+    'pillar1Body': '透明合理的收费，让每一件作品的价值都被真实认可。',
     'pillar2Title': '让买家更安心',
-    'pillar2Body': '实名认证的手作人、清晰透明的物流信息，以及完善的买家保障，让每一次跨境购物都值得信赖。',
+    'pillar2Body': '认证手作人、真实物流信息、多重保障，让每次购买都值得信赖。',
     'pillar3Title': 'AI 熊猫与你同行',
-    'pillar3Body': '贴心的 AI 熊猫助手，为创始人、手作人和买家提供多语言翻译、运营建议和成长陪伴，让每一步都更轻松。',
+    'pillar3Body': '贴心的 AI 熊猫助手，为创作者和买家提供语言翻译、运营建议和成长陪伴。',
     'founderCommandCenter': '创始人控制中心',
     'founderHeroDescription': '在 Banda Chao，您拥有6个专业AI助手，帮助您处理：',
     'founderAssistantsList': '战略决策、技术、安全、商务、内容和物流',
@@ -230,7 +250,7 @@ const translations: Record<Language, Record<string, string>> = {
     'howItWorksStep3Title': '3. 支持可持续创作',
     'howItWorksStep3Description': '购买带着温度的作品，让手作人能持续创作更多美好的事物。',
     'ctaHeadline': '你也是手作人吗？加入我们，一起创造温暖',
-    'ctaButtonText': '了解如何加入',
+    'ctaButtonText': '我要开店',
     'productsPageTitle': '全部商品',
     'productsFilterCategoriesTitle': '分类',
     'productsFilterCategoryApparel': '服饰',
@@ -248,6 +268,13 @@ const translations: Record<Language, Record<string, string>> = {
     'productDetailPlaceholderPrice': '¥329',
     'productDetailQuantity': '数量',
     'productDetailAddToCart': '加入购物车',
+    'buyNow': '立即购买',
+    'shipping': '配送',
+    'productDescription': '商品详情',
+    'similarProducts': '猜你喜欢',
+    'aboutThisMaker': '关于这位手作人',
+    'moreFromThisMaker': '更多来自这位手作人',
+    'profile': '个人中心',
     'itemsCount': '{count} 件商品',
     'loadingFounderConsole': '正在加载创始人控制台...',
     'loadingNotifications': '加载通知中...',
@@ -305,8 +332,8 @@ const translations: Record<Language, Record<string, string>> = {
     'registerPasswordTooShort': '密码至少需要6个字符',
     'registerEmailInvalid': '请输入有效的电子邮箱地址',
     'registerNameTooShort': '姓名至少需要2个字符',
-    'registerError': '注册出错了，请稍后再试',
-    'registerGoogleError': 'Google 登录失败，请重试',
+    'registerError': '注册遇到问题，请稍后再试',
+    'registerGoogleError': 'Google 登录遇到问题，请重试',
     'registerOr': '或',
     'registerGoogleButton': '使用Google注册',
     'loginTitle': '登录',
@@ -319,7 +346,7 @@ const translations: Record<Language, Record<string, string>> = {
     'loginButtonLoading': '登录中...',
     'loginGoogleButton': '使用Google登录',
     'loginOr': '或',
-    'loginError': '登录出错了，请检查邮箱和密码后重试',
+    'loginError': '登录遇到问题，请检查邮箱和密码后重试',
     'loginSuccess': '登录成功！正在跳转...',
     'myOrders': '我的订单',
     'myOrdersSubtitle': '查看所有订单并跟踪状态',
@@ -452,6 +479,7 @@ const translations: Record<Language, Record<string, string>> = {
     'featuredProducts': 'منتجات مميزة',
     'featuredVideos': 'فيديوهات مميزة',
     'viewAll': 'عرض الكل',
+    'viewAllMakers': 'عرض جميع الحرفيين',
     'founderSectionTitle': 'مركز القيادة للمؤسس',
     'founderSectionDescription': 'للمؤسس: 6 مساعدين ذكاء اصطناعي متخصصين يساعدونك في القرارات الاستراتيجية، التقنية، الأمان، التجارة، المحتوى، واللوجستيات',
     'goToFounderConsole': 'اذهب إلى مركز المؤسس',
@@ -653,6 +681,13 @@ const translations: Record<Language, Record<string, string>> = {
     'productDetailPlaceholderPrice': '329 درهم',
     'productDetailQuantity': 'الكمية',
     'productDetailAddToCart': 'أضف إلى السلة',
+    'buyNow': 'اشتري الآن',
+    'shipping': 'الشحن',
+    'productDescription': 'تفاصيل المنتج',
+    'similarProducts': 'منتجات مشابهة',
+    'aboutThisMaker': 'حول هذا الحرفي',
+    'moreFromThisMaker': 'المزيد من هذا الحرفي',
+    'profile': 'الملف الشخصي',
     'productDetailStoryTitle': 'قصة المنتج',
     'productDetailStoryParagraph1': 'هذا المنتج من صنع الحرفية ليلى في جبال يونّان، حيث تمزج بين فن الخيزران التقليدي واللمسات المعاصرة لتقديم قطعة مميزة للمنزل.',
     'productDetailStoryParagraph2': 'تبدأ عملية التصنيع باختيار أعواد الخيزران بعناية، ثم تنظيفها وتجفيفها ومعالجتها بالبخار للحفاظ على متانتها وجمالها الطبيعي.',
@@ -775,6 +810,7 @@ const translations: Record<Language, Record<string, string>> = {
     'featuredProducts': 'Featured Products',
     'featuredVideos': 'Featured Videos',
     'viewAll': 'View All',
+    'viewAllMakers': 'View All Makers',
     'founderCommandCenter': 'Founder Command Center',
     'founderHeroDescription': 'At Banda Chao, you have 6 specialized AI assistants helping you with:',
     'founderAssistantsList': 'Strategic decisions, technology, security, commerce, content, and logistics',
@@ -967,6 +1003,13 @@ const translations: Record<Language, Record<string, string>> = {
     'productDetailPlaceholderPrice': '$129',
     'productDetailQuantity': 'Quantity',
     'productDetailAddToCart': 'Add to Cart',
+    'buyNow': 'Buy Now',
+    'shipping': 'Shipping',
+    'productDescription': 'Product Details',
+    'similarProducts': 'Similar Products',
+    'aboutThisMaker': 'About this maker',
+    'moreFromThisMaker': 'More from this maker',
+    'profile': 'Profile',
     'productDetailStoryTitle': 'Product Story',
     'productDetailStoryParagraph1': 'Crafted by Lina in the Yunnan mountains, this piece blends traditional bamboo weaving with a modern silhouette to warm any room.',
     'productDetailStoryParagraph2': 'Each strand of bamboo is carefully selected, cleaned, and steamed to retain its flexibility and natural hue before being woven by hand.',

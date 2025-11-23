@@ -145,11 +145,30 @@ export async function fetchJsonWithRetry(
   }
 
   // Parse JSON for successful responses
+  // First check if response is actually JSON (not HTML)
+  const contentType = response.headers.get('content-type') || '';
+  const text = await response.text();
+  
+  // If response is HTML (common for 404 pages or errors), return empty data
+  if (text.includes('<!DOCTYPE') || text.includes('<html') || text.includes('<!doctype')) {
+    console.warn(`[fetchJsonWithRetry] Got HTML response instead of JSON for ${url}. Returning empty data.`);
+    return [];
+  }
+  
+  // If content-type doesn't indicate JSON, check text content
+  if (!contentType.includes('application/json') && !contentType.includes('text/json')) {
+    // Try to parse anyway, but log a warning
+    if (process.env.NODE_ENV === 'development') {
+      console.warn(`[fetchJsonWithRetry] Content-Type is "${contentType}", not JSON. Attempting to parse anyway.`);
+    }
+  }
+  
   try {
-    return await response.json();
+    return JSON.parse(text);
   } catch (error) {
-    console.error('[fetchJsonWithRetry] Failed to parse JSON:', error);
-    return { data: [], error: 'Invalid JSON response' };
+    console.error('[fetchJsonWithRetry] Failed to parse JSON response:', error);
+    // Return empty array instead of object with error for consistency with homepage expectations
+    return [];
   }
 }
 

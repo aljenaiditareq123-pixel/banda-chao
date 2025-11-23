@@ -15,8 +15,16 @@ import { usePathname, useSearchParams } from 'next/navigation';
 function AnalyticsContent() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  
+  // Skip Google Analytics for Chinese pages to avoid blocking Baidu crawlers
+  const isZhPage = pathname?.startsWith('/zh');
 
   useEffect(() => {
+    // Skip Google resources for Chinese pages
+    if (isZhPage) {
+      return;
+    }
+    
     // Track page view
     const url = pathname + (searchParams?.toString() ? `?${searchParams.toString()}` : '');
     
@@ -35,7 +43,7 @@ function AnalyticsContent() {
       // import { track } from '@vercel/analytics';
       // track('page_view', { path: url });
     }
-  }, [pathname, searchParams]);
+  }, [pathname, searchParams, isZhPage]);
 
   // Track custom events
   const trackEvent = (eventName: string, properties?: Record<string, any>) => {

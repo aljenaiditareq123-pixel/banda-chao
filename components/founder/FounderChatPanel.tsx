@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { getApiBaseUrl } from '@/lib/api-utils';
 import { apiCall, handleApiError } from '@/lib/api-error-handler';
+import { useAuth } from '@/contexts/AuthContext';
 
 import {
   type FounderOperatingMode,
@@ -118,7 +119,8 @@ const assistantsMap: Record<AssistantId, AssistantProfile> = {
  * - Send button
  * - Loading states
  */
-export default function FounderChatPanel({ assistantId, currentMode: externalMode }: FounderChatPanelProps) {
+export default function FounderChatPanel({ assistantId, currentMode: externalMode, suggestionText, onSuggestionUsed }: FounderChatPanelProps) {
+  const { token } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState('');
   const [loading, setLoading] = useState(false);
@@ -218,6 +220,9 @@ export default function FounderChatPanel({ assistantId, currentMode: externalMod
       const apiBaseUrl = getApiBaseUrl();
       const data = await apiCall(`${apiBaseUrl}/founder/sessions?limit=5`, {
         method: 'GET',
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
       });
       
       if (data.success) {
@@ -239,6 +244,10 @@ export default function FounderChatPanel({ assistantId, currentMode: externalMod
       
       await apiCall(`${apiBaseUrl}/founder/sessions`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
         body: JSON.stringify({
           title,
           summary: sessionSummary,
@@ -272,6 +281,19 @@ export default function FounderChatPanel({ assistantId, currentMode: externalMod
       }
     }
   }, [assistantId, assistant, loadChatHistory]);
+
+  // Handle suggestion text from parent component
+  useEffect(() => {
+    if (suggestionText && suggestionText.trim()) {
+      setDraft(suggestionText);
+      if (onSuggestionUsed) {
+        // Clear after a short delay to allow the text to be set
+        setTimeout(() => {
+          onSuggestionUsed();
+        }, 100);
+      }
+    }
+  }, [suggestionText, onSuggestionUsed]);
 
   // Save messages to localStorage whenever messages change
   useEffect(() => {
@@ -386,6 +408,10 @@ export default function FounderChatPanel({ assistantId, currentMode: externalMod
         
         const data = await apiCall(`${apiBaseUrl}/ai/founder`, {
           method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
           body: JSON.stringify({
             message: textToSend,
             context: {
@@ -411,11 +437,15 @@ export default function FounderChatPanel({ assistantId, currentMode: externalMod
           setSessionSummary(data.data.sessionSummary);
         }
       } else {
-        // Use regular assistant endpoint for other assistants
+        // Use regular assistant endpoint (but always use 'founder' for now)
         const data = await apiCall(`${apiBaseUrl}/ai/assistant`, {
           method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
           body: JSON.stringify({
-            assistant: assistantId,
+            assistant: 'founder', // Always use founder for now
             message: textToSend,
           }),
         });
@@ -435,12 +465,21 @@ export default function FounderChatPanel({ assistantId, currentMode: externalMod
       // Enhanced error handling with better typing
       let userFriendlyMessage = 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.';
       
-      if (error instanceof Error) {
+      // Check for 401 Unauthorized specifically
+      if (error && typeof error === 'object' && 'status' in error && error.status === 401) {
+        userFriendlyMessage = 'يبدو أن جلستك انتهت، من فضلك سجّل الدخول مرة أخرى ثم جرّب مجدداً.';
+      } else if (error instanceof Error) {
         userFriendlyMessage = handleApiError(error);
       } else if (typeof error === 'string') {
         userFriendlyMessage = error;
       } else if (error && typeof error === 'object' && 'message' in error) {
-        userFriendlyMessage = handleApiError(error as Error);
+        // Check if error message indicates unauthorized
+        const errorMsg = String((error as any).message || '');
+        if (errorMsg.includes('401') || errorMsg.includes('Unauthorized') || errorMsg.includes('token')) {
+          userFriendlyMessage = 'يبدو أن جلستك انتهت، من فضلك سجّل الدخول مرة أخرى ثم جرّب مجدداً.';
+        } else {
+          userFriendlyMessage = handleApiError(error as Error);
+        }
       }
       
       const errorMessage: ChatMessage = {
@@ -514,6 +553,18 @@ export default function FounderChatPanel({ assistantId, currentMode: externalMod
       </div>
 
       {/* Note: Sessions panel and slash commands are now handled by FounderAssistantLayout */}
+
+      {/* China Mode Info Note */}
+      {currentMode === 'CHINA_MODE' && (
+        <div className="px-6 pt-4">
+          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+            <p className="text-sm text-amber-900 text-right rtl:text-left">
+              <span className="font-semibold">وضع الصين مفعّل الآن:</span>{' '}
+              تحدث بالعربية، وسأساعدك في تحليل السوق الصيني أو كتابة نصوص بالصينية المبسّطة عند الطلب.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Input Form - Luxury Gulf Founder Style */}
       <form onSubmit={handleSubmit} className="p-6 border-t border-slate-200 bg-white rounded-b-3xl">

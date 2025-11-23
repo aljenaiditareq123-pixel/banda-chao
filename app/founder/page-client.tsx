@@ -19,7 +19,7 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
  * - Top Bar: Founder identity, time, status
  * - KPI Row: 4 primary KPIs (Active Makers, Revenue, Orders, AI Insights)
  * - Secondary Panels: Platform Health, Maker Activity, Content Performance
- * - AI Advisors Section: 6 Pandas as strategic advisors
+ * - AI Advisors Section: Founder Panda (single advisor)
  */
 export default function FounderPageClient() {
   const { user } = useAuth();

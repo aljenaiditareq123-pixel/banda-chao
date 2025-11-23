@@ -2,10 +2,30 @@ import VideosPageClient from './page-client';
 import { Video } from '@/types';
 import { getApiBaseUrl } from '@/lib/api-utils';
 import { fetchJsonWithRetry } from '@/lib/fetch-with-retry';
+import type { Metadata } from 'next';
 
 interface LocaleVideosPageProps {
   params: {
     locale: string;
+  };
+}
+
+export async function generateMetadata({ params }: LocaleVideosPageProps): Promise<Metadata> {
+  const { locale } = params;
+  const validLocale = (locale === 'zh' || locale === 'ar' || locale === 'en') ? locale : 'zh';
+  const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://banda-chao-frontend.onrender.com';
+
+  const titles = {
+    zh: '手作视频 — Banda Chao',
+    ar: 'Banda Chao - الفيديوهات',
+    en: 'Banda Chao - Videos',
+  };
+
+  return {
+    title: titles[validLocale],
+    alternates: {
+      canonical: `${baseUrl}/${validLocale}/videos`,
+    },
   };
 }
 
