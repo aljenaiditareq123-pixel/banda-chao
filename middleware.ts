@@ -208,6 +208,12 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next();
     }
     
+    // Special handling: product detail pages (/locale/products/[productId])
+    // Always allow these to pass through without redirect - they should work for all locales
+    if (pathname.match(/^\/(ar|zh|en)\/products\/[^\/]+$/)) {
+      return NextResponse.next();
+    }
+    
     // Check cookie preference
     const cookieLocale = getLocaleFromCookie(request);
     
