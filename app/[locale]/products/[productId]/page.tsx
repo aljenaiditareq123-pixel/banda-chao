@@ -25,12 +25,14 @@ async function fetchProduct(productId: string): Promise<Product | null> {
       retryDelay: 1000,
     });
 
+    // Backend returns product object directly (not wrapped in { data: {...} })
     // If error or not found
-    if (json.error || !json.data) {
+    if (json.error || !json.id) {
       return null;
     }
 
-    const item = json.data ?? json;
+    // Backend returns product object directly
+    const item = json;
     return normalizeProduct(item);
   } catch (error) {
     console.error('[ProductDetailPage] Failed to load product from backend:', error);

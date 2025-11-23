@@ -26,7 +26,8 @@ async function fetchAllMakers(search?: string): Promise<Maker[]> {
       retryDelay: 1000,
     });
 
-    const items = Array.isArray(json.data) ? json.data : [];
+    // Backend returns array directly (not wrapped in { data: [...] })
+    const items = Array.isArray(json) ? json : (Array.isArray(json.data) ? json.data : []);
     return items.map(normalizeMaker);
   } catch (error) {
     console.error('[MakersPage] Failed to load makers from backend:', error);

@@ -89,7 +89,8 @@ router.get('/', async (req: Request, res: Response) => {
         userLiked: likedCommentIds.has(comment.id)
       }));
 
-      return res.json({ data: commentsWithLikes });
+      // Return array directly for consistency with other endpoints
+      return res.json(commentsWithLikes);
     }
 
     // If not authenticated, return comments without userLiked
@@ -108,7 +109,8 @@ router.get('/', async (req: Request, res: Response) => {
       }
     }));
 
-    res.json({ data: commentsWithoutLikes });
+    // Return array directly for consistency with other endpoints
+    res.json(commentsWithoutLikes);
   } catch (error: any) {
     console.error('Get comments error:', error);
     res.status(500).json({ error: 'Failed to fetch comments', message: error.message });

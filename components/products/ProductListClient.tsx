@@ -112,10 +112,10 @@ export default function ProductListClient({ locale, products: initialProducts }:
 
                   <p className="text-sm text-gray-500">
                     {loading ? (
-                      <span>Loading...</span>
+                      <span>{t('loading') || 'Loading...'}</span>
                     ) : (
                       <span>
-                        {filteredProducts.length} items
+                        {t('itemsCount')?.replace('{count}', filteredProducts.length.toString()) || `${filteredProducts.length} items`}
                       </span>
                     )}
                   </p>
@@ -179,7 +179,7 @@ export default function ProductListClient({ locale, products: initialProducts }:
                       {paginatedProducts.length > 0 ? (
                         paginatedProducts.map((product) => (
                           <GridItem key={product.id}>
-                            <ProductCard product={product} href={`/${locale}/products/${product.id}`} />
+                            <ProductCard product={product} href={`/${locale}/products/${product.id}`} locale={locale} />
                           </GridItem>
                         ))
                       ) : (
@@ -188,8 +188,8 @@ export default function ProductListClient({ locale, products: initialProducts }:
                             icon="📦"
                             title={
                               filters.categories.length === 1
-                                ? `${t('noContent') || '暂无内容'} - ${filters.categories[0]}分类的商品`
-                                : t('noContent') || '暂无内容'
+                                ? t('noProductsInCategory') || t('noContent') || 'No products in this category'
+                                : t('noContent') || 'No products available'
                             }
                             description={
                               filters.categories.length === 1

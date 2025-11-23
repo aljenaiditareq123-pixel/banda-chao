@@ -91,9 +91,11 @@ export const authenticateToken = (
           return res.status(401).json({ error: 'Token payload is invalid' });
         }
 
-        // Safely assign userId and email from decoded token
+        // Safely assign userId, email, and role from decoded token
         req.userId = decoded.userId;
         req.userEmail = decoded.email || undefined;
+        // Store role from JWT token for quick access in requireFounder middleware
+        (req as any).userRole = decoded.role || undefined;
         
         // Only call next() if userId is properly set
         if (req.userId) {

@@ -77,13 +77,21 @@ function LoginForm() {
 
     // Validation
     if (!email.trim()) {
-      setError('يرجى إدخال البريد الإلكتروني');
+      setError('Please enter your email address');
+      setLoading(false);
+      return;
+    }
+
+    // Basic email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      setError('Please enter a valid email address');
       setLoading(false);
       return;
     }
 
     if (!password.trim()) {
-      setError('يرجى إدخال كلمة المرور');
+      setError('Please enter your password');
       setLoading(false);
       return;
     }
@@ -125,10 +133,21 @@ function LoginForm() {
       // Better error handling for different error types
       let errorMessage = 'فشل تسجيل الدخول، يرجى المحاولة مرة أخرى';
       
+      // Get API base URL for debugging
+      const apiBaseUrl = getApiBaseUrl();
+      const loginUrl = `${apiBaseUrl}/auth/login`;
+      
       if (error.response) {
         const status = error.response.status;
         if (status === 404) {
-          errorMessage = 'خطأ في الاتصال بالخادم. يرجى التحقق من إعدادات الاتصال.';
+          errorMessage = `خطأ في الاتصال بالخادم (404 - Not Found). 
+            يرجى التحقق من أن الخادم يعمل وأن رابط API صحيح. 
+            رابط API الحالي: ${loginUrl}`;
+          console.error('[Login] 404 Error - API endpoint not found:', {
+            url: loginUrl,
+            apiBaseUrl,
+            error: error.response.data
+          });
         } else if (status === 401) {
           errorMessage = error.response.data?.error || 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
         } else if (status === 500) {
@@ -139,7 +158,13 @@ function LoginForm() {
       } else if (error.message) {
         errorMessage = error.message;
       } else if (error.request) {
-        errorMessage = 'لا يمكن الاتصال بالخادم. يرجى التحقق من اتصالك بالإنترنت.';
+        errorMessage = `لا يمكن الاتصال بالخادم. يرجى التحقق من اتصالك بالإنترنت.
+          رابط API: ${loginUrl}`;
+        console.error('[Login] Network error - cannot reach server:', {
+          url: loginUrl,
+          apiBaseUrl,
+          error: error.request
+        });
       }
       
       setError(errorMessage);

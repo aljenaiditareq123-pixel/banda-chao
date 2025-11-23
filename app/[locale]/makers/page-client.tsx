@@ -53,7 +53,8 @@ export default function MakersPageClient({ locale, initialMakers, initialSearch 
     setError(null);
     try {
       const response = await makersAPI.getMakers({ search: query || undefined });
-      const items = Array.isArray(response.data?.data) ? response.data.data : [];
+      // Backend returns array directly (axios wraps it in response.data)
+      const items = Array.isArray(response.data) ? response.data : [];
       const normalized = items.map((item: any) => {
         // Use normalizeMaker helper
         const maker: Maker = {
@@ -75,8 +76,8 @@ export default function MakersPageClient({ locale, initialMakers, initialSearch 
       });
       setMakers(normalized);
     } catch (err: any) {
-      console.error('Failed to search makers:', err);
-      setError('فشل في البحث. يرجى المحاولة مرة أخرى.');
+      console.error('[MakersPage] Failed to search makers:', err);
+      setError(t('unexpectedError') || 'فشل في البحث. يرجى المحاولة مرة أخرى.');
     } finally {
       setIsLoading(false);
     }

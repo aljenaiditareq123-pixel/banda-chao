@@ -80,6 +80,21 @@ function RegisterForm() {
     setError(null);
     setSuccess(false);
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      setError(t('registerEmailInvalid') || 'Please enter a valid email address');
+      setLoading(false);
+      return;
+    }
+
+    // Validate name (if provided)
+    if (name && name.trim().length < 2) {
+      setError(t('registerNameTooShort') || 'Name must be at least 2 characters');
+      setLoading(false);
+      return;
+    }
+
     // Validate password match
     if (password !== confirmPassword) {
       setError(t('registerPasswordMismatch'));

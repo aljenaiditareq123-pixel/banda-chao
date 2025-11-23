@@ -154,18 +154,21 @@ export default function ProfilePageClient({ locale, userId, initialProfile }: Pr
         fetchJsonWithRetry(`${apiBaseUrl}/users/${userId}/followers`, {
           maxRetries: 2,
           retryDelay: 1000,
-        }).catch(() => ({ data: [], total: 0 })),
+        }).catch(() => []),
         fetchJsonWithRetry(`${apiBaseUrl}/users/${userId}/following`, {
           maxRetries: 2,
           retryDelay: 1000,
-        }).catch(() => ({ data: [], total: 0 })),
+        }).catch(() => []),
       ]);
 
-      setFollowersCount(followersRes.total || followersRes.data?.length || 0);
-      setFollowingCount(followingRes.total || followingRes.data?.length || 0);
+      // Backend returns array directly (fetchJsonWithRetry returns JSON directly)
+      const followers = Array.isArray(followersRes) ? followersRes : (followersRes.data || []);
+      const following = Array.isArray(followingRes) ? followingRes : (followingRes.data || []);
+      
+      setFollowersCount(followers.length);
+      setFollowingCount(following.length);
 
       // Check if current user is following this user
-      const followers = followersRes.data || [];
       const isCurrentUserFollowing = followers.some((f: any) => f.id === currentUser.id);
       setIsFollowing(isCurrentUserFollowing);
     } catch (error) {

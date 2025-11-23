@@ -63,8 +63,8 @@ export default function Header() {
               </>
             )}
             {user?.role === "FOUNDER" && (
-              <Link href="/founder/assistant" className="text-primary-600 hover:text-primary-700 transition font-semibold" aria-label="المؤسس">
-                المؤسس
+              <Link href="/founder/assistant" className="text-primary-600 hover:text-primary-700 transition font-semibold" aria-label={t('founderConsole') || 'Founder Console'}>
+                {t('founderConsole') || 'المؤسس'}
               </Link>
             )}
           </nav>
@@ -179,8 +179,8 @@ export default function Header() {
                   )}
                   <span className="hidden lg:inline text-sm font-medium">{user.name || t('myAccount')}</span>
                   {user.role === 'FOUNDER' && (
-                    <span className="ml-2 rounded-full bg-emerald-600 px-2 py-1 text-xs text-white font-semibold" title="Founder Account">
-                      Founder
+                    <span className="ml-2 rounded-full bg-emerald-600 px-2 py-1 text-xs text-white font-semibold" title={t('founderAccount') || 'Founder Account'}>
+                      {t('founder') || 'Founder'}
                     </span>
                   )}
                 </Link>
@@ -340,7 +340,15 @@ export default function Header() {
                   <span className="text-sm font-medium text-gray-700">{t('language') || 'اللغة'}:</span>
                   <div className="flex items-center space-x-1">
                     <button
-                      onClick={() => setLanguage('zh')}
+                      onClick={() => {
+                        setLanguage('zh');
+                        const currentPath = window.location.pathname;
+                        const newPath = currentPath.replace(/^\/(zh|ar|en)/, '/zh') || '/zh';
+                        if (currentPath !== newPath) {
+                          router.push(newPath);
+                          setMobileMenuOpen(false);
+                        }
+                      }}
                       className={`px-3 py-1 text-xs rounded transition ${
                         language === 'zh'
                           ? 'bg-primary-600 text-white'

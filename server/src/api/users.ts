@@ -593,10 +593,8 @@ router.get('/:id/followers', authenticateToken, async (req: Request, res: Respon
 
     const followers = follows.map((follow) => follow.follower);
 
-    res.json({
-      data: followers,
-      total: followers.length,
-    });
+    // Return array directly for consistency with other endpoints
+    res.json(followers);
   } catch (error: any) {
     console.error('[Follow] Error:', error);
     res.status(500).json({
@@ -637,10 +635,8 @@ router.get('/:id/following', authenticateToken, async (req: Request, res: Respon
 
     const following = follows.map((follow) => follow.following);
 
-    res.json({
-      data: following,
-      total: following.length,
-    });
+    // Return array directly for consistency with other endpoints
+    res.json(following);
   } catch (error: any) {
     console.error('[Follow] Error:', error);
     res.status(500).json({

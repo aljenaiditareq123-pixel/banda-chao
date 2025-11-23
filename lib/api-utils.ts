@@ -62,7 +62,7 @@ export function getApiBaseUrl(): string {
     return 'http://localhost:3001/api/v1';
   }
 
-  return 'https://banda-chao-backend.onrender.com/api/v1';
+  return 'https://banda-chao.onrender.com/api/v1';
 }
 
 /**

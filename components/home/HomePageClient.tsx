@@ -215,7 +215,7 @@ export default function HomePageClient({ locale, products, makers, videos }: Hom
           <Grid columns={{ base: 1, sm: 2, md: 3, lg: 4 }} gap="gap-6">
             {products.map((product) => (
               <GridItem key={product.id}>
-                <ProductCard product={product} href={`/${locale}/products/${product.id}`} />
+                <ProductCard product={product} href={`/${locale}/products/${product.id}`} locale={locale} />
               </GridItem>
             ))}
           </Grid>

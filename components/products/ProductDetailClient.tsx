@@ -206,7 +206,7 @@ export default function ProductDetailClient({ locale, product }: ProductDetailCl
                 </p>
               ))}
               <p className="text-xs text-gray-400">
-                Product ID: {product.id}
+                {t('productId') || 'Product ID'}: {product.id}
               </p>
             </div>
           </div>

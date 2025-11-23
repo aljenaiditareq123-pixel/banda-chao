@@ -5,19 +5,9 @@
 
 import { Router, Request, Response } from 'express';
 import { body, validationResult } from 'express-validator';
-import { authenticateToken } from '../middleware/auth';
-import { requireFounder } from '../middleware/requireFounder';
+import { authenticateFounder, AuthRequest } from '../middleware/founderAuth';
 import { founderAIRateLimit } from '../middleware/rateLimiter';
 import { prisma } from '../utils/prisma';
-
-// Extend Request type to include user property
-interface AuthenticatedRequest extends Request {
-  user?: {
-    id: string;
-    role: string;
-    email?: string;
-  };
-}
 
 const router = Router();
 
@@ -27,8 +17,7 @@ const router = Router();
  */
 router.post('/',
   founderAIRateLimit,
-  authenticateToken,
-  requireFounder,
+  authenticateFounder,
   [
     body('title')
       .isString()
@@ -47,7 +36,7 @@ router.post('/',
       .isIn(['STRATEGY_MODE', 'PRODUCT_MODE', 'TECH_MODE', 'MARKETING_MODE', 'CHINA_MODE'])
       .withMessage('Invalid operating mode'),
   ],
-  async (req: AuthenticatedRequest, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
     try {
       // Check validation results
       const errors = validationResult(req);
@@ -59,10 +48,12 @@ router.post('/',
       }
 
       const { title, summary, tasks, mode } = req.body;
-      const founderId = req.user?.id;
+      const founderId = req.userId; // Use userId from AuthRequest after authenticateFounder
 
       if (!founderId) {
+        console.warn('[FounderSessions] POST - No userId found', { path: req.path });
         return res.status(401).json({
+          message: 'Unauthorized: founder access only',
           error: 'Authentication required'
         });
       }
@@ -107,16 +98,17 @@ router.post('/',
  * Get founder session summaries (paginated)
  */
 router.get('/',
-  authenticateToken,
-  requireFounder,
-  async (req: AuthenticatedRequest, res: Response) => {
+  authenticateFounder,
+  async (req: AuthRequest, res: Response) => {
     try {
-      const founderId = req.user?.id;
+      const founderId = req.userId; // Use userId from AuthRequest after authenticateFounder
       const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
       const offset = parseInt(req.query.offset as string) || 0;
 
       if (!founderId) {
+        console.warn('[FounderSessions] GET - No userId found', { path: req.path });
         return res.status(401).json({
+          message: 'Unauthorized: founder access only',
           error: 'Authentication required'
         });
       }
@@ -182,15 +174,16 @@ router.get('/',
  * Get specific founder session
  */
 router.get('/:id',
-  authenticateToken,
-  requireFounder,
-  async (req: AuthenticatedRequest, res: Response) => {
+  authenticateFounder,
+  async (req: AuthRequest, res: Response) => {
     try {
-      const founderId = req.user?.id;
+      const founderId = req.userId; // Use userId from AuthRequest after authenticateFounder
       const sessionId = req.params.id;
 
       if (!founderId) {
+        console.warn('[FounderSessions] GET /:id - No userId found', { path: req.path });
         return res.status(401).json({
+          message: 'Unauthorized: founder access only',
           error: 'Authentication required'
         });
       }
@@ -235,15 +228,16 @@ router.get('/:id',
  * Delete specific founder session
  */
 router.delete('/:id',
-  authenticateToken,
-  requireFounder,
-  async (req: AuthenticatedRequest, res: Response) => {
+  authenticateFounder,
+  async (req: AuthRequest, res: Response) => {
     try {
-      const founderId = req.user?.id;
+      const founderId = req.userId; // Use userId from AuthRequest after authenticateFounder
       const sessionId = req.params.id;
 
       if (!founderId) {
+        console.warn('[FounderSessions] DELETE /:id - No userId found', { path: req.path });
         return res.status(401).json({
+          message: 'Unauthorized: founder access only',
           error: 'Authentication required'
         });
       }

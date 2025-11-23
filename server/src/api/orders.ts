@@ -165,10 +165,8 @@ router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
       },
     });
 
-    res.json({
-      data: orders,
-      total: orders.length,
-    });
+    // Return array directly for consistency with other endpoints
+    res.json(orders);
   } catch (error: any) {
     console.error('Get orders error:', error);
     res.status(500).json({
@@ -219,9 +217,8 @@ router.get('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    res.json({
-      data: order,
-    });
+    // Return object directly for consistency with other endpoints
+    res.json(order);
   } catch (error: any) {
     console.error('Get order error:', error);
     res.status(500).json({

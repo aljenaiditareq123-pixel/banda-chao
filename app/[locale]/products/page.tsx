@@ -23,7 +23,8 @@ async function fetchAllProducts(): Promise<Product[]> {
       retryDelay: 1000,
     });
 
-    const items = Array.isArray(json.data) ? json.data : [];
+    // Backend returns array directly (not wrapped in { data: [...] })
+    const items = Array.isArray(json) ? json : (Array.isArray(json.data) ? json.data : []);
     return items.map(normalizeProduct);
   } catch (error) {
     console.error('[ProductListPage] Failed to load products from backend:', error);

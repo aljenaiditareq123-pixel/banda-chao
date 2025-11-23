@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useNotifications } from '@/contexts/NotificationsContext';
 import { notificationsAPI } from '@/lib/api';
@@ -22,35 +22,46 @@ const getNotificationIcon = (type: string) => {
   }
 };
 
-const formatTimeAgo = (dateString: string) => {
+const formatTimeAgo = (dateString: string, t: (key: string) => string, language: string) => {
   const date = new Date(dateString);
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
   if (diffInSeconds < 60) {
-    return 'الآن';
+    return t('justNow') || 'Just now';
   } else if (diffInSeconds < 3600) {
     const minutes = Math.floor(diffInSeconds / 60);
-    return `منذ ${minutes} دقيقة`;
+    return t('minutesAgo')?.replace('{minutes}', minutes.toString()) || `${minutes} minutes ago`;
   } else if (diffInSeconds < 86400) {
     const hours = Math.floor(diffInSeconds / 3600);
-    return `منذ ${hours} ساعة`;
+    return t('hoursAgo')?.replace('{hours}', hours.toString()) || `${hours} hours ago`;
   } else if (diffInSeconds < 604800) {
     const days = Math.floor(diffInSeconds / 86400);
-    return `منذ ${days} يوم`;
+    return t('daysAgo')?.replace('{days}', days.toString()) || `${days} days ago`;
   } else {
-    return date.toLocaleDateString('ar-SA', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
+    return date.toLocaleDateString(
+      language === 'ar' ? 'ar-SA' : language === 'zh' ? 'zh-CN' : 'en-US',
+      {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      }
+    );
   }
 };
 
 export default function NotificationsPage() {
   const router = useRouter();
-  const { language } = useLanguage();
+  const { language, t, setLanguage } = useLanguage();
   const { markAllAsRead, refreshUnreadCount } = useNotifications();
+  const params = useParams();
+  const locale = params.locale as string;
+
+  useEffect(() => {
+    if (locale === 'zh' || locale === 'ar' || locale === 'en') {
+      setLanguage(locale);
+    }
+  }, [locale, setLanguage]);
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -123,13 +134,13 @@ export default function NotificationsPage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">الإشعارات</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('notifications') || 'Notifications'}</h1>
           {notifications.length > 0 && (
             <button
               onClick={handleMarkAllAsRead}
               className="px-4 py-2 text-sm font-medium text-primary-600 hover:text-primary-700 bg-white border border-primary-200 rounded-lg hover:bg-primary-50 transition"
             >
-              تعليم الكل كمقروء
+              {t('markAllAsRead') || 'Mark all as read'}
             </button>
           )}
         </div>
@@ -137,16 +148,16 @@ export default function NotificationsPage() {
         {/* Stats */}
         {total > 0 && (
           <div className="mb-4 text-sm text-gray-600">
-            إجمالي الإشعارات: {total}
+            {t('totalNotifications')?.replace('{total}', total.toString()) || `Total notifications: ${total}`}
           </div>
         )}
 
         {/* Notifications List */}
         {isLoading && notifications.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">جاري التحميل...</div>
+          <div className="text-center py-12 text-gray-500">{t('loading') || 'Loading...'}</div>
         ) : notifications.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">لا توجد إشعارات</p>
+            <p className="text-gray-500 text-lg">{t('noNotifications') || 'No notifications'}</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -183,7 +194,7 @@ export default function NotificationsPage() {
                       <p className="text-sm text-gray-600 mt-1">{notification.body}</p>
                     )}
                     <p className="text-xs text-gray-400 mt-2">
-                      {formatTimeAgo(notification.createdAt)}
+                      {formatTimeAgo(notification.createdAt, t, language)}
                     </p>
                   </div>
                 </div>
@@ -200,7 +211,7 @@ export default function NotificationsPage() {
               disabled={isLoading}
               className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'جاري التحميل...' : 'تحميل المزيد'}
+              {isLoading ? (t('loading') || 'Loading...') : (t('loadMore') || 'Load more')}
             </button>
           </div>
         )}

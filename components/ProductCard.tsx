@@ -2,22 +2,32 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Product } from '@/types';
 import LikeButton from '@/components/LikeButton';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface ProductCardProps {
   product: Product;
   href?: string;
+  locale?: string;
 }
 
-export default function ProductCard({ product, href }: ProductCardProps) {
+export default function ProductCard({ product, href, locale }: ProductCardProps) {
+  const { t, language } = useLanguage();
   const [imageError, setImageError] = useState(false);
+  const currentLocale = locale || language || 'zh';
 
   const formatPrice = (price: number | null | undefined): string => {
     if (price === null || price === undefined) {
-      return '价格待定';
+      return t('priceTBD');
     }
-    return `¥${price.toFixed(2)}`;
+    // Use proper currency formatting based on locale
+    return new Intl.NumberFormat(currentLocale === 'ar' ? 'ar-EG' : currentLocale === 'zh' ? 'zh-CN' : 'en-US', {
+      style: 'currency',
+      currency: currentLocale === 'ar' ? 'AED' : currentLocale === 'en' ? 'USD' : 'CNY',
+      maximumFractionDigits: 2,
+    }).format(price);
   };
 
   const hasImage = product.images && product.images.length > 0;
@@ -28,11 +38,14 @@ export default function ProductCard({ product, href }: ProductCardProps) {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
         <div className="relative aspect-square bg-gray-100">
           {!showPlaceholder ? (
-            <img
+            <Image
               src={product.images[0]}
               alt={product.name || 'Product image'}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              className="object-cover group-hover:scale-105 transition-transform duration-300"
               onError={() => setImageError(true)}
+              loading="lazy"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-red-100 to-pink-100" aria-label={`${product.name || 'Product'} placeholder`}>

@@ -171,9 +171,8 @@ router.get('/:id', async (req: Request, res: Response) => {
       },
     };
 
-    res.json({
-      data: formattedMaker,
-    });
+    // Return object directly for consistency with other endpoints
+    res.json(formattedMaker);
   } catch (error: any) {
     console.error('[Makers API] Get maker error:', error);
     res.status(500).json({
@@ -230,9 +229,8 @@ router.get('/slug/:slug', async (req: Request, res: Response) => {
       },
     };
 
-    res.json({
-      data: formattedMaker,
-    });
+    // Return object directly for consistency with other endpoints
+    res.json(formattedMaker);
   } catch (error: any) {
     console.error('[Makers API] Get maker by slug error:', error);
     res.status(500).json({

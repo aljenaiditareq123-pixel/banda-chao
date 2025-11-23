@@ -95,11 +95,14 @@ export default function ProfilePageClient({ userId }: { userId: string }) {
         followAPI.getFollowing(userId),
       ]);
 
-      setFollowersCount(followersRes.data.total || 0);
-      setFollowingCount(followingRes.data.total || 0);
+      // Backend returns array directly (axios wraps it in response.data)
+      const followers = Array.isArray(followersRes.data) ? followersRes.data : [];
+      const following = Array.isArray(followingRes.data) ? followingRes.data : [];
+      
+      setFollowersCount(followers.length);
+      setFollowingCount(following.length);
 
       // Check if current user is following this user
-      const followers = followersRes.data.data || [];
       const isCurrentUserFollowing = followers.some((f: any) => f.id === currentUser.id);
       setIsFollowing(isCurrentUserFollowing);
     } catch (error) {

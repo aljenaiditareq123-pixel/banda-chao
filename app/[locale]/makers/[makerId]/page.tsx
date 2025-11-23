@@ -28,8 +28,9 @@ async function fetchMaker(makerId: string): Promise<Maker | null> {
       retryDelay: 1000,
     });
 
-    // If not found (404), try as ID
-    if (json.error || (!json.data && json.error !== 'Rate limited by Render Free tier')) {
+    // Backend returns object directly (not wrapped in { data: {...} })
+    // If error, try as ID
+    if (json.error || (!json.id && json.error !== 'Rate limited by Render Free tier')) {
       // Small delay before retry
       await new Promise(resolve => setTimeout(resolve, 100));
       
@@ -41,11 +42,12 @@ async function fetchMaker(makerId: string): Promise<Maker | null> {
     }
 
     // If still not found or error
-    if (json.error || !json.data) {
+    if (json.error || !json.id) {
       return null;
     }
 
-    const payload = json.data ?? json;
+    // Backend returns maker object directly
+    const payload = json;
     return normalizeMaker(payload);
   } catch (error) {
     console.error('[MakerPage] Failed to fetch maker details:', error);
@@ -69,7 +71,8 @@ async function fetchMakerProducts(makerUserId: string): Promise<Product[]> {
       retryDelay: 1000,
     });
 
-    const items = Array.isArray(json.data) ? json.data : [];
+    // Backend returns array directly (not wrapped in { data: [...] })
+    const items = Array.isArray(json) ? json : (Array.isArray(json.data) ? json.data : []);
     const normalized = items.map(normalizeProduct);
 
     // Filter by maker's userId (Product.userId should match Maker.userId)
@@ -100,7 +103,8 @@ async function fetchMakerVideos(makerUserId: string): Promise<Video[]> {
       retryDelay: 1000,
     });
 
-    const videosData = json.data?.data || json.data || [];
+    // Backend returns array directly (not wrapped in { data: [...] })
+    const videosData = Array.isArray(json) ? json : (Array.isArray(json.data) ? json.data : []);
     
     const formatVideo = (video: any): Video => ({
       id: video.id,

@@ -3,18 +3,9 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getAssistantProfile, mapAssistantId } from '../lib/assistantProfiles';
 import { aiRateLimit, founderAIRateLimit } from '../middleware/rateLimiter';
 import { aiAssistantValidation } from '../middleware/validation';
-import { authenticateToken } from '../middleware/auth';
-import { requireFounder } from '../middleware/requireFounder';
+import { authenticateToken, AuthRequest as BaseAuthRequest } from '../middleware/auth';
+import { authenticateFounder, AuthRequest } from '../middleware/founderAuth';
 import { founderPandaService } from '../lib/founderPanda';
-
-// Extend Request type to include user property
-interface AuthenticatedRequest extends Request {
-  user?: {
-    id: string;
-    role: string;
-    email?: string;
-  };
-}
 
 const router = Router();
 
@@ -203,9 +194,8 @@ router.post('/assistant', aiRateLimit, aiAssistantValidation, async (req: Reques
  */
 router.post('/founder', 
   founderAIRateLimit, // Dedicated founder rate limiter
-  authenticateToken,
-  requireFounder, // CRITICAL: Only founder can access
-  async (req: AuthenticatedRequest, res: Response) => {
+  authenticateFounder, // CRITICAL: Only founder can access
+  async (req: AuthRequest, res: Response) => {
     try {
       const { message, context, mode, slashCommand } = req.body;
 
@@ -243,16 +233,8 @@ router.post('/founder',
         }
       }
 
-      const userId = req.user?.id;
+      const userId = req.userId; // Use userId from AuthRequest after authenticateFounder
       console.log(`[FounderAI] Request from founder ${userId}`);
-
-      // Double-check founder status (extra security)
-      if (req.user?.role !== 'FOUNDER') {
-        console.warn(`[FounderAI] Unauthorized access attempt by user ${userId}`);
-        return res.status(403).json({
-          error: 'Access denied. Founder privileges required.'
-        });
-      }
 
       // Generate AI response using Founder Panda service
       const aiResponse = await founderPandaService.getFounderPandaResponse({
@@ -312,9 +294,8 @@ router.post('/founder',
  * Health check for founder AI service
  */
 router.get('/founder/health',
-  authenticateToken,
-  requireFounder,
-  async (req: AuthenticatedRequest, res: Response) => {
+  authenticateFounder,
+  async (req: AuthRequest, res: Response) => {
     try {
       const isHealthy = await founderPandaService.healthCheck();
       

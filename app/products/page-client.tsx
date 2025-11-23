@@ -48,8 +48,8 @@ export default function ProductsPageClient() {
     try {
       const category = selectedCategory === 'all' ? undefined : selectedCategory;
       const response = await productsAPI.getProducts(category);
-      // Backend returns { data: [...], total: ... } format
-      const allProducts = response.data?.data || (Array.isArray(response.data) ? response.data : []);
+      // Backend returns array directly (axios wraps it in response.data)
+      const allProducts = Array.isArray(response.data) ? response.data : [];
 
       // Client-side pagination
       const start = (currentPage - 1) * ITEMS_PER_PAGE;

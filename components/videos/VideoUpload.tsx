@@ -69,7 +69,7 @@ export default function VideoUpload({ type: initialType, onSuccess, onCancel }: 
 
     // Validate file type
     if (!file.type.startsWith('video/')) {
-      setError('请选择视频文件');
+      setError(t('selectVideoFileError') || 'Please select a video file');
       return;
     }
 
@@ -85,8 +85,8 @@ export default function VideoUpload({ type: initialType, onSuccess, onCancel }: 
       if (fileDuration > maxDuration) {
         setError(
           type === 'short' 
-            ? '短视频不能超过60秒' 
-            : '长视频不能超过10分钟'
+            ? t('shortVideoMaxDuration') || 'Short video cannot exceed 60 seconds'
+            : t('longVideoMaxDuration') || 'Long video cannot exceed 10 minutes'
         );
         URL.revokeObjectURL(video.src);
         return;
@@ -105,7 +105,7 @@ export default function VideoUpload({ type: initialType, onSuccess, onCancel }: 
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      setError('请选择图片文件');
+      setError(t('selectImageFileError') || 'Please select an image file');
       return;
     }
 
@@ -137,19 +137,19 @@ export default function VideoUpload({ type: initialType, onSuccess, onCancel }: 
 
     try {
       if (!user) {
-        throw new Error('请先登录');
+        throw new Error(t('pleaseLogin') || 'Please log in first');
       }
 
       if (!videoFile || !thumbnailFile) {
-        throw new Error('请选择视频和缩略图');
+        throw new Error(t('selectVideoAndThumbnail') || 'Please select video and thumbnail');
       }
 
       if (!title.trim()) {
-        throw new Error('请输入视频标题');
+        throw new Error(t('enterVideoTitle') || 'Please enter video title');
       }
 
       if (duration === 0) {
-        throw new Error('无法获取视频时长');
+        throw new Error(t('cannotGetDuration') || 'Cannot get video duration');
       }
 
       // Validate duration limits
@@ -157,8 +157,8 @@ export default function VideoUpload({ type: initialType, onSuccess, onCancel }: 
       if (duration > maxDuration) {
         throw new Error(
           type === 'short' 
-            ? '短视频不能超过60秒' 
-            : '长视频不能超过10分钟'
+            ? t('shortVideoMaxDuration') || 'Short video cannot exceed 60 seconds'
+            : t('longVideoMaxDuration') || 'Long video cannot exceed 10 minutes'
         );
       }
 
@@ -204,7 +204,7 @@ export default function VideoUpload({ type: initialType, onSuccess, onCancel }: 
         onSuccess();
       }
     } catch (err: any) {
-      setError(err.response?.data?.error || err.message || '上传失败');
+      setError(err.response?.data?.error || err.message || t('uploadFailed') || 'Upload failed');
     } finally {
       setLoading(false);
       setUploadProgress(0);
@@ -225,7 +225,7 @@ export default function VideoUpload({ type: initialType, onSuccess, onCancel }: 
     <div className={`bg-white rounded-3xl border border-gray-100 shadow-sm p-6 md:p-8 space-y-6 ${isRTL ? 'rtl' : ''}`} dir={isRTL ? 'rtl' : 'ltr'}>
       {initialType && (
         <h2 className="text-2xl font-semibold text-gray-900">
-          {type === 'short' ? '上传短视频' : '上传长视频'}
+          {type === 'short' ? t('uploadShortVideo') : t('uploadLongVideo')}
         </h2>
       )}
 
@@ -249,7 +249,7 @@ export default function VideoUpload({ type: initialType, onSuccess, onCancel }: 
         {!initialType && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              视频类型 *
+              {t('videoType') || 'Video Type'} *
             </label>
             <div className="flex gap-4">
               <button
@@ -267,8 +267,8 @@ export default function VideoUpload({ type: initialType, onSuccess, onCancel }: 
                     : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
                 }`}
               >
-                <div className="font-semibold">短视频</div>
-                <div className="text-xs mt-1">最多60秒</div>
+                <div className="font-semibold">{t('shortVideos')}</div>
+                <div className="text-xs mt-1">{t('maxDurationShort') || t('shortVideoDescription')}</div>
               </button>
               <button
                 type="button"
@@ -285,8 +285,8 @@ export default function VideoUpload({ type: initialType, onSuccess, onCancel }: 
                     : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
                 }`}
               >
-                <div className="font-semibold">长视频</div>
-                <div className="text-xs mt-1">最多10分钟</div>
+                <div className="font-semibold">{t('longVideos')}</div>
+                <div className="text-xs mt-1">{t('maxDurationLong') || t('longVideoDescription')}</div>
               </button>
             </div>
           </div>
@@ -295,7 +295,7 @@ export default function VideoUpload({ type: initialType, onSuccess, onCancel }: 
         {/* Video File Upload */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            视频文件 *
+            {t('videoFile') || 'Video File'} *
           </label>
           <input
             ref={fileInputRef}
@@ -331,16 +331,16 @@ export default function VideoUpload({ type: initialType, onSuccess, onCancel }: 
                     d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
                   />
                 </svg>
-                <p className="text-sm text-gray-500">点击选择视频文件</p>
+                <p className="text-sm text-gray-500">{t('selectVideoFile') || 'Click to select video file'}</p>
                 <p className="text-xs text-gray-400 mt-1">
-                  {type === 'short' ? '最多60秒' : '最多10分钟'}
+                  {type === 'short' ? t('maxDurationShort') || t('shortVideoDescription') : t('maxDurationLong') || t('longVideoDescription')}
                 </p>
               </>
             )}
           </label>
           {duration > 0 && (
             <p className="mt-2 text-sm text-gray-600">
-              时长: {Math.floor(duration / 60)}:{(duration % 60).toString().padStart(2, '0')}
+              {t('duration') || 'Duration'}: {Math.floor(duration / 60)}:{(duration % 60).toString().padStart(2, '0')}
             </p>
           )}
         </div>
@@ -348,7 +348,7 @@ export default function VideoUpload({ type: initialType, onSuccess, onCancel }: 
         {/* Thumbnail Upload */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            缩略图 *
+            {t('thumbnail') || 'Thumbnail'} *
           </label>
           <input
             ref={thumbnailInputRef}
@@ -383,7 +383,7 @@ export default function VideoUpload({ type: initialType, onSuccess, onCancel }: 
                     d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
                   />
                 </svg>
-                <p className="text-sm text-gray-500">点击选择缩略图</p>
+                <p className="text-sm text-gray-500">{t('selectThumbnail') || 'Click to select thumbnail'}</p>
               </>
             )}
           </label>
@@ -392,12 +392,12 @@ export default function VideoUpload({ type: initialType, onSuccess, onCancel }: 
         {/* Title */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            标题 *
+            {t('videoTitle') || 'Title'} *
           </label>
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="输入视频标题"
+            placeholder={t('videoTitlePlaceholder') || 'Enter video title'}
             required
           />
         </div>
@@ -405,14 +405,14 @@ export default function VideoUpload({ type: initialType, onSuccess, onCancel }: 
         {/* Description */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            描述
+            {t('videoDescription') || 'Description'}
           </label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={4}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E7D32] focus:border-[#2E7D32]"
-            placeholder="描述您的视频..."
+            placeholder={t('videoDescriptionPlaceholder') || 'Describe your video...'}
           />
         </div>
 
@@ -420,32 +420,41 @@ export default function VideoUpload({ type: initialType, onSuccess, onCancel }: 
         {availableProducts.length > 0 && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              关联产品 (可选)
+              {t('linkProducts') || 'Link Products (Optional)'}
             </label>
             <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3 space-y-2">
-              {availableProducts.map((product) => (
-                <label
-                  key={product.id}
-                  className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedProducts.includes(product.id)}
-                    onChange={() => toggleProductSelection(product.id)}
-                    className="w-4 h-4 text-[#2E7D32] border-gray-300 rounded focus:ring-[#2E7D32]"
-                  />
-                  <div className="flex-1">
-                    <div className="font-medium text-sm text-gray-900">{product.name}</div>
-                    <div className="text-xs text-gray-500">
-                      {product.price ? `¥${product.price.toFixed(2)}` : '价格待定'}
+              {availableProducts.map((product) => {
+                const productPrice = product.price 
+                  ? new Intl.NumberFormat(language === 'ar' ? 'ar-EG' : language === 'zh' ? 'zh-CN' : 'en-US', {
+                      style: 'currency',
+                      currency: language === 'ar' ? 'AED' : language === 'en' ? 'USD' : 'CNY',
+                      maximumFractionDigits: 2,
+                    }).format(product.price!)
+                  : t('priceTBD');
+                return (
+                  <label
+                    key={product.id}
+                    className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedProducts.includes(product.id)}
+                      onChange={() => toggleProductSelection(product.id)}
+                      className="w-4 h-4 text-[#2E7D32] border-gray-300 rounded focus:ring-[#2E7D32]"
+                    />
+                    <div className="flex-1">
+                      <div className="font-medium text-sm text-gray-900">{product.name}</div>
+                      <div className="text-xs text-gray-500">
+                        {productPrice}
+                      </div>
                     </div>
-                  </div>
-                </label>
-              ))}
+                  </label>
+                );
+              })}
             </div>
             {selectedProducts.length > 0 && (
               <p className="mt-2 text-sm text-gray-600">
-                已选择 {selectedProducts.length} 个产品
+                {t('selectedProductsCount')?.replace('{count}', selectedProducts.length.toString()) || `${selectedProducts.length} products selected`}
               </p>
             )}
           </div>
@@ -461,7 +470,7 @@ export default function VideoUpload({ type: initialType, onSuccess, onCancel }: 
               className="flex-1"
               disabled={loading}
             >
-              取消
+              {t('cancel') || 'Cancel'}
             </Button>
           )}
           <Button
@@ -470,7 +479,7 @@ export default function VideoUpload({ type: initialType, onSuccess, onCancel }: 
             className="flex-1"
             disabled={loading || !videoFile || !thumbnailFile || !title.trim()}
           >
-            {loading ? '上传中...' : '上传视频'}
+            {loading ? (t('uploading') || 'Uploading...') : t('uploadVideo')}
           </Button>
         </div>
       </form>

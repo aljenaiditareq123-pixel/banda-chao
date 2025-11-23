@@ -1,5 +1,7 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Video } from '@/types';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface VideoCardProps {
   video: Video;
@@ -7,6 +9,7 @@ interface VideoCardProps {
 }
 
 export default function VideoCard({ video, locale = 'zh' }: VideoCardProps) {
+  const { t } = useLanguage();
   const formatViews = (views: number) => {
     if (views >= 1000000) {
       return `${(views / 1000000).toFixed(1)}M`;
@@ -27,14 +30,13 @@ export default function VideoCard({ video, locale = 'zh' }: VideoCardProps) {
     <Link href={`/${locale}/videos/${video.id}`} className="block group">
       <div className="bg-white rounded-xl border-2 border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden">
         <div className="relative aspect-video bg-gray-200 overflow-hidden">
-          <img
+          <Image
             src={video.thumbnail || 'https://via.placeholder.com/640x360?text=Video'}
             alt={video.title}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.src = 'https://via.placeholder.com/640x360?text=Video';
-            }}
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-cover group-hover:scale-110 transition-transform duration-500"
+            loading="lazy"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
           <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded-md font-semibold backdrop-blur-sm">
@@ -42,7 +44,7 @@ export default function VideoCard({ video, locale = 'zh' }: VideoCardProps) {
           </div>
           {video.type === 'short' && (
             <div className="absolute top-2 left-2 bg-red-600 text-white text-xs px-2 py-1 rounded-md font-semibold">
-              {video.type === 'short' ? 'قصير' : 'طويل'}
+              {t('shortVideos')}
             </div>
           )}
         </div>

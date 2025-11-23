@@ -16,7 +16,12 @@ const urlsToCache = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(urlsToCache);
+      // Wrap in try/catch to avoid console errors if URLs don't exist
+      return cache.addAll(urlsToCache).catch((error) => {
+        console.warn('[SW] Failed to cache some resources:', error);
+        // Continue anyway - individual cache failures shouldn't break the SW
+        return Promise.resolve();
+      });
     })
   );
   self.skipWaiting();

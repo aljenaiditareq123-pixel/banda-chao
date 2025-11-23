@@ -49,3 +49,4 @@ export default async function LocaleShortVideosPage({ params }: LocaleShortVideo
   return <ShortVideosPageClient locale={locale} shortVideos={shortVideos} />;
 }
 
+

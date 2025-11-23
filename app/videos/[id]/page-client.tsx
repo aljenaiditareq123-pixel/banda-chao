@@ -37,7 +37,9 @@ export default function VideoDetailPageClient() {
       setVideo(videoData);
 
       // Get related videos (excluding current video)
-      const relatedData = (relatedRes.data.data || []).filter((v: any) => v.id !== videoId);
+      // Backend returns array directly (axios wraps it in response.data)
+      const relatedArray = Array.isArray(relatedRes.data) ? relatedRes.data : (relatedRes.data?.data || []);
+      const relatedData = relatedArray.filter((v: any) => v.id !== videoId);
       const formattedRelated = relatedData.map((v: any) => ({
         id: v.id,
         userId: v.userId,

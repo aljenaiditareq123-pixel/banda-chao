@@ -1,9 +1,10 @@
 'use client';
 
+import { useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import Layout from '@/components/Layout';
 import Button from '@/components/Button';
-import { Grid, GridItem } from '@/components/Grid';
 import { useCart } from '@/contexts/CartContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -37,13 +38,11 @@ export default function LocaleCartPage({ params }: CartPageProps) {
     updateQuantity(productId, nextQuantity);
   };
 
-  const handleLocaleSync = () => {
+  useEffect(() => {
     if (locale === 'zh' || locale === 'ar' || locale === 'en') {
       setLanguage(locale);
     }
-  };
-
-  handleLocaleSync();
+  }, [locale, setLanguage]);
 
   return (
     <Layout showHeader={false}>
@@ -68,11 +67,14 @@ export default function LocaleCartPage({ params }: CartPageProps) {
                   {items.map((item) => (
                     <div key={item.product.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 border-b border-gray-100 pb-6">
                       <div className="flex items-start gap-4">
-                        <div className="h-24 w-24 sm:h-28 sm:w-28 border border-gray-100 rounded-2xl overflow-hidden bg-gray-100 flex-shrink-0">
-                          <img
+                        <div className="relative h-24 w-24 sm:h-28 sm:w-28 border border-gray-100 rounded-2xl overflow-hidden bg-gray-100 flex-shrink-0">
+                          <Image
                             src={item.product.images?.[0] ?? IMAGE_PLACEHOLDER}
                             alt={item.product.name}
-                            className="h-full w-full object-cover"
+                            fill
+                            sizes="112px"
+                            className="object-cover"
+                            loading="lazy"
                           />
                         </div>
                         <div>

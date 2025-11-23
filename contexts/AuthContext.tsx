@@ -108,6 +108,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string): Promise<User | null> => {
     try {
+      // Get API base URL for debugging
+      const apiBaseUrl = typeof window !== 'undefined' 
+        ? (process.env.NEXT_PUBLIC_API_URL || 'https://banda-chao.onrender.com')
+        : 'https://banda-chao.onrender.com';
+      const loginUrl = `${apiBaseUrl.replace(/\/$/, '')}/api/v1/auth/login`;
+      
+      console.log('[AuthContext] Attempting login', {
+        email: email.substring(0, 3) + '***',
+        apiBaseUrl,
+        loginUrl
+      });
+
       const response = await authAPI.login({ email, password });
       const { token: authToken, user: userData } = response.data;
       
@@ -119,6 +131,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         role: userData.role || 'USER', // Default to 'USER' if role is missing
         createdAt: userData.createdAt,
       };
+      
+      console.log('[AuthContext] Login successful', {
+        email: loggedInUser.email,
+        role: loggedInUser.role,
+        userId: loggedInUser.id
+      });
       
       if (typeof window !== 'undefined') {
         // Store token in localStorage for client-side access
@@ -132,6 +150,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       return loggedInUser;
     } catch (error: any) {
+      // Enhanced error logging for debugging
+      const apiBaseUrl = typeof window !== 'undefined' 
+        ? (process.env.NEXT_PUBLIC_API_URL || 'https://banda-chao.onrender.com')
+        : 'https://banda-chao.onrender.com';
+      const loginUrl = `${apiBaseUrl.replace(/\/$/, '')}/api/v1/auth/login`;
+      
+      console.error('[AuthContext] Login failed', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        url: loginUrl,
+        error: error.response?.data?.error || error.message,
+        email: email.substring(0, 3) + '***'
+      });
+
       // Preserve original error structure so caller can access error.response.status, etc.
       // If it's already an Error with response, throw it as-is
       // Otherwise, wrap it in a new Error

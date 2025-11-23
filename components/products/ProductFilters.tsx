@@ -132,7 +132,7 @@ export default function ProductFilters({ onFilterChange, initialFilters, product
   if (loading) {
     return (
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 space-y-8">
-        <div className="text-center text-gray-500 py-4">加载筛选选项...</div>
+        <div className="text-center text-gray-500 py-4">{t('loading')}</div>
       </div>
     );
   }
@@ -149,7 +149,7 @@ export default function ProductFilters({ onFilterChange, initialFilters, product
             onClick={clearFilters}
             className="w-full px-4 py-2 text-sm text-[#2E7D32] hover:bg-[#2E7D32]/10 rounded-lg transition"
           >
-            清除所有筛选
+            {t('clearFilters')}
           </button>
         </div>
       )}
@@ -176,7 +176,7 @@ export default function ProductFilters({ onFilterChange, initialFilters, product
               </label>
             ))
           ) : (
-            <div className="text-gray-400 text-xs py-2">暂无分类</div>
+            <div className="text-gray-400 text-xs py-2">{t('noCategories') || t('noContent')}</div>
           )}
         </div>
       </section>
@@ -190,17 +190,17 @@ export default function ProductFilters({ onFilterChange, initialFilters, product
           <div className="flex items-center gap-2">
             <input
               type="number"
-              placeholder="最低价"
+              placeholder={t('minPrice') || t('productsFilterPricePlaceholder') || 'Min price'}
               value={priceRange.min ?? ''}
               onChange={(e) => handlePriceMinChange(e.target.value)}
               className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2E7D32] focus:border-[#2E7D32]"
               min="0"
               step="0.01"
             />
-            <span className="text-gray-500 text-sm">至</span>
+            <span className="text-gray-500 text-sm">{t('to') || '-'}</span>
             <input
               type="number"
-              placeholder="最高价"
+              placeholder={t('maxPrice') || t('productsFilterPricePlaceholder') || 'Max price'}
               value={priceRange.max ?? ''}
               onChange={(e) => handlePriceMaxChange(e.target.value)}
               className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2E7D32] focus:border-[#2E7D32]"
@@ -213,7 +213,7 @@ export default function ProductFilters({ onFilterChange, initialFilters, product
               onClick={() => setPriceRange({ min: null, max: null })}
               className="text-xs text-[#2E7D32] hover:underline"
             >
-              清除价格筛选
+              {t('clearPriceFilter') || t('clearFilters')}
             </button>
           )}
         </div>
@@ -241,7 +241,7 @@ export default function ProductFilters({ onFilterChange, initialFilters, product
               </label>
             ))
           ) : (
-            <div className="text-gray-400 text-xs py-2">暂无制造商</div>
+            <div className="text-gray-400 text-xs py-2">{t('noMakersDescription') || t('noContent')}</div>
           )}
         </div>
       </section>
@@ -249,7 +249,7 @@ export default function ProductFilters({ onFilterChange, initialFilters, product
       {/* Active Filters Summary */}
       {hasActiveFilters && (
         <div className="pt-4 border-t border-gray-200">
-          <div className="text-xs text-gray-500 mb-2">已选筛选:</div>
+          <div className="text-xs text-gray-500 mb-2">{t('activeFilters') || 'Active filters'}:</div>
           <div className="flex flex-wrap gap-2">
             {categories.map((cat) => (
               <span
@@ -266,7 +266,7 @@ export default function ProductFilters({ onFilterChange, initialFilters, product
             )}
             {makers.length > 0 && (
               <span className="px-2 py-1 bg-[#2E7D32]/10 text-[#2E7D32] rounded text-xs">
-                {makers.length} 制造商
+                {makers.length} {t('makers')}
               </span>
             )}
           </div>

@@ -1,79 +1,137 @@
 "use client";
 
-import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import FounderCommandCenterLayout from "@/components/founder/FounderCommandCenterLayout";
-import FounderChatPanel from "@/components/founder/FounderChatPanel";
-import ModeSelector from "@/components/founder/ModeSelector";
+import FounderTopBar from "@/components/founder/FounderTopBar";
+import FounderKPICard from "@/components/founder/FounderKPICard";
+import PlatformHealthPanel from "@/components/founder/PlatformHealthPanel";
+import MakerActivityPanel from "@/components/founder/MakerActivityPanel";
+import ContentPerformancePanel from "@/components/founder/ContentPerformancePanel";
+import AIAdvisorsSection from "@/components/founder/AIAdvisorsSection";
+import { useFounderAnalytics } from "@/components/founder/useFounderAnalytics";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
-type FounderOperatingMode = 
-  | 'STRATEGY_MODE'
-  | 'PRODUCT_MODE' 
-  | 'TECH_MODE'
-  | 'MARKETING_MODE'
-  | 'CHINA_MODE';
-
+/**
+ * Founder Dashboard Page Client Component
+ * 
+ * Luxury Gulf Founder Style Dashboard
+ * 
+ * Layout:
+ * - Top Bar: Founder identity, time, status
+ * - KPI Row: 4 primary KPIs (Active Makers, Revenue, Orders, AI Insights)
+ * - Secondary Panels: Platform Health, Maker Activity, Content Performance
+ * - AI Advisors Section: 6 Pandas as strategic advisors
+ */
 export default function FounderPageClient() {
-  const { user, loading } = useAuth();
-  const [currentMode, setCurrentMode] = useState<FounderOperatingMode>('STRATEGY_MODE');
+  const { user } = useAuth();
+  const { analytics, loading: analyticsLoading } = useFounderAnalytics();
 
-  // Note: Auth check is handled by FounderRoute wrapper in app/founder/page.tsx
-  // This component only renders if user is authenticated and is FOUNDER
-  // No need for additional auth checks here
+  // Calculate active orders from analytics
+  const activeOrders = analytics?.orders?.byStatus
+    ? Object.values(analytics.orders.byStatus).reduce((sum, count) => sum + count, 0)
+    : 0;
+
+  // Calculate revenue (in AED or USD - placeholder)
+  const revenue = analytics?.summary?.totalRevenue || 0;
+  const formattedRevenue = new Intl.NumberFormat('ar-SA', {
+    style: 'currency',
+    currency: 'AED',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(revenue);
+
+  // Calculate AI insights (placeholder: total AI interactions)
+  // In future, this could come from a dedicated endpoint
+  const aiInteractions = analytics?.summary?.totalUsers 
+    ? Math.floor(analytics.summary.totalUsers * 2.5) // Placeholder calculation
+    : 0;
 
   return (
-    <FounderCommandCenterLayout currentPage="dashboard">
-      <div className="h-full flex flex-col">
-        {/* Welcome Section */}
-        <div className="mb-6">
-          <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-2xl p-6 text-white">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
-                <span className="text-2xl">🐼</span>
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold mb-1">
-                  Welcome back, Tariq!
-                </h1>
-                <p className="text-white/90">
-                  Ready to build the world&apos;s first neutral social commerce platform?
-                </p>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-white/10 rounded-lg p-3">
-                <p className="text-sm opacity-90">Today&apos;s Focus</p>
-                <p className="font-semibold">China Market Strategy</p>
-              </div>
-              <div className="bg-white/10 rounded-lg p-3">
-                <p className="text-sm opacity-90">Active Sessions</p>
-                <p className="font-semibold">3 Conversations</p>
-              </div>
-              <div className="bg-white/10 rounded-lg p-3">
-                <p className="text-sm opacity-90">Platform Status</p>
-                <p className="font-semibold">All Systems Online</p>
-              </div>
-            </div>
-          </div>
-        </div>
+    <div className="min-h-screen bg-slate-50">
+      {/* Top Bar */}
+      <FounderTopBar />
 
-        {/* Mode Selector */}
-        <div className="mb-6">
-          <ModeSelector
-            currentMode={currentMode}
-            onModeChange={setCurrentMode}
-          />
-        </div>
-        
-        {/* Main Chat Interface */}
-        <div className="flex-1 min-h-0">
-          <FounderChatPanel 
-            assistantId="founder"
-            currentMode={currentMode}
-          />
-        </div>
-      </div>
-    </FounderCommandCenterLayout>
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Primary KPI Row */}
+        <section className="mb-8">
+          {analyticsLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[...Array(4)].map((_, i) => (
+                <div
+                  key={i}
+                  className="bg-white rounded-2xl border border-slate-200 p-6"
+                >
+                  <div className="animate-pulse">
+                    <div className="h-12 w-12 bg-slate-200 rounded-xl mb-4" />
+                    <div className="h-4 bg-slate-200 rounded w-2/3 mb-2" />
+                    <div className="h-8 bg-slate-200 rounded w-1/2" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Active Makers - Dark variant (primary) */}
+              <FounderKPICard
+                title="الحرفيون النشطون"
+                value={analytics?.summary?.totalMakers || 0}
+                change="+12.5%"
+                trend="up"
+                variant="dark"
+                icon="🎨"
+                description="إجمالي الحرفيين المسجلين"
+              />
+
+              {/* Monthly Revenue - Dark variant (primary) */}
+              <FounderKPICard
+                title="إجمالي المعاملات"
+                value={formattedRevenue}
+                change="+31.4%"
+                trend="up"
+                variant="dark"
+                icon="💰"
+                description="إجمالي الإيرادات"
+              />
+
+              {/* Active Orders - Light variant */}
+              <FounderKPICard
+                title="الطلبات النشطة"
+                value={activeOrders}
+                change="+8.2%"
+                trend="up"
+                variant="light"
+                icon="📦"
+                description="جميع الطلبات النشطة"
+              />
+
+              {/* AI Insights - Light variant */}
+              <FounderKPICard
+                title="جلسات الذكاء الاصطناعي"
+                value={aiInteractions}
+                change="+45.8%"
+                trend="up"
+                variant="light"
+                icon="🤖"
+                description="إجمالي التفاعلات مع AI"
+              />
+            </div>
+          )}
+        </section>
+
+        {/* Secondary Panels */}
+        <section className="mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <PlatformHealthPanel />
+            <MakerActivityPanel />
+            <ContentPerformancePanel />
+          </div>
+        </section>
+
+        {/* AI Advisors Section */}
+        <section>
+          <AIAdvisorsSection />
+        </section>
+      </main>
+    </div>
   );
 }

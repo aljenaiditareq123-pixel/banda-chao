@@ -83,6 +83,7 @@ export default function RootLayout({
         {children}
         <DevPanel />
         <InstallPWA />
+        {/* Service Worker disabled by default - enable via NEXT_PUBLIC_ENABLE_SW=true */}
         <ServiceWorkerRegistration />
       </body>
     </html>

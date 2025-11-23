@@ -44,8 +44,9 @@ async function fetchAllVideos(): Promise<{ short: Video[]; long: Video[] }> {
       type: video.type as 'short' | 'long',
     });
     
-    const shortVideos = (shortJson.data?.data || shortJson.data || []).map(formatVideo);
-    const longVideos = (longJson.data?.data || longJson.data || []).map(formatVideo);
+    // Backend returns array directly (not wrapped in { data: [...] })
+    const shortVideos = (Array.isArray(shortJson) ? shortJson : (Array.isArray(shortJson.data) ? shortJson.data : [])).map(formatVideo);
+    const longVideos = (Array.isArray(longJson) ? longJson : (Array.isArray(longJson.data) ? longJson.data : [])).map(formatVideo);
 
     return { short: shortVideos, long: longVideos };
   } catch (error) {

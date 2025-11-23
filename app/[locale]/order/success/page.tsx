@@ -44,7 +44,8 @@ export default function OrderSuccessPage() {
       ordersAPI
         .getOrder(orderId)
         .then((response) => {
-          setOrder(response.data.data);
+          // Backend returns object directly (axios wraps it in response.data)
+          setOrder(response.data);
         })
         .catch((err) => {
           console.error('Failed to fetch order:', err);

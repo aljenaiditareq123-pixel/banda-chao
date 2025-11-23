@@ -57,13 +57,15 @@ export default function OrdersPageClient({ locale }: OrdersPageClientProps) {
     try {
       setLoading(true);
       const response = await ordersAPI.getOrders();
-      setOrders(response.data.data || []);
+      // Backend returns array directly (axios wraps it in response.data)
+      const ordersData = Array.isArray(response.data) ? response.data : [];
+      setOrders(ordersData);
     } catch (err: any) {
       console.error('[Orders] Failed to load orders:', err);
       setError(
         err.response?.data?.error ||
           err.message ||
-          (locale === 'ar' ? 'فشل تحميل الطلبات' : locale === 'zh' ? '加载订单失败' : 'Failed to load orders')
+          t('loadOrdersFailed') || 'Failed to load orders'
       );
     } finally {
       setLoading(false);
@@ -102,34 +104,24 @@ export default function OrdersPageClient({ locale }: OrdersPageClientProps) {
   };
 
   const getStatusText = (status: string) => {
-    const statusMap: Record<string, Record<string, string>> = {
-      PENDING: {
-        ar: 'قيد الانتظار',
-        zh: '待处理',
-        en: 'Pending',
-      },
-      PROCESSING: {
-        ar: 'قيد المعالجة',
-        zh: '处理中',
-        en: 'Processing',
-      },
-      SHIPPED: {
-        ar: 'تم الشحن',
-        zh: '已发货',
-        en: 'Shipped',
-      },
-      DELIVERED: {
-        ar: 'تم التسليم',
-        zh: '已送达',
-        en: 'Delivered',
-      },
-      CANCELLED: {
-        ar: 'ملغى',
-        zh: '已取消',
-        en: 'Cancelled',
-      },
+    const statusKeyMap: Record<string, string> = {
+      PENDING: 'orderStatusPending',
+      PROCESSING: 'orderStatusProcessing',
+      SHIPPED: 'orderStatusShipped',
+      DELIVERED: 'orderStatusDelivered',
+      CANCELLED: 'orderStatusCancelled',
+      FAILED: 'orderStatusFailed',
     };
-    return statusMap[status.toUpperCase()]?.[locale] || status;
+    const translationKey = statusKeyMap[status.toUpperCase()];
+    if (translationKey) {
+      const translated = t(translationKey);
+      // If translation exists and is not the key itself, use it
+      if (translated && translated !== translationKey) {
+        return translated;
+      }
+    }
+    // Fallback to English status if translation not found
+    return status;
   };
 
   return (

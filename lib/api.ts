@@ -49,7 +49,7 @@ const getApiBaseUrl = (): string => {
     return 'http://localhost:3001/api/v1';
   }
 
-  return 'https://banda-chao-backend.onrender.com/api/v1';
+  return 'https://banda-chao.onrender.com/api/v1';
 };
 
 // Create API base URL (safe for both server and client)
@@ -101,13 +101,19 @@ api.interceptors.response.use(
       const url = error.config?.url;
       const baseURL = error.config?.baseURL;
       
+      // Log error details (excluding sensitive data)
       console.error('❌ API Error:', {
         url,
-        baseURL,
-        fullUrl: baseURL ? `${baseURL}${url}` : url,
         status,
         message: error.message,
-        data: error.response?.data,
+        // Only log error response data if it's not sensitive
+        data: error.response?.data && typeof error.response.data === 'object' 
+          ? Object.fromEntries(
+              Object.entries(error.response.data).filter(
+                ([key]) => !['password', 'token', 'secret', 'key', 'authorization'].includes(key.toLowerCase())
+              )
+            )
+          : error.response?.data,
       });
 
       // Handle 401 errors - clear token and redirect to login (client-side only)
