@@ -1,0 +1,187 @@
+{
+  "baseUrl": "https://banda-chao-backend.onrender.com",
+  "apis": [
+    {
+      "name": "Health Check",
+      "endpoint": "/api/health",
+      "method": "GET",
+      "authentication": "None",
+      "description": "Basic health check endpoint",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Founder Sessions - Fixed",
+      "endpoint": "/api/v1/founder/sessions?limit=10",
+      "method": "GET",
+      "authentication": "Bearer Token",
+      "description": "Should return empty array, not 500 error",
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "sessions": [],
+        "message": "Sessions feature not yet implemented"
+      }
+    },
+    {
+      "name": "Founder AI - Gemini 1.5 Pro",
+      "endpoint": "/api/v1/ai/founder",
+      "method": "POST",
+      "authentication": "Bearer Token",
+      "description": "Real Gemini integration, should not return 500",
+      "requestBody": {
+        "message": "ما هي المؤشرات الحالية للمنصة؟"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "success": true,
+        "reply": "string (Arabic AI response)",
+        "timestamp": "ISO string"
+      }
+    },
+    {
+      "name": "Founder KPIs",
+      "endpoint": "/api/v1/founder/kpis",
+      "method": "GET",
+      "authentication": "Bearer Token",
+      "description": "Get founder dashboard KPIs",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Products List",
+      "endpoint": "/api/v1/products?page=1&pageSize=20",
+      "method": "GET",
+      "authentication": "None",
+      "description": "Public products list with pagination",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Product Detail",
+      "endpoint": "/api/v1/products/{productId}",
+      "method": "GET",
+      "authentication": "None",
+      "description": "Get single product details",
+      "expectedStatus": 200,
+      "example": "/api/v1/products/d62d6d88-4630-4993-b84a-8cb894690aa6"
+    },
+    {
+      "name": "Makers List",
+      "endpoint": "/api/v1/makers?page=1&pageSize=20",
+      "method": "GET",
+      "authentication": "None",
+      "description": "Public makers list with pagination",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Maker Detail",
+      "endpoint": "/api/v1/makers/{makerId}",
+      "method": "GET",
+      "authentication": "None",
+      "description": "Get single maker details",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Videos List",
+      "endpoint": "/api/v1/videos?page=1&pageSize=20",
+      "method": "GET",
+      "authentication": "None",
+      "description": "Public videos list with pagination",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Video Detail",
+      "endpoint": "/api/v1/videos/{videoId}",
+      "method": "GET",
+      "authentication": "None",
+      "description": "Get single video details",
+      "expectedStatus": 200
+    },
+    {
+      "name": "User Registration",
+      "endpoint": "/api/v1/auth/register",
+      "method": "POST",
+      "authentication": "None",
+      "description": "Register new user",
+      "requestBody": {
+        "email": "test@example.com",
+        "password": "TestPassword123!",
+        "name": "Test User"
+      },
+      "expectedStatus": 201
+    },
+    {
+      "name": "User Login",
+      "endpoint": "/api/v1/auth/login",
+      "method": "POST",
+      "authentication": "None",
+      "description": "Login and get JWT token",
+      "requestBody": {
+        "email": "founder@bandachao.com",
+        "password": "founder_password"
+      },
+      "expectedStatus": 200,
+      "expectedResponse": {
+        "token": "JWT token string",
+        "user": {}
+      }
+    },
+    {
+      "name": "Get Current User",
+      "endpoint": "/api/v1/users/me",
+      "method": "GET",
+      "authentication": "Bearer Token",
+      "description": "Get authenticated user profile",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Get Notifications",
+      "endpoint": "/api/v1/notifications?page=1&pageSize=10",
+      "method": "GET",
+      "authentication": "Bearer Token",
+      "description": "Get user notifications",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Notifications Unread Count",
+      "endpoint": "/api/v1/notifications/unread-count",
+      "method": "GET",
+      "authentication": "Bearer Token",
+      "description": "Get unread notifications count",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Create Checkout Session",
+      "endpoint": "/api/v1/payments/checkout",
+      "method": "POST",
+      "authentication": "Bearer Token",
+      "description": "Create Stripe checkout session (TEST MODE)",
+      "requestBody": {
+        "productId": "d62d6d88-4630-4993-b84a-8cb894690aa6",
+        "quantity": 1
+      },
+      "expectedStatus": 200,
+      "note": "TEST MODE - No real money charged"
+    },
+    {
+      "name": "404 Not Found",
+      "endpoint": "/api/v1/nonexistent",
+      "method": "GET",
+      "authentication": "None",
+      "description": "Test 404 error handling",
+      "expectedStatus": 404
+    }
+  ],
+  "testingNotes": {
+    "criticalFixes": [
+      "Founder Sessions should return 200 (not 500)",
+      "Founder AI should return 200 with Gemini response (not 500)",
+      "No more founder_sessions table errors",
+      "No more gemini-1.5-flash errors"
+    ],
+    "authentication": {
+      "note": "Get JWT token from /api/v1/auth/login first",
+      "format": "Bearer {token}"
+    },
+    "baseUrl": "https://banda-chao-backend.onrender.com"
+  }
+}
+

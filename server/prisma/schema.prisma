@@ -1,0 +1,421 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// User & Authentication
+// ============================================
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String?   // nullable for OAuth users
+  name          String
+  profilePicture String?  @default("")
+  bio           String?   @default("")
+  role          UserRole  @default(BUYER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  maker         Maker?
+  orders        Order[]
+  posts         Post[]
+  comments      Comment[]
+  productLikes  ProductLike[]
+  videoLikes    VideoLike[]
+  commentLikes  CommentLike[]
+  conversations Conversation[] @relation("ConversationParticipants")
+  sentMessages  Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+  analyticsEvents AnalyticsEvent[]
+  notifications   Notification[]
+  reports         Report[]        @relation("Reports")
+
+  @@index([email])
+  @@index([role])
+}
+
+enum UserRole {
+  FOUNDER
+  MAKER
+  BUYER
+  ADMIN
+}
+
+// ============================================
+// Maker (الحرفي/الصانع)
+// ============================================
+
+model Maker {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  displayName     String
+  bio             String?
+  country         String?
+  city            String?
+  languages       String[] @default([]) // ['ar', 'en', 'zh']
+  rating          Float    @default(0.0)
+  reviewCount     Int      @default(0)
+  socialLinks     Json?    // { website, instagram, facebook, etc. }
+  avatarUrl       String?  @default("")
+  coverImageUrl   String?  @default("")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products        Product[]
+  videos          Video[]
+  posts           Post[]
+
+  @@index([userId])
+  @@index([displayName])
+}
+
+// ============================================
+// Product
+// ============================================
+
+model Product {
+  id          String        @id @default(uuid())
+  makerId     String
+  name        String
+  description String        @db.Text
+  price       Float
+  currency    String        @default("USD")
+  stock       Int           @default(0)
+  status      ProductStatus @default(DRAFT)
+  category    String?
+  tags        String[]      @default([])
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  maker       Maker         @relation(fields: [makerId], references: [id], onDelete: Cascade)
+  images      ProductImage[]
+  productLikes ProductLike[]
+  comments    Comment[]
+  orders      Order[]
+
+  @@index([makerId])
+  @@index([status])
+  @@index([category])
+}
+
+enum ProductStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model ProductImage {
+  id        String   @id @default(uuid())
+  productId String
+  url       String
+  alt       String?  @default("")
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+// ============================================
+// Video (محتوى صانع)
+// ============================================
+
+model Video {
+  id          String   @id @default(uuid())
+  makerId     String
+  title       String
+  description String   @db.Text
+  videoUrl    String
+  thumbnailUrl String?  @default("")
+  language    String   @default("zh") // 'ar', 'en', 'zh'
+  duration    Int      // in seconds
+  type        VideoType @default(SHORT)
+  viewsCount  Int      @default(0)
+  likesCount  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  maker       Maker    @relation(fields: [makerId], references: [id], onDelete: Cascade)
+  videoLikes  VideoLike[]
+  comments    Comment[]
+
+  @@index([makerId])
+  @@index([type])
+  @@index([language])
+}
+
+enum VideoType {
+  SHORT
+  LONG
+}
+
+// ============================================
+// Post
+// ============================================
+
+model Post {
+  id        String   @id @default(uuid())
+  authorId String
+  makerId  String?  // optional, if related to a maker
+  content  String   @db.Text
+  mediaUrl String?  // optional media (image/video URL)
+  type     PostType @default(TEXT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  maker     Maker?   @relation(fields: [makerId], references: [id], onDelete: SetNull)
+  comments  Comment[]
+
+  @@index([authorId])
+  @@index([makerId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+enum PostType {
+  TEXT
+  IMAGE
+  VIDEO
+}
+
+// ============================================
+// Comment (نموذج مرن مع targetType + targetId)
+// ============================================
+
+model Comment {
+  id         String      @id @default(uuid())
+  authorId   String
+  targetType CommentTarget
+  targetId   String      // postId, videoId, or productId
+  content    String      @db.Text
+  likesCount Int         @default(0)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  // Relations
+  author     User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  commentLikes CommentLike[]
+
+  @@index([targetType, targetId])
+  @@index([authorId])
+  @@index([createdAt])
+}
+
+enum CommentTarget {
+  POST
+  VIDEO
+  PRODUCT
+}
+
+// ============================================
+// Order
+// ============================================
+
+model Order {
+  id                String      @id @default(uuid())
+  buyerId           String
+  productId         String
+  quantity          Int
+  totalPrice        Float
+  currency          String      @default("USD")
+  status            OrderStatus @default(PENDING)
+  shippingAddress   Json?       // { street, city, country, zipCode }
+  paymentProvider   String?      @default("STRIPE") // "STRIPE", "PAYPAL", etc.
+  paymentIntentId    String?     // Stripe Payment Intent ID
+  checkoutSessionId String?     // Stripe Checkout Session ID
+  platformFee        Float?      // Commission taken by platform
+  makerRevenue       Float?      // Revenue for maker (totalPrice - platformFee)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  // Relations
+  buyer      User        @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  product    Product     @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([buyerId])
+  @@index([productId])
+  @@index([status])
+  @@index([checkoutSessionId])
+  @@index([paymentIntentId])
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  FAILED
+  CANCELLED
+}
+
+// ============================================
+// Conversation & Message
+// ============================================
+
+model Conversation {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  participants User[] @relation("ConversationParticipants")
+  messages    Message[]
+
+  @@index([updatedAt])
+}
+
+model Message {
+  id             String   @id @default(uuid())
+  conversationId String
+  senderId       String
+  content        String   @db.Text
+  read           Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  // Relations
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User        @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([createdAt])
+}
+
+// ============================================
+// Likes
+// ============================================
+
+model ProductLike {
+  id        String   @id @default(uuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([productId])
+}
+
+model VideoLike {
+  id        String   @id @default(uuid())
+  userId    String
+  videoId   String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, videoId])
+  @@index([videoId])
+}
+
+model CommentLike {
+  id        String   @id @default(uuid())
+  userId    String
+  commentId String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, commentId])
+  @@index([commentId])
+}
+
+// ============================================
+// Analytics / Tracking
+// ============================================
+
+model AnalyticsEvent {
+  id        String   @id @default(uuid())
+  userId    String?  // Optional - can track anonymous events
+  eventType String   // PAGE_VIEW, CLICK, CHECKOUT_STARTED, CHECKOUT_COMPLETED, AI_MESSAGE_SENT, etc.
+  metadata  Json?    // Additional event data
+  createdAt DateTime @default(now())
+
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([eventType])
+  @@index([createdAt])
+}
+
+// ============================================
+// Notifications
+// ============================================
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String   // "new-product", "order-update", "message", "new-maker", etc.
+  title     String
+  body      String   @db.Text
+  read      Boolean  @default(false)
+  metadata  Json?    // Additional notification data
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([read])
+  @@index([createdAt])
+}
+
+// ============================================
+// Reports / Moderation
+// ============================================
+
+model Report {
+  id         String        @id @default(uuid())
+  reporterId String
+  targetType ReportTarget
+  targetId   String        // productId, videoId, postId, or userId
+  reason     String        @db.Text
+  status     ReportStatus  @default(OPEN)
+  metadata   Json?         // Additional report data
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  reporter   User          @relation("Reports", fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@index([targetType, targetId])
+  @@index([reporterId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum ReportTarget {
+  PRODUCT
+  VIDEO
+  POST
+  USER
+  COMMENT
+}
+
+enum ReportStatus {
+  OPEN
+  REVIEWED
+  RESOLVED
+  DISMISSED
+}

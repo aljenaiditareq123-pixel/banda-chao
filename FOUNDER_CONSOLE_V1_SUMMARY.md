@@ -237,3 +237,4 @@ The backend needs to implement:
 **Founder Console v1.0 is complete and ready for backend integration!**
 
 
+

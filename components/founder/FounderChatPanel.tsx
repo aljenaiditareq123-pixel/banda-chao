@@ -121,22 +121,17 @@ export default function FounderChatPanel({ user, loading: authLoading }: Founder
         throw new Error('No authentication token');
       }
 
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://banda-chao-backend.onrender.com';
-      const response = await axios.post(
-        `${API_BASE_URL}/api/v1/founder/chat`,
-        { message: fullMessage },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      // Use AI API endpoint
+      const { aiAPI } = await import('@/lib/api');
+      const response = await aiAPI.assistant({
+        assistant: 'consultant',
+        message: fullMessage,
+      });
 
       const assistantMessage: ChatMessage = {
         id: 'assistant-' + Date.now(),
         role: 'assistant',
-        content: response.data.response || response.data.message || 'لم أتمكن من الحصول على رد.',
+        content: response.response || response.message || 'لم أتمكن من الحصول على رد.',
         timestamp: new Date(),
       };
 

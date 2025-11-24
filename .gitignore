@@ -47,3 +47,11 @@ Thumbs.db
 *.pem
 .cache/
 
+# Server
+server/dist/
+server/uploads/
+server/node_modules/
+server/.env
+
+# Prisma
+server/prisma/migrations/
