@@ -44,4 +44,3 @@ export function buildApiUrl(endpoint: string): string {
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
   return `${apiUrl}${cleanEndpoint}`;
 }
-
