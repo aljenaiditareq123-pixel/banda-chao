@@ -39,7 +39,7 @@ router.get('/', async (req: Request, res: Response) => {
       prisma.product.findMany({
         where,
         skip,
-        take: pageSize,
+        take: limit,
         include: {
           maker: {
             include: {
@@ -73,13 +73,14 @@ router.get('/', async (req: Request, res: Response) => {
       products,
       pagination: {
         page,
-        pageSize,
+        pageSize: limit,
         total,
-        totalPages: Math.ceil(total / pageSize),
+        totalPages: Math.ceil(total / limit),
       },
     };
 
     // Cache response for 60 seconds
+    const cacheKey = `products:${page}:${limit}:${category || ''}:${makerId || ''}:${search || ''}`;
     setCache(cacheKey, response, 60 * 1000);
 
     res.json(response);

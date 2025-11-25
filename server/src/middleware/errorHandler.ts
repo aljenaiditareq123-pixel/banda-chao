@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { Prisma } from '@prisma/client';
+import { PrismaClientKnownRequestError, PrismaClientValidationError } from '@prisma/client/runtime/library';
 
 export interface AppError extends Error {
   statusCode?: number;
@@ -28,7 +29,7 @@ export function errorHandler(
   console.error('❌ Error occurred:', JSON.stringify(errorContext, null, 2));
 
   // Handle Prisma errors
-  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+  if (err instanceof PrismaClientKnownRequestError) {
     // Don't expose database errors to client
     console.error('Database error:', err.code, err.meta);
     
@@ -39,7 +40,7 @@ export function errorHandler(
     });
   }
 
-  if (err instanceof Prisma.PrismaClientValidationError) {
+  if (err instanceof PrismaClientValidationError) {
     console.error('Validation error:', err.message);
     
     return res.status(400).json({

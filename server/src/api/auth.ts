@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import * as bcrypt from 'bcryptjs';
+import * as jwt from 'jsonwebtoken';
 import { prisma } from '../utils/prisma';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { validate } from '../middleware/validate';
@@ -8,7 +8,7 @@ import { registerSchema, loginSchema } from '../validation/authSchemas';
 
 const router = Router();
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const JWT_SECRET: string = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
 // Register
@@ -61,7 +61,7 @@ router.post('/register', validate(registerSchema), async (req: Request, res: Res
     const token = jwt.sign(
       { userId: user.id, email: user.email, name: user.name, role: user.role },
       JWT_SECRET,
-      { expiresIn: JWT_EXPIRES_IN }
+      { expiresIn: JWT_EXPIRES_IN } as jwt.SignOptions
     );
 
     res.status(201).json({
@@ -104,7 +104,7 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response)
     const token = jwt.sign(
       { userId: user.id, email: user.email, name: user.name, role: user.role },
       JWT_SECRET,
-      { expiresIn: JWT_EXPIRES_IN }
+      { expiresIn: JWT_EXPIRES_IN } as jwt.SignOptions
     );
 
     res.json({

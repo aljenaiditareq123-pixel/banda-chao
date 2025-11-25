@@ -100,7 +100,7 @@ router.get('/summary', authenticateToken, async (req: AuthRequest, res: Response
       success: true,
       data: {
         totalEvents,
-        eventsByType: eventsByType.map((e) => ({
+        eventsByType: eventsByType.map((e: { eventType: string; _count: { id: number } }) => ({
           eventType: e.eventType,
           count: e._count.id,
         })),

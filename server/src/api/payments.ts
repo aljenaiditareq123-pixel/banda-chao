@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import Stripe from 'stripe';
 import { prisma } from '../utils/prisma';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { validate } from '../middleware/validate';

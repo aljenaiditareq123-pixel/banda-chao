@@ -53,7 +53,7 @@ router.get('/', authenticateToken, requireRole(['FOUNDER', 'ADMIN']), async (req
 
     const statsObj = {
       total: total,
-      paid: stats.find((s) => s.status === 'PAID')?._count.id || 0,
+      paid: stats.find((s: { status: string; _count: { id: number } }) => s.status === 'PAID')?._count.id || 0,
     };
 
     res.json({

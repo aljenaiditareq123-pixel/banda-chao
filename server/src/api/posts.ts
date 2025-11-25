@@ -8,8 +8,8 @@ const router = Router();
 router.get('/', async (req: Request, res: Response) => {
   try {
     const page = parseInt(req.query.page as string) || 1;
-    const pageSize = parseInt(req.query.pageSize as string) || parseInt(req.query.limit as string) || 20;
-    const skip = (page - 1) * pageSize;
+    const limit = parseInt(req.query.limit as string) || parseInt(req.query.pageSize as string) || 20;
+    const skip = (page - 1) * limit;
     const type = req.query.type as string;
     const makerId = req.query.makerId as string;
 

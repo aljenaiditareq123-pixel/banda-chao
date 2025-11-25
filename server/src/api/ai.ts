@@ -232,6 +232,10 @@ router.post('/founder', authenticateToken, requireRole(['FOUNDER']), async (req:
 
     console.log(`[FounderAI] Request from founder ${userId}`);
 
+    // Get assistant profile for system prompt
+    const profile = getAssistantProfile('consultant');
+    const SYSTEM_PROMPT = profile.systemPrompt;
+
     // Get current KPIs for context
     const [totalArtisans, totalProducts, totalVideos, totalUsers, totalOrders, paidOrders] = await Promise.all([
       prisma.user.count({ where: { role: 'MAKER' } }),
