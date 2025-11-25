@@ -19,3 +19,4 @@ export default function SignupPage({ params }: PageProps) {
   return <SignupPageClient locale={locale} />;
 }
 
+

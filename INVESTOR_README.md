@@ -284,3 +284,4 @@ Our platform combines the social power of content (videos, posts) with e-commerc
 **آخر تحديث**: ديسمبر 2024  
 **حالة المشروع**: Beta Ready for Investor Demo
 
+

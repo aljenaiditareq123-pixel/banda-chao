@@ -57,3 +57,4 @@ export default function CheckoutPageClient({ locale }: CheckoutPageClientProps) 
   );
 }
 
+

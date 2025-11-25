@@ -19,3 +19,4 @@ export default function CheckoutPage({ params }: PageProps) {
   return <CheckoutPageClient locale={locale} />;
 }
 
+

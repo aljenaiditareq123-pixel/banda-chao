@@ -19,3 +19,4 @@ export default async function AboutPage({ params }: PageProps) {
   return <AboutPageClient locale={locale} />;
 }
 
+

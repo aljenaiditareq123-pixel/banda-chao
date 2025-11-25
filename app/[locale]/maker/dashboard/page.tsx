@@ -23,3 +23,4 @@ export default async function MakerDashboardPage({ params }: PageProps) {
   return <MakerDashboardClient locale={locale} />;
 }
 
+

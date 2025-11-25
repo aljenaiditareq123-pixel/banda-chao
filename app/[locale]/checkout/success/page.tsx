@@ -22,3 +22,4 @@ export default async function CheckoutSuccessPage({ params, searchParams }: Page
   return <CheckoutSuccessClient locale={locale} sessionId={searchParams.session_id} />;
 }
 
+

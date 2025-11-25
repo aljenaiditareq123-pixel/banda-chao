@@ -19,3 +19,4 @@ export default function LoginPage({ params }: PageProps) {
   return <LoginPageClient locale={locale} />;
 }
 
+

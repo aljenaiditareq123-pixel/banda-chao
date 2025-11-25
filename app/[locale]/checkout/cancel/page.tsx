@@ -22,3 +22,4 @@ export default async function CheckoutCancelPage({ params, searchParams }: PageP
   return <CheckoutCancelClient locale={locale} orderId={searchParams.order_id} />;
 }
 
+
