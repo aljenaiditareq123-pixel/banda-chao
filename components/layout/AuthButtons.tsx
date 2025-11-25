@@ -1,112 +1,54 @@
 'use client';
 
-import { useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 
 interface AuthButtonsProps {
   locale: string;
-  isLoggedIn: boolean;
+  isLoggedIn?: boolean;
   userName?: string | null;
   onLogout?: () => void;
 }
 
-export default function AuthButtons({ locale, isLoggedIn, userName, onLogout }: AuthButtonsProps) {
-  const router = useRouter();
-
-  // Defensive logging (development only)
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[AuthButtons] Component mounted. isLoggedIn:', isLoggedIn);
-    }
-  }, [isLoggedIn]);
-
-  const handleLoginClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[AuthButtons] Login button clicked');
-    }
-    // Link will handle navigation, but ensure it's not prevented
-    router.push(`/${locale}/login`);
-  };
-
-  const handleSignupClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[AuthButtons] Signup button clicked');
-    }
-    // Link will handle navigation, but ensure it's not prevented
-    router.push(`/${locale}/signup`);
-  };
-
-  const handleLogoutClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[AuthButtons] Logout button clicked');
-    }
-    if (onLogout) {
-      onLogout();
-    }
-  };
-
-  const accountTexts = {
-    ar: {
-      myAccount: 'حسابي',
-      logOut: 'تسجيل الخروج',
-      login: 'تسجيل الدخول',
-      signup: 'إنشاء حساب',
-    },
-    en: {
-      myAccount: 'My Account',
-      logOut: 'Log Out',
-      login: 'Log In',
-      signup: 'Sign Up',
-    },
-    zh: {
-      myAccount: '我的账户',
-      logOut: '登出',
-      login: '登录',
-      signup: '注册',
-    },
-  };
-
-  const t = accountTexts[locale as keyof typeof accountTexts] || accountTexts.en;
-
-  if (isLoggedIn) {
+export default function AuthButtons({
+  locale,
+  isLoggedIn = false,
+  userName,
+  onLogout,
+}: AuthButtonsProps) {
+  // Simple logged out state - pure Link navigation
+  if (!isLoggedIn) {
     return (
-      <>
-        <span className="text-gray-600 text-sm relative z-[100]">
-          {t.myAccount} {userName ? `(${userName})` : ''}
-        </span>
-        <button
-          onClick={handleLogoutClick}
-          className="text-gray-600 hover:text-gray-900 text-sm relative z-[100]"
-          type="button"
+      <div className="flex items-center gap-2 relative z-[100]">
+        <Link
+          href={`/${locale}/login`}
+          className="text-sm px-3 py-1 rounded-full border border-gray-300 hover:bg-gray-100 transition-colors text-gray-700"
         >
-          {t.logOut}
-        </button>
-      </>
+          {locale === 'ar' ? 'تسجيل الدخول' : locale === 'zh' ? '登录' : 'Login'}
+        </Link>
+        <Link
+          href={`/${locale}/signup`}
+          className="text-sm px-3 py-1 rounded-full bg-primary text-white hover:bg-primary/90 transition-colors"
+        >
+          {locale === 'ar' ? 'إنشاء حساب' : locale === 'zh' ? '注册' : 'Sign up'}
+        </Link>
+      </div>
     );
   }
 
+  // Logged in state - show user menu
   return (
-    <>
-      <Link
-        href={`/${locale}/login`}
-        className="text-gray-600 hover:text-gray-900 text-sm relative z-[100] px-3 py-2 rounded transition-colors"
-        onClick={handleLoginClick}
+    <div className="flex items-center gap-2 relative z-[100]">
+      <span className="text-sm text-gray-700">
+        {locale === 'ar' ? 'مرحباً، ' : locale === 'zh' ? '你好, ' : 'Hi, '}
+        {userName || (locale === 'ar' ? 'مستخدم' : locale === 'zh' ? '用户' : 'User')}
+      </span>
+      <button
+        type="button"
+        onClick={onLogout}
+        className="text-sm px-3 py-1 rounded-full border border-red-300 text-red-600 hover:bg-red-50 transition-colors"
       >
-        {t.login}
-      </Link>
-      <Link
-        href={`/${locale}/signup`}
-        className="bg-primary text-white px-4 py-2 rounded-lg text-sm hover:bg-primary-600 relative z-[100] transition-colors"
-        onClick={handleSignupClick}
-      >
-        {t.signup}
-      </Link>
-    </>
+        {locale === 'ar' ? 'تسجيل الخروج' : locale === 'zh' ? '退出' : 'Logout'}
+      </button>
+    </div>
   );
 }
-

@@ -1,201 +1,149 @@
-'use client';
-
-import { useEffect, useState } from 'react';
 import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
+import Script from 'next/script';
 import { LanguageProvider } from '@/contexts/LanguageContext';
-import NotificationBell from '@/components/common/NotificationBell';
-import AuthButtons from '@/components/layout/AuthButtons';
-import UploadButton from '@/components/layout/UploadButton';
-import Link from 'next/link';
+import Navbar from '@/components/layout/Navbar';
 import '../globals.css';
 
 const validLocales = ['zh', 'en', 'ar'];
 
-interface LayoutProps {
+interface LocaleLayoutProps {
   children: React.ReactNode;
   params: {
     locale: string;
   };
 }
 
-export default function LocaleLayout({ children, params }: LayoutProps) {
+export async function generateMetadata({ params }: LocaleLayoutProps): Promise<Metadata> {
   const { locale } = params;
-  const [mounted, setMounted] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userName, setUserName] = useState<string | null>(null);
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const validLocale = (locale === 'zh' || locale === 'ar' || locale === 'en') ? locale : 'zh';
 
-  useEffect(() => {
-    setMounted(true);
-    if (typeof window !== 'undefined') {
-      const loggedIn = localStorage.getItem('bandaChao_isLoggedIn') === 'true';
-      const name = localStorage.getItem('bandaChao_userName');
-      const role = localStorage.getItem('bandaChao_userRole');
-      setIsLoggedIn(loggedIn);
-      setUserName(name);
-      setUserRole(role);
-      
-      // Defensive logging (development only)
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[Layout] Auth state loaded:', { loggedIn, name, role });
-      }
-    }
-  }, []);
+  const titles = {
+    zh: 'Banda Chao 手作平台 — 全球手作人的温暖之家',
+    ar: 'Banda Chao - منصة التجارة الاجتماعية',
+    en: 'Banda Chao - Social Commerce Platform',
+  };
 
+  const descriptions = {
+    zh: 'Banda Chao 是一个连接全球手作人与买家的温暖平台，让每一件原创好物被看到，让每一位手作人都被尊重。',
+    ar: 'Banda Chao - منصة هجينة تجمع بين التواصل الاجتماعي والتجارة الإلكترونية',
+    en: 'Banda Chao - A platform that combines social media with e-commerce',
+  };
+
+  const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://banda-chao-frontend.onrender.com';
+  const keywords = {
+    zh: '手作, 匠人, 原创, 手工作品, 手工艺品, 手作平台, 手作人社区, Banda Chao',
+    ar: 'منصة, تجارة, اجتماعية, حرفيين',
+    en: 'social commerce, e-commerce, makers, handmade, artisans',
+  };
+
+  const metadata: Metadata = {
+    title: titles[validLocale],
+    description: descriptions[validLocale],
+    keywords: keywords[validLocale].split(', '),
+    alternates: {
+      canonical: `${baseUrl}/${validLocale}`,
+      languages: {
+        'zh': `${baseUrl}/zh`,
+        'ar': `${baseUrl}/ar`,
+        'en': `${baseUrl}/en`,
+      },
+    },
+    openGraph: {
+      title: titles[validLocale],
+      description: descriptions[validLocale],
+      url: `${baseUrl}/${validLocale}`,
+      siteName: 'Banda Chao',
+      locale: validLocale === 'zh' ? 'zh_CN' : validLocale === 'ar' ? 'ar_SA' : 'en_US',
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: titles[validLocale],
+      description: descriptions[validLocale],
+    },
+  };
+
+  // Add Baidu-specific meta tags for Chinese locale
+  if (validLocale === 'zh') {
+    metadata.other = {
+      'renderer': 'webkit',
+      'force-rendering': 'webkit',
+      'baidu-site-verification': 'TODO_ADD_CODE',
+      'X-UA-Compatible': 'IE=Edge,chrome=1',
+      'itemprop:name': 'Banda Chao 手作平台',
+      'itemprop:description': '全球手作人的温暖之家',
+      'itemprop:image': `${baseUrl}/og-china.png`,
+    };
+  }
+
+  return metadata;
+}
+
+export default function LocaleLayout({ children, params }: LocaleLayoutProps) {
+  const { locale } = params;
+  
+  // Validate locale
   if (!validLocales.includes(locale)) {
     notFound();
   }
 
-  const dir = locale === 'ar' ? 'rtl' : 'ltr';
-  const lang = locale;
-
-  const accountTexts = {
-    ar: {
-      myAccount: 'حسابي',
-      logOut: 'تسجيل الخروج',
-    },
-    en: {
-      myAccount: 'My Account',
-      logOut: 'Log Out',
-    },
-    zh: {
-      myAccount: '我的账户',
-      logOut: '登出',
-    },
-  };
-
-  const accountT = accountTexts[locale as keyof typeof accountTexts] || accountTexts.en;
-
-  const handleLogout = () => {
-    if (typeof window !== 'undefined') {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[Layout] Logout called');
-      }
-      localStorage.removeItem('bandaChao_isLoggedIn');
-      localStorage.removeItem('bandaChao_userEmail');
-      localStorage.removeItem('bandaChao_userName');
-      localStorage.removeItem('bandaChao_userRole');
-      setIsLoggedIn(false);
-      setUserName(null);
-      setUserRole(null);
-      window.location.href = `/${locale}`;
-    }
-  };
-
-  // Prevent hydration mismatch by rendering minimal shell until mounted
-  if (!mounted) {
-    return (
-      <html lang={lang} dir={dir}>
-        <body>
-          <LanguageProvider defaultLanguage={locale as 'zh' | 'en' | 'ar'}>
-            <nav className="bg-white border-b border-gray-200 sticky top-0 z-[100]">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between h-16">
-                  <div className="flex items-center">
-                    <Link href={`/${locale}`} className="text-xl font-bold text-primary">
-                      Banda Chao
-                    </Link>
-                  </div>
-                  <div className="flex items-center gap-4 relative z-[100]">
-                    <Link href={`/${locale}/makers`} className="text-gray-600 hover:text-gray-900">
-                      {locale === 'ar' ? 'الحرفيون' : locale === 'zh' ? '手工艺人' : 'Makers'}
-                    </Link>
-                    <Link href={`/${locale}/products`} className="text-gray-600 hover:text-gray-900">
-                      {locale === 'ar' ? 'المنتجات' : locale === 'zh' ? '产品' : 'Products'}
-                    </Link>
-                    <Link href={`/${locale}/videos`} className="text-gray-600 hover:text-gray-900">
-                      {locale === 'ar' ? 'الفيديوهات' : locale === 'zh' ? '视频' : 'Videos'}
-                    </Link>
-                    <Link href={`/${locale}/about`} className="text-gray-600 hover:text-gray-900">
-                      {locale === 'ar' ? 'عن' : locale === 'zh' ? '关于' : 'About'}
-                    </Link>
-                    <AuthButtons locale={locale} isLoggedIn={false} />
-                    <UploadButton locale={locale} isLoggedIn={false} />
-                  </div>
-                </div>
-              </div>
-            </nav>
-            {children}
-          </LanguageProvider>
-        </body>
-      </html>
-    );
-  }
+  const validLocale = (locale === 'zh' || locale === 'ar' || locale === 'en') ? locale : 'zh';
+  const dir = validLocale === 'ar' ? 'rtl' : 'ltr';
+  const lang = validLocale;
 
   return (
     <html lang={lang} dir={dir}>
       <body>
-        <LanguageProvider defaultLanguage={locale as 'zh' | 'en' | 'ar'}>
-          {/* Simple Navbar */}
-          <nav className="bg-white border-b border-gray-200 sticky top-0 z-[100]">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="flex items-center justify-between h-16">
-                <div className="flex items-center">
-                  <Link href={`/${locale}`} className="text-xl font-bold text-primary">
-                    Banda Chao
-                  </Link>
-                </div>
-                <div className="flex items-center gap-4 relative z-[100]">
-                  <Link href={`/${locale}/makers`} className="text-gray-600 hover:text-gray-900">
-                    {locale === 'ar' ? 'الحرفيون' : locale === 'zh' ? '手工艺人' : 'Makers'}
-                  </Link>
-                  <Link href={`/${locale}/products`} className="text-gray-600 hover:text-gray-900">
-                    {locale === 'ar' ? 'المنتجات' : locale === 'zh' ? '产品' : 'Products'}
-                  </Link>
-                  <Link href={`/${locale}/videos`} className="text-gray-600 hover:text-gray-900">
-                    {locale === 'ar' ? 'الفيديوهات' : locale === 'zh' ? '视频' : 'Videos'}
-                  </Link>
-                  <Link href={`/${locale}/about`} className="text-gray-600 hover:text-gray-900">
-                    {locale === 'ar' ? 'عن' : locale === 'zh' ? '关于' : 'About'}
-                  </Link>
-                  {/* Auth Buttons */}
-                  <AuthButtons 
-                    locale={locale} 
-                    isLoggedIn={isLoggedIn}
-                    userName={userName}
-                    onLogout={handleLogout}
-                  />
-                  {/* Upload Button */}
-                  <UploadButton 
-                    locale={locale}
-                    isLoggedIn={isLoggedIn}
-                    userRole={userRole || undefined}
-                  />
-                  {/* Language Switcher */}
-                  <div className="flex items-center gap-2 relative z-[100]">
-                    <Link 
-                      href="/ar" 
-                      className={`text-sm px-2 py-1 rounded ${locale === 'ar' ? 'bg-primary text-white' : 'text-gray-600 hover:text-gray-900'}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                      }}
-                    >
-                      AR
-                    </Link>
-                    <Link 
-                      href="/en" 
-                      className={`text-sm px-2 py-1 rounded ${locale === 'en' ? 'bg-primary text-white' : 'text-gray-600 hover:text-gray-900'}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                      }}
-                    >
-                      EN
-                    </Link>
-                    <Link 
-                      href="/zh" 
-                      className={`text-sm px-2 py-1 rounded ${locale === 'zh' ? 'bg-primary text-white' : 'text-gray-600 hover:text-gray-900'}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                      }}
-                    >
-                      ZH
-                    </Link>
-                  </div>
-                  <NotificationBell />
-                </div>
-              </div>
-            </div>
-          </nav>
+        {/* Baidu-specific meta tags for Chinese pages */}
+        {validLocale === 'zh' && (
+          <Script
+            id="baidu-meta-tags"
+            strategy="beforeInteractive"
+            dangerouslySetInnerHTML={{
+              __html: `
+                if (document.querySelector('meta[name="renderer"]') === null) {
+                  const meta1 = document.createElement('meta');
+                  meta1.name = 'renderer';
+                  meta1.content = 'webkit';
+                  document.getElementsByTagName('head')[0].appendChild(meta1);
+                }
+                if (document.querySelector('meta[http-equiv="X-UA-Compatible"]') === null) {
+                  const meta2 = document.createElement('meta');
+                  meta2.httpEquiv = 'X-UA-Compatible';
+                  meta2.content = 'IE=Edge,chrome=1';
+                  document.getElementsByTagName('head')[0].appendChild(meta2);
+                }
+                if (document.querySelector('meta[name="force-rendering"]') === null) {
+                  const meta3 = document.createElement('meta');
+                  meta3.name = 'force-rendering';
+                  meta3.content = 'webkit';
+                  document.getElementsByTagName('head')[0].appendChild(meta3);
+                }
+                if (document.querySelector('meta[name="keywords"]') === null) {
+                  const meta4 = document.createElement('meta');
+                  meta4.name = 'keywords';
+                  meta4.content = '手作, 匠人, 原创, 手工作品, 手工艺品, 手作平台, 手作人社区, Banda Chao';
+                  document.getElementsByTagName('head')[0].appendChild(meta4);
+                }
+                if (document.querySelector('meta[itemprop="name"]') === null) {
+                  const meta5 = document.createElement('meta');
+                  meta5.setAttribute('itemprop', 'name');
+                  meta5.content = 'Banda Chao 手作平台';
+                  document.getElementsByTagName('head')[0].appendChild(meta5);
+                }
+                if (document.querySelector('meta[itemprop="description"]') === null) {
+                  const meta6 = document.createElement('meta');
+                  meta6.setAttribute('itemprop', 'description');
+                  meta6.content = '全球手作人的温暖之家';
+                  document.getElementsByTagName('head')[0].appendChild(meta6);
+                }
+              `,
+            }}
+          />
+        )}
+        <LanguageProvider defaultLanguage={validLocale as 'zh' | 'en' | 'ar'}>
+          <Navbar locale={validLocale} />
           {children}
         </LanguageProvider>
       </body>

@@ -55,3 +55,6 @@ server/.env
 
 # Prisma
 server/prisma/migrations/
+
+# Archive/Backup folder (not tracked)
+banda-chao-clean/
