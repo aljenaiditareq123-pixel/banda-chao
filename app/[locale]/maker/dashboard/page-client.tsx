@@ -62,7 +62,7 @@ export default function MakerDashboardClient({ locale }: MakerDashboardClientPro
         ordersAPI.getMyOrders().catch(() => ({ success: false, orders: [] })),
       ]);
 
-      if (!makerRes.success || !makerRes.maker) {
+      if (!makerRes.success || !('maker' in makerRes) || !makerRes.maker) {
         setError('Maker profile not found. Please complete onboarding.');
         return;
       }
