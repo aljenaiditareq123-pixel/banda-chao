@@ -104,7 +104,7 @@ export default function AboutPageClient({ locale }: AboutPageClientProps) {
       },
       whyChinaME: {
         title: 'Why China + Middle East?',
-        text: 'China is the world\'s largest market for handicrafts, and the Middle East has a rich tradition in craftsmanship. We bring together both strengths to create a cultural and commercial bridge connecting artisans and buyers from both regions.',
+        text: 'China is the world&apos;s largest market for handicrafts, and the Middle East has a rich tradition in craftsmanship. We bring together both strengths to create a cultural and commercial bridge connecting artisans and buyers from both regions.',
       },
       team: {
         title: 'Our Team',
@@ -243,7 +243,7 @@ export default function AboutPageClient({ locale }: AboutPageClientProps) {
               </div>
               <p className="text-gray-600 leading-relaxed mb-4">{t.team.founder.description}</p>
               <div className="bg-primary-50 border-r-4 border-primary-500 p-4 rounded">
-                <p className="text-gray-700 italic">"{t.team.founder.message}"</p>
+                <p className="text-gray-700 italic">&quot;{t.team.founder.message}&quot;</p>
               </div>
             </div>
           </Card>

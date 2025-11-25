@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import AuthButtons from './AuthButtons';
 import UploadButton from './UploadButton';
 import NotificationBell from '@/components/common/NotificationBell';
@@ -16,7 +15,6 @@ export default function Navbar({ locale }: NavbarProps) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
-  const pathname = usePathname();
 
   useEffect(() => {
     setMounted(true);

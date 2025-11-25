@@ -1,4 +1,3 @@
-import React from 'react';
 import Link from 'next/link';
 import { Product } from '@/types';
 import Card from '@/components/common/Card';
@@ -25,6 +24,7 @@ export default function ProductCard({ product, href }: ProductCardProps) {
       <Card hover>
         <div className="aspect-[4/3] bg-gray-200 relative overflow-hidden">
           {product.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={product.imageUrl}
               alt={product.name}

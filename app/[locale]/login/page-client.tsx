@@ -92,7 +92,7 @@ export default function LoginPageClient({ locale }: LoginPageClientProps) {
       email: 'Email',
       password: 'Password',
       submit: 'Log In',
-      noAccount: "Don't have an account?",
+      noAccount: "Don&apos;t have an account?",
       signUp: 'Sign Up',
     },
     zh: {

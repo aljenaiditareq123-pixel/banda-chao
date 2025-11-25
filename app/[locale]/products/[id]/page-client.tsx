@@ -45,6 +45,7 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
             <div className="aspect-square bg-gray-200 relative">
               {mainImage ? (
                 <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={mainImage}
                     alt={product.name}
@@ -72,6 +73,7 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
               <div className="grid grid-cols-4 gap-2 p-4">
                 {images.slice(1, 5).map((img: any, index: number) => (
                   <div key={index} className="aspect-square bg-gray-200 rounded-lg overflow-hidden relative">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={img.url}
                       alt={`${product.name} ${index + 2}`}

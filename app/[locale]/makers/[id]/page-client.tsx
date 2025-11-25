@@ -28,6 +28,7 @@ export default function MakerDetailClient({ locale, maker, products, videos }: M
               <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden relative">
                 {maker.avatarUrl || maker.user?.profilePicture ? (
                   <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={maker.avatarUrl || maker.user?.profilePicture}
                       alt={maker.displayName}

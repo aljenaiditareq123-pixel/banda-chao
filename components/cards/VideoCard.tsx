@@ -1,4 +1,3 @@
-import React from 'react';
 import Link from 'next/link';
 import Card from '@/components/common/Card';
 
@@ -34,6 +33,7 @@ export default function VideoCard({ video, href, locale }: VideoCardProps) {
       <Card hover>
         <div className="aspect-video bg-gray-200 relative overflow-hidden">
           {video.thumbnailUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={video.thumbnailUrl}
               alt={video.title}

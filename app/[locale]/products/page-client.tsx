@@ -117,6 +117,7 @@ export default function ProductsPageClient({
     if (clampedPage !== currentPage) {
       setCurrentPage(clampedPage);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, totalPages]);
 
   // Reset to page 1 when filters change

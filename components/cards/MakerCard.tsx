@@ -1,4 +1,3 @@
-import React from 'react';
 import Link from 'next/link';
 import Card from '@/components/common/Card';
 
@@ -34,6 +33,7 @@ export default function MakerCard({ maker, href, locale }: MakerCardProps) {
           <div className="flex items-start mb-4">
             <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
               {maker.avatarUrl || maker.user?.profilePicture ? (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={maker.avatarUrl || maker.user?.profilePicture}
                   alt={maker.displayName}

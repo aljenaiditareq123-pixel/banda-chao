@@ -2,11 +2,6 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  i18n: {
-    locales: ['zh', 'en', 'ar'],
-    defaultLocale: 'zh',
-    localeDetection: true,
-  },
   images: {
     domains: ['banda-chao-backend.onrender.com', 'localhost'],
     remotePatterns: [
@@ -15,9 +10,6 @@ const nextConfig = {
         hostname: '**',
       },
     ],
-  },
-  experimental: {
-    appDir: true,
   },
 }
 
