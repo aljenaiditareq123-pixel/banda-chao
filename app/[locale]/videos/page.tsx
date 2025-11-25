@@ -24,9 +24,10 @@ export default async function VideosPage({ params, searchParams }: PageProps) {
     notFound();
   }
 
-  // Fetch videos from API
+  // Fetch videos from API with error handling
   let videos: any[] = [];
   let pagination = { page: 1, limit: 20, total: 0, totalPages: 0 };
+  let error: string | null = null;
 
   try {
     const response = await videosAPI.getAll({
@@ -39,10 +40,17 @@ export default async function VideosPage({ params, searchParams }: PageProps) {
     });
     videos = response.videos || [];
     pagination = response.pagination || pagination;
-  } catch (error) {
-    console.error('Error fetching videos:', error);
+  } catch (err: any) {
+    console.error('Error fetching videos:', err);
+    error = err.response?.data?.message || err.message || 'Failed to load videos';
   }
 
-  return <VideosPageClient locale={locale} videos={videos} pagination={pagination} />;
+  return (
+    <VideosPageClient 
+      locale={locale} 
+      videos={videos} 
+      pagination={pagination}
+      error={error}
+    />
+  );
 }
-

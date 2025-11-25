@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { usersAPI } from '@/lib/api';
 
 interface User {
   id: string;
@@ -18,7 +18,7 @@ interface UseAuthReturn {
 
 /**
  * Custom hook to get current authenticated user
- * Checks localStorage for JWT token and fetches user info from backend
+ * Uses centralized API client with retry logic
  */
 export function useAuth(): UseAuthReturn {
   const [user, setUser] = useState<User | null>(null);
@@ -39,18 +39,12 @@ export function useAuth(): UseAuthReturn {
           return;
         }
 
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://banda-chao-backend.onrender.com';
-        const response = await axios.get<{ user: User }>(`${API_BASE_URL}/api/v1/users/me`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        setUser(response.data.user || response.data);
-      } catch (err) {
+        // Use centralized API client with retry logic
+        const data = await usersAPI.getMe();
+        setUser(data.user || data);
+      } catch (err: any) {
         // If 401, user is not authenticated - clear token and user
-        if (axios.isAxiosError(err) && err.response?.status === 401) {
+        if (err?.response?.status === 401) {
           if (typeof window !== 'undefined') {
             localStorage.removeItem('auth_token');
           }
@@ -70,6 +64,3 @@ export function useAuth(): UseAuthReturn {
 
   return { user, loading, error };
 }
-
-
-

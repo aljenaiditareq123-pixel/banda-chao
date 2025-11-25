@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { initializeSocketClient, getSocket } from '@/lib/socket';
+import { fetchJsonWithRetry } from '@/lib/fetch-with-retry';
+import { buildApiUrl } from '@/lib/api-utils';
 import Button from '@/components/Button';
 
 interface Message {
@@ -93,11 +95,11 @@ export default function ChatBox({ conversationId, currentUserId, initialMessages
         content,
       });
     } else {
-      // Fallback to HTTP API
+      // Fallback to HTTP API with retry logic
       try {
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
         const token = localStorage.getItem('auth_token');
-        const response = await fetch(`${API_URL}/api/v1/conversations/${conversationId}/messages`, {
+        const url = buildApiUrl(`/conversations/${conversationId}/messages`);
+        const data = await fetchJsonWithRetry(url, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -106,8 +108,7 @@ export default function ChatBox({ conversationId, currentUserId, initialMessages
           body: JSON.stringify({ content }),
         });
 
-        if (response.ok) {
-          const data = await response.json();
+        if (data && data.message) {
           setMessages((prev) => [...prev, data.message]);
         }
       } catch (error) {

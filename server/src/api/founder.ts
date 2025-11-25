@@ -84,25 +84,41 @@ router.post('/chat', authenticateToken, requireRole(['FOUNDER']), async (req: Au
   }
 });
 
-// Founder Sessions endpoint (placeholder - returns empty array if table doesn't exist)
+// Founder Sessions endpoint - handles missing table gracefully
 router.get('/sessions', authenticateToken, requireRole(['FOUNDER']), async (req: AuthRequest, res: Response) => {
   try {
     const limit = parseInt(req.query.limit as string) || 10;
     
-    // Return empty array if founder_sessions table doesn't exist
-    // This prevents 500 errors in production
+    // Try to query founder_sessions table
+    // Note: This table may not exist in all environments
+    const sessions = await prisma.founderSession.findMany({
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+    });
+
     res.json({
       success: true,
-      sessions: [],
-      message: 'Sessions feature not yet implemented',
+      sessions,
+      total: sessions.length,
     });
   } catch (error: any) {
-    // If table doesn't exist, return empty array instead of error
+    // Handle Prisma error P2021 (table does not exist)
+    if (error.code === 'P2021') {
+      console.log('[FounderSessions] Table founder_sessions does not exist, returning empty array');
+      return res.json({
+        success: true,
+        sessions: [],
+        total: 0,
+        message: 'Sessions feature not yet implemented',
+      });
+    }
+    
+    // For other errors, log and return safe response
     console.error('[FounderSessions] Error fetching sessions:', error);
-    res.json({
-      success: true,
-      sessions: [],
-      message: 'Sessions feature not yet implemented',
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      message: 'Failed to fetch sessions',
     });
   }
 });

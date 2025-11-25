@@ -71,7 +71,7 @@ export default function VideosPageClient({
     return (
       <div className="min-h-screen bg-gray-50" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <ErrorState message={error} onRetry={onRetry} />
+          <ErrorState message={error} onRetry={onRetry} locale={locale} />
         </div>
       </div>
     );

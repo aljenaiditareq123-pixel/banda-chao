@@ -38,10 +38,18 @@ export default function MakerCard({ maker, href, locale }: MakerCardProps) {
                   src={maker.avatarUrl || maker.user?.profilePicture}
                   alt={maker.displayName}
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    // Hide broken image and show placeholder
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const placeholder = target.nextElementSibling as HTMLElement;
+                    if (placeholder) {
+                      placeholder.style.display = 'flex';
+                    }
+                  }}
                 />
-              ) : (
-                <span className="text-2xl">👤</span>
-              )}
+              ) : null}
+              <span className="text-2xl" style={{ display: (maker.avatarUrl || maker.user?.profilePicture) ? 'none' : 'flex' }}>👤</span>
             </div>
             <div className="mr-4 flex-1 min-w-0">
               <h3 className="text-lg font-semibold text-gray-900 mb-1 truncate">

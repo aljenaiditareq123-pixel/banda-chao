@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Grid, GridItem } from '@/components/Grid';
 import Button from '@/components/Button';
@@ -9,6 +9,7 @@ import MakerCard from '@/components/cards/MakerCard';
 import VideoCard from '@/components/cards/VideoCard';
 import { useLanguage } from '@/contexts/LanguageContext';
 import EmptyState from '@/components/common/EmptyState';
+import OnboardingModal from '@/components/common/OnboardingModal';
 
 interface HomePageClientProps {
   locale: string;
@@ -24,6 +25,7 @@ export default function HomePageClient({
   featuredVideos,
 }: HomePageClientProps) {
   const { setLanguage, t } = useLanguage();
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
     if (locale === 'zh' || locale === 'ar' || locale === 'en') {
@@ -56,8 +58,38 @@ export default function HomePageClient({
 
   const texts = heroTexts[locale as keyof typeof heroTexts] || heroTexts.en;
 
+  const helpTexts = {
+    ar: {
+      help: 'مساعدة',
+    },
+    en: {
+      help: 'Help',
+    },
+    zh: {
+      help: '帮助',
+    },
+  };
+
+  const helpT = helpTexts[locale as keyof typeof helpTexts] || helpTexts.en;
+
   return (
     <div className="bg-white" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+      {/* Help/Onboarding Button - Floating */}
+      <button
+        onClick={() => setShowOnboarding(true)}
+        className="fixed bottom-6 right-6 z-[60] bg-primary text-white rounded-full w-14 h-14 shadow-lg hover:bg-primary-600 flex items-center justify-center text-xl"
+        aria-label={helpT.help}
+      >
+        ?
+      </button>
+
+      {/* Onboarding Modal */}
+      <OnboardingModal
+        locale={locale}
+        isOpen={showOnboarding}
+        onClose={() => setShowOnboarding(false)}
+      />
+
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800 text-white py-20 md:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -126,7 +158,7 @@ export default function HomePageClient({
                   {locale === 'ar' ? 'المنتجات المميزة' : locale === 'zh' ? '精选产品' : 'Featured Products'}
                 </h2>
                 <p className="text-gray-600">
-                  {locale === 'ar' ? 'منتجات يدوية فريدة من حرفيين موهوبين' : locale === 'zh' ? '来自才华横溢手工艺人的独特手工产品' : 'Unique handmade products from talented makers'}
+                  {locale === 'ar' ? 'اكتشف منتجات يدوية فريدة من حرفيين موهوبين' : locale === 'zh' ? '发现来自才华横溢的手工艺人的独特手工产品' : 'Discover unique handmade products from talented makers'}
                 </p>
               </div>
               <Link href={`/${locale}/products`}>
@@ -136,17 +168,20 @@ export default function HomePageClient({
               </Link>
             </div>
             <Grid columns={{ base: 1, sm: 2, md: 3, lg: 4 }} gap="gap-6">
-              {featuredProducts.slice(0, 8).map((product) => (
-                <GridItem key={product.id}>
-                  <ProductCard
-                    product={{
-                      ...product,
-                      imageUrl: product.images?.[0]?.url || product.imageUrl || '',
-                    }}
-                    href={`/${locale}/products/${product.id}`}
-                  />
-                </GridItem>
-              ))}
+              {featuredProducts.slice(0, 8).map((product) => {
+                const imageUrl = product.images?.[0]?.url || product.imageUrl || '';
+                return (
+                  <GridItem key={product.id}>
+                    <ProductCard
+                      product={{
+                        ...product,
+                        imageUrl,
+                      }}
+                      href={`/${locale}/products/${product.id}`}
+                    />
+                  </GridItem>
+                );
+              })}
             </Grid>
           </div>
         </section>
@@ -162,7 +197,7 @@ export default function HomePageClient({
                   {locale === 'ar' ? 'الفيديوهات المميزة' : locale === 'zh' ? '精选视频' : 'Featured Videos'}
                 </h2>
                 <p className="text-gray-600">
-                  {locale === 'ar' ? 'شاهد كيف يصنع الحرفيون منتجاتهم' : locale === 'zh' ? '观看手工艺人如何制作他们的产品' : 'Watch how makers create their products'}
+                  {locale === 'ar' ? 'شاهد فيديوهات من حرفيين موهوبين' : locale === 'zh' ? '观看来自才华横溢的手工艺人的视频' : 'Watch videos from talented makers'}
                 </p>
               </div>
               <Link href={`/${locale}/videos`}>
@@ -186,63 +221,29 @@ export default function HomePageClient({
         </section>
       )}
 
-      {/* About CTA */}
-      <section className="py-16 bg-white">
+      {/* CTA Section */}
+      <section className="py-16 bg-primary-600 text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
-            {locale === 'ar' ? 'تعرف على Banda Chao' : locale === 'zh' ? '了解 Banda Chao' : 'Learn About Banda Chao'}
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            {locale === 'ar' ? 'ابدأ رحلتك مع Banda Chao اليوم' : locale === 'zh' ? '今天开始您的 Banda Chao 之旅' : 'Start Your Journey with Banda Chao Today'}
           </h2>
-          <p className="text-gray-600 mb-6">
-            {locale === 'ar' 
-              ? 'اكتشف رؤيتنا ورسالتنا وقيمنا، وتعرف على فريق العمل'
-              : locale === 'zh'
-              ? '了解我们的愿景、使命和价值观，认识我们的团队'
-              : 'Discover our vision, mission, and values, and meet our team'
-            }
+          <p className="text-lg text-primary-100 mb-8">
+            {locale === 'ar' ? 'انضم إلى مجتمع الحرفيين واكتشف إبداعاً لا حدود له' : locale === 'zh' ? '加入手工艺人社区，发现无限的创造力' : 'Join our community of makers and discover endless creativity'}
           </p>
-          <Link href={`/${locale}/about`}>
-            <Button variant="primary" className="px-8 py-3">
-              {locale === 'ar' ? 'اعرف المزيد' : locale === 'zh' ? '了解更多' : 'Learn More'}
-            </Button>
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href={`/${locale}/makers`}>
+              <Button variant="secondary" className="px-8 py-3 bg-white text-primary hover:bg-primary-50">
+                {locale === 'ar' ? 'استكشف الحرفيين' : locale === 'zh' ? '探索手工艺人' : 'Explore Makers'}
+              </Button>
+            </Link>
+            <Link href={`/${locale}/products`}>
+              <Button variant="secondary" className="px-8 py-3 border-2 border-white text-white hover:bg-white hover:text-primary">
+                {locale === 'ar' ? 'تصفح المنتجات' : locale === 'zh' ? '浏览产品' : 'Browse Products'}
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
-
-      {/* AI Assistant CTA (for Founder) */}
-      <section className="py-16 bg-primary-50">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
-            {locale === 'ar' ? 'مؤسس؟ استخدم الباندا المستشار' : locale === 'zh' ? '创始人？使用顾问熊猫' : 'Founder? Use Consultant Panda'}
-          </h2>
-          <p className="text-gray-600 mb-6">
-            {locale === 'ar' 
-              ? 'لوحة تحكم ذكية مع مساعد AI لمراقبة وإدارة منصة Banda Chao'
-              : locale === 'zh'
-              ? '智能仪表板，配备 AI 助手，用于监控和管理 Banda Chao 平台'
-              : 'Smart dashboard with AI assistant to monitor and manage Banda Chao platform'
-            }
-          </p>
-          <Link href="/founder">
-            <Button variant="primary" className="px-8 py-3">
-              {locale === 'ar' ? 'الذهاب إلى لوحة المؤسس' : locale === 'zh' ? '前往创始人控制台' : 'Go to Founder Console'}
-            </Button>
-          </Link>
-        </div>
-      </section>
-
-      {/* Empty State if no content */}
-      {featuredMakers.length === 0 && featuredProducts.length === 0 && featuredVideos.length === 0 && (
-        <section className="py-20">
-          <EmptyState
-            icon="🏠"
-            title={locale === 'ar' ? 'مرحباً بك في Banda Chao' : 'Welcome to Banda Chao'}
-            message={locale === 'ar' 
-              ? 'ابدأ بإضافة حرفيين ومنتجات لملء المنصة بالمحتوى.'
-              : 'Start by adding makers and products to fill the platform with content.'
-            }
-          />
-        </section>
-      )}
     </div>
   );
 }

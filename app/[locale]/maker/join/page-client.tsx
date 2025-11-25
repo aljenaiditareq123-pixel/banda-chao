@@ -47,6 +47,13 @@ export default function MakerJoinClient({ locale }: MakerJoinClientProps) {
       const response = await makersAPI.onboard(formData);
 
       if (response.success) {
+        // Update user role to MAKER in localStorage
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('bandaChao_userRole', 'MAKER');
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[MakerJoin] User role updated to MAKER');
+          }
+        }
         router.push(`/${locale}/maker/dashboard`);
       } else {
         setError(response.message || (locale === 'ar' ? 'فشل إنشاء الملف' : 'Failed to create profile'));

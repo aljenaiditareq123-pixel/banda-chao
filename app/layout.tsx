@@ -1,12 +1,19 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { LanguageProvider } from '@/contexts/LanguageContext'
+import EnvCheckInit from '@/components/common/EnvCheckInit'
 
 export const metadata: Metadata = {
   title: 'Banda Chao - Social E-commerce Platform',
   description: 'A global social-commerce platform connecting independent artisans worldwide with buyers. Support for Arabic, English, and Chinese.',
   keywords: ['handmade', 'artisans', 'e-commerce', 'social commerce', 'crafts', 'Banda Chao'],
   authors: [{ name: 'Tariq Al-Junaidi' }],
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Banda Chao',
+  },
   openGraph: {
     title: 'Banda Chao - Social E-commerce Platform',
     description: 'A global social-commerce platform connecting independent artisans worldwide with buyers',
@@ -28,6 +35,9 @@ export const metadata: Metadata = {
     description: 'A global social-commerce platform connecting independent artisans worldwide with buyers',
     images: ['/og-image.png'],
   },
+  other: {
+    'mobile-web-app-capable': 'yes',
+  },
 }
 
 export default function RootLayout({
@@ -38,6 +48,7 @@ export default function RootLayout({
   return (
     <html lang="zh">
       <body>
+        <EnvCheckInit />
         <LanguageProvider defaultLanguage="zh">
           {children}
         </LanguageProvider>

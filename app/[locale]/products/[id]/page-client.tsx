@@ -44,11 +44,24 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="aspect-square bg-gray-200 relative">
               {mainImage ? (
-                <img
-                  src={mainImage}
-                  alt={product.name}
-                  className="w-full h-full object-cover"
-                />
+                <>
+                  <img
+                    src={mainImage}
+                    alt={product.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      const placeholder = target.nextElementSibling as HTMLElement;
+                      if (placeholder) {
+                        placeholder.style.display = 'flex';
+                      }
+                    }}
+                  />
+                  <div className="w-full h-full flex items-center justify-center text-6xl text-gray-400 absolute inset-0" style={{ display: 'none' }}>
+                    🛍️
+                  </div>
+                </>
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-6xl text-gray-400">
                   🛍️
@@ -58,12 +71,23 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
             {images.length > 1 && (
               <div className="grid grid-cols-4 gap-2 p-4">
                 {images.slice(1, 5).map((img: any, index: number) => (
-                  <div key={index} className="aspect-square bg-gray-200 rounded-lg overflow-hidden">
+                  <div key={index} className="aspect-square bg-gray-200 rounded-lg overflow-hidden relative">
                     <img
                       src={img.url}
                       alt={`${product.name} ${index + 2}`}
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const placeholder = target.nextElementSibling as HTMLElement;
+                        if (placeholder) {
+                          placeholder.style.display = 'flex';
+                        }
+                      }}
                     />
+                    <div className="w-full h-full flex items-center justify-center text-2xl text-gray-400 absolute inset-0" style={{ display: 'none' }}>
+                      🛍️
+                    </div>
                   </div>
                 ))}
               </div>

@@ -3,9 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useFounderKpis } from '@/hooks/useFounderKpis';
-import { makersAPI, productsAPI, videosAPI } from '@/lib/api';
+import { makersAPI, productsAPI, videosAPI, ordersAPI } from '@/lib/api';
 import { aiAPI } from '@/lib/api';
-import axios from 'axios';
 import LoadingState from '@/components/common/LoadingState';
 import ErrorState from '@/components/common/ErrorState';
 import Card from '@/components/common/Card';
@@ -44,23 +43,19 @@ export default function FounderConsole() {
   const fetchRecentData = async () => {
     try {
       setLoadingData(true);
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
 
       const [makersRes, productsRes, videosRes, ordersRes] = await Promise.all([
         makersAPI.getAll({ limit: 5 }),
         productsAPI.getAll({ limit: 5 }),
         videosAPI.getAll({ limit: 5 }),
-        axios.get(`${API_URL}/api/v1/orders`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        }).catch(() => ({ data: { orders: [], stats: { total: 0, paid: 0 } } })),
+        ordersAPI.getAll().catch(() => ({ orders: [], stats: { total: 0, paid: 0 } })),
       ]);
 
       setRecentMakers(makersRes.makers || []);
       setRecentProducts(productsRes.products || []);
       setRecentVideos(videosRes.videos || []);
-      setRecentOrders(ordersRes.data.orders || []);
-      setOrdersStats(ordersRes.data.stats || { total: 0, paid: 0 });
+      setRecentOrders(ordersRes.orders || []);
+      setOrdersStats(ordersRes.stats || { total: 0, paid: 0 });
 
       // Generate fake growth data for demo
       const weeks = ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6', 'Week 7', 'Week 8'];

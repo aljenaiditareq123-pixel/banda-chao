@@ -23,24 +23,32 @@ export default async function MakersPage({ params, searchParams }: PageProps) {
     notFound();
   }
 
-  // Fetch makers from API
+  // Fetch makers from API with error handling
   let makers: any[] = [];
   let pagination = { page: 1, limit: 20, total: 0, totalPages: 0 };
+  let error: string | null = null;
 
   try {
     const response = await makersAPI.getAll({
       page: parseInt(searchParams.page || '1'),
-      limit: 20,
+      limit: 100, // Fetch more for client-side filtering/pagination
       country: searchParams.country,
       language: searchParams.language,
       search: searchParams.search,
     });
     makers = response.makers || [];
     pagination = response.pagination || pagination;
-  } catch (error) {
-    console.error('Error fetching makers:', error);
+  } catch (err: any) {
+    console.error('Error fetching makers:', err);
+    error = err.response?.data?.message || err.message || 'Failed to load makers';
   }
 
-  return <MakersPageClient locale={locale} makers={makers} pagination={pagination} />;
+  return (
+    <MakersPageClient 
+      locale={locale} 
+      makers={makers} 
+      pagination={pagination}
+      error={error}
+    />
+  );
 }
-

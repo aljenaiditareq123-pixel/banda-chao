@@ -2,10 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { FounderKPIs } from '@/types/founder';
-import axios from 'axios';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://banda-chao-backend.onrender.com';
-const API_URL = `${API_BASE_URL}/api/v1/founder/kpis`;
+import { founderAPI } from '@/lib/api';
 
 interface UseFounderKpisReturn {
   kpis: FounderKPIs | null;
@@ -16,6 +13,7 @@ interface UseFounderKpisReturn {
 
 /**
  * Custom hook to fetch Founder KPIs from the backend
+ * Uses centralized API client with retry logic
  */
 export function useFounderKpis(): UseFounderKpisReturn {
   const [kpis, setKpis] = useState<FounderKPIs | null>(null);
@@ -33,15 +31,10 @@ export function useFounderKpis(): UseFounderKpisReturn {
         throw new Error('No authentication token found');
       }
 
-      const response = await axios.get<FounderKPIs>(API_URL, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      setKpis(response.data);
-    } catch (err) {
+      // Use centralized API client with retry logic
+      const data = await founderAPI.getKPIs();
+      setKpis(data);
+    } catch (err: any) {
       const errorMessage = err instanceof Error ? err.message : 'حدث خطأ أثناء جلب البيانات';
       setError(errorMessage);
       setKpis(null);
@@ -61,6 +54,3 @@ export function useFounderKpis(): UseFounderKpisReturn {
     refetch: fetchKpis,
   };
 }
-
-
-

@@ -24,4 +24,3 @@ export async function generateFounderAIResponse(prompt: string): Promise<string>
     return "عذراً، حدث خطأ مؤقت في نظام الذكاء الاصطناعي الخاص بباندتشاو. حاول مرة أخرى بعد قليل.";
   }
 }
-

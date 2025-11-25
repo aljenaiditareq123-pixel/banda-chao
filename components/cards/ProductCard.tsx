@@ -29,12 +29,20 @@ export default function ProductCard({ product, href }: ProductCardProps) {
               src={product.imageUrl}
               alt={product.name}
               className="w-full h-full object-cover"
+              onError={(e) => {
+                // Hide broken image and show placeholder
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                const placeholder = target.nextElementSibling as HTMLElement;
+                if (placeholder) {
+                  placeholder.style.display = 'flex';
+                }
+              }}
             />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-5xl text-gray-400">
-              🛍️
-            </div>
-          )}
+          ) : null}
+          <div className="w-full h-full flex items-center justify-center text-5xl text-gray-400" style={{ display: product.imageUrl ? 'none' : 'flex' }}>
+            🛍️
+          </div>
         </div>
         <div className="p-4">
           <h3 className="text-base font-semibold text-gray-900 mb-2 line-clamp-2">

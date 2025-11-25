@@ -1,0 +1,22 @@
+{
+  "name": "Banda Chao - Social E-commerce Platform",
+  "short_name": "Banda Chao",
+  "description": "A global social-commerce platform connecting independent artisans worldwide with buyers",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2D62FF",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/og-image.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["shopping", "social", "business"],
+  "lang": "en",
+  "dir": "ltr"
+}
+

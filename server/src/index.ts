@@ -27,6 +27,10 @@ import { requestLogger } from './middleware/requestLogger';
 // Load environment variables
 dotenv.config();
 
+// Check environment variables
+import { checkBackendEnv } from './utils/env-check';
+checkBackendEnv();
+
 const app: Express = express();
 const server = createServer(app);
 const PORT = process.env.PORT || 3001;

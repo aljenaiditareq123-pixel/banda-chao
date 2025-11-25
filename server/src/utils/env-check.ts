@@ -1,0 +1,66 @@
+/**
+ * Backend Environment Variable Checks
+ * Runtime verification of critical environment variables
+ */
+
+/**
+ * Check backend environment variables
+ * Logs warnings if critical variables are missing
+ */
+export function checkBackendEnv(): void {
+  const requiredVars = {
+    DATABASE_URL: process.env.DATABASE_URL,
+    JWT_SECRET: process.env.JWT_SECRET,
+    GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+    FRONTEND_URL: process.env.FRONTEND_URL,
+  };
+
+  const missing: string[] = [];
+  const warnings: string[] = [];
+
+  // Check required variables
+  if (!requiredVars.DATABASE_URL) {
+    missing.push('DATABASE_URL');
+  }
+
+  if (!requiredVars.JWT_SECRET) {
+    missing.push('JWT_SECRET');
+  }
+
+  if (!requiredVars.GEMINI_API_KEY) {
+    warnings.push('GEMINI_API_KEY (AI features will not work)');
+  }
+
+  if (!requiredVars.FRONTEND_URL) {
+    warnings.push('FRONTEND_URL (CORS may not work correctly)');
+  }
+
+  // Log missing critical variables
+  if (missing.length > 0) {
+    console.error('[ENV CHECK] ❌ Missing required environment variables:', missing.join(', '));
+    console.error('[ENV CHECK] Server may not function correctly without these variables.');
+  }
+
+  // Log warnings
+  if (warnings.length > 0) {
+    console.warn('[ENV CHECK] ⚠️ Missing optional environment variables:', warnings.join(', '));
+  }
+
+  // Log success in development
+  if (process.env.NODE_ENV === 'development' && missing.length === 0) {
+    console.log('[ENV CHECK] ✅ All required environment variables are set');
+    if (warnings.length === 0) {
+      console.log('[ENV CHECK] ✅ All optional environment variables are set');
+    }
+  }
+
+  // Log values (masked) in development
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[ENV CHECK] Environment variables status:');
+    console.log('  DATABASE_URL:', requiredVars.DATABASE_URL ? '✅ Set' : '❌ Missing');
+    console.log('  JWT_SECRET:', requiredVars.JWT_SECRET ? '✅ Set' : '❌ Missing');
+    console.log('  GEMINI_API_KEY:', requiredVars.GEMINI_API_KEY ? '✅ Set' : '⚠️ Missing');
+    console.log('  FRONTEND_URL:', requiredVars.FRONTEND_URL || '⚠️ Using default');
+  }
+}
+

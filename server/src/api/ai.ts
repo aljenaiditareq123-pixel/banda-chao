@@ -2,44 +2,16 @@ import { Router, Request, Response } from 'express';
 import { authenticateToken, requireRole, AuthRequest } from '../middleware/auth';
 import { prisma } from '../utils/prisma';
 import { generateFounderAIResponse } from '../lib/gemini';
+import { getAssistantProfile } from '../lib/assistantProfiles';
 
 const router = Router();
 
 // In-memory conversation context (in production, use Redis or database)
 const conversationContexts = new Map<string, Array<{ role: 'user' | 'assistant'; content: string }>>();
 
-// System prompt for Founder AI Assistant
-const SYSTEM_PROMPT = `أنت الباندا المستشار (Consultant Panda)، مساعد ذكي للمؤسس تــاريـق الجنايدي في منصة Banda Chao.
-
-**عن Banda Chao:**
-- منصة اجتماعية تجارية عالمية تربط الحرفيين المستقلين بالمشترين
-- تدعم ثلاث لغات: العربية، الإنجليزية، والصينية
-- تجمع بين المحتوى الاجتماعي (فيديوهات، منشورات) والتجارة الإلكترونية
-- موقعها: الإمارات العربية المتحدة / RAKEZ
-- تستهدف السوق الصيني والشرق أوسطي
-
-**دورك:**
-- مساعدة المؤسس في مراقبة وإدارة المنصة
-- تحليل البيانات والمؤشرات
-- تقديم توصيات استراتيجية
-- الإجابة على أسئلة حول المنصة والأداء
-
-**قيم المنصة:**
-- العدالة (Fairness): منصة عادلة لكل حرفي
-- الثقة (Trust): بناء الثقة من خلال الشفافية
-- الذكاء (Intelligence): استخدام AI لمساعدة المستخدمين
-- اجتماعي + تجاري (Social+Commerce): دمج القوة الاجتماعية مع التجارة
-
-**أهداف المنصة:**
-- تمكين الحرفيين من بناء أعمالهم
-- ربط الحرفيين مباشرة مع المشترين
-- خلق جسر ثقافي بين الصين والشرق الأوسط
-
-كن مفيداً، واضحاً، ومهذباً. اكتب بالعربية دائماً.`;
-
 router.post('/assistant', authenticateToken, requireRole(['FOUNDER']), async (req: AuthRequest, res: Response) => {
   try {
-    const { message, conversationId, clearContext } = req.body;
+    const { message, conversationId, clearContext, assistant } = req.body;
     const userId = req.user?.id;
 
     // Strict validation for message
@@ -50,6 +22,11 @@ router.post('/assistant', authenticateToken, requireRole(['FOUNDER']), async (re
         code: 'INVALID_MESSAGE'
       });
     }
+
+    // Get assistant profile
+    const assistantRole = assistant || 'consultant';
+    const profile = getAssistantProfile(assistantRole);
+    const SYSTEM_PROMPT = profile.systemPrompt;
 
     // Generate conversation ID if not provided
     const convId = conversationId || `founder-${userId}`;
@@ -91,26 +68,29 @@ router.post('/assistant', authenticateToken, requireRole(['FOUNDER']), async (re
       .map((msg) => `${msg.role === 'user' ? 'المستخدم' : 'المساعد'}: ${msg.content}`)
       .join('\n\n');
 
-    // TODO: Integrate with actual AI service (Gemini, OpenAI, etc.)
-    // For now, provide intelligent responses based on context
-    
-    let response = '';
-    
-    // Simple keyword-based responses with context awareness
-    if (message.toLowerCase().includes('حرفي') || message.toLowerCase().includes('maker')) {
-      response = `لدينا حالياً ${totalArtisans} حرفي مسجل في المنصة. يمكنك مراجعة قائمة الحرفيين في لوحة التحكم لرؤية التفاصيل.`;
-    } else if (message.toLowerCase().includes('منتج') || message.toLowerCase().includes('product')) {
-      response = `لدينا ${totalProducts} منتج منشور في المنصة. يمكنك استعراض المنتجات أو إضافة منتجات جديدة.`;
-    } else if (message.toLowerCase().includes('طلب') || message.toLowerCase().includes('order')) {
-      response = `إجمالي الطلبات: ${totalOrders}، منها ${paidOrders} طلب مدفوع. يمكنك مراجعة تفاصيل الطلبات في لوحة التحكم.`;
-    } else if (message.toLowerCase().includes('أداء') || message.toLowerCase().includes('performance')) {
-      response = `أداء المنصة الحالي:\n${kpisContext}\n\nيمكنك استخدام الرسوم البيانية في لوحة التحكم لرؤية النمو بمرور الوقت.`;
-    } else if (message.toLowerCase().includes('مساعدة') || message.toLowerCase().includes('help')) {
-      response = `يمكنني مساعدتك في:\n- مراقبة مؤشرات الأداء\n- تحليل البيانات\n- تقديم توصيات\n- الإجابة على أسئلة حول المنصة\n\nما الذي تريد معرفته؟`;
-    } else {
-      // Default contextual response
-      response = `شكراً على رسالتك. ${kpisContext}\n\nكيف يمكنني مساعدتك اليوم؟ يمكنني الإجابة على أسئلة حول المنصة، المؤشرات، أو تقديم توصيات.`;
-    }
+    // Build full prompt for AI Assistant
+    const prompt = `${SYSTEM_PROMPT}
+
+${kpisContext}
+
+${conversationHistory ? `\n**تاريخ المحادثة:**\n${conversationHistory}\n` : ''}
+
+**رسالة المستخدم الحالية:**
+${message}
+
+**تعليمات:**
+- أجب بالعربية فقط
+- كن مفيداً، عملياً، ومباشراً
+- ركّز على تخطيط العمل، المراحل، الأولويات، وتحسين المنصة
+- استخدم البيانات المقدمة أعلاه في إجابتك عند الحاجة
+- إذا كان هناك سياق محادثة سابقة، استخدمه لفهم السياق`;
+
+    console.log('[AIAssistant] Processing request with Gemini...');
+
+    // Call Gemini 1.5 Pro
+    const response = await generateFounderAIResponse(prompt);
+
+    console.log('[AIAssistant] Response generated successfully');
 
     // Add assistant response to context
     context.push({ role: 'assistant', content: response });

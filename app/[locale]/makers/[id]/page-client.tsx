@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { Grid, GridItem } from '@/components/Grid';
 import ProductCard from '@/components/cards/ProductCard';
 import VideoCard from '@/components/cards/VideoCard';
@@ -15,6 +16,8 @@ interface MakerDetailClientProps {
 }
 
 export default function MakerDetailClient({ locale, maker, products, videos }: MakerDetailClientProps) {
+  const [isFollowed, setIsFollowed] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
   return (
     <div className="min-h-screen bg-gray-50" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -22,22 +25,53 @@ export default function MakerDetailClient({ locale, maker, products, videos }: M
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 mb-8">
           <div className="flex flex-col md:flex-row gap-6">
             <div className="flex-shrink-0">
-              <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+              <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden relative">
                 {maker.avatarUrl || maker.user?.profilePicture ? (
-                  <img
-                    src={maker.avatarUrl || maker.user?.profilePicture}
-                    alt={maker.displayName}
-                    className="w-full h-full object-cover"
-                  />
+                  <>
+                    <img
+                      src={maker.avatarUrl || maker.user?.profilePicture}
+                      alt={maker.displayName}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const placeholder = target.nextElementSibling as HTMLElement;
+                        if (placeholder) {
+                          placeholder.style.display = 'flex';
+                        }
+                      }}
+                    />
+                    <span className="text-4xl md:text-5xl absolute inset-0 flex items-center justify-center" style={{ display: 'none' }}>👤</span>
+                  </>
                 ) : (
                   <span className="text-4xl md:text-5xl">👤</span>
                 )}
               </div>
             </div>
             <div className="flex-1">
-              <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
-                {maker.displayName}
-              </h1>
+              <div className="flex items-start justify-between mb-3">
+                <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
+                  {maker.displayName}
+                </h1>
+                <Button
+                  variant={isFollowed ? 'secondary' : 'primary'}
+                  onClick={async () => {
+                    setFollowLoading(true);
+                    // Simulate API call (replace with actual API when available)
+                    await new Promise((resolve) => setTimeout(resolve, 500));
+                    setIsFollowed(!isFollowed);
+                    setFollowLoading(false);
+                  }}
+                  disabled={followLoading}
+                  className="min-w-[120px]"
+                >
+                  {followLoading
+                    ? (locale === 'ar' ? 'جاري...' : 'Loading...')
+                    : isFollowed
+                    ? (locale === 'ar' ? 'متابع ✓' : locale === 'zh' ? '已关注 ✓' : 'Following ✓')
+                    : (locale === 'ar' ? 'متابعة' : locale === 'zh' ? '关注' : 'Follow')}
+                </Button>
+              </div>
               {maker.bio && (
                 <p className="text-lg text-gray-600 mb-4">{maker.bio}</p>
               )}

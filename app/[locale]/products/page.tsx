@@ -23,24 +23,32 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
     notFound();
   }
 
-  // Fetch products from API
+  // Fetch products from API with error handling
   let products: any[] = [];
   let pagination = { page: 1, limit: 20, total: 0, totalPages: 0 };
+  let error: string | null = null;
 
   try {
     const response = await productsAPI.getAll({
       page: parseInt(searchParams.page || '1'),
-      limit: 20,
+      limit: 100, // Fetch more for client-side filtering/pagination
       category: searchParams.category,
       makerId: searchParams.makerId,
       search: searchParams.search,
     });
     products = response.products || [];
     pagination = response.pagination || pagination;
-  } catch (error) {
-    console.error('Error fetching products:', error);
+  } catch (err: any) {
+    console.error('Error fetching products:', err);
+    error = err.response?.data?.message || err.message || 'Failed to load products';
   }
 
-  return <ProductsPageClient locale={locale} products={products} pagination={pagination} />;
+  return (
+    <ProductsPageClient 
+      locale={locale} 
+      products={products} 
+      pagination={pagination}
+      error={error}
+    />
+  );
 }
-

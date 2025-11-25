@@ -1,7 +1,51 @@
-import axios, { AxiosInstance, AxiosError } from 'axios';
+import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
+import { getApiUrl } from './api-utils';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://banda-chao-backend.onrender.com';
-const API_URL = `${API_BASE_URL}/api/v1`;
+// Use centralized API URL utility to prevent double prefix
+const API_URL = getApiUrl();
+
+// Retry configuration
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000; // Start with 1 second
+const RETRY_STATUS_CODES = [429, 503, 504]; // Status codes to retry on
+
+/**
+ * Retry logic for axios requests
+ */
+async function retryRequest(
+  requestFn: () => Promise<any>,
+  retries = MAX_RETRIES,
+  delay = RETRY_DELAY
+): Promise<any> {
+  try {
+    return await requestFn();
+  } catch (error) {
+    const axiosError = error as AxiosError;
+    const status = axiosError.response?.status;
+
+    // Only retry on specific status codes
+    if (retries > 0 && status && RETRY_STATUS_CODES.includes(status)) {
+      // Calculate exponential backoff
+      const currentDelay = delay * Math.pow(2, MAX_RETRIES - retries);
+
+      // Log retry attempt (only in development)
+      if (process.env.NODE_ENV === 'development') {
+        console.warn(
+          `[axios-retry] Retrying request after ${status} error. Attempts remaining: ${retries}. Delay: ${currentDelay}ms`
+        );
+      }
+
+      // Wait before retrying
+      await new Promise((resolve) => setTimeout(resolve, currentDelay));
+
+      // Retry the request
+      return retryRequest(requestFn, retries - 1, delay);
+    }
+
+    // If not retryable or out of retries, throw the error
+    throw error;
+  }
+}
 
 // Create axios instance
 const apiClient: AxiosInstance = axios.create({
@@ -9,6 +53,7 @@ const apiClient: AxiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 30000, // 30 seconds timeout
 });
 
 // Request interceptor to add auth token
@@ -27,17 +72,61 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response interceptor to handle errors
+// Response interceptor with retry logic
 apiClient.interceptors.response.use(
   (response) => response,
-  (error: AxiosError) => {
-    if (error.response?.status === 401) {
-      // Unauthorized - clear token and redirect to login
+  async (error: AxiosError) => {
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+    const status = error.response?.status;
+
+    // Handle 401 - Unauthorized
+    if (status === 401) {
+      // Clear token and redirect to login
       if (typeof window !== 'undefined') {
         localStorage.removeItem('auth_token');
         window.location.href = '/login';
       }
+      return Promise.reject(error);
     }
+
+    // Retry logic for rate limiting and server errors
+    if (
+      status &&
+      RETRY_STATUS_CODES.includes(status) &&
+      originalRequest &&
+      !originalRequest._retry
+    ) {
+      originalRequest._retry = true;
+
+      // Calculate exponential backoff delay
+      const retryCount = (originalRequest._retryCount || 0) + 1;
+      originalRequest._retryCount = retryCount;
+      const delay = RETRY_DELAY * Math.pow(2, retryCount - 1);
+
+      // Log retry attempt (only in development)
+      if (process.env.NODE_ENV === 'development') {
+        console.warn(
+          `[axios-retry] Retrying request after ${status} error. Attempt: ${retryCount}/${MAX_RETRIES}. Delay: ${delay}ms`
+        );
+      }
+
+      // Wait before retrying
+      await new Promise((resolve) => setTimeout(resolve, delay));
+
+      // Retry the request
+      try {
+        return await apiClient(originalRequest);
+      } catch (retryError) {
+        // If retry fails, check if we should retry again
+        const retryStatus = (retryError as AxiosError).response?.status;
+        if (retryCount < MAX_RETRIES && retryStatus && RETRY_STATUS_CODES.includes(retryStatus)) {
+          // Continue retrying
+          return apiClient.interceptors.response.handlers[0].rejected!(retryError);
+        }
+        return Promise.reject(retryError);
+      }
+    }
+
     return Promise.reject(error);
   }
 );
@@ -261,10 +350,29 @@ export const ordersAPI = {
     const response = await apiClient.get('/orders/my');
     return response.data;
   },
+  getAll: async () => {
+    const response = await apiClient.get('/orders');
+    return response.data;
+  },
 };
 
 // ============================================
-// Users API (existing)
+// Founder API
+// ============================================
+
+export const founderAPI = {
+  getKPIs: async () => {
+    const response = await apiClient.get('/founder/kpis');
+    return response.data;
+  },
+  getSessions: async (limit?: number) => {
+    const response = await apiClient.get('/founder/sessions', { params: { limit } });
+    return response.data;
+  },
+};
+
+// ============================================
+// Users API
 // ============================================
 
 export const usersAPI = {
