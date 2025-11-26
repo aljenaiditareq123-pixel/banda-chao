@@ -6,6 +6,7 @@ export interface Product {
   externalLink?: string;
   userId: string;
   price: number;
+  currency?: string;
   category?: string;
   createdAt: string;
   updatedAt: string;

@@ -85,7 +85,7 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean; _retryCount?: number };
     const status = error.response?.status;
 
     // Handle 401 - Unauthorized
@@ -133,12 +133,7 @@ apiClient.interceptors.response.use(
       try {
         return await apiClient(originalRequest);
       } catch (retryError) {
-        // If retry fails, check if we should retry again
-        const retryStatus = (retryError as AxiosError).response?.status;
-        if (retryCount < MAX_RETRIES && retryStatus && RETRY_STATUS_CODES.includes(retryStatus)) {
-          // Continue retrying
-          return apiClient.interceptors.response.handlers[0].rejected!(retryError);
-        }
+        // If retry fails, reject the error
         return Promise.reject(retryError);
       }
     }

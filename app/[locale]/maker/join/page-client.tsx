@@ -44,9 +44,9 @@ export default function MakerJoinClient({ locale }: MakerJoinClientProps) {
       setLoading(true);
       setError(null);
 
-      const response = await makersAPI.onboard(formData);
+      const response = await makersAPI.createOrUpdate(formData);
 
-      if (response.success) {
+      if (response.maker) {
         // Update user role to MAKER in localStorage
         if (typeof window !== 'undefined') {
           localStorage.setItem('bandaChao_userRole', 'MAKER');

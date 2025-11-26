@@ -18,7 +18,7 @@ interface UseClientFiltersOptions<T> {
   getCategory?: (item: T) => string | undefined;
   getMakerId?: (item: T) => string | undefined;
   getCountry?: (item: T) => string | undefined;
-  getLanguage?: (item: T) => string | undefined;
+  getLanguage?: (item: T) => string | string[] | undefined;
 }
 
 export function useClientFilters<T>({
@@ -72,9 +72,9 @@ export function useClientFilters<T>({
         const language = getLanguage(item);
         // Check if language string contains the filter or if it's an array
         if (Array.isArray(language)) {
-          return language.includes(filters.language);
+          return language.includes(filters.language!);
         }
-        return language && (language.includes(filters.language) || language === filters.language);
+        return language && (typeof language === 'string' && (language.includes(filters.language!) || language === filters.language!));
       });
     }
 

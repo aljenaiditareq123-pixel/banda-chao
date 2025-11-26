@@ -330,7 +330,10 @@ export default function ProductsPageClient({
                       product={{
                         ...product,
                         imageUrl,
-                      }}
+                        userId: '',
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString(),
+                      } as any}
                       href={`/${locale}/products/${product.id}`}
                     />
                   </GridItem>
