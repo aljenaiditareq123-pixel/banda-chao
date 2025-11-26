@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { makersAPI } from '@/lib/api';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Card from '@/components/common/Card';
 import Button from '@/components/Button';
 import LoadingState from '@/components/common/LoadingState';
@@ -27,11 +28,29 @@ export default function MakerJoinClient({ locale }: MakerJoinClientProps) {
     categories: [] as string[],
   });
 
+  // Check localStorage for auth state (consistent with navbar)
+  const [localAuthState, setLocalAuthState] = useState<{
+    isLoggedIn: boolean;
+    hasToken: boolean;
+  }>({ isLoggedIn: false, hasToken: false });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const isLoggedIn = localStorage.getItem('bandaChao_isLoggedIn') === 'true';
+      const hasToken = !!localStorage.getItem('auth_token');
+      setLocalAuthState({ isLoggedIn, hasToken });
+    }
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user) {
+    // Check both user from API and localStorage for consistency
+    const isAuthenticated = user || localAuthState.isLoggedIn || localAuthState.hasToken;
+    
+    if (!isAuthenticated) {
       setError(locale === 'ar' ? 'يجب تسجيل الدخول أولاً' : 'Please login first');
+      router.push(`/${locale}/login`);
       return;
     }
 
@@ -74,7 +93,13 @@ export default function MakerJoinClient({ locale }: MakerJoinClientProps) {
     );
   }
 
-  if (!user) {
+  // Check authentication: use localStorage state (like navbar) as primary check
+  // If localStorage says logged in but API call failed, still allow access
+  // Only show "must log in" if both localStorage and API say not authenticated
+  const isAuthenticated = user || localAuthState.isLoggedIn || localAuthState.hasToken;
+
+  if (!isAuthenticated && !authLoading) {
+    // Only show error if truly not authenticated (no localStorage flag and no token)
     return (
       <div className="min-h-screen bg-gray-50" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
         <div className="max-w-2xl mx-auto px-4 py-12">
@@ -82,6 +107,13 @@ export default function MakerJoinClient({ locale }: MakerJoinClientProps) {
             message={locale === 'ar' ? 'يجب تسجيل الدخول أولاً' : 'Please login first'}
             fullScreen={false}
           />
+          <div className="mt-6 text-center">
+            <Link href={`/${locale}/login`}>
+              <Button variant="primary" className="px-6 py-2">
+                {locale === 'ar' ? 'تسجيل الدخول' : locale === 'zh' ? '登录' : 'Login'}
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
     );

@@ -225,15 +225,10 @@ export default function HomePageClient({
           <p className="text-lg text-primary-100 mb-8">
             {locale === 'ar' ? 'انضم إلى مجتمع الحرفيين واكتشف إبداعاً لا حدود له' : locale === 'zh' ? '加入手工艺人社区，发现无限的创造力' : 'Join our community of makers and discover endless creativity'}
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex justify-center">
             <Link href={`/${locale}/makers`}>
               <Button variant="secondary" className="px-8 py-3 bg-white text-primary hover:bg-primary-50">
                 {locale === 'ar' ? 'استكشف الحرفيين' : locale === 'zh' ? '探索手工艺人' : 'Explore Makers'}
-              </Button>
-            </Link>
-            <Link href={`/${locale}/products`}>
-              <Button variant="secondary" className="px-8 py-3 border-2 border-white text-white hover:bg-white hover:text-primary">
-                {locale === 'ar' ? 'تصفح المنتجات' : locale === 'zh' ? '浏览产品' : 'Browse Products'}
               </Button>
             </Link>
           </div>
