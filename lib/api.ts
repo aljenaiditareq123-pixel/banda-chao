@@ -95,8 +95,12 @@ apiClient.interceptors.response.use(
         try {
           localStorage.removeItem('auth_token');
           // Only redirect if not already on login/register page
-          if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
-            window.location.href = '/login';
+          const pathname = window.location.pathname;
+          if (!pathname.includes('/login') && !pathname.includes('/register') && !pathname.includes('/signup')) {
+            // Extract locale from current path (e.g., /ar/... or /en/... or /zh/...)
+            const localeMatch = pathname.match(/^\/(ar|en|zh)/);
+            const locale = localeMatch ? localeMatch[1] : 'en'; // Default to 'en' if no locale found
+            window.location.href = `/${locale}/login`;
           }
         } catch (e) {
           // localStorage may not be available - ignore
