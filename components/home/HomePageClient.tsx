@@ -91,7 +91,7 @@ export default function HomePageClient({
       />
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800 text-white py-20 md:py-28">
+      <section className="bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800 text-white relative z-0 mt-16 py-12 md:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
             {texts.headline}

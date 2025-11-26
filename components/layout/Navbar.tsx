@@ -69,7 +69,7 @@ export default function Navbar({ locale }: NavbarProps) {
   // Prevent hydration mismatch by rendering minimal shell until mounted
   if (!mounted) {
     return (
-      <nav className="bg-white border-b border-gray-200 sticky top-0 z-[100]">
+      <nav className="bg-white border-b border-gray-200 sticky top-0 relative z-[9999] pointer-events-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
@@ -77,7 +77,7 @@ export default function Navbar({ locale }: NavbarProps) {
                 Banda Chao
               </Link>
             </div>
-            <div className="flex items-center gap-4 relative z-[100]">
+            <div className="flex items-center gap-4 relative z-[9999] pointer-events-auto">
               <Link href={`/${locale}/makers`} className="text-gray-600 hover:text-gray-900">
                 {locale === 'ar' ? 'الحرفيون' : locale === 'zh' ? '手工艺人' : 'Makers'}
               </Link>
@@ -100,7 +100,7 @@ export default function Navbar({ locale }: NavbarProps) {
   }
 
   return (
-    <nav className="bg-white border-b border-gray-200 sticky top-0 z-[100]">
+    <nav className="bg-white border-b border-gray-200 sticky top-0 relative z-[9999] pointer-events-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
@@ -108,7 +108,7 @@ export default function Navbar({ locale }: NavbarProps) {
               Banda Chao
             </Link>
           </div>
-          <div className="flex items-center gap-4 relative z-[100]">
+          <div className="flex items-center gap-4 relative z-[9999] pointer-events-auto">
             <Link 
               href={`/${locale}/makers`} 
               className="text-gray-600 hover:text-gray-900 transition-colors"
@@ -147,7 +147,7 @@ export default function Navbar({ locale }: NavbarProps) {
               userRole={userRole || undefined}
             />
             {/* Language Switcher */}
-            <div className="flex items-center gap-2 relative z-[100]">
+            <div className="flex items-center gap-2 relative z-[9999] pointer-events-auto">
               <Link 
                 href="/ar" 
                 className={`text-sm px-2 py-1 rounded transition-colors ${

@@ -285,3 +285,4 @@ Our platform combines the social power of content (videos, posts) with e-commerc
 **حالة المشروع**: Beta Ready for Investor Demo
 
 
+

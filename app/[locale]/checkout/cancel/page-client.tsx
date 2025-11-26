@@ -47,3 +47,4 @@ export default function CheckoutCancelClient({ locale, orderId }: CheckoutCancel
 }
 
 
+
