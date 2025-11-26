@@ -56,7 +56,7 @@ export default function AboutPageClient({ locale }: AboutPageClientProps) {
       team: {
         title: 'فريق العمل',
         founder: {
-          name: 'تــاريـق الجنايدي',
+          name: 'طارق الجنيدي',
           role: 'المؤسس والرئيس التنفيذي',
           description: 'مؤسس Banda Chao، رائد أعمال شغوف بتمكين الحرفيين وربط الثقافات. رسالته الإنسانية هي خلق منصة عادلة حيث يمكن لكل حرفي أن يزدهر ويشارك إبداعه مع العالم.',
           message: 'نؤمن بأن الإبداع لا يعرف حدوداً، وأن كل حرفي يستحق فرصة لعرض موهبته للعالم.',
@@ -109,7 +109,7 @@ export default function AboutPageClient({ locale }: AboutPageClientProps) {
       team: {
         title: 'Our Team',
         founder: {
-          name: 'Tariq Al-Junaidi',
+          name: 'Tareq Aljenaidi',
           role: 'Founder & CEO',
           description: 'Founder of Banda Chao, an entrepreneur passionate about empowering artisans and connecting cultures. His humanitarian mission is to create a fair platform where every artisan can thrive and share their creativity with the world.',
           message: 'We believe that creativity knows no boundaries, and that every artisan deserves a chance to showcase their talent to the world.',
@@ -232,21 +232,23 @@ export default function AboutPageClient({ locale }: AboutPageClientProps) {
         {/* Team */}
         <div className="mb-12">
           <h2 className="text-3xl font-bold text-gray-900 mb-6 text-center">{t.team.title}</h2>
-          <Card className="max-w-2xl mx-auto">
-            <div className="p-8">
-              <div className="text-center mb-6">
-                <div className="w-32 h-32 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 mx-auto mb-4 flex items-center justify-center text-5xl text-white">
+          <div className="max-w-2xl mx-auto">
+            <Card className="p-6 md:p-8">
+              <div className="flex flex-col items-center gap-3 text-center">
+                <div className="w-32 h-32 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 mx-auto mb-2 flex items-center justify-center text-5xl text-white">
                   👤
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">{t.team.founder.name}</h3>
-                <p className="text-primary-600 font-medium mb-4">{t.team.founder.role}</p>
+                <h3 className="text-lg md:text-xl font-semibold text-gray-900">{t.team.founder.name}</h3>
+                <p className="text-sm md:text-base text-gray-500">{t.team.founder.role}</p>
+                <p className="text-sm md:text-base text-gray-700 leading-relaxed mt-2 max-w-xl">
+                  {t.team.founder.description}
+                </p>
+                <div className="mt-4 w-full bg-blue-50 border border-blue-100 text-blue-800 rounded-xl px-4 py-3 text-sm leading-relaxed">
+                  <p className="italic">&quot;{t.team.founder.message}&quot;</p>
+                </div>
               </div>
-              <p className="text-gray-600 leading-relaxed mb-4">{t.team.founder.description}</p>
-              <div className="bg-primary-50 border-r-4 border-primary-500 p-4 rounded">
-                <p className="text-gray-700 italic">&quot;{t.team.founder.message}&quot;</p>
-              </div>
-            </div>
-          </Card>
+            </Card>
+          </div>
         </div>
 
         {/* CTA */}

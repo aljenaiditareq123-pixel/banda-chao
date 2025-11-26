@@ -99,15 +99,10 @@ export default function HomePageClient({
           <p className="text-lg md:text-xl text-primary-50 max-w-3xl mx-auto mb-10">
             {texts.description}
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex justify-center">
             <Link href={`/${locale}/makers`}>
               <Button variant="secondary" className="px-8 py-3 text-base md:text-lg bg-white text-primary hover:bg-primary-50">
                 {texts.cta1}
-              </Button>
-            </Link>
-            <Link href={`/${locale}/products`}>
-              <Button variant="secondary" className="px-8 py-3 text-base md:text-lg border-2 border-white text-white hover:bg-white hover:text-primary">
-                {texts.cta2}
               </Button>
             </Link>
           </div>

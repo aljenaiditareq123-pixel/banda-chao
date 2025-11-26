@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: 'Banda Chao - Social E-commerce Platform',
   description: 'A global social-commerce platform connecting independent artisans worldwide with buyers. Support for Arabic, English, and Chinese.',
   keywords: ['handmade', 'artisans', 'e-commerce', 'social commerce', 'crafts', 'Banda Chao'],
-  authors: [{ name: 'Tariq Al-Junaidi' }],
+  authors: [{ name: 'Tareq Aljenaidi' }],
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
