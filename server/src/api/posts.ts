@@ -47,11 +47,6 @@ router.get('/', async (req: Request, res: Response) => {
               },
             },
           },
-          _count: {
-            select: {
-              comments: true,
-            },
-          },
         },
         orderBy: {
           createdAt: 'desc',
@@ -98,11 +93,6 @@ router.get('/:id', async (req: Request, res: Response) => {
                 profilePicture: true,
               },
             },
-          },
-        },
-        _count: {
-          select: {
-            comments: true,
           },
         },
       },

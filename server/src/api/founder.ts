@@ -89,12 +89,9 @@ router.get('/sessions', authenticateToken, requireRole(['FOUNDER']), async (req:
   try {
     const limit = parseInt(req.query.limit as string) || 10;
     
-    // Try to query founder_sessions table
-    // Note: This table may not exist in all environments
-    const sessions = await prisma.founderSession.findMany({
-      take: limit,
-      orderBy: { createdAt: 'desc' },
-    });
+    // Note: founder_sessions table does not exist in the current schema
+    // Returning empty array for now - can be implemented later if needed
+    const sessions: any[] = [];
 
     res.json({
       success: true,

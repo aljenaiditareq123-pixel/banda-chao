@@ -56,7 +56,6 @@ router.get('/', async (req: Request, res: Response) => {
           _count: {
             select: {
               videoLikes: true,
-              comments: true,
             },
           },
         },
@@ -108,7 +107,6 @@ router.get('/:id', async (req: Request, res: Response) => {
         _count: {
           select: {
             videoLikes: true,
-            comments: true,
           },
         },
       },
@@ -155,7 +153,6 @@ router.get('/makers/:makerId', async (req: Request, res: Response) => {
         _count: {
           select: {
             videoLikes: true,
-            comments: true,
           },
         },
       },

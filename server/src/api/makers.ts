@@ -406,7 +406,7 @@ router.post('/onboard', authenticateToken, async (req: AuthRequest, res: Respons
       });
     }
 
-    const { displayName, bio, country, city, languages, categories } = req.body;
+    const { displayName, bio, country, city, languages } = req.body;
 
     if (!displayName || !bio) {
       return res.status(400).json({
@@ -424,7 +424,6 @@ router.post('/onboard', authenticateToken, async (req: AuthRequest, res: Respons
         country: country || null,
         city: city || null,
         languages: languages || ['ar', 'en'],
-        categories: categories || [],
       },
       include: {
         user: {

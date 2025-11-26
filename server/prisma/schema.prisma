@@ -35,7 +35,6 @@ model User {
   commentLikes  CommentLike[]
   conversations Conversation[] @relation("ConversationParticipants")
   sentMessages  Message[] @relation("SentMessages")
-  receivedMessages Message[] @relation("ReceivedMessages")
   analyticsEvents AnalyticsEvent[]
   notifications   Notification[]
   reports         Report[]        @relation("Reports")
@@ -103,7 +102,6 @@ model Product {
   maker       Maker         @relation(fields: [makerId], references: [id], onDelete: Cascade)
   images      ProductImage[]
   productLikes ProductLike[]
-  comments    Comment[]
   orders      Order[]
 
   @@index([makerId])
@@ -152,7 +150,6 @@ model Video {
   // Relations
   maker       Maker    @relation(fields: [makerId], references: [id], onDelete: Cascade)
   videoLikes  VideoLike[]
-  comments    Comment[]
 
   @@index([makerId])
   @@index([type])
@@ -181,7 +178,6 @@ model Post {
   // Relations
   author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   maker     Maker?   @relation(fields: [makerId], references: [id], onDelete: SetNull)
-  comments  Comment[]
 
   @@index([authorId])
   @@index([makerId])
