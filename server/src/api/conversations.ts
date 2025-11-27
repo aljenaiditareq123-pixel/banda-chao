@@ -2,11 +2,13 @@ import { Router, Request, Response } from 'express';
 import { prisma } from '../utils/prisma';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { getIO } from '../realtime/socket';
+import { validate } from '../middleware/validate';
+import { createConversationSchema, sendMessageSchema } from '../validation/conversationSchemas';
 
 const router = Router();
 
 // Get or create conversation between two users
-router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
+router.post('/', authenticateToken, validate(createConversationSchema), async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
     const { participantId } = req.body;
@@ -15,13 +17,6 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
       return res.status(401).json({
         success: false,
         message: 'Unauthorized',
-      });
-    }
-
-    if (!participantId) {
-      return res.status(400).json({
-        success: false,
-        message: 'participantId is required',
       });
     }
 
@@ -267,7 +262,7 @@ router.get('/:id/messages', authenticateToken, async (req: AuthRequest, res: Res
 });
 
 // Send message (fallback for non-realtime)
-router.post('/:id/messages', authenticateToken, async (req: AuthRequest, res: Response) => {
+router.post('/:id/messages', authenticateToken, validate(sendMessageSchema), async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
     const { id: conversationId } = req.params;
@@ -277,13 +272,6 @@ router.post('/:id/messages', authenticateToken, async (req: AuthRequest, res: Re
       return res.status(401).json({
         success: false,
         message: 'Unauthorized',
-      });
-    }
-
-    if (!content || content.trim().length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Message content is required',
       });
     }
 

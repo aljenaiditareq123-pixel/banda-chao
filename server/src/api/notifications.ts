@@ -2,6 +2,8 @@ import { Router, Request, Response } from 'express';
 import { prisma } from '../utils/prisma';
 import { authenticateToken, requireRole, AuthRequest } from '../middleware/auth';
 import { getIO } from '../realtime/socket';
+import { validate } from '../middleware/validate';
+import { sendNotificationSchema } from '../validation/notificationSchemas';
 
 const router = Router();
 
@@ -135,16 +137,9 @@ router.post('/read', authenticateToken, async (req: AuthRequest, res: Response) 
 });
 
 // Send notification (admin/founder only)
-router.post('/send', authenticateToken, requireRole(['FOUNDER', 'ADMIN']), async (req: AuthRequest, res: Response) => {
+router.post('/send', authenticateToken, requireRole(['FOUNDER', 'ADMIN']), validate(sendNotificationSchema), async (req: AuthRequest, res: Response) => {
   try {
     const { userId, type, title, body, metadata } = req.body;
-
-    if (!userId || !type || !title || !body) {
-      return res.status(400).json({
-        success: false,
-        message: 'userId, type, title, and body are required',
-      });
-    }
 
     const notification = await prisma.notification.create({
       data: {

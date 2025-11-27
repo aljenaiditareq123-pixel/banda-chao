@@ -4,6 +4,8 @@ import path from 'path';
 import fs from 'fs';
 import { prisma } from '../utils/prisma';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
+import { validate } from '../middleware/validate';
+import { updateUserSchema } from '../validation/userSchemas';
 
 const router = Router();
 
@@ -96,7 +98,7 @@ router.get('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
 });
 
 // Update user
-router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) => {
+router.put('/:id', authenticateToken, validate(updateUserSchema), async (req: AuthRequest, res: Response) => {
   try {
     if (req.userId !== req.params.id) {
       return res.status(403).json({ error: 'You can only update your own profile' });

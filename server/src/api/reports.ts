@@ -1,11 +1,13 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../utils/prisma';
 import { authenticateToken, requireRole, AuthRequest } from '../middleware/auth';
+import { validate } from '../middleware/validate';
+import { createReportSchema, updateReportStatusSchema } from '../validation/reportSchemas';
 
 const router = Router();
 
 // Create report
-router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
+router.post('/', authenticateToken, validate(createReportSchema), async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
     const { targetType, targetId, reason, metadata } = req.body;
@@ -14,21 +16,6 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
       return res.status(401).json({
         success: false,
         message: 'Unauthorized',
-      });
-    }
-
-    if (!targetType || !targetId || !reason) {
-      return res.status(400).json({
-        success: false,
-        message: 'targetType, targetId, and reason are required',
-      });
-    }
-
-    const validTargetTypes = ['PRODUCT', 'VIDEO', 'POST', 'USER', 'COMMENT'];
-    if (!validTargetTypes.includes(targetType)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid targetType',
       });
     }
 
@@ -114,17 +101,10 @@ router.get('/', authenticateToken, requireRole(['FOUNDER', 'ADMIN']), async (req
 });
 
 // Update report status (admin/founder only)
-router.patch('/:id/status', authenticateToken, requireRole(['FOUNDER', 'ADMIN']), async (req: AuthRequest, res: Response) => {
+router.patch('/:id/status', authenticateToken, requireRole(['FOUNDER', 'ADMIN']), validate(updateReportStatusSchema), async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
-
-    if (!status || !['OPEN', 'REVIEWED', 'RESOLVED', 'DISMISSED'].includes(status)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Valid status is required',
-      });
-    }
 
     const report = await prisma.report.update({
       where: { id },
