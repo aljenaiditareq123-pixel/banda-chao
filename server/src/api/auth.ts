@@ -85,17 +85,12 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response)
   try {
     const { email, password } = req.body;
 
-    // Validate request body
-    if (!email || !password) {
-      return res.status(400).json({ 
-        success: false,
-        message: 'Email and password are required' 
-      });
-    }
+    // Note: email and password are already validated by Zod middleware
+    // No need to check again here
 
     // Fetch user by email using raw SQL (consistent with register endpoint)
     // This ensures we use the exact column name from the database
-    const users = await prisma.$queryRaw<Array<{
+    let users: Array<{
       id: string;
       email: string;
       name: string;
@@ -103,12 +98,34 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response)
       profilePicture: string | null;
       bio: string | null;
       role: string;
-    }>>`
-      SELECT id, email, name, "passwordHash", "profilePicture", bio, role
-      FROM users
-      WHERE email = ${email.trim()}
-      LIMIT 1;
-    `;
+    }>;
+    
+    try {
+      users = await prisma.$queryRaw<Array<{
+        id: string;
+        email: string;
+        name: string;
+        passwordHash: string | null;
+        profilePicture: string | null;
+        bio: string | null;
+        role: string;
+      }>>`
+        SELECT id, email, name, "passwordHash", "profilePicture", bio, role
+        FROM users
+        WHERE email = ${email.trim()}
+        LIMIT 1;
+      `;
+    } catch (dbError: any) {
+      console.error('[LOGIN_ERROR] Database query failed:', {
+        message: dbError.message,
+        code: dbError.code,
+        meta: dbError.meta,
+      });
+      return res.status(500).json({
+        success: false,
+        message: 'Database connection error. Please try again later.',
+      });
+    }
 
     // If user not found, return 401
     if (users.length === 0 || !users[0].passwordHash) {
@@ -121,7 +138,16 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response)
     const user = users[0];
 
     // Compare password with stored hash (passwordHash is guaranteed to be non-null after the check above)
-    const isValidPassword = await bcrypt.compare(password, user.passwordHash!);
+    let isValidPassword: boolean;
+    try {
+      isValidPassword = await bcrypt.compare(password, user.passwordHash!);
+    } catch (bcryptError: any) {
+      console.error('[LOGIN_ERROR] Password comparison failed:', bcryptError.message);
+      return res.status(500).json({
+        success: false,
+        message: 'Internal server error during authentication',
+      });
+    }
 
     // If password mismatch, return 401
     if (!isValidPassword) {
@@ -132,11 +158,20 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response)
     }
 
     // Generate JWT token
-    const token = jwt.sign(
-      { userId: user.id, email: user.email, name: user.name, role: user.role },
-      JWT_SECRET,
-      { expiresIn: JWT_EXPIRES_IN } as jwt.SignOptions
-    );
+    let token: string;
+    try {
+      token = jwt.sign(
+        { userId: user.id, email: user.email, name: user.name, role: user.role },
+        JWT_SECRET,
+        { expiresIn: JWT_EXPIRES_IN } as jwt.SignOptions
+      );
+    } catch (jwtError: any) {
+      console.error('[LOGIN_ERROR] JWT signing failed:', jwtError.message);
+      return res.status(500).json({
+        success: false,
+        message: 'Internal server error during token generation',
+      });
+    }
 
     // Return success response
     res.json({

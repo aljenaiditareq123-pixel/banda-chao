@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
+import * as jwt from 'jsonwebtoken';
 import { prisma } from '../utils/prisma';
 
 export interface AuthRequest extends Request {
@@ -33,31 +33,26 @@ export function authenticateToken(req: AuthRequest, res: Response, next: NextFun
   }
 
   try {
-    const decoded = jwt.verify(token, jwtSecret) as { userId: string; email: string; role: string };
+    const decoded = jwt.verify(token, jwtSecret) as { 
+      userId: string; 
+      email: string; 
+      name?: string;
+      role: string;
+    };
     req.userId = decoded.userId;
     
-    // Optionally fetch user from database
-    prisma.user
-      .findUnique({
-        where: { id: decoded.userId },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          role: true,
-        },
-      })
-      .then((user) => {
-        if (user) {
-          req.user = user;
-        }
-        next();
-      })
-      .catch(() => {
-        // If user fetch fails, still allow request with userId
-        next();
-      });
+    // Set user from decoded token (faster, no DB query needed for every request)
+    // The token already contains user info, so we trust it
+    req.user = {
+      id: decoded.userId,
+      email: decoded.email,
+      name: decoded.name || decoded.email.split('@')[0], // Fallback to email prefix if name not in token
+      role: decoded.role,
+    };
+    
+    next();
   } catch (error) {
+    console.error('[AUTH_MIDDLEWARE] Token verification failed:', error);
     return res.status(403).json({
       success: false,
       message: 'Invalid or expired token',

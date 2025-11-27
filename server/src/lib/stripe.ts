@@ -1,11 +1,12 @@
 import Stripe from 'stripe';
 
-if (!process.env.STRIPE_SECRET_KEY) {
+if (!process.env.STRIPE_SECRET_KEY && process.env.NODE_ENV !== 'test') {
   throw new Error('STRIPE_SECRET_KEY is not set in environment variables');
 }
 
-// Initialize Stripe client
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+// Initialize Stripe client (use dummy key in test mode)
+const stripeKey = process.env.STRIPE_SECRET_KEY || 'sk_test_dummy_key_for_testing';
+export const stripe = new Stripe(stripeKey, {
   apiVersion: '2023-10-16',
 });
 
