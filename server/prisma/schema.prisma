@@ -315,6 +315,7 @@ model ProductLike {
 
   @@unique([userId, productId])
   @@index([productId])
+  @@map("product_likes")
 }
 
 model VideoLike {
@@ -328,6 +329,7 @@ model VideoLike {
 
   @@unique([userId, videoId])
   @@index([videoId])
+  @@map("video_likes")
 }
 
 model CommentLike {
@@ -341,6 +343,7 @@ model CommentLike {
 
   @@unique([userId, commentId])
   @@index([commentId])
+  @@map("comment_likes")
 }
 
 // ============================================
