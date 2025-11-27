@@ -65,7 +65,12 @@ model Maker {
   languages       String[] @default([]) // ['ar', 'en', 'zh']
   rating          Float    @default(0.0)
   reviewCount     Int      @default(0)
-  socialLinks     Json?    // { website, instagram, facebook, etc. }
+  socialLinks     Json?    // { website, instagram, facebook, etc. } - Legacy field, kept for backward compatibility
+  wechatLink      String?  // WeChat profile or QR code URL
+  instagramLink   String?  // Instagram profile URL
+  twitterLink     String?  // Twitter/X profile URL
+  facebookLink    String?  // Facebook profile URL
+  paypalLink      String?  // PayPal.me link or business profile
   avatarUrl       String?  @default("")
   coverImageUrl   String?  @default("")
   createdAt       DateTime @default(now())

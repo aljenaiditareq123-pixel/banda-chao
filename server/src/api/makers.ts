@@ -132,7 +132,7 @@ router.post('/', authenticateToken, requireRole(['MAKER']), validate(createMaker
     // Invalidate makers cache when a maker is created/updated
     invalidateCachePattern('makers:');
   try {
-    const { displayName, bio, country, city, languages, socialLinks } = req.body;
+    const { displayName, bio, country, city, languages, socialLinks, wechatLink, instagramLink, twitterLink, facebookLink, paypalLink } = req.body;
 
     if (!displayName) {
       return res.status(400).json({ error: 'Display name is required' });
@@ -155,7 +155,12 @@ router.post('/', authenticateToken, requireRole(['MAKER']), validate(createMaker
           city,
           languages: languages || [],
           socialLinks: socialLinks || {},
-        },
+          wechatLink: wechatLink || null,
+          instagramLink: instagramLink || null,
+          twitterLink: twitterLink || null,
+          facebookLink: facebookLink || null,
+          paypalLink: paypalLink || null,
+        } as any, // Type assertion needed until Prisma Client is regenerated
         include: {
           user: {
             select: {
@@ -178,7 +183,12 @@ router.post('/', authenticateToken, requireRole(['MAKER']), validate(createMaker
           city,
           languages: languages || [],
           socialLinks: socialLinks || {},
-        },
+          wechatLink: wechatLink || null,
+          instagramLink: instagramLink || null,
+          twitterLink: twitterLink || null,
+          facebookLink: facebookLink || null,
+          paypalLink: paypalLink || null,
+        } as any, // Type assertion needed until Prisma Client is regenerated
         include: {
           user: {
             select: {

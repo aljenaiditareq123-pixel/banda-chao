@@ -97,6 +97,75 @@ export default function MakerDetailClient({ locale, maker, products, videos }: M
                   </div>
                 )}
               </div>
+              
+              {/* Social Media Links */}
+              {(maker.wechatLink || maker.instagramLink || maker.twitterLink || maker.facebookLink || maker.paypalLink) && (
+                <div className="flex flex-wrap gap-3 mb-4">
+                  <span className="text-sm font-medium text-gray-700">
+                    {locale === 'ar' ? 'تابعنا على:' : locale === 'zh' ? '关注我们:' : 'Follow us:'}
+                  </span>
+                  {maker.wechatLink && (
+                    <a
+                      href={maker.wechatLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-3 py-1.5 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors"
+                      title="WeChat"
+                    >
+                      <span className="text-lg">💬</span>
+                      <span className="text-sm font-medium">WeChat</span>
+                    </a>
+                  )}
+                  {maker.instagramLink && (
+                    <a
+                      href={maker.instagramLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-3 py-1.5 bg-pink-50 text-pink-700 rounded-lg hover:bg-pink-100 transition-colors"
+                      title="Instagram"
+                    >
+                      <span className="text-lg">📷</span>
+                      <span className="text-sm font-medium">Instagram</span>
+                    </a>
+                  )}
+                  {maker.twitterLink && (
+                    <a
+                      href={maker.twitterLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
+                      title="Twitter/X"
+                    >
+                      <span className="text-lg">🐦</span>
+                      <span className="text-sm font-medium">Twitter</span>
+                    </a>
+                  )}
+                  {maker.facebookLink && (
+                    <a
+                      href={maker.facebookLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
+                      title="Facebook"
+                    >
+                      <span className="text-lg">👥</span>
+                      <span className="text-sm font-medium">Facebook</span>
+                    </a>
+                  )}
+                  {maker.paypalLink && (
+                    <a
+                      href={maker.paypalLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-3 py-1.5 bg-yellow-50 text-yellow-700 rounded-lg hover:bg-yellow-100 transition-colors"
+                      title="PayPal"
+                    >
+                      <span className="text-lg">💳</span>
+                      <span className="text-sm font-medium">PayPal</span>
+                    </a>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -139,7 +208,7 @@ export default function MakerDetailClient({ locale, maker, products, videos }: M
         </section>
 
         {/* Videos Section */}
-        <section>
+        <section className="mb-12">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-gray-900">
               {locale === 'ar' ? 'الفيديوهات' : locale === 'zh' ? '视频' : 'Videos'}
@@ -152,19 +221,53 @@ export default function MakerDetailClient({ locale, maker, products, videos }: M
               </Link>
             )}
           </div>
-          {videos.length > 0 ? (
-            <Grid columns={{ base: 1, sm: 2, md: 3, lg: 4 }} gap="gap-6">
-              {videos.map((video) => (
-                <GridItem key={video.id}>
-                  <VideoCard
-                    video={video}
-                    href={`/${locale}/videos/${video.id}`}
-                    locale={locale}
-                  />
-                </GridItem>
-              ))}
-            </Grid>
-          ) : (
+          
+          {/* Short Videos */}
+          {videos.filter((v: any) => v.type === 'SHORT').length > 0 && (
+            <div className="mb-8">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                {locale === 'ar' ? 'فيديوهات قصيرة (30-60 ثانية)' : locale === 'zh' ? '短视频 (30-60秒)' : 'Short Videos (30-60s)'}
+              </h3>
+              <Grid columns={{ base: 1, sm: 2, md: 3, lg: 4 }} gap="gap-6">
+                {videos
+                  .filter((v: any) => v.type === 'SHORT')
+                  .map((video: any) => (
+                    <GridItem key={video.id}>
+                      <VideoCard
+                        video={video}
+                        href={`/${locale}/videos/${video.id}`}
+                        locale={locale}
+                      />
+                    </GridItem>
+                  ))}
+              </Grid>
+            </div>
+          )}
+
+          {/* Long Videos */}
+          {videos.filter((v: any) => v.type === 'LONG').length > 0 && (
+            <div className="mb-8">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                {locale === 'ar' ? 'فيديوهات طويلة (15-30 دقيقة)' : locale === 'zh' ? '长视频 (15-30分钟)' : 'Long Videos (15-30min)'}
+              </h3>
+              <Grid columns={{ base: 1, sm: 2, md: 3, lg: 4 }} gap="gap-6">
+                {videos
+                  .filter((v: any) => v.type === 'LONG')
+                  .map((video: any) => (
+                    <GridItem key={video.id}>
+                      <VideoCard
+                        video={video}
+                        href={`/${locale}/videos/${video.id}`}
+                        locale={locale}
+                      />
+                    </GridItem>
+                  ))}
+              </Grid>
+            </div>
+          )}
+
+          {/* No Videos State */}
+          {videos.length === 0 && (
             <EmptyState
               icon="🎬"
               title={locale === 'ar' ? 'لا توجد فيديوهات' : 'No videos yet'}
