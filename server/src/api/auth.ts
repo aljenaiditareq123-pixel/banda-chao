@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
+import { randomUUID } from 'crypto';
 import { prisma } from '../utils/prisma';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { validate } from '../middleware/validate';
@@ -20,12 +21,12 @@ router.post('/register', validate(registerSchema), async (req: Request, res: Res
       return res.status(400).json({ error: 'Email, password, and name are required' });
     }
 
-    // Check if user exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
+    // Check if user exists (using raw SQL since table is 'users' not 'User')
+    const existingUsers = await prisma.$queryRaw<Array<{id: string, email: string}>>`
+      SELECT id, email FROM users WHERE email = ${email} LIMIT 1;
+    `;
 
-    if (existingUser) {
+    if (existingUsers.length > 0) {
       return res.status(400).json({ error: 'User already exists' });
     }
 
@@ -37,25 +38,29 @@ router.post('/register', validate(registerSchema), async (req: Request, res: Res
       ? role 
       : 'BUYER';
 
-    // Create user
-    const user = await prisma.user.create({
-      data: {
-        email,
-        passwordHash: hashedPassword,
-        name,
-        role: userRole,
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        profilePicture: true,
-        bio: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
+    // Create user (using raw SQL since table is 'users' not 'User')
+    const userId = randomUUID();
+    await prisma.$executeRaw`
+      INSERT INTO users (id, email, "passwordHash", name, role, "createdAt", "updatedAt")
+      VALUES (${userId}, ${email}, ${hashedPassword}, ${name}, ${userRole}, NOW(), NOW());
+    `;
+
+    // Fetch the created user
+    const createdUsers = await prisma.$queryRaw<Array<{
+      id: string;
+      email: string;
+      name: string;
+      profilePicture: string | null;
+      bio: string | null;
+      role: string;
+      createdAt: Date;
+      updatedAt: Date;
+    }>>`
+      SELECT id, email, name, "profilePicture", bio, role, "createdAt", "updatedAt"
+      FROM users
+      WHERE id = ${userId};
+    `;
+    const user = createdUsers[0];
 
     // Generate token
     const token = jwt.sign(
@@ -84,20 +89,33 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response)
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    // Find user
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
+    // Find user (using raw SQL since table is 'users' not 'User')
+    const users = await prisma.$queryRaw<Array<{
+      id: string;
+      email: string;
+      name: string;
+      passwordHash: string | null;
+      profilePicture: string | null;
+      bio: string | null;
+      role: string;
+    }>>`
+      SELECT id, email, name, "passwordHash", "profilePicture", bio, role
+      FROM users
+      WHERE email = ${email}
+      LIMIT 1;
+    `;
 
-    if (!user || !user.passwordHash) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+    if (users.length === 0 || !users[0].passwordHash) {
+      return res.status(400).json({ error: 'Invalid credentials' });
     }
 
-    // Verify password
-    const isValidPassword = await bcrypt.compare(password, user.passwordHash);
+    const user = users[0];
+
+    // Verify password (passwordHash is guaranteed to be non-null from check above)
+    const isValidPassword = await bcrypt.compare(password, user.passwordHash!);
 
     if (!isValidPassword) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(400).json({ error: 'Invalid credentials' });
     }
 
     // Generate token
@@ -108,13 +126,14 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response)
     );
 
     res.json({
+      success: true,
       message: 'Login successful',
       user: {
         id: user.id,
         email: user.email,
         name: user.name,
-        profilePicture: user.profilePicture,
-        bio: user.bio,
+        profilePicture: user.profilePicture || '',
+        bio: user.bio || '',
         role: user.role,
       },
       token,
@@ -128,39 +147,76 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response)
 // Get current user (me)
 router.get('/me', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
-    const user = await prisma.user.findUnique({
-      where: { id: req.userId! },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        profilePicture: true,
-        bio: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true,
-        maker: {
-          select: {
-            id: true,
-            displayName: true,
-            bio: true,
-            country: true,
-            city: true,
-            languages: true,
-            rating: true,
-            reviewCount: true,
-            avatarUrl: true,
-            coverImageUrl: true,
-          },
-        },
-      },
-    });
+    // Find user using raw SQL since table is 'users' not 'User'
+    const users = await prisma.$queryRaw<Array<{
+      id: string;
+      email: string;
+      name: string;
+      profilePicture: string | null;
+      bio: string | null;
+      role: string;
+      createdAt: Date;
+      updatedAt: Date;
+    }>>`
+      SELECT id, email, name, "profilePicture", bio, role, "createdAt", "updatedAt"
+      FROM users
+      WHERE id = ${req.userId!}
+      LIMIT 1;
+    `;
 
-    if (!user) {
+    if (users.length === 0) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    res.json({ user });
+    const user = users[0];
+
+    // Get maker profile if exists
+    let maker = null;
+    try {
+      const makers = await prisma.$queryRaw<Array<{
+        id: string;
+        displayName: string;
+        bio: string | null;
+        country: string | null;
+        city: string | null;
+        languages: string[];
+        rating: number;
+        reviewCount: number;
+        avatarUrl: string | null;
+        coverImageUrl: string | null;
+      }>>`
+        SELECT id, "displayName", bio, country, city, languages, rating, "reviewCount", "avatarUrl", "coverImageUrl"
+        FROM makers
+        WHERE "userId" = ${user.id}
+        LIMIT 1;
+      `;
+      if (makers.length > 0) {
+        maker = makers[0];
+      }
+    } catch (makerErr) {
+      // Maker profile not found or error - continue without it
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('[Auth /me] Maker profile fetch error:', makerErr);
+      }
+    }
+
+    res.json({ 
+      user: {
+        ...user,
+        maker: maker ? {
+          id: maker.id,
+          displayName: maker.displayName,
+          bio: maker.bio,
+          country: maker.country,
+          city: maker.city,
+          languages: maker.languages,
+          rating: maker.rating,
+          reviewCount: maker.reviewCount,
+          avatarUrl: maker.avatarUrl,
+          coverImageUrl: maker.coverImageUrl,
+        } : null,
+      }
+    });
   } catch (error: any) {
     console.error('Get me error:', error);
     res.status(500).json({ error: 'Internal server error' });
