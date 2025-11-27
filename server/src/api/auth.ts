@@ -85,62 +85,73 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response)
   try {
     const { email, password } = req.body;
 
+    // Validate request body
     if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
+      return res.status(400).json({ 
+        success: false,
+        message: 'Email and password are required' 
+      });
     }
 
-    // Find user (using raw SQL since table is 'users' not 'User')
-    const users = await prisma.$queryRaw<Array<{
-      id: string;
-      email: string;
-      name: string;
-      passwordHash: string | null;
-      profilePicture: string | null;
-      bio: string | null;
-      role: string;
-    }>>`
-      SELECT id, email, name, "passwordHash", "profilePicture", bio, role
-      FROM users
-      WHERE email = ${email}
-      LIMIT 1;
-    `;
+    // Fetch user by email using Prisma
+    const user = await prisma.user.findUnique({
+      where: { email: email.trim() },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        passwordHash: true,
+        profilePicture: true,
+        bio: true,
+        role: true,
+      },
+    });
 
-    if (users.length === 0 || !users[0].passwordHash) {
-      return res.status(400).json({ error: 'Invalid credentials' });
+    // If user not found, return 401
+    if (!user || !user.passwordHash) {
+      return res.status(401).json({ 
+        success: false,
+        message: 'Invalid email or password' 
+      });
     }
 
-    const user = users[0];
+    // Compare password with stored hash
+    const isValidPassword = await bcrypt.compare(password, user.passwordHash);
 
-    // Verify password (passwordHash is guaranteed to be non-null from check above)
-    const isValidPassword = await bcrypt.compare(password, user.passwordHash!);
-
+    // If password mismatch, return 401
     if (!isValidPassword) {
-      return res.status(400).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ 
+        success: false,
+        message: 'Invalid email or password' 
+      });
     }
 
-    // Generate token
+    // Generate JWT token
     const token = jwt.sign(
       { userId: user.id, email: user.email, name: user.name, role: user.role },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN } as jwt.SignOptions
     );
 
+    // Return success response
     res.json({
       success: true,
-      message: 'Login successful',
+      token,
       user: {
         id: user.id,
         email: user.email,
         name: user.name,
+        role: user.role,
         profilePicture: user.profilePicture || '',
         bio: user.bio || '',
-        role: user.role,
       },
-      token,
     });
   } catch (error: any) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('[LOGIN_ERROR]', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Internal server error' 
+    });
   }
 });
 
