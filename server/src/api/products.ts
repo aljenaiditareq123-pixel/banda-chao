@@ -55,11 +55,6 @@ router.get('/', async (req: Request, res: Response) => {
           images: {
             orderBy: { order: 'asc' },
           },
-          _count: {
-            select: {
-              productLikes: true,
-            },
-          },
         },
         orderBy: {
           createdAt: 'desc',
@@ -109,11 +104,6 @@ router.get('/:id', async (req: Request, res: Response) => {
         images: {
           orderBy: { order: 'asc' },
         },
-        _count: {
-          select: {
-            productLikes: true,
-          },
-        },
       },
     });
 
@@ -145,11 +135,6 @@ router.get('/makers/:makerId', async (req: Request, res: Response) => {
       include: {
         images: {
           orderBy: { order: 'asc' },
-        },
-        _count: {
-          select: {
-            productLikes: true,
-          },
         },
       },
       orderBy: {

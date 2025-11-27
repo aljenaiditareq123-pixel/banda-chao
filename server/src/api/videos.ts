@@ -53,11 +53,6 @@ router.get('/', async (req: Request, res: Response) => {
               },
             },
           },
-          _count: {
-            select: {
-              videoLikes: true,
-            },
-          },
         },
         orderBy: {
           createdAt: 'desc',
@@ -104,11 +99,6 @@ router.get('/:id', async (req: Request, res: Response) => {
             },
           },
         },
-        _count: {
-          select: {
-            videoLikes: true,
-          },
-        },
       },
     });
 
@@ -149,13 +139,6 @@ router.get('/makers/:makerId', async (req: Request, res: Response) => {
       where,
       skip,
       take: limit,
-      include: {
-        _count: {
-          select: {
-            videoLikes: true,
-          },
-        },
-      },
       orderBy: {
         createdAt: 'desc',
       },
