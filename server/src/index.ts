@@ -23,6 +23,7 @@ import conversationRoutes from './api/conversations';
 import reportRoutes from './api/reports';
 import { errorHandler } from './middleware/errorHandler';
 import { requestLogger } from './middleware/requestLogger';
+import { prisma } from './utils/prisma';
 
 // Load environment variables
 dotenv.config();
@@ -130,11 +131,19 @@ app.use((req: Request, res: Response) => {
 app.use(errorHandler);
 
 // Start server
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
   console.log(`🚀 Server is running on port ${PORT}`);
   console.log(`📡 API: http://localhost:${PORT}/api/v1`);
   console.log(`🔌 Socket.IO: http://localhost:${PORT}/socket.io`);
   console.log(`🌍 Environment: ${NODE_ENV}`);
+  
+  // Verify Prisma connection (lightweight check)
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    console.log(`✅ Database connection verified`);
+  } catch (err) {
+    console.warn(`⚠️ Database connection check failed:`, err);
+  }
 });
 
 // Export app for testing

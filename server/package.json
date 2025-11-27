@@ -10,6 +10,7 @@
     "start": "node dist/index.js",
     "db:migrate": "npx prisma migrate dev --name phase3_stability",
     "db:generate": "npx prisma generate",
+    "migrate:deploy": "npx prisma migrate deploy --schema=./prisma/schema.prisma",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "npx prisma studio",
     "db:reset": "npx prisma migrate reset",
@@ -23,6 +24,7 @@
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "@prisma/client": "^5.9.0",
+    "prisma": "^5.9.0",
     "axios": "^1.7.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
@@ -44,7 +46,6 @@
     "@types/multer": "^1.4.11",
     "@types/node": "^20.11.0",
     "@types/supertest": "^6.0.2",
-    "prisma": "^5.9.0",
     "supertest": "^6.3.3",
     "tsx": "^4.7.0",
     "typescript": "^5.4.0",

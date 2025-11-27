@@ -41,6 +41,7 @@ model User {
 
   @@index([email])
   @@index([role])
+  @@map("users")
 }
 
 enum UserRole {
@@ -78,6 +79,7 @@ model Maker {
 
   @@index([userId])
   @@index([displayName])
+  @@map("makers")
 }
 
 // ============================================
@@ -107,6 +109,7 @@ model Product {
   @@index([makerId])
   @@index([status])
   @@index([category])
+  @@map("products")
 }
 
 enum ProductStatus {
@@ -154,6 +157,7 @@ model Video {
   @@index([makerId])
   @@index([type])
   @@index([language])
+  @@map("videos")
 }
 
 enum VideoType {
