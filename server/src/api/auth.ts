@@ -93,30 +93,35 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response)
       });
     }
 
-    // Fetch user by email using Prisma
-    const user = await prisma.user.findUnique({
-      where: { email: email.trim() },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        passwordHash: true,
-        profilePicture: true,
-        bio: true,
-        role: true,
-      },
-    });
+    // Fetch user by email using raw SQL (consistent with register endpoint)
+    // This ensures we use the exact column name from the database
+    const users = await prisma.$queryRaw<Array<{
+      id: string;
+      email: string;
+      name: string;
+      passwordHash: string | null;
+      profilePicture: string | null;
+      bio: string | null;
+      role: string;
+    }>>`
+      SELECT id, email, name, "passwordHash", "profilePicture", bio, role
+      FROM users
+      WHERE email = ${email.trim()}
+      LIMIT 1;
+    `;
 
     // If user not found, return 401
-    if (!user || !user.passwordHash) {
+    if (users.length === 0 || !users[0].passwordHash) {
       return res.status(401).json({ 
         success: false,
         message: 'Invalid email or password' 
       });
     }
 
-    // Compare password with stored hash
-    const isValidPassword = await bcrypt.compare(password, user.passwordHash);
+    const user = users[0];
+
+    // Compare password with stored hash (passwordHash is guaranteed to be non-null after the check above)
+    const isValidPassword = await bcrypt.compare(password, user.passwordHash!);
 
     // If password mismatch, return 401
     if (!isValidPassword) {
@@ -147,10 +152,20 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response)
       },
     });
   } catch (error: any) {
-    console.error('[LOGIN_ERROR]', error);
+    // Enhanced error logging to help debug the issue
+    console.error('[LOGIN_ERROR]', {
+      message: error.message,
+      code: error.code,
+      meta: error.meta,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+    });
     res.status(500).json({ 
       success: false,
-      message: 'Internal server error' 
+      message: 'Internal server error',
+      ...(process.env.NODE_ENV === 'development' && { 
+        error: error.message,
+        code: error.code 
+      })
     });
   }
 });
