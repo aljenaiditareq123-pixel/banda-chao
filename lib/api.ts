@@ -185,10 +185,11 @@ export const authAPI = {
     return response.data;
   },
   login: async (data: { email: string; password: string }) => {
-    const response = await apiClient.post('/auth/login', data);
-    if (response.data.token && typeof window !== 'undefined') {
-      localStorage.setItem('auth_token', response.data.token);
-    }
+    const response = await apiClient.post('/auth/login', data, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
     return response.data;
   },
   me: async () => {

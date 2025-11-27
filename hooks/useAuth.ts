@@ -7,7 +7,7 @@ interface User {
   id: string;
   email: string;
   name: string;
-  role: 'FOUNDER' | 'MAKER' | 'USER';
+  role: 'FOUNDER' | 'MAKER' | 'BUYER' | 'ADMIN' | 'USER';
 }
 
 interface UseAuthReturn {
@@ -31,7 +31,23 @@ export function useAuth(): UseAuthReturn {
         setLoading(true);
         setError(null);
 
-        const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+        if (typeof window === 'undefined') {
+          setLoading(false);
+          return;
+        }
+
+        const token = localStorage.getItem('auth_token');
+        const storedUser = localStorage.getItem('bandaChao_user');
+        
+        // If we have stored user data, use it immediately (optimistic)
+        if (storedUser) {
+          try {
+            const parsedUser = JSON.parse(storedUser);
+            setUser(parsedUser);
+          } catch (e) {
+            // Invalid JSON, continue to API call
+          }
+        }
         
         if (!token) {
           setUser(null);
@@ -39,20 +55,46 @@ export function useAuth(): UseAuthReturn {
           return;
         }
 
-        // Use centralized API client with retry logic
-        const data = await usersAPI.getMe();
-        setUser(data.user || data);
-      } catch (err: any) {
-        // If 401, user is not authenticated - clear token and user
-        if (err?.response?.status === 401) {
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('auth_token');
+        // Use centralized API client with retry logic to get fresh user data
+        try {
+          const data = await usersAPI.getMe();
+          const userData = data.user || data;
+          setUser(userData);
+          
+          // Update localStorage with fresh data
+          if (userData) {
+            localStorage.setItem('bandaChao_user', JSON.stringify(userData));
+            localStorage.setItem('bandaChao_userRole', userData.role || 'BUYER');
+            localStorage.setItem('bandaChao_userEmail', userData.email || '');
+            localStorage.setItem('bandaChao_userName', userData.name || '');
           }
-          setUser(null);
-        } else {
-          const errorMessage = err instanceof Error ? err.message : 'حدث خطأ أثناء جلب بيانات المستخدم';
-          setError(errorMessage);
+        } catch (apiErr: any) {
+          // If API call fails but we have stored user, keep using it
+          if (storedUser) {
+            // Already set above, just log the error
+            if (process.env.NODE_ENV === 'development') {
+              console.warn('[useAuth] API call failed, using stored user data:', apiErr.message);
+            }
+          } else {
+            // No stored user and API failed - clear everything
+            if (apiErr?.response?.status === 401) {
+              localStorage.removeItem('auth_token');
+              localStorage.removeItem('bandaChao_isLoggedIn');
+              localStorage.removeItem('bandaChao_user');
+              localStorage.removeItem('bandaChao_userRole');
+              localStorage.removeItem('bandaChao_userEmail');
+              localStorage.removeItem('bandaChao_userName');
+              setUser(null);
+            } else {
+              const errorMessage = apiErr instanceof Error ? apiErr.message : 'حدث خطأ أثناء جلب بيانات المستخدم';
+              setError(errorMessage);
+              setUser(null);
+            }
+          }
         }
+      } catch (err: any) {
+        console.error('[useAuth] Unexpected error:', err);
+        setError(err instanceof Error ? err.message : 'حدث خطأ غير متوقع');
         setUser(null);
       } finally {
         setLoading(false);

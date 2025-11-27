@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Button from '@/components/Button';
+import { authAPI } from '@/lib/api';
 
 interface LoginPageClientProps {
   locale: string;
@@ -45,33 +46,56 @@ export default function LoginPageClient({ locale }: LoginPageClientProps) {
       return;
     }
 
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    // Mock login - save to localStorage
     try {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('bandaChao_isLoggedIn', 'true');
-        localStorage.setItem('bandaChao_userEmail', email);
-        localStorage.setItem('bandaChao_userName', email.split('@')[0] || 'User');
-        // Default role is BUYER (can be upgraded to MAKER via /maker/join)
-        localStorage.setItem('bandaChao_userRole', 'BUYER');
-        
-        if (process.env.NODE_ENV === 'development') {
-          console.log('[Login] User logged in:', { email, role: 'BUYER' });
+      // Call the actual login API
+      const response = await authAPI.login({ email: email.trim(), password });
+
+      if (response.token && response.user) {
+        // Store authentication data in localStorage
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('auth_token', response.token);
+          localStorage.setItem('bandaChao_isLoggedIn', 'true');
+          localStorage.setItem('bandaChao_userEmail', response.user.email);
+          localStorage.setItem('bandaChao_userName', response.user.name || email.split('@')[0] || 'User');
+          localStorage.setItem('bandaChao_userRole', response.user.role || 'BUYER');
+          localStorage.setItem('bandaChao_user', JSON.stringify(response.user));
+          
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[Login] User logged in:', { 
+              email: response.user.email, 
+              role: response.user.role,
+              token: response.token.substring(0, 20) + '...'
+            });
+          }
+          
+          // Redirect based on role
+          if (response.user.role === 'FOUNDER') {
+            router.push('/founder');
+          } else {
+            router.push(`/${locale}`);
+          }
+          router.refresh();
         }
-        
-        // Redirect to home or products
-        router.push(`/${locale}/products`);
-        router.refresh();
+      } else {
+        setError(
+          locale === 'ar' 
+            ? 'فشل تسجيل الدخول. يرجى التحقق من بياناتك.'
+            : locale === 'zh'
+            ? '登录失败。请检查您的凭据。'
+            : 'Login failed. Please check your credentials.'
+        );
       }
-    } catch (err) {
+    } catch (err: any) {
+      console.error('[Login] Error:', err);
+      const errorMessage = err?.response?.data?.error || err?.response?.data?.message || err?.message;
       setError(
-        locale === 'ar' 
-          ? 'حدث خطأ أثناء تسجيل الدخول'
-          : locale === 'zh'
-          ? '登录时出错'
-          : 'Error during login'
+        errorMessage || (
+          locale === 'ar' 
+            ? 'حدث خطأ أثناء تسجيل الدخول'
+            : locale === 'zh'
+            ? '登录时出错'
+            : 'Error during login'
+        )
       );
     } finally {
       setLoading(false);
