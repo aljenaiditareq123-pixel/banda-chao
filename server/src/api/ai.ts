@@ -131,9 +131,36 @@ router.post('/pricing-suggestion', authenticateToken, requireRole(['MAKER', 'FOU
       });
     }
 
-    // TODO: Integrate with actual AI service
-    // For now, provide a simple calculation-based suggestion
-    const basePrice = cost ? cost * 2.5 : 50; // 2.5x markup if cost provided
+    // Build prompt for Gemini AI pricing suggestion
+    const pricingPrompt = `أنت خبير في تسعير المنتجات اليدوية والحرفية. مهمتك هي اقتراح سعر مناسب لمنتج بناءً على المعلومات التالية:
+
+**معلومات المنتج:**
+- اسم المنتج: ${productName}
+- الوصف: ${description || 'غير متوفر'}
+- الفئة: ${category || 'عام'}
+${cost ? `- التكلفة الإنتاجية: ${cost} ${req.body.currency || 'USD'}` : '- التكلفة الإنتاجية: غير محددة'}
+
+**المطلوب:**
+1. اقترح سعراً مناسباً للمنتج (بالعملة: ${req.body.currency || 'USD'})
+2. قدم ثلاثة خيارات: سعر تنافسي، سعر متوسط، سعر مميز
+3. اشرح سبب كل سعر بشكل مختصر
+4. قدم نصيحة إضافية حول التسعير
+
+**تعليمات:**
+- أجب بالعربية فقط
+- كن عملياً ومباشراً
+- راعِ نوع المنتج والفئة عند الاقتراح
+- إذا كانت التكلفة متوفرة، استخدمها كأساس للاقتراح`;
+
+    console.log('[AIPricing] Processing pricing suggestion with Gemini...');
+    
+    // Call Gemini AI for pricing suggestion
+    const aiResponse = await generateFounderAIResponse(pricingPrompt);
+    
+    console.log('[AIPricing] Response generated successfully');
+
+    // Extract suggested price from AI response (fallback to calculation if needed)
+    const basePrice = cost ? cost * 2.5 : 50;
     const categoryMultipliers: Record<string, number> = {
       handmade: 1.2,
       jewelry: 1.5,
@@ -141,9 +168,13 @@ router.post('/pricing-suggestion', authenticateToken, requireRole(['MAKER', 'FOU
       art: 1.8,
     };
     const multiplier = categoryMultipliers[category?.toLowerCase() || 'handmade'] || 1.2;
-    const suggestedPrice = Math.round(basePrice * multiplier);
+    const fallbackPrice = Math.round(basePrice * multiplier);
 
-    const response = `بناءً على المعلومات المقدمة:
+    // Try to extract price from AI response, otherwise use fallback
+    const priceMatch = aiResponse.match(/(\d+(?:\.\d+)?)\s*(?:USD|دولار|ريال|درهم|يوان)/i);
+    const suggestedPrice = priceMatch ? Math.round(parseFloat(priceMatch[1])) : fallbackPrice;
+
+    const response = aiResponse || `بناءً على المعلومات المقدمة:
 - اسم المنتج: ${productName}
 - الفئة: ${category || 'عام'}
 ${cost ? `- التكلفة: ${cost}` : ''}
@@ -188,13 +219,45 @@ router.post('/content-helper', authenticateToken, requireRole(['MAKER', 'FOUNDER
       });
     }
 
-    // TODO: Integrate with actual AI service (GPT, Gemini, etc.)
-    // For now, provide a template-based suggestion
-    const description = `**${productName}**
+    // Build prompt for Gemini AI content generation
+    const contentPrompt = `أنت خبير في كتابة وصف المنتجات اليدوية والحرفية. مهمتك هي كتابة وصف جذاب ومهني لمنتج بناءً على المعلومات التالية:
+
+**معلومات المنتج:**
+- اسم المنتج: ${productName}
+- الفئة: ${category || 'عام'}
+${keyFeatures && Array.isArray(keyFeatures) && keyFeatures.length > 0 
+  ? `- المميزات الرئيسية:\n${keyFeatures.map((f: string) => `  • ${f}`).join('\n')}`
+  : ''}
+
+**المطلوب:**
+اكتب وصفاً احترافياً للمنتج يتضمن:
+1. مقدمة جذابة عن المنتج
+2. المميزات والفوائد الرئيسية
+3. معلومات عن الجودة والتصنيع
+4. دعوة للعمل (Call to Action) مناسبة
+
+**تعليمات:**
+- أجب بالعربية فقط
+- استخدم لغة جذابة ومهنية
+- ركز على القيمة والجودة
+- اجعل الوصف مناسباً للتسويق عبر الإنترنت
+- لا تستخدم علامات التنسيق المفرطة (مثل ** أو ##)`;
+
+    console.log('[AIContent] Processing content generation with Gemini...');
+    
+    // Call Gemini AI for content generation
+    const description = await generateFounderAIResponse(contentPrompt);
+    
+    console.log('[AIContent] Response generated successfully');
+    
+    // Fallback to template if AI response is empty or error
+    const finalDescription = description || `**${productName}**
 
 ${category ? `فئة: ${category}` : ''}
 
-${keyFeatures ? `المميزات الرئيسية:\n${keyFeatures.map((f: string) => `- ${f}`).join('\n')}` : ''}
+${keyFeatures && Array.isArray(keyFeatures) && keyFeatures.length > 0 
+  ? `المميزات الرئيسية:\n${keyFeatures.map((f: string) => `- ${f}`).join('\n')}` 
+  : ''}
 
 منتج يدوي فريد يجمع بين الجمال والجودة. مصنوع بعناية فائقة ليوفر تجربة استثنائية.
 
@@ -202,7 +265,7 @@ ${keyFeatures ? `المميزات الرئيسية:\n${keyFeatures.map((f: strin
 
     res.json({
       success: true,
-      description,
+      description: finalDescription,
       message: 'تم إنشاء وصف مقترح. يمكنك تعديله قبل الحفظ.',
     });
   } catch (error: any) {

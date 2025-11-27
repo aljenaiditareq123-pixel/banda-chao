@@ -89,6 +89,13 @@ export function initializeSocket(server: HTTPServer) {
               },
             },
           },
+          include: {
+            participants: {
+              select: {
+                id: true,
+              },
+            },
+          },
         });
 
         if (!conversation) {
@@ -118,7 +125,11 @@ export function initializeSocket(server: HTTPServer) {
         // Emit to all users in conversation
         io?.to(`conversation:${conversationId}`).emit('message:receive', message);
 
-        // TODO: Send notification to other participants
+        // Send notification to other participants
+        const otherParticipants = conversation.participants.filter(p => p.id !== userId);
+        otherParticipants.forEach(participant => {
+          io?.to(`user:${participant.id}`).emit('message:new', message);
+        });
       } catch (error) {
         console.error('Error sending message:', error);
         socket.emit('error', { message: 'Failed to send message' });

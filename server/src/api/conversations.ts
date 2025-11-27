@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../utils/prisma';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
+import { getIO } from '../realtime/socket';
 
 const router = Router();
 
@@ -323,11 +324,9 @@ router.post('/:id/messages', authenticateToken, async (req: AuthRequest, res: Re
       },
     });
 
-    // TODO: Emit Socket.IO event for real-time delivery
-    // const io = getIO();
-    // if (io) {
-    //   io.to(`conversation:${conversationId}`).emit('message:receive', message);
-    // }
+    // Emit Socket.IO event for real-time delivery
+    const io = getIO();
+    io?.to(`conversation:${conversationId}`).emit('message:sent', message);
 
     res.json({
       success: true,

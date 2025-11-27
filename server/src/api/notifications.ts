@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../utils/prisma';
 import { authenticateToken, requireRole, AuthRequest } from '../middleware/auth';
+import { getIO } from '../realtime/socket';
 
 const router = Router();
 
@@ -155,8 +156,9 @@ router.post('/send', authenticateToken, requireRole(['FOUNDER', 'ADMIN']), async
       },
     });
 
-    // TODO: Emit Socket.IO event for real-time notification
-    // socketIO.to(`user:${userId}`).emit('notification', notification);
+    // Emit Socket.IO event for real-time notification
+    const io = getIO();
+    io?.to(`user:${userId}`).emit('notification', notification);
 
     res.json({
       success: true,

@@ -5,10 +5,102 @@ import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { checkoutSchema } from '../validation/paymentSchemas';
 import { createCheckoutSession, verifyWebhookSignature, isTestMode } from '../lib/stripe';
-import { notifyMakerOrderPlaced, notifyOrderStatusChange } from '../lib/notifications';
 import { calculateRevenue } from '../config/commerceConfig';
+import { getIO } from '../realtime/socket';
 
 const router = Router();
+
+/**
+ * Notify maker when an order is placed
+ */
+async function notifyMakerOrderPlaced(orderId: string, makerId: string, productName: string, buyerName: string) {
+  try {
+    // Get maker's user ID
+    const maker = await prisma.maker.findUnique({
+      where: { id: makerId },
+      include: { user: true },
+    });
+
+    if (maker?.user) {
+      // Create notification in database
+      const notification = await prisma.notification.create({
+        data: {
+          userId: maker.user.id,
+          type: 'order-placed',
+          title: 'طلب جديد',
+          body: `تم طلب منتجك "${productName}" من ${buyerName}`,
+          metadata: {
+            orderId,
+            productName,
+            buyerName,
+          },
+        },
+      });
+
+      // Emit Socket.IO event for real-time notification
+      const io = getIO();
+      io?.to(`user:${maker.user.id}`).emit('notification', notification);
+    }
+  } catch (error) {
+    console.error('Error notifying maker of order:', error);
+    // Don't throw - notification failure shouldn't break order creation
+  }
+}
+
+/**
+ * Notify user when order status changes
+ */
+async function notifyOrderStatusChange(orderId: string, userId: string, status: string, productName: string) {
+  try {
+    const statusMessages: Record<string, { title: string; body: string }> = {
+      PAID: {
+        title: 'تم تأكيد الدفع',
+        body: `تم تأكيد دفع طلبك للمنتج "${productName}"`,
+      },
+      FAILED: {
+        title: 'فشل الدفع',
+        body: `فشل دفع طلبك للمنتج "${productName}". يرجى المحاولة مرة أخرى.`,
+      },
+      CANCELLED: {
+        title: 'تم إلغاء الطلب',
+        body: `تم إلغاء طلبك للمنتج "${productName}"`,
+      },
+      SHIPPED: {
+        title: 'تم الشحن',
+        body: `تم شحن طلبك للمنتج "${productName}"`,
+      },
+      DELIVERED: {
+        title: 'تم التوصيل',
+        body: `تم توصيل طلبك للمنتج "${productName}"`,
+      },
+    };
+
+    const message = statusMessages[status];
+    if (message) {
+      // Create notification in database
+      const notification = await prisma.notification.create({
+        data: {
+          userId,
+          type: 'order-update',
+          title: message.title,
+          body: message.body,
+          metadata: {
+            orderId,
+            status,
+            productName,
+          },
+        },
+      });
+
+      // Emit Socket.IO event for real-time notification
+      const io = getIO();
+      io?.to(`user:${userId}`).emit('notification', notification);
+    }
+  } catch (error) {
+    console.error('Error notifying order status change:', error);
+    // Don't throw - notification failure shouldn't break order update
+  }
+}
 
 // Create checkout session
 router.post(
@@ -114,8 +206,8 @@ router.post(
         },
       });
 
-      // TODO: Notify maker of new order
-      // await notifyMakerOrderPlaced(order.id, product.makerId, product.name, req.user?.name || 'مشتري');
+      // Notify maker of new order
+      await notifyMakerOrderPlaced(order.id, product.makerId, product.name, req.user?.name || 'مشتري');
 
       res.json({
         success: true,
@@ -170,6 +262,12 @@ router.post('/webhook', async (req: Request, res: Response) => {
           });
 
           if (order) {
+            // Get buyer information for notification
+            const buyer = await prisma.user.findUnique({
+              where: { id: order.buyerId },
+              select: { name: true },
+            });
+
             await prisma.order.update({
               where: { id: orderId },
               data: {
@@ -179,8 +277,8 @@ router.post('/webhook', async (req: Request, res: Response) => {
             });
 
             // Notify buyer and maker
-            // TODO: await notifyOrderStatusChange(orderId, order.buyerId, 'PAID', order.product.name);
-            // TODO: await notifyMakerOrderPlaced(orderId, order.product.makerId, order.product.name, order.buyer.name);
+            await notifyOrderStatusChange(orderId, order.buyerId, 'PAID', order.product.name);
+            await notifyMakerOrderPlaced(orderId, order.product.makerId, order.product.name, buyer?.name || 'مشتري');
           }
         }
         break;
@@ -191,6 +289,7 @@ router.post('/webhook', async (req: Request, res: Response) => {
         // Find order by payment intent ID
         const order = await prisma.order.findFirst({
           where: { paymentIntentId: paymentIntent.id },
+          include: { product: true },
         });
 
         if (order) {
@@ -200,6 +299,9 @@ router.post('/webhook', async (req: Request, res: Response) => {
               status: 'PAID',
             },
           });
+
+          // Notify buyer of payment success
+          await notifyOrderStatusChange(order.id, order.buyerId, 'PAID', order.product.name);
         }
         break;
       }
@@ -208,6 +310,7 @@ router.post('/webhook', async (req: Request, res: Response) => {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
         const order = await prisma.order.findFirst({
           where: { paymentIntentId: paymentIntent.id },
+          include: { product: true },
         });
 
         if (order) {
@@ -217,6 +320,9 @@ router.post('/webhook', async (req: Request, res: Response) => {
               status: 'FAILED',
             },
           });
+
+          // Notify buyer of payment failure
+          await notifyOrderStatusChange(order.id, order.buyerId, 'FAILED', order.product.name);
         }
         break;
       }
