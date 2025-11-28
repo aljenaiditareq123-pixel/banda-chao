@@ -21,6 +21,7 @@ export default function ChatPageClient({ locale, conversationId, initialMessages
     if (initialMessages.length === 0) {
       fetchMessages();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId]);
 
   const fetchMessages = async () => {

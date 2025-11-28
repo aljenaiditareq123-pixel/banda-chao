@@ -92,7 +92,8 @@ export default function VideosPageClient({
                   <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow overflow-hidden">
                     <div className="aspect-video bg-gray-200 relative">
                       {video.thumbnailUrl ? (
-                        <img
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                           src={video.thumbnailUrl}
                           alt={video.title}
                           className="w-full h-full object-cover"

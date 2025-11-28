@@ -1,6 +1,5 @@
 'use client';
 
-import { useLanguage } from '@/contexts/LanguageContext';
 import Card from '@/components/common/Card';
 
 interface PrivacyPolicyClientProps {
@@ -8,7 +7,6 @@ interface PrivacyPolicyClientProps {
 }
 
 export default function PrivacyPolicyClient({ locale }: PrivacyPolicyClientProps) {
-  const { texts } = useLanguage();
 
   const content = {
     ar: {
