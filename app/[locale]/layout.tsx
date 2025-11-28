@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import Script from 'next/script';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import Navbar from '@/components/layout/Navbar';
+import Footer from '@/components/layout/Footer';
 import '../globals.css';
 
 const validLocales = ['zh', 'en', 'ar'];
@@ -143,8 +144,13 @@ export default function LocaleLayout({ children, params }: LocaleLayoutProps) {
           />
         )}
         <LanguageProvider defaultLanguage={validLocale as 'zh' | 'en' | 'ar'}>
-          <Navbar locale={validLocale} />
-          {children}
+          <div className="flex flex-col min-h-screen">
+            <Navbar locale={validLocale} />
+            <main className="flex-grow">
+              {children}
+            </main>
+            <Footer locale={validLocale} />
+          </div>
         </LanguageProvider>
       </body>
     </html>

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Button from '@/components/Button';
+import { authAPI } from '@/lib/api';
 
 interface SignupPageClientProps {
   locale: string;
@@ -19,13 +20,16 @@ export default function SignupPageClient({ locale }: SignupPageClientProps) {
 
   // Check if already logged in
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && !loading) {
       const isLoggedIn = localStorage.getItem('bandaChao_isLoggedIn');
-      if (isLoggedIn === 'true') {
+      const token = localStorage.getItem('auth_token');
+      if (isLoggedIn === 'true' && token) {
+        // Already logged in, redirect to home
         router.push(`/${locale}`);
       }
     }
-  }, [locale, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locale]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,34 +61,64 @@ export default function SignupPageClient({ locale }: SignupPageClientProps) {
       return;
     }
 
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    // Mock signup - save to localStorage
     try {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('bandaChao_isLoggedIn', 'true');
-        localStorage.setItem('bandaChao_userEmail', email);
-        localStorage.setItem('bandaChao_userName', name);
-        // Default role is BUYER (can be upgraded to MAKER via /maker/join)
-        localStorage.setItem('bandaChao_userRole', 'BUYER');
-        
-        if (process.env.NODE_ENV === 'development') {
-          console.log('[Signup] User created:', { email, name, role: 'BUYER' });
+      // Call the actual register API
+      const response = await authAPI.register({
+        email: email.trim(),
+        password,
+        name: name.trim(),
+        role: 'BUYER', // Default role
+      });
+
+      if (response.token && response.user) {
+        // Store authentication data in localStorage
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('auth_token', response.token);
+          localStorage.setItem('bandaChao_isLoggedIn', 'true');
+          localStorage.setItem('bandaChao_userEmail', response.user.email);
+          localStorage.setItem('bandaChao_userName', response.user.name || name);
+          localStorage.setItem('bandaChao_userRole', response.user.role || 'BUYER');
+          localStorage.setItem('bandaChao_user', JSON.stringify(response.user));
+          
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[Signup] User created and logged in:', { 
+              email: response.user.email, 
+              name: response.user.name,
+              role: response.user.role,
+              token: response.token.substring(0, 20) + '...'
+            });
+          }
+          
+          // Redirect based on role
+          if (response.user.role === 'FOUNDER') {
+            router.push('/founder');
+          } else {
+            router.push(`/${locale}`);
+          }
+          router.refresh();
         }
-        
-        // Redirect to login (or home)
-        router.push(`/${locale}/login`);
+      } else {
+        setError(
+          locale === 'ar' 
+            ? 'فشل إنشاء الحساب. يرجى المحاولة مرة أخرى.'
+            : locale === 'zh'
+            ? '创建账户失败。请重试。'
+            : 'Failed to create account. Please try again.'
+        );
+        setLoading(false);
       }
-    } catch (err) {
+    } catch (err: any) {
+      console.error('[Signup] Error:', err);
+      const errorMessage = err?.response?.data?.error || err?.response?.data?.message || err?.message;
       setError(
-        locale === 'ar' 
-          ? 'حدث خطأ أثناء إنشاء الحساب'
-          : locale === 'zh'
-          ? '创建账户时出错'
-          : 'Error creating account'
+        errorMessage || (
+          locale === 'ar' 
+            ? 'حدث خطأ أثناء إنشاء الحساب'
+            : locale === 'zh'
+            ? '创建账户时出错'
+            : 'Error creating account'
+        )
       );
-    } finally {
       setLoading(false);
     }
   };
@@ -142,7 +176,9 @@ export default function SignupPageClient({ locale }: SignupPageClientProps) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              disabled={loading}
+              autoComplete="name"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
               placeholder={t.name}
             />
           </div>
@@ -156,7 +192,9 @@ export default function SignupPageClient({ locale }: SignupPageClientProps) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              disabled={loading}
+              autoComplete="email"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
               placeholder={t.email}
             />
           </div>
@@ -171,7 +209,9 @@ export default function SignupPageClient({ locale }: SignupPageClientProps) {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              disabled={loading}
+              autoComplete="new-password"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
               placeholder={t.password}
             />
           </div>

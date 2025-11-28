@@ -19,14 +19,16 @@ export default function LoginPageClient({ locale }: LoginPageClientProps) {
 
   // Check if already logged in
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && !loading) {
       const isLoggedIn = localStorage.getItem('bandaChao_isLoggedIn');
-      if (isLoggedIn === 'true') {
+      const token = localStorage.getItem('auth_token');
+      if (isLoggedIn === 'true' && token) {
         // Already logged in, redirect to home
         router.push(`/${locale}`);
       }
     }
-  }, [locale, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locale]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -152,7 +154,9 @@ export default function LoginPageClient({ locale }: LoginPageClientProps) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              disabled={loading}
+              autoComplete="email"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
               placeholder={t.email}
             />
           </div>
@@ -167,7 +171,9 @@ export default function LoginPageClient({ locale }: LoginPageClientProps) {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={1}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              disabled={loading}
+              autoComplete="current-password"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
               placeholder={t.password}
             />
           </div>

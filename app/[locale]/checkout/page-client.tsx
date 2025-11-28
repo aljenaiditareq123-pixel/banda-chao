@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Button from '@/components/Button';
 import { Grid, GridItem } from '@/components/Grid';
 import { paymentsAPI } from '@/lib/api';
+import { redirectToCheckout } from '@/lib/stripe-client';
 
 interface CheckoutPageClientProps {
   locale: string;
@@ -191,8 +192,11 @@ export default function CheckoutPageClient({ locale }: CheckoutPageClientProps) 
         currency: orderSummary?.currency || 'USD',
       });
 
-      if (response.success && response.checkoutUrl) {
-        // Redirect to Stripe checkout
+      if (response.success && response.sessionId) {
+        // Redirect to Stripe Checkout using Stripe.js
+        await redirectToCheckout(response.sessionId);
+      } else if (response.success && response.checkoutUrl) {
+        // Fallback: redirect directly if sessionId not available
         window.location.href = response.checkoutUrl;
       } else {
         setError(response.message || t.error);
