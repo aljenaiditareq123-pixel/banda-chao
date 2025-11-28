@@ -1,7 +1,8 @@
-import HomePageClient from '@/components/home/HomePageClient';
+import { redirect } from 'next/navigation';
 
+// Root page redirects to default locale
 export default function HomePage() {
-  return <HomePageClient locale="ar" featuredMakers={[]} featuredProducts={[]} featuredVideos={[]} />;
+  redirect('/ar');
 }
 
 

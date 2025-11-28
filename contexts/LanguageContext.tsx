@@ -90,7 +90,7 @@ interface LanguageProviderProps {
   defaultLanguage?: Language;
 }
 
-export function LanguageProvider({ children, defaultLanguage = 'zh' }: LanguageProviderProps) {
+export function LanguageProvider({ children, defaultLanguage = 'ar' }: LanguageProviderProps) {
   const [language, setLanguageState] = useState<Language>(defaultLanguage);
 
   useEffect(() => {
