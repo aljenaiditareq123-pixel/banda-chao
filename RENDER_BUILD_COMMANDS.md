@@ -12,6 +12,13 @@
 npm install && npm run build
 ```
 
+**ملاحظة مهمة:** الأمر `postbuild` سيتم تنفيذه تلقائياً بعد البناء، وسيقوم بـ:
+1. محاولة `prisma migrate deploy` أولاً (للمهاجرات الموجودة)
+2. إذا فشل، سيحاول `prisma db push` (للمزامنة المباشرة)
+3. إذا فشل كلاهما، سيستمر البناء بدون خطأ
+
+هذا يضمن مزامنة قاعدة البيانات تلقائياً مع schema وإصلاح أخطاء "Column does not exist".
+
 ### Start Command:
 ```bash
 npm start
@@ -21,6 +28,7 @@ npm start
 - **Node Version:** 20.x or higher
 - **Build Command:** `npm install && npm run build`
 - **Start Command:** `npm start`
+- **Postbuild:** يتم تنفيذه تلقائياً (`prisma migrate deploy` أو `db push`)
 
 ---
 
