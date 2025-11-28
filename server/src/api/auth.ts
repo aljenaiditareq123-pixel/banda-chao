@@ -41,7 +41,7 @@ router.post('/register', validate(registerSchema), async (req: Request, res: Res
     // Create user (using raw SQL since table is 'users' not 'User')
     const userId = randomUUID();
     await prisma.$executeRaw`
-      INSERT INTO users (id, email, "passwordHash", name, role, "createdAt", "updatedAt")
+      INSERT INTO users (id, email, password, name, role, created_at, updated_at)
       VALUES (${userId}, ${email}, ${hashedPassword}, ${name}, ${userRole}, NOW(), NOW());
     `;
 
@@ -56,7 +56,7 @@ router.post('/register', validate(registerSchema), async (req: Request, res: Res
       createdAt: Date;
       updatedAt: Date;
     }>>`
-      SELECT id, email, name, "profilePicture", bio, role, "createdAt", "updatedAt"
+      SELECT id, email, name, profile_picture as "profilePicture", bio, role, created_at as "createdAt", updated_at as "updatedAt"
       FROM users
       WHERE id = ${userId};
     `;
@@ -110,7 +110,7 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response)
         bio: string | null;
         role: string;
       }>>`
-        SELECT id, email, name, "passwordHash", "profilePicture", bio, role
+        SELECT id, email, name, password as "passwordHash", profile_picture as "profilePicture", bio, role
         FROM users
         WHERE email = ${email.trim()}
         LIMIT 1;
