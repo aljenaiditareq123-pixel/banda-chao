@@ -31,7 +31,7 @@ export default function HomePageClient({
     if (locale === 'zh' || locale === 'ar' || locale === 'en') {
       setLanguage(locale);
     } else {
-      setLanguage('zh');
+      setLanguage('ar');
     }
   }, [locale, setLanguage]);
 

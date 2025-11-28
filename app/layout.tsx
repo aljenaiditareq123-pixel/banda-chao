@@ -46,10 +46,10 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="zh">
+    <html lang="ar">
       <body>
         <EnvCheckInit />
-        <LanguageProvider defaultLanguage="zh">
+        <LanguageProvider defaultLanguage="ar">
           {children}
         </LanguageProvider>
       </body>

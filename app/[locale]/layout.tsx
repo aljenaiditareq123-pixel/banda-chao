@@ -17,7 +17,7 @@ interface LocaleLayoutProps {
 
 export async function generateMetadata({ params }: LocaleLayoutProps): Promise<Metadata> {
   const { locale } = params;
-  const validLocale = (locale === 'zh' || locale === 'ar' || locale === 'en') ? locale : 'zh';
+  const validLocale = (locale === 'zh' || locale === 'ar' || locale === 'en') ? locale : 'ar';
 
   const titles = {
     zh: 'Banda Chao 手作平台 — 全球手作人的温暖之家',
@@ -89,7 +89,7 @@ export default function LocaleLayout({ children, params }: LocaleLayoutProps) {
     notFound();
   }
 
-  const validLocale = (locale === 'zh' || locale === 'ar' || locale === 'en') ? locale : 'zh';
+  const validLocale = (locale === 'zh' || locale === 'ar' || locale === 'en') ? locale : 'ar';
   const dir = validLocale === 'ar' ? 'rtl' : 'ltr';
   const lang = validLocale;
 
