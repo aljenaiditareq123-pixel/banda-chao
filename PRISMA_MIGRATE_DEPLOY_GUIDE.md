@@ -23,13 +23,15 @@
 
 **بعد:**
 ```json
-"postbuild": "npx prisma migrate deploy --schema=./prisma/schema.prisma || npx prisma db push --schema=./prisma/schema.prisma --accept-data-loss || echo 'Database migration/push failed, continuing...'"
+"postbuild": "npx prisma migrate deploy --schema=./prisma/schema.prisma || npx prisma db push --schema=./prisma/schema.prisma --accept-data-loss --force-reset || echo 'Database migration/push failed, continuing...'"
 ```
 
 ### كيف يعمل:
 1. **أولاً:** يحاول `prisma migrate deploy` (للمهاجرات الموجودة)
-2. **ثانياً:** إذا فشل، يحاول `prisma db push` (للمزامنة المباشرة)
+2. **ثانياً:** إذا فشل، يحاول `prisma db push --accept-data-loss --force-reset` (مزامنة قسرية - يحذف جميع البيانات ويعيد إنشاء الهيكل)
 3. **أخيراً:** إذا فشل كلاهما، يستمر البناء بدون خطأ
+
+**⚠️ تحذير:** `--force-reset` سيحذف جميع البيانات الحالية في قاعدة البيانات ويعيد إنشاء الهيكل بالكامل. استخدم بحذر!
 
 ---
 
@@ -99,6 +101,7 @@
 - ✅ مزامنة مباشرة من schema
 - ✅ لا يحتاج migrations
 - ⚠️ قد يفقد البيانات (مع `--accept-data-loss`)
+- ⚠️ `--force-reset` يحذف جميع البيانات ويعيد إنشاء الهيكل بالكامل
 - ⚠️ ليس مثالي للإنتاج
 
 ### 2. الترتيب في postbuild
