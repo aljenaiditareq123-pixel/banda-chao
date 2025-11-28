@@ -380,8 +380,8 @@ export default function FounderConsole() {
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-lg bg-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
                           {product.images?.[0]?.url || product.imageUrl ? (
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
                               src={product.images?.[0]?.url || product.imageUrl}
                               alt={product.name}
                               className="w-full h-full object-cover"
@@ -433,8 +433,8 @@ export default function FounderConsole() {
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-lg bg-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
                           {video.thumbnailUrl ? (
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
                               src={video.thumbnailUrl}
                               alt={video.title}
                               className="w-full h-full object-cover"
