@@ -77,8 +77,8 @@ export default function VideoDetailClient({ locale, video, relatedVideos }: Vide
                     <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
                       <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
                         {video.maker.avatarUrl || video.maker.user?.profilePicture ? (
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
                             src={video.maker.avatarUrl || video.maker.user?.profilePicture}
                             alt={video.maker.displayName}
                             className="w-full h-full object-cover"

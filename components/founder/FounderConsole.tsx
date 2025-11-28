@@ -327,8 +327,8 @@ export default function FounderConsole() {
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
                           {maker.avatarUrl || maker.user?.profilePicture ? (
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
                               src={maker.avatarUrl || maker.user?.profilePicture}
                               alt={maker.displayName}
                               className="w-full h-full object-cover"
