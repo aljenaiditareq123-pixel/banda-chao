@@ -10,6 +10,7 @@ import { paymentsAPI } from '@/lib/api';
 import { trackCheckoutStarted } from '@/lib/analytics';
 import LoadingState from '@/components/common/LoadingState';
 import ErrorState from '@/components/common/ErrorState';
+import GroupBuyButton from '@/components/GroupBuyButton';
 
 interface ProductDetailClientProps {
   locale: string;
@@ -236,6 +237,17 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
                 <Button variant="secondary">
                   ❤️
                 </Button>
+              </div>
+
+              {/* Group Buy Button */}
+              <div className="mt-4">
+                <GroupBuyButton
+                  onClick={() => {
+                    // TODO: Implement group buy logic
+                    console.log('Group buy clicked for product:', product.id);
+                  }}
+                  className="w-full"
+                />
               </div>
 
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
