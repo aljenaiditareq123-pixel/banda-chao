@@ -11,6 +11,7 @@ import { trackCheckoutStarted } from '@/lib/analytics';
 import LoadingState from '@/components/common/LoadingState';
 import ErrorState from '@/components/common/ErrorState';
 import GroupBuyButton from '@/components/GroupBuyButton';
+import ShareModal from '@/components/ShareModal';
 
 interface ProductDetailClientProps {
   locale: string;
@@ -22,6 +23,7 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
   const [quantity, setQuantity] = useState(1);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   const formatPrice = (price: number, currency: string = 'USD') => {
     const symbols: Record<string, string> = {
@@ -243,8 +245,7 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
               <div className="mt-4">
                 <GroupBuyButton
                   onClick={() => {
-                    // TODO: Implement group buy logic
-                    console.log('Group buy clicked for product:', product.id);
+                    setIsShareModalOpen(true);
                   }}
                   className="w-full"
                 />
@@ -290,6 +291,15 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
           </section>
         )}
       </div>
+
+      {/* Share Modal */}
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        productId={product.id}
+        productName={product.name}
+        locale={locale}
+      />
     </div>
   );
 }
