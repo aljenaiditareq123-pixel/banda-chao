@@ -1,60 +1,139 @@
+# ============================================
 # Dependencies
+# ============================================
 node_modules/
 /.pnp
 .pnp.js
+.pnp.*
+yarn.lock
+package-lock.json
 
-# Testing
-/coverage
-
-# Next.js
-/.next/
+# ============================================
+# Build & Distribution
+# ============================================
+.next/
 /out/
-/build
-/dist
+/build/
+/dist/
+*.tsbuildinfo
+next-env.d.ts
 
-# Production
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Environment variables
+# ============================================
+# Environment Variables (CRITICAL - Never commit!)
+# ============================================
 .env
+.env.*
+!.env.example
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 
-# Vercel
-.vercel
+# ============================================
+# Logs & Debug
+# ============================================
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# TypeScript
-*.tsbuildinfo
-next-env.d.ts
+# ============================================
+# OS Files
+# ============================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
 
-# IDE
+# ============================================
+# IDE & Editors
+# ============================================
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+.project
+.classpath
+.settings/
+*.sublime-project
+*.sublime-workspace
 
-# OS
-.DS_Store
-Thumbs.db
+# ============================================
+# Testing
+# ============================================
+/coverage/
+.nyc_output/
+*.lcov
+.jest/
 
-# Misc
-*.pem
+# ============================================
+# Temporary & Cache
+# ============================================
 .cache/
+.temp/
+.tmp/
+*.tmp
+*.temp
+*.bak
+*.backup
+*.old
 
-# Server
+# ============================================
+# Vercel & Deployment
+# ============================================
+.vercel
+.vercel/
+
+# ============================================
+# Server Specific
+# ============================================
 server/dist/
+server/build/
 server/uploads/
 server/node_modules/
 server/.env
+server/.env.*
+server/*.log
 
+# ============================================
 # Prisma
+# ============================================
 server/prisma/migrations/
+*.db
+*.db-journal
 
-# Archive/Backup folder (not tracked)
+# ============================================
+# Security & Keys
+# ============================================
+*.pem
+*.key
+*.cert
+*.crt
+secrets/
+.secrets/
+
+# ============================================
+# Archive/Backup folders
+# ============================================
 banda-chao-clean/
+*.zip
+*.tar
+*.tar.gz
+*.rar
+
+# ============================================
+# Misc
+# ============================================
+*.pid
+*.seed
+*.pid.lock
+.npm
+.eslintcache
+.stylelintcache
