@@ -57,12 +57,6 @@ router.get('/', async (req: Request, res: Response) => {
               profile_picture: true,
             },
           },
-          _count: {
-            select: {
-              products: true,
-              videos: true,
-            },
-          },
         },
         orderBy: {
           created_at: 'desc',
