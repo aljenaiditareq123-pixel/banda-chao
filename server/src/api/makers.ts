@@ -426,7 +426,7 @@ router.post('/onboard', authenticateToken, async (req: AuthRequest, res: Respons
     }
 
     // Create maker profile
-    const maker = await prisma.maker.create({
+    const maker = await prisma.makers.create({
       data: {
           user_id: userId,
         displayName,

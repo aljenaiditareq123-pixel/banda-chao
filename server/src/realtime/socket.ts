@@ -50,13 +50,15 @@ export function initializeSocket(server: HTTPServer) {
     // Join conversation rooms
     socket.on('join:conversation', async (conversationId: string) => {
       try {
-        // Verify user is part of conversation
-        const conversation = await prisma.conversations.findFirst({
-          where: {
-            id: conversationId,
-            user_id: userId,
-          },
-        });
+        // Verify user is part of conversation (extract partner ID from conversationId)
+        const [partnerId1, partnerId2] = conversationId.split('_');
+        if (partnerId1 !== userId && partnerId2 !== userId) {
+          socket.emit('error', { message: 'Not authorized to join this conversation' });
+          return;
+        }
+        
+        const partnerId = partnerId1 === userId ? partnerId2 : partnerId1;
+        const conversation = { id: conversationId, user_id: userId, receiver_id: partnerId };
 
         if (conversation) {
           socket.join(`conversation:${conversationId}`);
@@ -75,13 +77,15 @@ export function initializeSocket(server: HTTPServer) {
       try {
         const { conversationId, content } = data;
 
-        // Verify user is part of conversation
-        const conversation = await prisma.conversations.findFirst({
-          where: {
-            id: conversationId,
-            user_id: userId,
-          },
-        });
+        // Verify user is part of conversation (extract partner ID from conversationId)
+        const [partnerId1, partnerId2] = conversationId.split('_');
+        if (partnerId1 !== userId && partnerId2 !== userId) {
+          socket.emit('error', { message: 'Not authorized to join this conversation' });
+          return;
+        }
+        
+        const partnerId = partnerId1 === userId ? partnerId2 : partnerId1;
+        const conversation = { id: conversationId, user_id: userId, receiver_id: partnerId };
 
         if (!conversation) {
           socket.emit('error', { message: 'Not authorized to send message' });
