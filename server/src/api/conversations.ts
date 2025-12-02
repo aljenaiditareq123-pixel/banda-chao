@@ -62,42 +62,6 @@ router.post('/', authenticateToken, validate(createConversationSchema), async (r
         messages: [],
       };
     }
-      where: {
-        participants: {
-          every: {
-            id: {
-              in: [userId, participantId],
-            },
-          },
-        },
-      },
-      include: {
-        participants: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            profilePicture: true,
-          },
-        },
-        messages: {
-          take: 1,
-          orderBy: {
-            createdAt: 'desc',
-          },
-          include: {
-            sender: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    // Conversation already created above
 
     res.json({
       success: true,
