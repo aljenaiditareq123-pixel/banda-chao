@@ -70,12 +70,12 @@ const baseClient = new PrismaClient({
 
 // Wrap Prisma client methods with retry logic
 const prismaWithRetry = new Proxy(baseClient, {
-  get(target, prop) {
+  get(target: PrismaClient, prop: string | symbol) {
     const original = (target as any)[prop];
     
     // Only wrap async methods that interact with database
     if (typeof original === 'function' && ['$connect', '$queryRaw', '$queryRawUnsafe', '$executeRaw', '$executeRawUnsafe'].includes(prop as string)) {
-      return async (...args: any[]) => {
+      return async (...args: any[]): Promise<any> => {
         const maxRetries = 5;
         const baseDelay = 1000;
         let lastError: Error | null = null;
@@ -118,7 +118,7 @@ const prismaWithRetry = new Proxy(baseClient, {
     
     return original;
   },
-});
+}) as PrismaClient;
 
 export const prisma = globalForPrisma.prisma ?? prismaWithRetry;
 
