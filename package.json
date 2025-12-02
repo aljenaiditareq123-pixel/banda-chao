@@ -10,7 +10,8 @@
     "type-check": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "start:dev:server": "cd server && npm run dev"
   },
   "dependencies": {
     "@stripe/stripe-js": "^8.5.3",
