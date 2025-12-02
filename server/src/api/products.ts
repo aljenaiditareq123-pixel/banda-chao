@@ -67,7 +67,7 @@ router.get('/', async (req: Request, res: Response) => {
         u.name as "userName",
         u.profile_picture as "userProfilePicture"
       FROM products p
-      LEFT JOIN users u ON p.user_id = u.id
+      LEFT JOIN users u ON p."user_id" = u.id
       WHERE ${whereClause}
       ORDER BY p.created_at DESC
       LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
@@ -119,7 +119,7 @@ router.get('/:id', async (req: Request, res: Response) => {
         u.name as "userName",
         u.profile_picture as "userProfilePicture"
       FROM products p
-      LEFT JOIN users u ON p.user_id = u.id
+      LEFT JOIN users u ON p."user_id" = u.id
       WHERE p.id = $1
     `, req.params.id);
 
@@ -167,8 +167,8 @@ router.get('/makers/:makerId', async (req: Request, res: Response) => {
         u.name as "userName",
         u.profile_picture as "userProfilePicture"
       FROM products p
-      LEFT JOIN users u ON p.user_id = u.id
-      WHERE p.user_id = $1
+      LEFT JOIN users u ON p."user_id" = u.id
+      WHERE p."user_id" = $1
       ORDER BY p.created_at DESC
       LIMIT $2 OFFSET $3
     `, userId, limit, skip);
