@@ -450,7 +450,7 @@ router.post('/onboard', authenticateToken, async (req: AuthRequest, res: Respons
     await prisma.users.update({
       where: { id: userId },
       data: {
-        role: 'MAKER',
+        role: 'MAKER' as any,
       },
     });
 
