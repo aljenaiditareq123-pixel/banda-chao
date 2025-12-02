@@ -35,33 +35,50 @@ router.get('/', async (req: Request, res: Response) => {
       ];
     }
 
-    const [products, total] = await Promise.all([
-      prisma.product.findMany({
-        where,
-        skip,
-        take: limit,
-        include: {
-          maker: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  name: true,
-                  profilePicture: true,
-                },
-              },
-            },
-          },
-          images: {
-            orderBy: { order: 'asc' },
-          },
-        },
-        orderBy: {
-          createdAt: 'desc',
-        },
-      }),
-      prisma.product.count({ where }),
-    ]);
+    // Use raw SQL to match actual schema (products table doesn't have status, maker, or images)
+    let whereClause = '1=1';
+    const params: any[] = [];
+    let paramIndex = 1;
+
+    if (category) {
+      whereClause += ` AND p.category = $${paramIndex}`;
+      params.push(category);
+      paramIndex++;
+    }
+
+    if (search) {
+      whereClause += ` AND (p.name ILIKE $${paramIndex} OR p.description ILIKE $${paramIndex})`;
+      params.push(`%${search}%`);
+      paramIndex++;
+    }
+
+    const products = await prisma.$queryRawUnsafe<Array<any>>(`
+      SELECT 
+        p.id,
+        p.name,
+        p.description,
+        p.price,
+        p.category,
+        p.image_url as "imageUrl",
+        p.external_link as "externalLink",
+        p.created_at as "createdAt",
+        p.updated_at as "updatedAt",
+        u.id as "userId",
+        u.name as "userName",
+        u.profile_picture as "userProfilePicture"
+      FROM products p
+      LEFT JOIN users u ON p.user_id = u.id
+      WHERE ${whereClause}
+      ORDER BY p.created_at DESC
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+    `, ...params, limit, skip);
+
+    const totalResult = await prisma.$queryRawUnsafe<Array<{ count: bigint }>>(`
+      SELECT COUNT(*) as count
+      FROM products p
+      WHERE ${whereClause}
+    `, ...params);
+    const total = Number(totalResult[0]?.count || 0);
 
     const response = {
       products,
@@ -87,60 +104,74 @@ router.get('/', async (req: Request, res: Response) => {
 // Get product by ID
 router.get('/:id', async (req: Request, res: Response) => {
   try {
-    const product = await prisma.product.findUnique({
-      where: { id: req.params.id },
-      include: {
-        maker: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                profilePicture: true,
-              },
-            },
-          },
-        },
-        images: {
-          orderBy: { order: 'asc' },
-        },
-      },
-    });
+    const products = await prisma.$queryRawUnsafe<Array<any>>(`
+      SELECT 
+        p.id,
+        p.name,
+        p.description,
+        p.price,
+        p.category,
+        p.image_url as "imageUrl",
+        p.external_link as "externalLink",
+        p.created_at as "createdAt",
+        p.updated_at as "updatedAt",
+        u.id as "userId",
+        u.name as "userName",
+        u.profile_picture as "userProfilePicture"
+      FROM products p
+      LEFT JOIN users u ON p.user_id = u.id
+      WHERE p.id = $1
+    `, req.params.id);
 
-    if (!product) {
+    if (!products || products.length === 0) {
       return res.status(404).json({ error: 'Product not found' });
     }
 
-    res.json({ product });
+    res.json({ product: products[0] });
   } catch (error: any) {
     console.error('Get product error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// Get products by maker
+// Get products by maker (using user_id)
 router.get('/makers/:makerId', async (req: Request, res: Response) => {
   try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 20;
     const skip = (page - 1) * limit;
 
-    const products = await prisma.product.findMany({
-      where: {
-        makerId: req.params.makerId,
-        status: 'PUBLISHED',
-      },
-      skip,
-      take: limit,
-      include: {
-        images: {
-          orderBy: { order: 'asc' },
-        },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    // Get maker's user_id
+    const makers = await prisma.$queryRawUnsafe<Array<{ user_id: string }>>(`
+      SELECT user_id FROM makers WHERE id = $1 LIMIT 1
+    `, req.params.makerId);
+
+    if (!makers || makers.length === 0) {
+      return res.status(404).json({ error: 'Maker not found' });
+    }
+
+    const userId = makers[0].user_id;
+
+    const products = await prisma.$queryRawUnsafe<Array<any>>(`
+      SELECT 
+        p.id,
+        p.name,
+        p.description,
+        p.price,
+        p.category,
+        p.image_url as "imageUrl",
+        p.external_link as "externalLink",
+        p.created_at as "createdAt",
+        p.updated_at as "updatedAt",
+        u.id as "userId",
+        u.name as "userName",
+        u.profile_picture as "userProfilePicture"
+      FROM products p
+      LEFT JOIN users u ON p.user_id = u.id
+      WHERE p.user_id = $1
+      ORDER BY p.created_at DESC
+      LIMIT $2 OFFSET $3
+    `, userId, limit, skip);
 
     res.json({ products });
   } catch (error: any) {

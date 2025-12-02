@@ -36,30 +36,58 @@ router.get('/', async (req: Request, res: Response) => {
       ];
     }
 
-    const [videos, total] = await Promise.all([
-      prisma.video.findMany({
-        where,
-        skip,
-        take: limit,
-        include: {
-          maker: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  name: true,
-                  profilePicture: true,
-                },
-              },
-            },
-          },
-        },
-        orderBy: {
-          createdAt: 'desc',
-        },
-      }),
-      prisma.video.count({ where }),
-    ]);
+    // Use raw SQL to match actual schema (videos table has user_id, not makerId)
+    let whereClause = '1=1';
+    const params: any[] = [];
+    let paramIndex = 1;
+
+    if (type && ['SHORT', 'LONG'].includes(type)) {
+      whereClause += ` AND v.type = $${paramIndex}`;
+      params.push(type);
+      paramIndex++;
+    }
+
+    if (language) {
+      whereClause += ` AND v.language = $${paramIndex}`;
+      params.push(language);
+      paramIndex++;
+    }
+
+    if (search) {
+      whereClause += ` AND (v.title ILIKE $${paramIndex} OR v.description ILIKE $${paramIndex})`;
+      params.push(`%${search}%`);
+      paramIndex++;
+    }
+
+    const videos = await prisma.$queryRawUnsafe<Array<any>>(`
+      SELECT 
+        v.id,
+        v.title,
+        v.description,
+        v.video_url as "videoUrl",
+        v.thumbnail_url as "thumbnailUrl",
+        v.duration,
+        v.type,
+        v.views as "viewsCount",
+        v.likes as "likesCount",
+        v.created_at as "createdAt",
+        v.updated_at as "updatedAt",
+        u.id as "userId",
+        u.name as "userName",
+        u.profile_picture as "userProfilePicture"
+      FROM videos v
+      LEFT JOIN users u ON v.user_id = u.id
+      WHERE ${whereClause}
+      ORDER BY v.created_at DESC
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+    `, ...params, limit, skip);
+
+    const totalResult = await prisma.$queryRawUnsafe<Array<{ count: bigint }>>(`
+      SELECT COUNT(*) as count
+      FROM videos v
+      WHERE ${whereClause}
+    `, ...params);
+    const total = Number(totalResult[0]?.count || 0);
 
     const response = {
       videos,
@@ -85,34 +113,39 @@ router.get('/', async (req: Request, res: Response) => {
 // Get video by ID
 router.get('/:id', async (req: Request, res: Response) => {
   try {
-    const video = await prisma.video.findUnique({
-      where: { id: req.params.id },
-      include: {
-        maker: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                profilePicture: true,
-              },
-            },
-          },
-        },
-      },
-    });
+    const videos = await prisma.$queryRawUnsafe<Array<any>>(`
+      SELECT 
+        v.id,
+        v.title,
+        v.description,
+        v.video_url as "videoUrl",
+        v.thumbnail_url as "thumbnailUrl",
+        v.duration,
+        v.type,
+        v.views as "viewsCount",
+        v.likes as "likesCount",
+        v.created_at as "createdAt",
+        v.updated_at as "updatedAt",
+        u.id as "userId",
+        u.name as "userName",
+        u.profile_picture as "userProfilePicture"
+      FROM videos v
+      LEFT JOIN users u ON v.user_id = u.id
+      WHERE v.id = $1
+    `, req.params.id);
 
-    if (!video) {
+    if (!videos || videos.length === 0) {
       return res.status(404).json({ error: 'Video not found' });
     }
 
+    const video = videos[0];
+    
     // Increment views count
-    await prisma.video.update({
-      where: { id: video.id },
-      data: { viewsCount: { increment: 1 } },
-    });
+    await prisma.$executeRawUnsafe(`
+      UPDATE videos SET views = views + 1 WHERE id = $1
+    `, req.params.id);
 
-    res.json({ video: { ...video, viewsCount: video.viewsCount + 1 } });
+    res.json({ video: { ...video, viewsCount: (video.viewsCount || 0) + 1 } });
   } catch (error: any) {
     console.error('Get video error:', error);
     res.status(500).json({ error: 'Internal server error' });
