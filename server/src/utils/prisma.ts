@@ -124,11 +124,5 @@ export const prisma = globalForPrisma.prisma ?? prismaWithRetry;
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
-// Add connection error handler
-prisma.$on('error' as any, (e: any) => {
-  maintenanceLogger.log('database_error', {
-    message: 'Database error detected',
-    error: e.message,
-    status: 'warning',
-  });
-});
+// Note: Prisma $on is for query/error logging, not connection errors
+// Connection errors are handled by the retry wrapper above
