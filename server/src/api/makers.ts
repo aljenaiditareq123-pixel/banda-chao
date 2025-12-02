@@ -106,13 +106,6 @@ router.get('/:id', async (req: Request, res: Response) => {
             bio: true,
           },
         },
-        _count: {
-          select: {
-            products: true,
-            videos: true,
-            posts: true,
-          },
-        },
       },
     });
 
@@ -232,12 +225,6 @@ router.get('/me', authenticateToken, async (req: AuthRequest, res: Response) => 
             name: true,
             email: true,
             profile_picture: true,
-          },
-        },
-        _count: {
-          select: {
-            products: true,
-            videos: true,
           },
         },
       },
