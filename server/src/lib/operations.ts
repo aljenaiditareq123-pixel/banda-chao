@@ -164,16 +164,17 @@ export async function getSystemHealth(): Promise<{
     await prisma.$queryRaw`SELECT 1`;
     
     // Get recent maintenance logs
-    const recentLogs = maintenanceLogger.getLogs('database_recovery', 10);
+    const allLogs = maintenanceLogger.getLogs();
+    const recentLogs = allLogs.filter(log => log.action === 'database_retry' || log.action === 'database_recovery').slice(-10);
     const lastRecovery = recentLogs.length > 0 ? recentLogs[recentLogs.length - 1] : null;
     
     // Get total maintenance actions today
-    const todayLogs = maintenanceLogger.getLogs();
-    const todayActions = todayLogs.filter(log => {
+    const todayLogs = allLogs.filter(log => {
       const logDate = new Date(log.timestamp);
       const today = new Date();
       return logDate.toDateString() === today.toDateString();
-    }).length;
+    });
+    const todayActions = todayLogs.length;
 
     return {
       database: 'healthy',
