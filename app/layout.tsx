@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { LanguageProvider } from '@/contexts/LanguageContext'
 import EnvCheckInit from '@/components/common/EnvCheckInit'
+import { ErrorBoundary } from '@/components/common/ErrorBoundary'
 
 export const metadata: Metadata = {
   title: 'Banda Chao - Social E-commerce Platform',
@@ -49,9 +50,11 @@ export default function RootLayout({
     <html lang="ar">
       <body>
         <EnvCheckInit />
-        <LanguageProvider defaultLanguage="ar">
-          {children}
-        </LanguageProvider>
+        <ErrorBoundary>
+          <LanguageProvider defaultLanguage="ar">
+            {children}
+          </LanguageProvider>
+        </ErrorBoundary>
       </body>
     </html>
   )

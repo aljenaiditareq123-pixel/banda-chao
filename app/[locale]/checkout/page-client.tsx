@@ -5,7 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Button from '@/components/Button';
 import { Grid, GridItem } from '@/components/Grid';
 import { paymentsAPI } from '@/lib/api';
-import { redirectToCheckout } from '@/lib/stripe-client';
+import { redirectToCheckout, saveOrderDraft, getOrderDraft, clearOrderDraft } from '@/lib/stripe-client';
+import { maintenanceLogger } from '@/lib/maintenance-logger';
 
 interface CheckoutPageClientProps {
   locale: string;
@@ -37,12 +38,25 @@ export default function CheckoutPageClient({ locale }: CheckoutPageClientProps) 
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   const [orderSummary, setOrderSummary] = useState<{
     subtotal: number;
     shipping: number;
     total: number;
     currency: string;
   } | null>(null);
+
+  // Load saved draft on mount
+  useEffect(() => {
+    const draft = getOrderDraft();
+    if (draft && draft.productId === productId) {
+      setShippingAddress(draft.shippingAddress || shippingAddress);
+      maintenanceLogger.log('order_draft_loaded', {
+        message: 'Order draft loaded from local storage',
+        productId: draft.productId,
+      }, 'info');
+    }
+  }, [productId]);
 
   // Translations
   const texts = {
@@ -193,8 +207,33 @@ export default function CheckoutPageClient({ locale }: CheckoutPageClientProps) 
       });
 
       if (response.success && response.sessionId) {
-        // Redirect to Stripe Checkout using Stripe.js
-        await redirectToCheckout(response.sessionId);
+        try {
+          // Redirect to Stripe Checkout using Stripe.js (with built-in retry)
+          await redirectToCheckout(response.sessionId);
+          // Clear draft on success
+          clearOrderDraft();
+        } catch (stripeError: any) {
+          // The Backup Plan: Save order as draft if Stripe fails
+          saveOrderDraft({
+            productId: productId!,
+            quantity: quantity,
+            shippingAddress: shippingAddress,
+            total: orderSummary?.total || 0,
+          });
+
+          maintenanceLogger.log('stripe_checkout_failed', {
+            message: 'Stripe checkout failed, order saved as draft',
+            error: stripeError.message,
+            sessionId: response.sessionId,
+          }, 'error');
+
+          setError(
+            locale === 'ar'
+              ? 'فشل الاتصال بخدمة الدفع. تم حفظ طلبك كمسودة. يرجى المحاولة مرة أخرى.'
+              : 'Payment service connection failed. Your order has been saved as draft. Please try again.'
+          );
+          setLoading(false);
+        }
       } else if (response.success && response.checkoutUrl) {
         // Fallback: redirect directly if sessionId not available
         window.location.href = response.checkoutUrl;
@@ -204,9 +243,33 @@ export default function CheckoutPageClient({ locale }: CheckoutPageClientProps) 
       }
     } catch (err: any) {
       console.error('Checkout error:', err);
-      setError(err.response?.data?.message || err.message || t.error);
+      
+      // The Backup Plan: Save order as draft on API failure
+      saveOrderDraft({
+        productId: productId!,
+        quantity: quantity,
+        shippingAddress: shippingAddress,
+        total: orderSummary?.total || 0,
+      });
+
+      maintenanceLogger.log('checkout_api_failed', {
+        message: 'Checkout API failed, order saved as draft',
+        error: err.message,
+      }, 'error');
+
+      setError(
+        locale === 'ar'
+          ? 'حدث خطأ في الاتصال. تم حفظ طلبك كمسودة. يرجى المحاولة مرة أخرى.'
+          : 'Connection error. Your order has been saved as draft. Please try again.'
+      );
       setLoading(false);
     }
+  };
+
+  const handleRetry = () => {
+    setRetryCount(prev => prev + 1);
+    setError(null);
+    handleCheckout({ preventDefault: () => {} } as React.FormEvent);
   };
 
   return (
@@ -370,10 +433,20 @@ export default function CheckoutPageClient({ locale }: CheckoutPageClientProps) 
                       </span>
                     </div>
 
-                    {/* Error Message */}
+                    {/* Error Message with Retry */}
                     {error && (
                       <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                        <p className="text-sm text-red-800">{error}</p>
+                        <p className="text-sm text-red-800 mb-2">{error}</p>
+                        {retryCount < 3 && (
+                          <button
+                            type="button"
+                            onClick={handleRetry}
+                            disabled={loading}
+                            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {locale === 'ar' ? 'إعادة المحاولة' : locale === 'zh' ? '重试' : 'Retry'}
+                          </button>
+                        )}
                       </div>
                     )}
 
