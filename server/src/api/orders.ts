@@ -18,19 +18,23 @@ router.get('/', authenticateToken, requireRole(['FOUNDER', 'ADMIN']), async (req
     }
 
     const [orders, total, stats] = await Promise.all([
-      prisma.order.findMany({
+      prisma.orders.findMany({
         where,
         skip,
         take: pageSize,
         include: {
-          product: {
-            select: {
-              id: true,
-              name: true,
-              price: true,
+          order_items: {
+            include: {
+              products: {
+                select: {
+                  id: true,
+                  name: true,
+                  price: true,
+                },
+              },
             },
           },
-          buyer: {
+          users: {
             select: {
               id: true,
               name: true,
@@ -39,11 +43,11 @@ router.get('/', authenticateToken, requireRole(['FOUNDER', 'ADMIN']), async (req
           },
         },
         orderBy: {
-          createdAt: 'desc',
+          created_at: 'desc',
         },
       }),
-      prisma.order.count({ where }),
-      prisma.order.groupBy({
+      prisma.orders.count({ where }),
+      prisma.orders.groupBy({
         by: ['status'],
         _count: {
           id: true,
@@ -87,22 +91,26 @@ router.get('/my', authenticateToken, async (req: AuthRequest, res: Response) => 
       });
     }
 
-    const orders = await prisma.order.findMany({
-      where: { buyerId: userId },
+    const orders = await prisma.orders.findMany({
+      where: { user_id: userId },
       include: {
-        product: {
+        order_items: {
           include: {
-            maker: {
-              select: {
-                id: true,
-                displayName: true,
+            products: {
+              include: {
+                users: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
               },
             },
           },
         },
       },
       orderBy: {
-        createdAt: 'desc',
+        created_at: 'desc',
       },
     });
 
@@ -130,8 +138,8 @@ router.get('/maker', authenticateToken, async (req: AuthRequest, res: Response) 
       });
     }
 
-    const maker = await prisma.maker.findUnique({
-      where: { userId },
+    const maker = await prisma.makers.findFirst({
+      where: { user_id: userId },
     });
 
     if (!maker) {
@@ -141,20 +149,28 @@ router.get('/maker', authenticateToken, async (req: AuthRequest, res: Response) 
       });
     }
 
-    const orders = await prisma.order.findMany({
+    const orders = await prisma.orders.findMany({
       where: {
-        product: {
-          makerId: maker.id,
+        order_items: {
+          some: {
+            products: {
+              user_id: maker.user_id,
+            },
+          },
         },
       },
       include: {
-        product: {
-          select: {
-            id: true,
-            name: true,
+        order_items: {
+          include: {
+            products: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
-        buyer: {
+        users: {
           select: {
             id: true,
             name: true,
@@ -163,7 +179,7 @@ router.get('/maker', authenticateToken, async (req: AuthRequest, res: Response) 
         },
       },
       orderBy: {
-        createdAt: 'desc',
+        created_at: 'desc',
       },
     });
 

@@ -23,38 +23,36 @@ router.get('/', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Invalid targetType' });
     }
 
+    // Map targetType to appropriate field
+    const where: any = {};
+    if (targetType === 'PRODUCT') {
+      where.product_id = targetId;
+    } else if (targetType === 'VIDEO') {
+      where.video_id = targetId;
+    } else {
+      where.product_id = null;
+      where.video_id = null;
+    }
+
     const [comments, total] = await Promise.all([
-      prisma.comment.findMany({
-        where: {
-          targetType: targetType as any,
-          targetId,
-        },
+      prisma.comments.findMany({
+        where,
         skip,
         take: limit,
         include: {
-          author: {
+          users: {
             select: {
               id: true,
               name: true,
-              profilePicture: true,
-            },
-          },
-          _count: {
-            select: {
-              commentLikes: true,
+              profile_picture: true,
             },
           },
         },
         orderBy: {
-          createdAt: 'asc',
+          created_at: 'asc',
         },
       }),
-      prisma.comment.count({
-        where: {
-          targetType: targetType as any,
-          targetId,
-        },
-      }),
+      prisma.comments.count({ where }),
     ]);
 
     res.json({
@@ -85,19 +83,32 @@ router.post('/', authenticateToken, validate(createCommentSchema), async (req: A
       return res.status(400).json({ error: 'Invalid targetType' });
     }
 
-    const comment = await prisma.comment.create({
-      data: {
-        authorId: req.userId!,
-        targetType: targetType as any,
-        targetId,
-        content,
-      },
+    const { randomUUID } = await import('crypto');
+    const commentId = randomUUID();
+    
+    const data: any = {
+      id: commentId,
+      user_id: req.userId!,
+      content,
+      likes: 0,
+      created_at: new Date(),
+      updated_at: new Date(),
+    };
+    
+    if (targetType === 'PRODUCT') {
+      data.product_id = targetId;
+    } else if (targetType === 'VIDEO') {
+      data.video_id = targetId;
+    }
+
+    const comment = await prisma.comments.create({
+      data,
       include: {
-        author: {
+        users: {
           select: {
             id: true,
             name: true,
-            profilePicture: true,
+            profile_picture: true,
           },
         },
       },

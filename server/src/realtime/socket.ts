@@ -24,7 +24,7 @@ export function initializeSocket(server: HTTPServer) {
       }
 
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as { id: string; email: string };
-      const user = await prisma.user.findUnique({
+      const user = await prisma.users.findUnique({
         where: { id: decoded.id },
         select: { id: true, email: true, name: true, role: true },
       });
@@ -51,14 +51,10 @@ export function initializeSocket(server: HTTPServer) {
     socket.on('join:conversation', async (conversationId: string) => {
       try {
         // Verify user is part of conversation
-        const conversation = await prisma.conversation.findFirst({
+        const conversation = await prisma.conversations.findFirst({
           where: {
             id: conversationId,
-            participants: {
-              some: {
-                id: userId,
-              },
-            },
+            user_id: userId,
           },
         });
 
@@ -80,21 +76,10 @@ export function initializeSocket(server: HTTPServer) {
         const { conversationId, content } = data;
 
         // Verify user is part of conversation
-        const conversation = await prisma.conversation.findFirst({
+        const conversation = await prisma.conversations.findFirst({
           where: {
             id: conversationId,
-            participants: {
-              some: {
-                id: userId,
-              },
-            },
-          },
-          include: {
-            participants: {
-              select: {
-                id: true,
-              },
-            },
+            user_id: userId,
           },
         });
 
@@ -104,32 +89,42 @@ export function initializeSocket(server: HTTPServer) {
         }
 
         // Create message in database
-        const message = await prisma.message.create({
+        const { randomUUID } = await import('crypto');
+        const message = await prisma.messages.create({
           data: {
-            conversationId,
-            senderId: userId,
+            id: randomUUID(),
             content,
-          },
-          include: {
-            sender: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                profilePicture: true,
-              },
-            },
+            sender_id: userId,
+            receiver_id: conversation.receiver_id || conversation.user_id,
+            timestamp: new Date(),
+            read: false,
           },
         });
+
+        // Get sender info for message
+        const sender = await prisma.users.findUnique({
+          where: { id: userId },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            profile_picture: true,
+          },
+        });
+
+        const messageWithSender = {
+          ...message,
+          sender: sender,
+        };
 
         // Emit to all users in conversation
-        io?.to(`conversation:${conversationId}`).emit('message:receive', message);
+        io?.to(`conversation:${conversationId}`).emit('message:receive', messageWithSender);
 
-        // Send notification to other participants
-        const otherParticipants = conversation.participants.filter(p => p.id !== userId);
-        otherParticipants.forEach(participant => {
-          io?.to(`user:${participant.id}`).emit('message:new', message);
-        });
+        // Send notification to other participant
+        const receiverId = conversation.user_id === userId ? conversation.receiver_id : conversation.user_id;
+        if (receiverId) {
+          io?.to(`user:${receiverId}`).emit('message:new', messageWithSender);
+        }
       } catch (error) {
         console.error('Error sending message:', error);
         socket.emit('error', { message: 'Failed to send message' });

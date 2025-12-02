@@ -44,17 +44,17 @@ const upload = multer({
 // Get current user
 router.get('/me', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id: req.userId! },
       select: {
         id: true,
         email: true,
         name: true,
-        profilePicture: true,
+        profile_picture: true,
         bio: true,
         role: true,
-        createdAt: true,
-        updatedAt: true,
+        created_at: true,
+        updated_at: true,
       },
     });
 
@@ -72,17 +72,17 @@ router.get('/me', authenticateToken, async (req: AuthRequest, res: Response) => 
 // Get user by ID
 router.get('/:id', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id: req.params.id },
       select: {
         id: true,
         email: true,
         name: true,
-        profilePicture: true,
+        profile_picture: true,
         bio: true,
         role: true,
-        createdAt: true,
-        updatedAt: true,
+        created_at: true,
+        updated_at: true,
       },
     });
 
@@ -106,21 +106,22 @@ router.put('/:id', authenticateToken, validate(updateUserSchema), async (req: Au
 
     const { name, bio } = req.body;
 
-    const user = await prisma.user.update({
+    const user = await prisma.users.update({
       where: { id: req.params.id },
       data: {
         ...(name && { name }),
         ...(bio !== undefined && { bio }),
+        updated_at: new Date(),
       },
       select: {
         id: true,
         email: true,
         name: true,
-        profilePicture: true,
+        profile_picture: true,
         bio: true,
         role: true,
-        createdAt: true,
-        updatedAt: true,
+        created_at: true,
+        updated_at: true,
       },
     });
 
@@ -140,16 +141,17 @@ router.post('/avatar', authenticateToken, upload.single('avatar'), async (req: A
 
     const filePath = `/uploads/avatars/${req.file.filename}`;
 
-    const user = await prisma.user.update({
+    const user = await prisma.users.update({
       where: { id: req.userId! },
       data: {
-        profilePicture: filePath,
+        profile_picture: filePath,
+        updated_at: new Date(),
       },
       select: {
         id: true,
         email: true,
         name: true,
-        profilePicture: true,
+        profile_picture: true,
         bio: true,
         role: true,
       },

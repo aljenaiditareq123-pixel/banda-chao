@@ -23,13 +23,17 @@ interface CreateNotificationParams {
  */
 export async function createNotification(params: CreateNotificationParams) {
   try {
-    const notification = await prisma.notification.create({
+    const { randomUUID } = await import('crypto');
+    const notification = await prisma.notifications.create({
       data: {
-        userId: params.userId,
+        id: randomUUID(),
+        user_id: params.userId,
         type: params.type,
         title: params.title,
         body: params.body,
-        metadata: params.metadata || {},
+        data: params.metadata || {},
+        is_read: false,
+        created_at: new Date(),
       },
     });
 
@@ -49,7 +53,7 @@ export async function createNotification(params: CreateNotificationParams) {
 export async function notifyFounderNewProduct(productId: string, makerId: string, productName: string) {
   try {
     // Find founder user
-    const founder = await prisma.user.findFirst({
+    const founder = await prisma.users.findFirst({
       where: {
         role: 'FOUNDER',
       },
@@ -79,14 +83,14 @@ export async function notifyFounderNewProduct(productId: string, makerId: string
 export async function notifyMakerOrderPlaced(orderId: string, makerId: string, productName: string, buyerName: string) {
   try {
     // Get maker's user ID
-    const maker = await prisma.maker.findUnique({
+    const maker = await prisma.makers.findUnique({
       where: { id: makerId },
-      include: { user: true },
+      include: { users: true },
     });
 
-    if (maker?.user) {
+    if (maker?.users) {
       await createNotification({
-        userId: maker.user.id,
+        userId: maker.users.id,
         type: 'order-placed',
         title: 'طلب جديد',
         body: `تم طلب منتجك "${productName}" من ${buyerName}`,

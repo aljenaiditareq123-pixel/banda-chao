@@ -19,14 +19,16 @@ router.post('/', authenticateToken, validate(createReportSchema), async (req: Au
       });
     }
 
-    const report = await prisma.report.create({
+    const { randomUUID } = await import('crypto');
+    const report = await prisma.reports.create({
       data: {
-        reporterId: userId,
-        targetType,
-        targetId,
+        id: randomUUID(),
+        user_id: userId,
+        target_type: targetType,
+        target_id: targetId,
         reason,
-        metadata: metadata || {},
-        status: 'OPEN',
+        resolved: false,
+        created_at: new Date(),
       },
     });
 
@@ -61,15 +63,15 @@ router.get('/', authenticateToken, requireRole(['FOUNDER', 'ADMIN']), async (req
     }
 
     const [reports, total] = await Promise.all([
-      prisma.report.findMany({
+      prisma.reports.findMany({
         where,
         skip,
         take: pageSize,
         orderBy: {
-          createdAt: 'desc',
+          created_at: 'desc',
         },
         include: {
-          reporter: {
+          users: {
             select: {
               id: true,
               name: true,
@@ -78,7 +80,7 @@ router.get('/', authenticateToken, requireRole(['FOUNDER', 'ADMIN']), async (req
           },
         },
       }),
-      prisma.report.count({ where }),
+      prisma.reports.count({ where }),
     ]);
 
     res.json({
@@ -106,9 +108,9 @@ router.patch('/:id/status', authenticateToken, requireRole(['FOUNDER', 'ADMIN'])
     const { id } = req.params;
     const { status } = req.body;
 
-    const report = await prisma.report.update({
+    const report = await prisma.reports.update({
       where: { id },
-      data: { status },
+      data: { resolved: status === 'RESOLVED' },
     });
 
     res.json({

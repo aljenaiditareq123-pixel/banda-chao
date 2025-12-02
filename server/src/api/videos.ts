@@ -168,12 +168,12 @@ router.get('/makers/:makerId', async (req: Request, res: Response) => {
       where.type = type;
     }
 
-    const videos = await prisma.video.findMany({
+    const videos = await prisma.videos.findMany({
       where,
       skip,
       take: limit,
       orderBy: {
-        createdAt: 'desc',
+        created_at: 'desc',
       },
     });
 

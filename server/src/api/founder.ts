@@ -22,22 +22,22 @@ router.get('/kpis', authenticateToken, requireRole(['FOUNDER']), async (req: Aut
       newOrdersThisWeek,
     ] = await Promise.all([
       // Total Artisans (Makers)
-      prisma.user.count({
+      prisma.users.count({
         where: { role: 'MAKER' },
       }),
       // Total Products
-      prisma.product.count(),
+      prisma.products.count(),
       // Total Videos
-      prisma.video.count(),
-      // Total Orders (placeholder - you'll need to add Order model later)
-      0,
+      prisma.videos.count(),
+      // Total Orders
+      prisma.orders.count(),
       // Total Users
-      prisma.user.count(),
+      prisma.users.count(),
       // New Artisans This Week
-      prisma.user.count({
+      prisma.users.count({
         where: {
           role: 'MAKER',
-          createdAt: { gte: oneWeekAgo },
+          created_at: { gte: oneWeekAgo },
         },
       }),
       // New Orders This Week (placeholder)

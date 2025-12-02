@@ -44,12 +44,12 @@ router.post('/assistant', authenticateToken, requireRole(['FOUNDER']), async (re
 
     // Get current KPIs for context
     const [totalArtisans, totalProducts, totalVideos, totalUsers, totalOrders, paidOrders] = await Promise.all([
-      prisma.user.count({ where: { role: 'MAKER' } }),
-      prisma.product.count({ where: { status: 'PUBLISHED' } }),
-      prisma.video.count(),
-      prisma.user.count(),
-      prisma.order.count(),
-      prisma.order.count({ where: { status: 'PAID' } }),
+      prisma.users.count({ where: { role: 'MAKER' } }),
+      prisma.products.count({ where: {} }),
+      prisma.videos.count(),
+      prisma.users.count(),
+      prisma.orders.count(),
+      prisma.orders.count({ where: { status: 'PAID' } }),
     ]);
 
     const kpisContext = `
@@ -301,12 +301,12 @@ router.post('/founder', authenticateToken, requireRole(['FOUNDER']), async (req:
 
     // Get current KPIs for context
     const [totalArtisans, totalProducts, totalVideos, totalUsers, totalOrders, paidOrders] = await Promise.all([
-      prisma.user.count({ where: { role: 'MAKER' } }),
-      prisma.product.count({ where: { status: 'PUBLISHED' } }),
-      prisma.video.count(),
-      prisma.user.count(),
-      prisma.order.count(),
-      prisma.order.count({ where: { status: 'PAID' } }),
+      prisma.users.count({ where: { role: 'MAKER' } }),
+      prisma.products.count({ where: {} }),
+      prisma.videos.count(),
+      prisma.users.count(),
+      prisma.orders.count(),
+      prisma.orders.count({ where: { status: 'PAID' } }),
     ]);
 
     const kpisContext = `

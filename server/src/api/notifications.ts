@@ -32,19 +32,19 @@ router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
     }
 
     const [notifications, total, unreadCount] = await Promise.all([
-      prisma.notification.findMany({
+      prisma.notifications.findMany({
         where,
         skip,
         take: pageSize,
         orderBy: {
-          createdAt: 'desc',
+          created_at: 'desc',
         },
       }),
-      prisma.notification.count({ where }),
-      prisma.notification.count({
+      prisma.notifications.count({ where }),
+      prisma.notifications.count({
         where: {
-          userId,
-          read: false,
+          user_id: userId,
+          is_read: false,
         },
       }),
     ]);
@@ -83,13 +83,13 @@ router.post('/read', authenticateToken, async (req: AuthRequest, res: Response) 
     const { notificationId, markAllAsRead } = req.body;
 
     if (markAllAsRead) {
-      await prisma.notification.updateMany({
+      await prisma.notifications.updateMany({
         where: {
-          userId,
-          read: false,
+          user_id: userId,
+          is_read: false,
         },
         data: {
-          read: true,
+          is_read: true,
         },
       });
 
@@ -106,13 +106,13 @@ router.post('/read', authenticateToken, async (req: AuthRequest, res: Response) 
       });
     }
 
-    const notification = await prisma.notification.update({
+    const notification = await prisma.notifications.update({
       where: {
         id: notificationId,
-        userId, // Ensure user owns the notification
+        user_id: userId, // Ensure user owns the notification
       },
       data: {
-        read: true,
+        is_read: true,
       },
     });
 
@@ -141,13 +141,17 @@ router.post('/send', authenticateToken, requireRole(['FOUNDER', 'ADMIN']), valid
   try {
     const { userId, type, title, body, metadata } = req.body;
 
-    const notification = await prisma.notification.create({
+    const { randomUUID } = await import('crypto');
+    const notification = await prisma.notifications.create({
       data: {
-        userId,
+        id: randomUUID(),
+        user_id: userId,
         type,
         title,
         body,
-        metadata: metadata || {},
+        data: metadata || {},
+        is_read: false,
+        created_at: new Date(),
       },
     });
 

@@ -24,35 +24,24 @@ router.get('/', async (req: Request, res: Response) => {
     }
 
     const [posts, total] = await Promise.all([
-      prisma.post.findMany({
+      prisma.posts.findMany({
         where,
         skip,
         take: limit,
         include: {
-          author: {
+          users: {
             select: {
               id: true,
               name: true,
-              profilePicture: true,
-            },
-          },
-          maker: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  name: true,
-                  profilePicture: true,
-                },
-              },
+              profile_picture: true,
             },
           },
         },
         orderBy: {
-          createdAt: 'desc',
+          created_at: 'desc',
         },
       }),
-      prisma.post.count({ where }),
+      prisma.posts.count({ where }),
     ]);
 
     res.json({
@@ -73,26 +62,15 @@ router.get('/', async (req: Request, res: Response) => {
 // Get post by ID
 router.get('/:id', async (req: Request, res: Response) => {
   try {
-    const post = await prisma.post.findUnique({
+    const post = await prisma.posts.findUnique({
       where: { id: req.params.id },
       include: {
-        author: {
+        users: {
           select: {
             id: true,
             name: true,
-            profilePicture: true,
+            profile_picture: true,
             bio: true,
-          },
-        },
-        maker: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                profilePicture: true,
-              },
-            },
           },
         },
       },
@@ -117,35 +95,30 @@ router.get('/:id/comments', async (req: Request, res: Response) => {
     const skip = (page - 1) * limit;
 
     const [comments, total] = await Promise.all([
-      prisma.comment.findMany({
+      prisma.comments.findMany({
         where: {
-          targetType: 'POST',
-          targetId: req.params.id,
+          product_id: null,
+          video_id: null,
         },
         skip,
         take: limit,
         include: {
-          author: {
+          users: {
             select: {
               id: true,
               name: true,
-              profilePicture: true,
-            },
-          },
-          _count: {
-            select: {
-              commentLikes: true,
+              profile_picture: true,
             },
           },
         },
         orderBy: {
-          createdAt: 'asc',
+          created_at: 'asc',
         },
       }),
-      prisma.comment.count({
+      prisma.comments.count({
         where: {
-          targetType: 'POST',
-          targetId: req.params.id,
+          product_id: null,
+          video_id: null,
         },
       }),
     ]);

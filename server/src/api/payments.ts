@@ -16,30 +16,34 @@ const router = Router();
 async function notifyMakerOrderPlaced(orderId: string, makerId: string, productName: string, buyerName: string) {
   try {
     // Get maker's user ID
-    const maker = await prisma.maker.findUnique({
+    const maker = await prisma.makers.findUnique({
       where: { id: makerId },
-      include: { user: true },
+      include: { users: true },
     });
 
-    if (maker?.user) {
+    if (maker?.users) {
       // Create notification in database
-      const notification = await prisma.notification.create({
+      const { randomUUID } = await import('crypto');
+      const notification = await prisma.notifications.create({
         data: {
-          userId: maker.user.id,
+          id: randomUUID(),
+          user_id: maker.users.id,
           type: 'order-placed',
           title: 'طلب جديد',
           body: `تم طلب منتجك "${productName}" من ${buyerName}`,
-          metadata: {
+          data: {
             orderId,
             productName,
             buyerName,
           },
+          is_read: false,
+          created_at: new Date(),
         },
       });
 
       // Emit Socket.IO event for real-time notification
       const io = getIO();
-      io?.to(`user:${maker.user.id}`).emit('notification', notification);
+      io?.to(`user:${maker.users.id}`).emit('notification', notification);
     }
   } catch (error) {
     console.error('Error notifying maker of order:', error);
@@ -78,17 +82,21 @@ async function notifyOrderStatusChange(orderId: string, userId: string, status: 
     const message = statusMessages[status];
     if (message) {
       // Create notification in database
-      const notification = await prisma.notification.create({
+      const { randomUUID } = await import('crypto');
+      const notification = await prisma.notifications.create({
         data: {
-          userId,
+          id: randomUUID(),
+          user_id: userId,
           type: 'order-update',
           title: message.title,
           body: message.body,
-          metadata: {
+          data: {
             orderId,
             status,
             productName,
           },
+          is_read: false,
+          created_at: new Date(),
         },
       });
 
@@ -121,17 +129,13 @@ router.post(
       }
 
       // Fetch product
-      const product = await prisma.product.findUnique({
+      const product = await prisma.products.findUnique({
         where: { id: productId },
         include: {
-          maker: {
-            include: {
-              user: {
-                select: {
-                  name: true,
-                  email: true,
-                },
-              },
+          users: {
+            select: {
+              name: true,
+              email: true,
             },
           },
         },
@@ -145,41 +149,45 @@ router.post(
         });
       }
 
-      if (product.status !== 'PUBLISHED') {
+      // Calculate total price (products table doesn't have status or stock fields)
+      if (!product.price) {
         return res.status(400).json({
           success: false,
-          message: 'Product is not available for purchase',
-          code: 'PRODUCT_NOT_AVAILABLE',
+          message: 'Product price not available',
+          code: 'PRODUCT_PRICE_MISSING',
         });
       }
 
-      // Check stock if available
-      if (product.stock !== null && product.stock < quantity) {
-        return res.status(400).json({
-          success: false,
-          message: 'Insufficient stock',
-          code: 'INSUFFICIENT_STOCK',
-        });
-      }
-
-      // Calculate total price
       const totalPrice = product.price * quantity;
 
       // Calculate revenue split
       const { platformFee, makerRevenue } = calculateRevenue(totalPrice, currency);
 
       // Create order in database
-      const order = await prisma.order.create({
+      const { randomUUID } = await import('crypto');
+      const orderId = randomUUID();
+      const orderItemId = randomUUID();
+      
+      const order = await prisma.orders.create({
         data: {
-          buyerId: userId,
-          productId: productId,
-          quantity: quantity,
-          totalPrice: totalPrice,
-          currency: currency,
+          id: orderId,
+          user_id: userId,
           status: 'PENDING',
-          paymentProvider: 'STRIPE',
-          platformFee,
-          makerRevenue,
+          totalAmount: totalPrice,
+          created_at: new Date(),
+          updated_at: new Date(),
+        },
+      });
+
+      // Create order item
+      await prisma.order_items.create({
+        data: {
+          id: orderItemId,
+          order_id: order.id,
+          product_id: productId,
+          quantity: quantity,
+          price: totalPrice,
+          created_at: new Date(),
         },
       });
 
@@ -198,16 +206,17 @@ router.post(
         customerEmail: req.user?.email,
       });
 
-      // Update order with checkout session ID
-      await prisma.order.update({
+      // Update order with checkout session ID (stored in stripe_id field)
+      await prisma.orders.update({
         where: { id: order.id },
         data: {
-          checkoutSessionId: session.id,
+          stripe_id: session.id,
+          updated_at: new Date(),
         },
       });
 
       // Notify maker of new order
-      await notifyMakerOrderPlaced(order.id, product.makerId, product.name, req.user?.name || 'مشتري');
+      await notifyMakerOrderPlaced(order.id, product.user_id, product.name, req.user?.name || 'مشتري');
 
       res.json({
         success: true,
@@ -256,29 +265,37 @@ router.post('/webhook', async (req: Request, res: Response) => {
         const orderId = session.metadata?.orderId;
 
         if (orderId) {
-          const order = await prisma.order.findUnique({
+          const order = await prisma.orders.findUnique({
             where: { id: orderId },
-            include: { product: true },
+            include: { 
+              order_items: {
+                include: {
+                  products: true,
+                },
+              },
+            },
           });
 
-          if (order) {
+          if (order && order.order_items.length > 0) {
+            const product = order.order_items[0].products;
             // Get buyer information for notification
-            const buyer = await prisma.user.findUnique({
-              where: { id: order.buyerId },
+            const buyer = await prisma.users.findUnique({
+              where: { id: order.user_id },
               select: { name: true },
             });
 
-            await prisma.order.update({
+            await prisma.orders.update({
               where: { id: orderId },
               data: {
                 status: 'PAID',
-                paymentIntentId: session.payment_intent as string,
+                stripe_id: session.payment_intent as string,
+                updated_at: new Date(),
               },
             });
 
             // Notify buyer and maker
-            await notifyOrderStatusChange(orderId, order.buyerId, 'PAID', order.product.name);
-            await notifyMakerOrderPlaced(orderId, order.product.makerId, order.product.name, buyer?.name || 'مشتري');
+            await notifyOrderStatusChange(orderId, order.user_id, 'PAID', product.name);
+            await notifyMakerOrderPlaced(orderId, product.user_id, product.name, buyer?.name || 'مشتري');
           }
         }
         break;
@@ -287,42 +304,58 @@ router.post('/webhook', async (req: Request, res: Response) => {
       case 'payment_intent.succeeded': {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
         // Find order by payment intent ID
-        const order = await prisma.order.findFirst({
-          where: { paymentIntentId: paymentIntent.id },
-          include: { product: true },
+        const order = await prisma.orders.findFirst({
+          where: { stripe_id: paymentIntent.id },
+          include: { 
+            order_items: {
+              include: {
+                products: true,
+              },
+            },
+          },
         });
 
-        if (order) {
-          await prisma.order.update({
+        if (order && order.order_items.length > 0) {
+          const product = order.order_items[0].products;
+          await prisma.orders.update({
             where: { id: order.id },
             data: {
               status: 'PAID',
+              updated_at: new Date(),
             },
           });
 
           // Notify buyer of payment success
-          await notifyOrderStatusChange(order.id, order.buyerId, 'PAID', order.product.name);
+          await notifyOrderStatusChange(order.id, order.user_id, 'PAID', product.name);
         }
         break;
       }
 
       case 'payment_intent.payment_failed': {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
-        const order = await prisma.order.findFirst({
-          where: { paymentIntentId: paymentIntent.id },
-          include: { product: true },
+        const order = await prisma.orders.findFirst({
+          where: { stripe_id: paymentIntent.id },
+          include: { 
+            order_items: {
+              include: {
+                products: true,
+              },
+            },
+          },
         });
 
-        if (order) {
-          await prisma.order.update({
+        if (order && order.order_items.length > 0) {
+          const product = order.order_items[0].products;
+          await prisma.orders.update({
             where: { id: order.id },
             data: {
               status: 'FAILED',
+              updated_at: new Date(),
             },
           });
 
           // Notify buyer of payment failure
-          await notifyOrderStatusChange(order.id, order.buyerId, 'FAILED', order.product.name);
+          await notifyOrderStatusChange(order.id, order.user_id, 'FAILED', product.name);
         }
         break;
       }

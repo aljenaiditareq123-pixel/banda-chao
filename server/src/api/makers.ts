@@ -44,17 +44,17 @@ router.get('/', async (req: Request, res: Response) => {
     }
 
     const [makers, total] = await Promise.all([
-      prisma.maker.findMany({
+      prisma.makers.findMany({
         where,
         skip,
         take: pageSize,
         include: {
-          user: {
+          users: {
             select: {
               id: true,
               email: true,
               name: true,
-              profilePicture: true,
+              profile_picture: true,
             },
           },
           _count: {
@@ -65,10 +65,10 @@ router.get('/', async (req: Request, res: Response) => {
           },
         },
         orderBy: {
-          createdAt: 'desc',
+          created_at: 'desc',
         },
       }),
-      prisma.maker.count({ where }),
+      prisma.makers.count({ where }),
     ]);
 
     const response = {
@@ -94,7 +94,7 @@ router.get('/', async (req: Request, res: Response) => {
 // Get maker by ID
 router.get('/:id', async (req: Request, res: Response) => {
   try {
-    const maker = await prisma.maker.findUnique({
+    const maker = await prisma.makers.findUnique({
       where: { id: req.params.id },
       include: {
         user: {
@@ -102,7 +102,7 @@ router.get('/:id', async (req: Request, res: Response) => {
             id: true,
             email: true,
             name: true,
-            profilePicture: true,
+            profile_picture: true,
             bio: true,
           },
         },
@@ -139,14 +139,14 @@ router.post('/', authenticateToken, requireRole(['MAKER']), validate(createMaker
     }
 
     // Check if maker profile already exists
-    const existingMaker = await prisma.maker.findUnique({
-      where: { userId: req.userId! },
+    const existingMaker = await prisma.makers.findFirst({
+      where: { user_id: req.userId! },
     });
 
     let maker;
     if (existingMaker) {
       // Update existing maker
-      maker = await prisma.maker.update({
+      maker = await prisma.makers.update({
         where: { id: existingMaker.id },
         data: {
           displayName,
@@ -162,21 +162,21 @@ router.post('/', authenticateToken, requireRole(['MAKER']), validate(createMaker
           paypalLink: paypalLink || null,
         } as any, // Type assertion needed until Prisma Client is regenerated
         include: {
-          user: {
+          users: {
             select: {
               id: true,
               email: true,
               name: true,
-              profilePicture: true,
+              profile_picture: true,
             },
           },
         },
       });
     } else {
       // Create new maker
-      maker = await prisma.maker.create({
+      maker = await prisma.makers.create({
         data: {
-          userId: req.userId!,
+          user_id: req.userId!,
           displayName,
           bio,
           country,
@@ -190,12 +190,12 @@ router.post('/', authenticateToken, requireRole(['MAKER']), validate(createMaker
           paypalLink: paypalLink || null,
         } as any, // Type assertion needed until Prisma Client is regenerated
         include: {
-          user: {
+          users: {
             select: {
               id: true,
               email: true,
               name: true,
-              profilePicture: true,
+              profile_picture: true,
             },
           },
         },
@@ -223,15 +223,15 @@ router.get('/me', authenticateToken, async (req: AuthRequest, res: Response) => 
       });
     }
 
-    const maker = await prisma.maker.findUnique({
-      where: { userId },
+    const maker = await prisma.makers.findUnique({
+      where: { user_id: userId },
       include: {
         user: {
           select: {
             id: true,
             name: true,
             email: true,
-            profilePicture: true,
+            profile_picture: true,
           },
         },
         _count: {
@@ -274,8 +274,8 @@ router.get('/me/products', authenticateToken, async (req: AuthRequest, res: Resp
       });
     }
 
-    const maker = await prisma.maker.findUnique({
-      where: { userId },
+    const maker = await prisma.makers.findUnique({
+      where: { user_id: userId },
     });
 
     if (!maker) {
@@ -299,12 +299,12 @@ router.get('/me/products', authenticateToken, async (req: AuthRequest, res: Resp
     }
 
     const [products, total] = await Promise.all([
-      prisma.product.findMany({
+      prisma.products.findMany({
         where,
         skip,
         take: pageSize,
         orderBy: {
-          createdAt: 'desc',
+          created_at: 'desc',
         },
         include: {
           _count: {
@@ -314,7 +314,7 @@ router.get('/me/products', authenticateToken, async (req: AuthRequest, res: Resp
           },
         },
       }),
-      prisma.product.count({ where }),
+      prisma.products.count({ where }),
     ]);
 
     res.json({
@@ -347,8 +347,8 @@ router.get('/me/videos', authenticateToken, async (req: AuthRequest, res: Respon
       });
     }
 
-    const maker = await prisma.maker.findUnique({
-      where: { userId },
+    const maker = await prisma.makers.findUnique({
+      where: { user_id: userId },
     });
 
     if (!maker) {
@@ -363,15 +363,15 @@ router.get('/me/videos', authenticateToken, async (req: AuthRequest, res: Respon
     const skip = (page - 1) * pageSize;
 
     const [videos, total] = await Promise.all([
-      prisma.video.findMany({
-        where: { makerId: maker.id },
+      prisma.videos.findMany({
+        where: { user_id: maker.user_id },
         skip,
         take: pageSize,
         orderBy: {
-          createdAt: 'desc',
+          created_at: 'desc',
         },
       }),
-      prisma.video.count({ where: { makerId: maker.id } }),
+      prisma.videos.count({ where: { makerId: maker.id } }),
     ]);
 
     res.json({
@@ -405,8 +405,8 @@ router.post('/onboard', authenticateToken, async (req: AuthRequest, res: Respons
     }
 
     // Check if maker already exists
-    const existingMaker = await prisma.maker.findUnique({
-      where: { userId },
+    const existingMaker = await prisma.makers.findFirst({
+      where: { user_id: userId },
     });
 
     if (existingMaker) {
@@ -428,7 +428,7 @@ router.post('/onboard', authenticateToken, async (req: AuthRequest, res: Respons
     // Create maker profile
     const maker = await prisma.maker.create({
       data: {
-        userId,
+          user_id: userId,
         displayName,
         bio,
         country: country || null,
@@ -447,7 +447,7 @@ router.post('/onboard', authenticateToken, async (req: AuthRequest, res: Respons
     });
 
     // Update user role to MAKER if not already
-    await prisma.user.update({
+    await prisma.users.update({
       where: { id: userId },
       data: {
         role: 'MAKER',
