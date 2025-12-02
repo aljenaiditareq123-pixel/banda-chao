@@ -97,7 +97,7 @@ router.get('/:id', async (req: Request, res: Response) => {
     const maker = await prisma.makers.findUnique({
       where: { id: req.params.id },
       include: {
-        user: {
+        users: {
           select: {
             id: true,
             email: true,
@@ -226,7 +226,7 @@ router.get('/me', authenticateToken, async (req: AuthRequest, res: Response) => 
     const maker = await prisma.makers.findUnique({
       where: { user_id: userId },
       include: {
-        user: {
+        users: {
           select: {
             id: true,
             name: true,
@@ -305,7 +305,6 @@ router.get('/me/products', authenticateToken, async (req: AuthRequest, res: Resp
         take: pageSize,
         orderBy: {
           created_at: 'desc',
-        },
         },
       }),
       prisma.products.count({ where }),
