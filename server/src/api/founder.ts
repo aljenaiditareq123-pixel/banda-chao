@@ -23,7 +23,7 @@ router.get('/kpis', authenticateToken, requireRole(['FOUNDER']), async (req: Aut
     ] = await Promise.all([
       // Total Artisans (Makers)
       prisma.users.count({
-        where: { role: 'MAKER' },
+        where: { role: 'MAKER' as any },
       }),
       // Total Products
       prisma.products.count(),
@@ -36,7 +36,7 @@ router.get('/kpis', authenticateToken, requireRole(['FOUNDER']), async (req: Aut
       // New Artisans This Week
       prisma.users.count({
         where: {
-          role: 'MAKER',
+          role: 'MAKER' as any,
           created_at: { gte: oneWeekAgo },
         },
       }),

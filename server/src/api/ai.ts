@@ -44,7 +44,7 @@ router.post('/assistant', authenticateToken, requireRole(['FOUNDER']), async (re
 
     // Get current KPIs for context
     const [totalArtisans, totalProducts, totalVideos, totalUsers, totalOrders, paidOrders] = await Promise.all([
-      prisma.users.count({ where: { role: 'MAKER' } }),
+      prisma.users.count({ where: { role: 'MAKER' as any } }),
       prisma.products.count({ where: {} }),
       prisma.videos.count(),
       prisma.users.count(),
@@ -301,7 +301,7 @@ router.post('/founder', authenticateToken, requireRole(['FOUNDER']), async (req:
 
     // Get current KPIs for context
     const [totalArtisans, totalProducts, totalVideos, totalUsers, totalOrders, paidOrders] = await Promise.all([
-      prisma.users.count({ where: { role: 'MAKER' } }),
+      prisma.users.count({ where: { role: 'MAKER' as any } }),
       prisma.products.count({ where: {} }),
       prisma.videos.count(),
       prisma.users.count(),

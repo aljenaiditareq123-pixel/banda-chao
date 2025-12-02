@@ -371,7 +371,7 @@ router.get('/me/videos', authenticateToken, async (req: AuthRequest, res: Respon
           created_at: 'desc',
         },
       }),
-      prisma.videos.count({ where: { makerId: maker.id } }),
+      prisma.videos.count({ where: { user_id: maker.user_id } }),
     ]);
 
     res.json({
@@ -426,17 +426,21 @@ router.post('/onboard', authenticateToken, async (req: AuthRequest, res: Respons
     }
 
     // Create maker profile
+    const { randomUUID } = await import('crypto');
+    const makerId = randomUUID();
+    const slug = displayName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') + '-' + makerId.substring(0, 8);
     const maker = await prisma.makers.create({
       data: {
-          user_id: userId,
-        displayName,
-        bio,
-        country: country || null,
-        city: city || null,
-        languages: languages || ['ar', 'en'],
+        id: makerId,
+        user_id: userId,
+        slug: slug,
+        name: displayName,
+        bio: bio || null,
+        created_at: new Date(),
+        updated_at: new Date(),
       },
       include: {
-        user: {
+        users: {
           select: {
             id: true,
             name: true,
