@@ -143,7 +143,7 @@ router.get('/makers/:makerId', async (req: Request, res: Response) => {
 
     // Get maker's user_id
     const makers = await prisma.$queryRawUnsafe<Array<{ user_id: string }>>(`
-      SELECT user_id FROM makers WHERE id = $1 LIMIT 1
+      SELECT "user_id" FROM makers WHERE id = $1 LIMIT 1
     `, req.params.makerId);
 
     if (!makers || makers.length === 0) {

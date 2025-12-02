@@ -130,7 +130,7 @@ router.get('/:id', async (req: Request, res: Response) => {
         u.name as "userName",
         u.profile_picture as "userProfilePicture"
       FROM videos v
-      LEFT JOIN users u ON v.user_id = u.id
+      LEFT JOIN users u ON v."user_id" = u.id
       WHERE v.id = $1
     `, req.params.id);
 
