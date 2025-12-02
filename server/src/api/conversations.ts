@@ -168,24 +168,15 @@ router.get('/:id/messages', authenticateToken, async (req: AuthRequest, res: Res
       });
     }
 
-    // Verify user is part of conversation
-    const conversation = await prisma.conversation.findFirst({
-      where: {
-        id: conversationId,
-        participants: {
-          some: {
-            id: userId,
-          },
-        },
-      },
-    });
-
-    if (!conversation) {
+    // Verify user is part of conversation (extract partner ID from conversationId)
+    const [partnerId1, partnerId2] = conversationId.split('_');
+    if (partnerId1 !== userId && partnerId2 !== userId) {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to view this conversation',
       });
     }
+    const partnerId = partnerId1 === userId ? partnerId2 : partnerId1;
 
     const page = parseInt(req.query.page as string) || 1;
     const pageSize = parseInt(req.query.pageSize as string) || 50;
