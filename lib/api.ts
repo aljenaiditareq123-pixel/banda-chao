@@ -450,6 +450,29 @@ export const founderAPI = {
 };
 
 // ============================================
+// Operations API (Banda Ops)
+// ============================================
+
+export const opsAPI = {
+  getBriefing: async () => {
+    const response = await apiClient.get('/ops/briefing');
+    return response.data;
+  },
+  getLowStockProducts: async (threshold?: number) => {
+    const response = await apiClient.get('/ops/inventory/low-stock', { params: { threshold } });
+    return response.data;
+  },
+  getDailySalesStats: async (date?: string) => {
+    const response = await apiClient.get('/ops/sales/daily', { params: { date } });
+    return response.data;
+  },
+  getSystemHealth: async () => {
+    const response = await apiClient.get('/ops/health');
+    return response.data;
+  },
+};
+
+// ============================================
 // Users API
 // ============================================
 
