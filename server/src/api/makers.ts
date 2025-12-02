@@ -306,12 +306,6 @@ router.get('/me/products', authenticateToken, async (req: AuthRequest, res: Resp
         orderBy: {
           created_at: 'desc',
         },
-        include: {
-          _count: {
-            select: {
-              orders: true,
-            },
-          },
         },
       }),
       prisma.products.count({ where }),
