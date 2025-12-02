@@ -22,6 +22,7 @@ import notificationRoutes from './api/notifications';
 import conversationRoutes from './api/conversations';
 import reportRoutes from './api/reports';
 import maintenanceRoutes from './api/maintenance';
+import opsRoutes from './api/ops';
 import { errorHandler } from './middleware/errorHandler';
 import { requestLogger } from './middleware/requestLogger';
 import { prisma } from './utils/prisma';
@@ -119,6 +120,7 @@ app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/conversations', conversationRoutes);
 app.use('/api/v1/reports', reportRoutes);
 app.use('/api/v1/maintenance', maintenanceRoutes);
+app.use('/api/v1/ops', opsRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {
