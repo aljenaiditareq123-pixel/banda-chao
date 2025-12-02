@@ -3,6 +3,7 @@ import './globals.css'
 import { LanguageProvider } from '@/contexts/LanguageContext'
 import EnvCheckInit from '@/components/common/EnvCheckInit'
 import { ErrorBoundary } from '@/components/common/ErrorBoundary'
+import ChatWidget from '@/components/common/ChatWidget'
 
 export const metadata: Metadata = {
   title: 'Banda Chao - Social E-commerce Platform',
@@ -53,6 +54,7 @@ export default function RootLayout({
         <ErrorBoundary>
           <LanguageProvider defaultLanguage="ar">
             {children}
+            <ChatWidget />
           </LanguageProvider>
         </ErrorBoundary>
       </body>
