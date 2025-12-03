@@ -36,6 +36,7 @@ async function createUser() {
       const userId = existingUsers[0].id;
       const hashedPassword = await bcrypt.hash(password, 10);
 
+      // Update user with correct enum casting
       await prisma.$executeRaw`
         UPDATE users
         SET 
@@ -51,9 +52,10 @@ async function createUser() {
       const userId = randomUUID();
       const hashedPassword = await bcrypt.hash(password, 10);
 
+      // Use explicit enum casting with correct case: "UserRole" (capital U, capital R)
       await prisma.$executeRaw`
         INSERT INTO users (id, email, password, name, role, created_at, updated_at)
-        VALUES (${userId}, ${email}, ${hashedPassword}, ${name}, ${role}::UserRole, NOW(), NOW());
+        VALUES (${userId}, ${email}, ${hashedPassword}, ${name}, ${role}::"UserRole", NOW(), NOW());
       `;
 
       console.log('✅ User created successfully');
