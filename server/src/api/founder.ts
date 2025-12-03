@@ -4,6 +4,9 @@ import { authenticateToken, requireRole, AuthRequest } from '../middleware/auth'
 
 const router = Router();
 
+// Temporary: Store last error in memory for debugging
+let lastKPIsError: any = null;
+
 // Get Founder KPIs
 router.get('/kpis', authenticateToken, requireRole(['FOUNDER']), async (req: AuthRequest, res: Response) => {
   try {
@@ -57,14 +60,18 @@ router.get('/kpis', authenticateToken, requireRole(['FOUNDER']), async (req: Aut
 
     res.json(kpis);
   } catch (error: any) {
-    // Enhanced error logging for debugging
-    console.error('Get KPIs error:', {
+    // Store error in memory for debugging
+    lastKPIsError = {
+      timestamp: new Date().toISOString(),
       message: error?.message || 'Unknown error',
       stack: error?.stack || 'No stack trace available',
       code: error?.code || 'No error code',
       meta: error?.meta || 'No metadata',
-      fullError: error,
-    });
+      fullError: error?.toString() || String(error),
+    };
+
+    // Enhanced error logging for debugging
+    console.error('Get KPIs error:', lastKPIsError);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -90,6 +97,15 @@ router.post('/chat', authenticateToken, requireRole(['FOUNDER']), async (req: Au
     console.error('Chat error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
+});
+
+// Temporary: Endpoint to view last error (for debugging)
+router.get('/last-error', authenticateToken, requireRole(['FOUNDER']), async (req: AuthRequest, res: Response) => {
+  res.json({
+    success: true,
+    lastError: lastKPIsError,
+    message: lastKPIsError ? 'Last error found' : 'No error recorded yet',
+  });
 });
 
 // Founder Sessions endpoint - handles missing table gracefully
