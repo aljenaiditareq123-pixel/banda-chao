@@ -44,27 +44,44 @@ const upload = multer({
 // Get current user
 router.get('/me', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
-    const user = await prisma.users.findUnique({
-      where: { id: req.userId! },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        profile_picture: true,
-        bio: true,
-        role: true,
-        created_at: true,
-        updated_at: true,
-      },
-    });
+    // Use raw SQL to ensure consistent field names and avoid Prisma schema mismatches
+    const users = await prisma.$queryRaw<Array<{
+      id: string;
+      email: string;
+      name: string;
+      profilePicture: string | null;
+      bio: string | null;
+      role: string;
+      createdAt: Date;
+      updatedAt: Date;
+    }>>`
+      SELECT 
+        id, 
+        email, 
+        name, 
+        profile_picture as "profilePicture", 
+        bio, 
+        role, 
+        created_at as "createdAt", 
+        updated_at as "updatedAt"
+      FROM users
+      WHERE id = ${req.userId!}
+      LIMIT 1;
+    `;
 
-    if (!user) {
+    if (!users || users.length === 0) {
       return res.status(404).json({ error: 'User not found' });
     }
 
+    const user = users[0];
     res.json({ user });
   } catch (error: any) {
-    console.error('Get user error:', error);
+    console.error('Get user error:', {
+      message: error?.message || 'Unknown error',
+      stack: error?.stack || 'No stack trace',
+      code: error?.code || 'No error code',
+      userId: req.userId,
+    });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
