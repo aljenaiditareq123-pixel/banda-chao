@@ -65,6 +65,11 @@ router.get('/', async (req: Request, res: Response) => {
       paramIndex++;
     }
 
+    // Build parameters array for LIMIT and OFFSET
+    const limitParamIndex = paramIndex;
+    const offsetParamIndex = paramIndex + 1;
+    const allParams = [...params, limit, skip];
+
     const videos = await prisma.$queryRawUnsafe<Array<any>>(`
       SELECT 
         v.id,
@@ -85,8 +90,8 @@ router.get('/', async (req: Request, res: Response) => {
       LEFT JOIN users u ON v."user_id" = u.id
       WHERE ${whereClause}
       ORDER BY v.created_at DESC
-      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
-    `, ...params, limit, skip);
+      LIMIT $${limitParamIndex} OFFSET $${offsetParamIndex}
+    `, ...allParams);
 
     const totalResult = await prisma.$queryRawUnsafe<Array<{ count: bigint }>>(`
       SELECT COUNT(*) as count
@@ -111,7 +116,14 @@ router.get('/', async (req: Request, res: Response) => {
 
     res.json(response);
   } catch (error: any) {
-    console.error('Get videos error:', error);
+    console.error('Get videos error:', {
+      message: error?.message || 'Unknown error',
+      stack: error?.stack || 'No stack trace',
+      code: error?.code || 'No error code',
+      meta: error?.meta || 'No metadata',
+      query: whereClause,
+      params: params.length,
+    });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -153,7 +165,13 @@ router.get('/:id', async (req: Request, res: Response) => {
 
     res.json({ video: { ...video, viewsCount: (video.viewsCount || 0) + 1 } });
   } catch (error: any) {
-    console.error('Get video error:', error);
+    console.error('Get video error:', {
+      message: error?.message || 'Unknown error',
+      stack: error?.stack || 'No stack trace',
+      code: error?.code || 'No error code',
+      meta: error?.meta || 'No metadata',
+      videoId: req.params.id,
+    });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -166,26 +184,48 @@ router.get('/makers/:makerId', async (req: Request, res: Response) => {
     const skip = (page - 1) * limit;
     const type = req.query.type as string;
 
-    const where: any = {
-      makerId: req.params.makerId,
-    };
-    
+    // Use raw SQL to match actual schema (videos table has user_id, not makerId)
+    let whereClause = `v."user_id" = $1`;
+    const params: any[] = [req.params.makerId];
+    let paramIndex = 2;
+
     if (type && ['SHORT', 'LONG'].includes(type)) {
-      where.type = type;
+      whereClause += ` AND v.type = $${paramIndex}`;
+      params.push(type);
+      paramIndex++;
     }
 
-    const videos = await prisma.videos.findMany({
-      where,
-      skip,
-      take: limit,
-      orderBy: {
-        created_at: 'desc',
-      },
-    });
+    const videos = await prisma.$queryRawUnsafe<Array<any>>(`
+      SELECT 
+        v.id,
+        v.title,
+        v.description,
+        v.video_url as "videoUrl",
+        v.thumbnail_url as "thumbnailUrl",
+        v.duration,
+        v.type,
+        v.views as "viewsCount",
+        v.likes as "likesCount",
+        v.created_at as "createdAt",
+        v.updated_at as "updatedAt",
+        u.id as "userId",
+        u.name as "userName",
+        u.profile_picture as "userProfilePicture"
+      FROM videos v
+      LEFT JOIN users u ON v."user_id" = u.id
+      WHERE ${whereClause}
+      ORDER BY v.created_at DESC
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+    `, ...params, limit, skip);
 
     res.json({ videos });
   } catch (error: any) {
-    console.error('Get maker videos error:', error);
+    console.error('Get maker videos error:', {
+      message: error?.message || 'Unknown error',
+      stack: error?.stack || 'No stack trace',
+      code: error?.code || 'No error code',
+      meta: error?.meta || 'No metadata',
+    });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
