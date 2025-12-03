@@ -14,6 +14,7 @@
     "db:push": "npx prisma db push --schema=./prisma/schema.prisma --accept-data-loss",
     "db:seed": "tsx prisma/seed.ts",
     "db:quick-seed": "tsx scripts/quick-seed.ts",
+    "db:seed-render": "cd /opt/render/project/src/server && npm run db:quick-seed",
     "db:studio": "npx prisma studio",
     "db:reset": "npx prisma migrate reset",
     "test": "vitest run",
