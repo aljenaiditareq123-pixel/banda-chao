@@ -13,15 +13,16 @@ router.get('/kpis', authenticateToken, requireRole(['FOUNDER']), async (req: Aut
 
     // Get all counts
     const [
-      totalArtisans,
+      totalArtisansResult,
       totalProducts,
       totalVideos,
       totalOrders,
       totalUsers,
-      newArtisansThisWeek,
+      newArtisansThisWeekResult,
       newOrdersThisWeek,
     ] = await Promise.all([
       // Total Artisans (Makers) - count from makers table directly
+      // Using makers table as it's the source of truth for artisans
       prisma.makers.count(),
       // Total Products
       prisma.products.count(),
@@ -41,6 +42,9 @@ router.get('/kpis', authenticateToken, requireRole(['FOUNDER']), async (req: Aut
       0,
     ]);
 
+    const totalArtisans = totalArtisansResult;
+    const newArtisansThisWeek = newArtisansThisWeekResult;
+
     const kpis = {
       totalArtisans,
       totalProducts,
@@ -53,7 +57,14 @@ router.get('/kpis', authenticateToken, requireRole(['FOUNDER']), async (req: Aut
 
     res.json(kpis);
   } catch (error: any) {
-    console.error('Get KPIs error:', error);
+    // Enhanced error logging for debugging
+    console.error('Get KPIs error:', {
+      message: error?.message || 'Unknown error',
+      stack: error?.stack || 'No stack trace available',
+      code: error?.code || 'No error code',
+      meta: error?.meta || 'No metadata',
+      fullError: error,
+    });
     res.status(500).json({ error: 'Internal server error' });
   }
 });
