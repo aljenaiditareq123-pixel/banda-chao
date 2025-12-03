@@ -70,13 +70,26 @@ if (!dbUrl) {
   throw new Error('DATABASE_URL environment variable is required');
 }
 
+// Log DATABASE_URL info (masked for security)
+const dbUrlInfo = new URL(dbUrl);
+console.log('[PRISMA] 📋 Database Connection Info:');
+console.log(`  Host: ${dbUrlInfo.hostname}`);
+console.log(`  Port: ${dbUrlInfo.port || '5432 (default)'}`);
+console.log(`  Database: ${dbUrlInfo.pathname.replace('/', '')}`);
+console.log(`  User: ${dbUrlInfo.username || 'not set'}`);
+console.log(`  SSL: ${dbUrl.includes('ssl=') ? 'configured' : 'not configured'}`);
+console.log(`  Contains 'render.com': ${dbUrl.includes('render.com') ? '✅ Yes' : '❌ No'}`);
+
 // Auto-add SSL for Render PostgreSQL if needed
 let finalDbUrl = dbUrl;
 if (dbUrl.includes('render.com') && !dbUrl.includes('ssl=')) {
   finalDbUrl = dbUrl.includes('?') ? `${dbUrl}&ssl=true` : `${dbUrl}?ssl=true`;
-  if (process.env.NODE_ENV === 'development') {
-    console.log('[PRISMA] ℹ️ Added ssl=true to DATABASE_URL for Render PostgreSQL');
-  }
+  console.log('[PRISMA] ✅ Added ssl=true to DATABASE_URL for Render PostgreSQL');
+  console.log(`[PRISMA] 📝 Updated URL: ${finalDbUrl.replace(/:[^:@]+@/, ':****@')}`); // Mask password
+} else if (dbUrl.includes('render.com') && dbUrl.includes('ssl=')) {
+  console.log('[PRISMA] ✅ SSL already configured in DATABASE_URL');
+} else if (!dbUrl.includes('render.com')) {
+  console.log('[PRISMA] ℹ️ Not a Render PostgreSQL URL, using DATABASE_URL as-is');
 }
 
 // Create Prisma client with retry wrapper

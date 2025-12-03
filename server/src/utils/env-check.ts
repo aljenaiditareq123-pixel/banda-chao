@@ -54,7 +54,28 @@ export function checkBackendEnv(): void {
     }
   }
 
-  // Log values (masked) in development
+  // Log values (masked) in development and production
+  if (requiredVars.DATABASE_URL) {
+    try {
+      const dbUrl = new URL(requiredVars.DATABASE_URL);
+      console.log('[ENV CHECK] DATABASE_URL Analysis:');
+      console.log(`  Host: ${dbUrl.hostname}`);
+      console.log(`  Port: ${dbUrl.port || '5432 (default)'}`);
+      console.log(`  Database: ${dbUrl.pathname.replace('/', '')}`);
+      console.log(`  User: ${dbUrl.username || 'not set'}`);
+      console.log(`  Contains 'render.com': ${requiredVars.DATABASE_URL.includes('render.com') ? '✅ Yes' : '❌ No'}`);
+      console.log(`  Contains 'ssl=': ${requiredVars.DATABASE_URL.includes('ssl=') ? '✅ Yes' : '❌ No'}`);
+      
+      // Warning if Render URL but no SSL
+      if (requiredVars.DATABASE_URL.includes('render.com') && !requiredVars.DATABASE_URL.includes('ssl=')) {
+        console.warn('[ENV CHECK] ⚠️ WARNING: Render PostgreSQL URL detected but SSL not configured!');
+        console.warn('[ENV CHECK] ⚠️ The code will auto-add ssl=true, but it\'s better to add it manually.');
+      }
+    } catch (e) {
+      console.error('[ENV CHECK] ❌ Invalid DATABASE_URL format:', e);
+    }
+  }
+  
   if (process.env.NODE_ENV === 'development') {
     console.log('[ENV CHECK] Environment variables status:');
     console.log('  DATABASE_URL:', requiredVars.DATABASE_URL ? '✅ Set' : '❌ Missing');
