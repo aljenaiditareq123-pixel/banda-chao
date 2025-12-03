@@ -24,11 +24,11 @@ router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
     const unreadOnly = req.query.unreadOnly === 'true';
 
     const where: any = {
-      userId,
+      user_id: userId,
     };
 
     if (unreadOnly) {
-      where.read = false;
+      where.is_read = false;
     }
 
     const [notifications, total, unreadCount] = await Promise.all([
