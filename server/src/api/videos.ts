@@ -122,8 +122,6 @@ router.get('/', async (req: Request, res: Response) => {
       stack: error?.stack || 'No stack trace',
       code: error?.code || 'No error code',
       meta: error?.meta || 'No metadata',
-      query: whereClause,
-      params: params.length,
     });
     res.status(500).json({ error: 'Internal server error' });
   }
