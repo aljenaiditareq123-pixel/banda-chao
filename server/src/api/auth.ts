@@ -120,10 +120,22 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response)
         message: dbError.message,
         code: dbError.code,
         meta: dbError.meta,
+        stack: process.env.NODE_ENV === 'development' ? dbError.stack : undefined,
       });
+      
+      // Check if it's a connection error
+      const isConnectionError = 
+        dbError.message?.includes('connection') ||
+        dbError.message?.includes('connect') ||
+        dbError.code === 'P1001' || // Prisma connection error
+        dbError.code === 'ECONNREFUSED';
+      
       return res.status(500).json({
         success: false,
-        message: 'Database connection error. Please try again later.',
+        message: isConnectionError 
+          ? 'Database connection error. Please ensure the database server is running and try again.'
+          : 'Database error. Please try again later.',
+        error: process.env.NODE_ENV === 'development' ? dbError.message : undefined,
       });
     }
 
