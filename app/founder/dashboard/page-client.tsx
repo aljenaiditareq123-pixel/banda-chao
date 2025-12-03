@@ -60,12 +60,35 @@ export default function OperationsDashboardClient() {
     try {
       setLoading(true);
       setError(null);
+      
+      // Log API call for debugging
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://banda-chao.onrender.com';
+      console.log('[Founder Dashboard] Fetching briefing from:', `${apiUrl}/api/v1/ops/briefing`);
+      
       const response = await opsAPI.getBriefing();
-      setBriefing(response.briefing);
+      
+      // Handle different response structures
+      if (response && response.briefing) {
+        setBriefing(response.briefing);
+      } else if (response && !response.briefing) {
+        // If response exists but no briefing, use response directly
+        console.warn('[Founder Dashboard] Response structure unexpected:', response);
+        setBriefing(response as any);
+      } else {
+        throw new Error('Invalid response structure');
+      }
+      
       setLastUpdate(new Date());
     } catch (err: any) {
-      setError(err.message || 'Failed to load operations data');
-      console.error('Error fetching briefing:', err);
+      const errorMessage = err?.response?.data?.message || err?.message || 'Failed to load operations data';
+      setError(errorMessage);
+      console.error('[Founder Dashboard] Error fetching briefing:', {
+        message: errorMessage,
+        status: err?.response?.status,
+        statusText: err?.response?.statusText,
+        data: err?.response?.data,
+        fullError: err,
+      });
     } finally {
       setLoading(false);
     }

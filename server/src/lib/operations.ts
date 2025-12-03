@@ -223,6 +223,7 @@ export async function getDailyBriefing(): Promise<{
   };
 }> {
   try {
+  try {
     const [systemHealth, salesStats, inventoryAlerts] = await Promise.all([
       getSystemHealth(),
       getDailySalesStats(),
