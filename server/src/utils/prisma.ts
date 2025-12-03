@@ -14,28 +14,10 @@ async function createPrismaClientWithRetry(): Promise<PrismaClient> {
   const baseDelay = 1000; // 1 second
   let lastError: Error | null = null;
 
-  // Validate DATABASE_URL format
-  const dbUrl = process.env.DATABASE_URL;
-  if (!dbUrl) {
-    throw new Error('DATABASE_URL environment variable is not set');
-  }
-
-  // Check if DATABASE_URL needs SSL parameter (for Render PostgreSQL)
-  let finalDbUrl = dbUrl;
-  if (dbUrl.includes('render.com') && !dbUrl.includes('ssl=')) {
-    finalDbUrl = dbUrl.includes('?') ? `${dbUrl}&ssl=true` : `${dbUrl}?ssl=true`;
-    console.log('[PRISMA] Added ssl=true to DATABASE_URL for Render PostgreSQL');
-  }
-
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       const client = new PrismaClient({
         log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-        datasources: {
-          db: {
-            url: finalDbUrl,
-          },
-        },
       });
 
       // Test connection
