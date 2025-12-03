@@ -47,11 +47,12 @@ router.get('/', async (req: Request, res: Response) => {
       paramIndex++;
     }
 
-    if (language) {
-      whereClause += ` AND v.language = $${paramIndex}`;
-      params.push(language);
-      paramIndex++;
-    }
+    // Note: language column does not exist in videos table, so we skip this filter
+    // if (language) {
+    //   whereClause += ` AND v.language = $${paramIndex}`;
+    //   params.push(language);
+    //   paramIndex++;
+    // }
 
     if (makerId) {
       whereClause += ` AND v."user_id" = $${paramIndex}`;

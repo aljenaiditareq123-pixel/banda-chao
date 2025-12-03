@@ -68,8 +68,18 @@ app.use(helmet({
 
 // CORS Configuration
 const allowedOrigins = NODE_ENV === 'production'
-  ? [FRONTEND_URL].filter(Boolean)
-  : [FRONTEND_URL, 'http://localhost:3000', 'https://banda-chao.vercel.app'];
+  ? [
+      FRONTEND_URL,
+      'https://banda-chao-frontend.onrender.com',
+      'https://banda-chao.onrender.com',
+    ].filter(Boolean)
+  : [
+      FRONTEND_URL,
+      'http://localhost:3000',
+      'https://banda-chao.vercel.app',
+      'https://banda-chao-frontend.onrender.com',
+      'https://banda-chao.onrender.com',
+    ].filter(Boolean);
 
 app.use(cors({
   origin: (origin, callback) => {
