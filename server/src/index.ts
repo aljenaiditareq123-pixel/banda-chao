@@ -112,12 +112,27 @@ app.use(requestLogger);
 // Serve static files (avatars)
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
+// Temporary: Store last KPIs error in memory (shared with founder.ts)
+// This will be populated by founder.ts when an error occurs
+(global as any).lastKPIsError = null;
+
 // Health check endpoint
 app.get('/api/health', (req: Request, res: Response) => {
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
+  });
+});
+
+// Temporary: Public endpoint to view last KPIs error (for debugging)
+app.get('/api/debug/last-kpis-error', (req: Request, res: Response) => {
+  const lastError = (global as any).lastKPIsError;
+  res.json({
+    success: true,
+    lastError: lastError,
+    message: lastError ? 'Last error found' : 'No error recorded yet',
+    timestamp: new Date().toISOString(),
   });
 });
 

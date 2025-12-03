@@ -4,8 +4,12 @@ import { authenticateToken, requireRole, AuthRequest } from '../middleware/auth'
 
 const router = Router();
 
-// Temporary: Store last error in memory for debugging
-let lastKPIsError: any = null;
+// Temporary: Store last error in memory for debugging (shared globally)
+// Access via global object to share with index.ts
+const getLastError = () => (global as any).lastKPIsError;
+const setLastError = (error: any) => {
+  (global as any).lastKPIsError = error;
+};
 
 // Get Founder KPIs
 router.get('/kpis', authenticateToken, requireRole(['FOUNDER']), async (req: AuthRequest, res: Response) => {
@@ -61,7 +65,7 @@ router.get('/kpis', authenticateToken, requireRole(['FOUNDER']), async (req: Aut
     res.json(kpis);
   } catch (error: any) {
     // Store error in memory for debugging
-    lastKPIsError = {
+    const errorData = {
       timestamp: new Date().toISOString(),
       message: error?.message || 'Unknown error',
       stack: error?.stack || 'No stack trace available',
@@ -69,9 +73,10 @@ router.get('/kpis', authenticateToken, requireRole(['FOUNDER']), async (req: Aut
       meta: error?.meta || 'No metadata',
       fullError: error?.toString() || String(error),
     };
+    setLastError(errorData);
 
     // Enhanced error logging for debugging
-    console.error('Get KPIs error:', lastKPIsError);
+    console.error('Get KPIs error:', errorData);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -101,10 +106,11 @@ router.post('/chat', authenticateToken, requireRole(['FOUNDER']), async (req: Au
 
 // Temporary: Endpoint to view last error (for debugging) - PUBLIC for debugging
 router.get('/last-error', async (req: Request, res: Response) => {
+  const lastError = getLastError();
   res.json({
     success: true,
-    lastError: lastKPIsError,
-    message: lastKPIsError ? 'Last error found' : 'No error recorded yet',
+    lastError: lastError,
+    message: lastError ? 'Last error found' : 'No error recorded yet',
     timestamp: new Date().toISOString(),
   });
 });
