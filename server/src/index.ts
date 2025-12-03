@@ -81,16 +81,39 @@ const allowedOrigins = NODE_ENV === 'production'
       'https://banda-chao.onrender.com',
     ].filter(Boolean);
 
+// CORS middleware with full support for OPTIONS requests
 app.use(cors({
   origin: (origin, callback) => {
+    // In development, allow all origins temporarily
+    if (NODE_ENV === 'development') {
+      callback(null, true);
+      return;
+    }
+    // In production, check against allowed origins
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
     }
   },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-Requested-With',
+    'Accept',
+    'Origin',
+    'Access-Control-Request-Method',
+    'Access-Control-Request-Headers',
+  ],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
   credentials: true,
+  preflightContinue: false,
+  optionsSuccessStatus: 204, // Some legacy browsers (IE11, various SmartTVs) choke on 204
 }));
+
+// Handle preflight OPTIONS requests explicitly
+app.options('*', cors());
 
 // Rate Limiting
 const authLimiter = rateLimit({
