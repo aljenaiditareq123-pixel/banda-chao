@@ -53,6 +53,12 @@ router.get('/', async (req: Request, res: Response) => {
       paramIndex++;
     }
 
+    if (makerId) {
+      whereClause += ` AND v."user_id" = $${paramIndex}`;
+      params.push(makerId);
+      paramIndex++;
+    }
+
     if (search) {
       whereClause += ` AND (v.title ILIKE $${paramIndex} OR v.description ILIKE $${paramIndex})`;
       params.push(`%${search}%`);
