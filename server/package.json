@@ -6,7 +6,7 @@
     "dev": "tsx watch src/index.ts",
     "prebuild": "npx prisma generate",
     "build": "npx tsc -p tsconfig.json",
-    "postbuild": "npx prisma migrate deploy --schema=./prisma/schema.prisma || npx prisma db push --schema=./prisma/schema.prisma --accept-data-loss || echo 'Database migration/push failed, continuing...'",
+    "postbuild": "echo 'Running Prisma migrations...' && npx prisma migrate deploy --schema=./prisma/schema.prisma || (echo 'Migration deploy failed, trying db push...' && npx prisma db push --schema=./prisma/schema.prisma --accept-data-loss) || echo 'Database migration/push failed, continuing...'",
     "start": "node dist/index.js",
     "db:migrate": "npx prisma migrate dev --name phase3_stability",
     "db:generate": "npx prisma generate",
