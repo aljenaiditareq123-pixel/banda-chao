@@ -1,4 +1,4 @@
-import { Router, Response } from 'express';
+import { Router, Request, Response } from 'express';
 import { prisma } from '../utils/prisma';
 import { authenticateToken, requireRole, AuthRequest } from '../middleware/auth';
 
@@ -99,12 +99,13 @@ router.post('/chat', authenticateToken, requireRole(['FOUNDER']), async (req: Au
   }
 });
 
-// Temporary: Endpoint to view last error (for debugging)
-router.get('/last-error', authenticateToken, requireRole(['FOUNDER']), async (req: AuthRequest, res: Response) => {
+// Temporary: Endpoint to view last error (for debugging) - PUBLIC for debugging
+router.get('/last-error', async (req: Request, res: Response) => {
   res.json({
     success: true,
     lastError: lastKPIsError,
     message: lastKPIsError ? 'Last error found' : 'No error recorded yet',
+    timestamp: new Date().toISOString(),
   });
 });
 
