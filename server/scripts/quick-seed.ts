@@ -68,12 +68,11 @@ async function quickSeed() {
       const productId = randomUUID();
       const maker = makers[i % makers.length];
       const price = productPrices[i];
-      const stock = Math.floor(Math.random() * 20) + 5; // Random stock between 5-25
 
       await prisma.$executeRaw`
         INSERT INTO products (
-          id, user_id, name, description, price, stock, category, 
-          image_url, status, created_at, updated_at
+          id, user_id, name, description, price, category, 
+          image_url, external_link, created_at, updated_at
         )
         VALUES (
           ${productId},
@@ -81,10 +80,9 @@ async function quickSeed() {
           ${productNames[i]},
           ${productDescriptions[i]},
           ${price},
-          ${stock},
           ${'HANDMADE'},
           ${`https://picsum.photos/400/400?random=${i + 100}`},
-          ${'ACTIVE'},
+          ${`https://banda-chao-frontend.onrender.com/products/${productId}`},
           NOW(),
           NOW()
         );
@@ -131,7 +129,7 @@ async function quickSeed() {
           ${`https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4`},
           ${`https://picsum.photos/640/360?random=${i + 200}`},
           ${i < 3 ? 60 : 300}, -- SHORT videos are 60s, LONG are 300s
-          ${type}::"VideoType",
+          ${type},
           0,
           0,
           NOW(),
