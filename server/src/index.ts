@@ -32,7 +32,25 @@ dotenv.config();
 
 // Check environment variables
 import { checkBackendEnv } from './utils/env-check';
+import { testDatabaseConnection } from './utils/db-connection-test';
+
 checkBackendEnv();
+
+// Test database connection on startup (development only)
+if (process.env.NODE_ENV === 'development' || process.env.TEST_DB_ON_START === 'true') {
+  testDatabaseConnection()
+    .then((result) => {
+      if (result.success) {
+        console.log('[STARTUP] ✅ Database connection verified');
+      } else {
+        console.error('[STARTUP] ❌ Database connection failed:', result.error);
+        console.error('[STARTUP] Details:', result.details);
+      }
+    })
+    .catch((err) => {
+      console.error('[STARTUP] ❌ Database test error:', err);
+    });
+}
 
 const app: Express = express();
 const server = createServer(app);
