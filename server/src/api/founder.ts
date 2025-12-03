@@ -11,6 +11,23 @@ const setLastError = (error: any) => {
   (global as any).lastKPIsError = error;
 };
 
+// Helper function to safely execute Prisma queries with fallback
+const safePrismaCount = async (
+  queryFn: () => Promise<number>,
+  fallback: number = 0,
+  label: string = 'Unknown'
+): Promise<number> => {
+  try {
+    return await queryFn();
+  } catch (error: any) {
+    console.error(`[KPIs] Error counting ${label}:`, {
+      message: error?.message || 'Unknown error',
+      code: error?.code || 'No error code',
+    });
+    return fallback;
+  }
+};
+
 // Get Founder KPIs
 router.get('/kpis', authenticateToken, requireRole(['FOUNDER']), async (req: AuthRequest, res: Response) => {
   try {
@@ -18,39 +35,60 @@ router.get('/kpis', authenticateToken, requireRole(['FOUNDER']), async (req: Aut
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-    // Get all counts
+    // Get all counts with individual try-catch for each query
+    // This ensures that if one query fails, others can still succeed
     const [
-      totalArtisansResult,
+      totalArtisans,
       totalProducts,
       totalVideos,
       totalOrders,
       totalUsers,
-      newArtisansThisWeekResult,
+      newArtisansThisWeek,
       newOrdersThisWeek,
     ] = await Promise.all([
       // Total Artisans (Makers) - count from makers table directly
-      // Using makers table as it's the source of truth for artisans
-      prisma.makers.count(),
+      safePrismaCount(
+        () => prisma.makers.count(),
+        0,
+        'totalArtisans'
+      ),
       // Total Products
-      prisma.products.count(),
+      safePrismaCount(
+        () => prisma.products.count(),
+        0,
+        'totalProducts'
+      ),
       // Total Videos
-      prisma.videos.count(),
+      safePrismaCount(
+        () => prisma.videos.count(),
+        0,
+        'totalVideos'
+      ),
       // Total Orders
-      prisma.orders.count(),
+      safePrismaCount(
+        () => prisma.orders.count(),
+        0,
+        'totalOrders'
+      ),
       // Total Users
-      prisma.users.count(),
+      safePrismaCount(
+        () => prisma.users.count(),
+        0,
+        'totalUsers'
+      ),
       // New Artisans This Week - count makers created in the last week
-      prisma.makers.count({
-        where: {
-          created_at: { gte: oneWeekAgo },
-        },
-      }),
+      safePrismaCount(
+        () => prisma.makers.count({
+          where: {
+            created_at: { gte: oneWeekAgo },
+          },
+        }),
+        0,
+        'newArtisansThisWeek'
+      ),
       // New Orders This Week (placeholder)
-      0,
+      Promise.resolve(0),
     ]);
-
-    const totalArtisans = totalArtisansResult;
-    const newArtisansThisWeek = newArtisansThisWeekResult;
 
     const kpis = {
       totalArtisans,
@@ -64,6 +102,7 @@ router.get('/kpis', authenticateToken, requireRole(['FOUNDER']), async (req: Aut
 
     res.json(kpis);
   } catch (error: any) {
+    // This catch block should rarely be hit now, but keep it as a safety net
     // Store error in memory for debugging
     const errorData = {
       timestamp: new Date().toISOString(),
@@ -76,8 +115,19 @@ router.get('/kpis', authenticateToken, requireRole(['FOUNDER']), async (req: Aut
     setLastError(errorData);
 
     // Enhanced error logging for debugging
-    console.error('Get KPIs error:', errorData);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Get KPIs error (outer catch):', errorData);
+    
+    // Return partial data with zeros instead of crashing
+    res.json({
+      totalArtisans: 0,
+      totalProducts: 0,
+      totalVideos: 0,
+      totalOrders: 0,
+      totalUsers: 0,
+      newArtisansThisWeek: 0,
+      newOrdersThisWeek: 0,
+      error: 'Some data could not be loaded',
+    });
   }
 });
 
