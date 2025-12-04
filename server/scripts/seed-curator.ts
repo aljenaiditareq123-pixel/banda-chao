@@ -1,6 +1,6 @@
 /**
- * Curator Seed Script - Realistic Arabic Artisan Data
- * Creates 5 inspiring makers with stories, products, and videos
+ * Curator Seed Script - Global Chinese Artisan Data
+ * Creates 5 inspiring Chinese makers with stories, products, and videos
  * Run: npx tsx scripts/seed-curator.ts
  */
 
@@ -35,197 +35,197 @@ interface MakerData {
 
 const makersData: MakerData[] = [
   {
-    name: 'العم سالم',
-    email: 'saleem.pottery@bandachao.com',
-    slug: 'saleem-pottery',
-    bio: 'صانع فخار تقليدي من جدة، يحافظ على الحرفة الأصيلة منذ 40 عاماً',
-    story: 'بدأت رحلتي مع الفخار في سن السادسة عشرة، عندما تعلمت من والدي الذي ورث هذه الحرفة من جده. اليوم، بعد 40 عاماً من العمل، ما زلت أستخدم نفس التقنيات التقليدية التي تعلمتها، وأضيف لمسة عصرية على التصاميم الكلاسيكية. كل قطعة تحمل قصة وتاريخ.',
-    profilePicture: 'https://picsum.photos/seed/saleem-profile/400/400',
-    coverPicture: 'https://picsum.photos/seed/saleem-cover/1200/400',
+    name: 'Master Shifu',
+    email: 'shifu.bamboo@bandachao.com',
+    slug: 'shifu-bamboo',
+    bio: 'Master craftsman from Hangzhou, specializing in bamboo and wood artistry for over 30 years',
+    story: 'I began my journey with bamboo at the age of 15, learning from my grandfather who was a master craftsman in the ancient art of bamboo weaving. After 30 years of dedication, I combine traditional Chinese techniques with modern design aesthetics. Each piece I create carries the wisdom of generations and the spirit of nature. My workshop in Hangzhou is where tradition meets innovation.',
+    profilePicture: 'https://picsum.photos/seed/shifu-profile/400/400',
+    coverPicture: 'https://picsum.photos/seed/shifu-cover/1200/400',
     products: [
       {
-        name: 'مزهرية فخارية تقليدية',
-        description: 'مزهرية فخارية يدوية الصنع بتصميم عربي أصيل، مناسبة للزينة أو كهدية قيمة. مصنوعة من الطين الطبيعي ومزججة يدوياً.',
-        price: 125.00,
+        name: 'Handwoven Bamboo Tea Set',
+        description: 'Exquisite handwoven bamboo tea set with traditional Chinese design. Each piece is carefully crafted using ancient techniques passed down through generations. Perfect for tea ceremonies or as a beautiful home decoration.',
+        price: 145.00,
         category: 'HANDMADE',
-        imageUrl: 'https://picsum.photos/seed/saleem-product1/600/600',
+        imageUrl: 'https://picsum.photos/seed/shifu-product1/600/600',
       },
       {
-        name: 'طقم أواني فخارية للطبخ',
-        description: 'طقم أواني فخارية تقليدية للطبخ، آمنة للاستخدام على النار، تحافظ على نكهة الطعام الأصيلة. يتضمن 3 أواني بأحجام مختلفة.',
-        price: 180.00,
+        name: 'Bamboo Wind Chime - Zen Collection',
+        description: 'Elegant bamboo wind chime designed for tranquility and harmony. Handcrafted with precision, each chime produces a unique soothing sound. Perfect for gardens, patios, or meditation spaces.',
+        price: 65.00,
         category: 'HANDMADE',
-        imageUrl: 'https://picsum.photos/seed/saleem-product2/600/600',
+        imageUrl: 'https://picsum.photos/seed/shifu-product2/600/600',
       },
     ],
     videos: [
       {
-        title: 'كيف تصنع مزهرية فخارية يدوياً',
-        description: 'ورشة عمل كاملة تشرح خطوات صناعة المزهرية الفخارية من البداية حتى النهاية، مع نصائح من العم سالم',
+        title: 'The Art of Bamboo Weaving: Traditional Techniques',
+        description: 'A comprehensive workshop showing the complete process of bamboo weaving, from selecting materials to finishing the final piece. Learn ancient Chinese craftsmanship from Master Shifu.',
         type: 'LONG',
-        duration: 420,
+        duration: 480,
       },
       {
-        title: 'جولة في ورشة الفخار التقليدية',
-        description: 'جولة قصيرة داخل ورشة العم سالم، حيث يشرح الأدوات والتقنيات المستخدمة في صناعة الفخار',
+        title: 'Quick Tour: Master Shifu\'s Bamboo Workshop',
+        description: 'A short tour inside Master Shifu\'s workshop in Hangzhou, showcasing tools and traditional techniques used in bamboo artistry',
         type: 'SHORT',
         duration: 90,
       },
     ],
   },
   {
-    name: 'ليلى النسيج',
-    email: 'layla.weaving@bandachao.com',
-    slug: 'layla-weaving',
-    bio: 'فنانة نسيج يدوي من دمشق، متخصصة في السجاد والمنسوجات التقليدية',
-    story: 'نشأت في عائلة دمشقية عريقة في صناعة النسيج. تعلمت الحرفة من جدتي التي كانت تنسج السجاد باليد. اليوم، أدمج بين التصاميم التقليدية السورية واللمسات العصرية، وأنسج كل قطعة بحب وصبر. كل سجادة تحكي قصة من قصص بلدي.',
-    profilePicture: 'https://picsum.photos/seed/layla-profile/400/400',
-    coverPicture: 'https://picsum.photos/seed/layla-cover/1200/400',
+    name: 'Mulan',
+    email: 'mulan.silk@bandachao.com',
+    slug: 'mulan-silk',
+    bio: 'Silk artist from Suzhou, creating luxurious handwoven silk products with modern elegance',
+    story: 'Growing up in Suzhou, the silk capital of China, I learned the art of silk weaving from my mother, who inherited this craft from her ancestors. Today, after 20 years of practice, I blend traditional Suzhou silk techniques with contemporary designs. Every silk piece I create tells a story of heritage and innovation. My atelier is where ancient Chinese elegance meets modern luxury.',
+    profilePicture: 'https://picsum.photos/seed/mulan-profile/400/400',
+    coverPicture: 'https://picsum.photos/seed/mulan-cover/1200/400',
     products: [
       {
-        name: 'سجادة حريرية يدوية',
-        description: 'سجادة حريرية فاخرة منسوجة يدوياً بتصميم دمشقي تقليدي. كل سجادة فريدة من نوعها وتستغرق شهرين من العمل المتواصل.',
-        price: 850.00,
+        name: 'Luxury Handwoven Silk Scarf',
+        description: 'Premium handwoven silk scarf featuring traditional Chinese patterns with a modern twist. Made from 100% pure silk, each scarf is unique and takes weeks to complete. A perfect blend of tradition and contemporary style.',
+        price: 185.00,
         category: 'HANDMADE',
-        imageUrl: 'https://picsum.photos/seed/layla-product1/600/600',
+        imageUrl: 'https://picsum.photos/seed/mulan-product1/600/600',
       },
       {
-        name: 'وشاح حريري منسوج يدوياً',
-        description: 'وشاح حريري أنيق منسوج يدوياً بتصاميم عربية كلاسيكية. مثالي للهدايا أو الاستخدام الشخصي.',
-        price: 95.00,
+        name: 'Silk Robe - Traditional Chinese Design',
+        description: 'Elegant silk robe handcrafted using traditional Suzhou techniques. Features intricate embroidery and luxurious fabric. Perfect for special occasions or as a statement piece in your wardrobe.',
+        price: 320.00,
         category: 'HANDMADE',
-        imageUrl: 'https://picsum.photos/seed/layla-product2/600/600',
+        imageUrl: 'https://picsum.photos/seed/mulan-product2/600/600',
       },
     ],
     videos: [
       {
-        title: 'فن النسيج اليدوي: من الخيط إلى السجادة',
-        description: 'فيلم وثائقي قصير عن عملية النسيج اليدوي الكاملة، من اختيار الخيوط حتى الانتهاء من السجادة',
+        title: 'Silk Weaving Masterclass: From Thread to Luxury',
+        description: 'A documentary-style video showing the complete silk weaving process, from selecting silk threads to finishing a luxurious scarf. Experience the artistry of Suzhou silk.',
         type: 'LONG',
         duration: 600,
       },
       {
-        title: 'تصميم جديد: سجادة دمشقية عصرية',
-        description: 'ليلى تشرح تصميمها الجديد الذي يدمج بين التراث والحداثة',
+        title: 'New Design: Modern Silk Collection',
+        description: 'Mulan introduces her latest collection that blends traditional Chinese silk patterns with contemporary fashion',
         type: 'SHORT',
         duration: 120,
       },
     ],
   },
   {
-    name: 'أحمد النحاس',
-    email: 'ahmed.copper@bandachao.com',
-    slug: 'ahmed-copper',
-    bio: 'حرفي نحاس من القاهرة، متخصص في النقش والتصميم على النحاس',
-    story: 'ورثت حرفة النقش على النحاس من والدي الذي كان يعمل في خان الخليلي. أتقنت هذه الحرفة على مدى 25 عاماً، وأصمم اليوم قطعاً فنية تجمع بين التصاميم الإسلامية التقليدية واللمسات المعاصرة. كل قطعة نحاسية تحمل توقيعي الفني.',
-    profilePicture: 'https://picsum.photos/seed/ahmed-profile/400/400',
-    coverPicture: 'https://picsum.photos/seed/ahmed-cover/1200/400',
+    name: 'Neo',
+    email: 'neo.tech@bandachao.com',
+    slug: 'neo-tech',
+    bio: 'Tech artisan from Shenzhen, creating innovative smart gadgets and modern Chinese tech products',
+    story: 'Based in Shenzhen, the Silicon Valley of China, I combine cutting-edge technology with traditional Chinese craftsmanship. With 15 years of experience in electronics and design, I create smart gadgets that blend innovation with cultural heritage. Each product is designed to enhance modern life while honoring Chinese traditions. My workshop is where the future meets tradition.',
+    profilePicture: 'https://picsum.photos/seed/neo-profile/400/400',
+    coverPicture: 'https://picsum.photos/seed/neo-cover/1200/400',
     products: [
       {
-        name: 'مصباح نحاسي منقوش',
-        description: 'مصباح نحاسي فاخر منقوش يدوياً بتصاميم عربية إسلامية. يضفي جواً دافئاً وتراثياً على أي مساحة.',
-        price: 220.00,
+        name: 'Smart Tea Maker with App Control',
+        description: 'Innovative smart tea maker that combines traditional Chinese tea culture with modern technology. Control brewing temperature and time via smartphone app. Features elegant design inspired by ancient Chinese teapots.',
+        price: 199.00,
         category: 'HANDMADE',
-        imageUrl: 'https://picsum.photos/seed/ahmed-product1/600/600',
+        imageUrl: 'https://picsum.photos/seed/neo-product1/600/600',
       },
       {
-        name: 'طبق تقديم نحاسي كبير',
-        description: 'طبق تقديم نحاسي كبير منقوش بتصاميم هندسية جميلة. مثالي لتقديم الفواكه أو الحلويات في المناسبات.',
-        price: 150.00,
+        name: 'Wireless Charging Pad - Bamboo Design',
+        description: 'Elegant wireless charging pad with bamboo finish, featuring fast charging technology. Combines modern functionality with natural Chinese aesthetics. Perfect for home or office.',
+        price: 45.00,
         category: 'HANDMADE',
-        imageUrl: 'https://picsum.photos/seed/ahmed-product2/600/600',
+        imageUrl: 'https://picsum.photos/seed/neo-product2/600/600',
       },
     ],
     videos: [
       {
-        title: 'فن النقش على النحاس: من الفكرة إلى القطعة',
-        description: 'ورشة عمل شاملة تشرح تقنيات النقش على النحاس، من الرسم الأولي حتى الانتهاء من القطعة',
-        type: 'LONG',
-        duration: 480,
-      },
-      {
-        title: 'تصميم جديد: مصباح نحاسي عصري',
-        description: 'أحمد يعرض تصميمه الجديد لمصباح نحاسي يجمع بين التراث والحداثة',
-        type: 'SHORT',
-        duration: 75,
-      },
-    ],
-  },
-  {
-    name: 'فاطمة الخزف',
-    email: 'fatima.ceramics@bandachao.com',
-    slug: 'fatima-ceramics',
-    bio: 'فنانة خزف من فاس، متخصصة في الخزف المغربي التقليدي',
-    story: 'تعلمت فن الخزف من والدتي التي كانت تصنع الأواني الفخارية للجيران. بعد 20 عاماً من الممارسة، أصبحت متخصصة في الخزف المغربي التقليدي بلمسات عصرية. أستخدم نفس التقنيات القديمة ولكن بتصاميم جديدة تناسب الحياة المعاصرة.',
-    profilePicture: 'https://picsum.photos/seed/fatima-profile/400/400',
-    coverPicture: 'https://picsum.photos/seed/fatima-cover/1200/400',
-    products: [
-      {
-        name: 'طقم أطباق خزفية مغربية',
-        description: 'طقم أطباق خزفية يدوية الصنع بتصاميم مغربية تقليدية. يتضمن 6 أطباق بأحجام مختلفة، كل قطعة فريدة.',
-        price: 140.00,
-        category: 'HANDMADE',
-        imageUrl: 'https://picsum.photos/seed/fatima-product1/600/600',
-      },
-      {
-        name: 'إبريق شاي خزفي تقليدي',
-        description: 'إبريق شاي خزفي تقليدي من فاس، مصنوع يدوياً بتصميم مغربي أصيل. مثالي لتحضير الشاي المغربي الأصيل.',
-        price: 85.00,
-        category: 'HANDMADE',
-        imageUrl: 'https://picsum.photos/seed/fatima-product2/600/600',
-      },
-    ],
-    videos: [
-      {
-        title: 'صناعة الخزف المغربي: تقليد عريق',
-        description: 'فيلم وثائقي عن صناعة الخزف المغربي التقليدي، من تحضير الطين حتى الحرق والتزجيج',
+        title: 'Tech Meets Tradition: Building Smart Chinese Products',
+        description: 'A comprehensive guide showing how traditional Chinese design principles are integrated into modern smart gadgets. See the complete development process from concept to finished product.',
         type: 'LONG',
         duration: 540,
       },
       {
-        title: 'كيف تصنع إبريق شاي خزفي',
-        description: 'فاطمة تشرح خطوات صناعة إبريق الشاي الخزفي التقليدي',
+        title: 'Unboxing: Smart Tea Maker Prototype',
+        description: 'Neo demonstrates his latest smart tea maker prototype, showcasing innovative features and design',
         type: 'SHORT',
         duration: 105,
       },
     ],
   },
   {
-    name: 'خالد الخشب',
-    email: 'khalid.woodwork@bandachao.com',
-    slug: 'khalid-woodwork',
-    bio: 'نجار تقليدي من بغداد، متخصص في الأثاث الخشبي المنحوت',
-    story: 'بدأت العمل في النجارة في سن الثانية عشرة مع والدي في دكانه الصغير في شارع الرشيد. بعد 30 عاماً، أصبحت متخصصاً في صناعة الأثاث الخشبي المنحوت بتصاميم عراقية تقليدية. كل قطعة أثاث تحمل روح بغداد القديمة.',
-    profilePicture: 'https://picsum.photos/seed/khalid-profile/400/400',
-    coverPicture: 'https://picsum.photos/seed/khalid-cover/1200/400',
+    name: 'Luna',
+    email: 'luna.ceramics@bandachao.com',
+    slug: 'luna-ceramics',
+    bio: 'Modern ceramic artist from Jingdezhen, creating contemporary Chinese ceramics with traditional roots',
+    story: 'I learned pottery in Jingdezhen, the porcelain capital of China, where ceramics have been made for over 1,000 years. After 18 years of mastering traditional techniques, I now create modern ceramic pieces that honor Chinese heritage while embracing contemporary aesthetics. Each piece is fired in traditional kilns but designed for modern living. My studio bridges centuries of Chinese ceramic art.',
+    profilePicture: 'https://picsum.photos/seed/luna-profile/400/400',
+    coverPicture: 'https://picsum.photos/seed/luna-cover/1200/400',
     products: [
       {
-        name: 'طاولة قهوة خشبية منحوتة',
-        description: 'طاولة قهوة خشبية يدوية الصنع منحوتة بتصاميم عراقية تقليدية. مصنوعة من خشب الجوز الطبيعي.',
-        price: 350.00,
+        name: 'Modern Chinese Ceramic Tea Set',
+        description: 'Contemporary ceramic tea set featuring minimalist design with traditional Chinese influences. Handcrafted in Jingdezhen using time-honored techniques. Each set is unique and perfect for modern tea ceremonies.',
+        price: 165.00,
         category: 'HANDMADE',
-        imageUrl: 'https://picsum.photos/seed/khalid-product1/600/600',
+        imageUrl: 'https://picsum.photos/seed/luna-product1/600/600',
       },
       {
-        name: 'ساعة حائط خشبية منحوتة',
-        description: 'ساعة حائط خشبية فاخرة منحوتة يدوياً بتصميم عراقي كلاسيكي. كل ساعة فريدة ومصنوعة يدوياً.',
-        price: 280.00,
+        name: 'Porcelain Vase - Contemporary Collection',
+        description: 'Elegant porcelain vase with modern geometric patterns inspired by ancient Chinese motifs. Handcrafted using traditional Jingdezhen porcelain techniques. A beautiful statement piece for any home.',
+        price: 125.00,
         category: 'HANDMADE',
-        imageUrl: 'https://picsum.photos/seed/khalid-product2/600/600',
+        imageUrl: 'https://picsum.photos/seed/luna-product2/600/600',
       },
     ],
     videos: [
       {
-        title: 'فن النجارة التقليدية: من الخشب إلى الأثاث',
-        description: 'ورشة عمل شاملة عن صناعة الأثاث الخشبي المنحوت، من اختيار الخشب حتى الانتهاء من القطعة',
+        title: 'Jingdezhen Porcelain: Ancient Art, Modern Design',
+        description: 'A documentary exploring the art of Jingdezhen porcelain, from clay preparation to kiln firing. Learn how traditional Chinese ceramics are reimagined for contemporary life.',
         type: 'LONG',
-        duration: 660,
+        duration: 520,
       },
       {
-        title: 'جولة في ورشة النجارة التقليدية',
-        description: 'جولة قصيرة في ورشة خالد، حيث يعرض الأدوات والتقنيات المستخدمة',
+        title: 'How to Make a Modern Chinese Ceramic Vase',
+        description: 'Luna demonstrates the process of creating a contemporary ceramic vase using traditional Jingdezhen techniques',
         type: 'SHORT',
-        duration: 90,
+        duration: 110,
+      },
+    ],
+  },
+  {
+    name: 'Kai',
+    email: 'kai.metalwork@bandachao.com',
+    slug: 'kai-metalwork',
+    bio: 'Master metalworker from Beijing, specializing in handmade swords and traditional Chinese metalwork',
+    story: 'I began my apprenticeship in traditional Chinese metalwork at age 16, learning from masters in Beijing\'s ancient craft district. After 25 years, I specialize in creating handcrafted swords and metal art that honor Chinese martial traditions. Each piece is forged using traditional methods passed down through generations, but designed for modern collectors and practitioners. My forge is where ancient Chinese warrior spirit meets contemporary artistry.',
+    profilePicture: 'https://picsum.photos/seed/kai-profile/400/400',
+    coverPicture: 'https://picsum.photos/seed/kai-cover/1200/400',
+    products: [
+      {
+        name: 'Handcrafted Chinese Sword - Collector\'s Edition',
+        description: 'Exquisite handcrafted Chinese sword made using traditional forging techniques. Features authentic Chinese design with modern precision. Each sword is unique and comes with a custom display stand. Perfect for collectors and martial arts practitioners.',
+        price: 450.00,
+        category: 'HANDMADE',
+        imageUrl: 'https://picsum.photos/seed/kai-product1/600/600',
+      },
+      {
+        name: 'Decorative Metal Wall Art - Dragon Design',
+        description: 'Stunning handcrafted metal wall art featuring traditional Chinese dragon design. Made from high-quality metal with intricate details. A powerful statement piece that brings Chinese cultural heritage to any space.',
+        price: 280.00,
+        category: 'HANDMADE',
+        imageUrl: 'https://picsum.photos/seed/kai-product2/600/600',
+      },
+    ],
+    videos: [
+      {
+        title: 'The Art of Chinese Sword Making: Traditional Forging',
+        description: 'A comprehensive workshop on traditional Chinese sword making, from selecting materials to final polishing. Learn ancient Chinese metalworking techniques from Master Kai.',
+        type: 'LONG',
+        duration: 720,
+      },
+      {
+        title: 'Tour: Kai\'s Traditional Forge',
+        description: 'A short tour of Kai\'s forge in Beijing, showcasing traditional tools and metalworking techniques',
+        type: 'SHORT',
+        duration: 95,
       },
     ],
   },
@@ -234,7 +234,7 @@ const makersData: MakerData[] = [
 async function seedCurator() {
   try {
     console.log('🎨 ============================================');
-    console.log('🎨 Curator Seed Script - Starting...');
+    console.log('🎨 Curator Seed Script - Global Chinese Theme');
     console.log('🎨 ============================================');
     console.log('');
 
@@ -334,7 +334,7 @@ async function seedCurator() {
               NOW()
             );
           `;
-          console.log(`      ✅ Created product: ${product.name} (${product.price} ريال)`);
+          console.log(`      ✅ Created product: ${product.name} ($${product.price.toFixed(2)})`);
           totalProducts++;
         } else {
           console.log(`      ⏭️  Product already exists: ${product.name}`);
@@ -426,4 +426,3 @@ seedCurator()
     console.error('❌ Script failed:', error);
     process.exit(1);
   });
-
