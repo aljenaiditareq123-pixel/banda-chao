@@ -4,13 +4,13 @@
  */
 
 /**
- * Convert audio blob to text using Google Speech-to-Text API
- * @param audioBlob - The audio blob from the browser's MediaRecorder
+ * Convert audio buffer to text using Google Speech-to-Text API
+ * @param audioBuffer - The audio buffer from multer (Node.js Buffer)
  * @param languageCode - Language code (default: 'ar-SA' for Arabic)
  * @returns The transcribed text
  */
 export async function transcribeAudio(
-  audioBlob: Blob,
+  audioBuffer: Buffer,
   languageCode: string = 'ar-SA'
 ): Promise<string> {
   const GOOGLE_SPEECH_API_KEY = process.env.GOOGLE_SPEECH_API_KEY || process.env.GEMINI_API_KEY;
@@ -20,8 +20,8 @@ export async function transcribeAudio(
   }
 
   try {
-    // Convert blob to base64
-    const base64Audio = await blobToBase64(audioBlob);
+    // Convert buffer to base64 (Node.js native)
+    const base64Audio = audioBuffer.toString('base64');
     
     // Prepare request for Google Speech-to-Text API
     const requestBody = {
@@ -34,7 +34,7 @@ export async function transcribeAudio(
         model: 'latest_long', // Best for longer audio
       },
       audio: {
-        content: base64Audio.split(',')[1], // Remove data:audio/webm;base64, prefix
+        content: base64Audio,
       },
     };
 
@@ -51,18 +51,26 @@ export async function transcribeAudio(
     );
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+      const errorData = (await response.json().catch(() => ({}))) as { error?: { message?: string } };
       throw new Error(
         `Speech-to-Text API error: ${response.status} - ${errorData.error?.message || response.statusText}`
       );
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as {
+      results?: Array<{
+        alternatives?: Array<{
+          transcript?: string;
+        }>;
+      }>;
+    };
     
     // Extract transcribed text
-    if (data.results && data.results.length > 0 && data.results[0].alternatives) {
+    if (data.results && data.results.length > 0 && data.results[0].alternatives && data.results[0].alternatives.length > 0) {
       const transcript = data.results[0].alternatives[0].transcript;
-      return transcript.trim();
+      if (transcript) {
+        return transcript.trim();
+      }
     }
 
     return ''; // No transcription found
@@ -70,18 +78,6 @@ export async function transcribeAudio(
     console.error('[Speech-to-Text] Error:', error);
     throw new Error(`Speech-to-Text failed: ${error.message}`);
   }
-}
-
-/**
- * Convert Blob to Base64 string
- */
-function blobToBase64(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
 }
 
 /**

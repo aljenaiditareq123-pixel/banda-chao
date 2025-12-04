@@ -57,11 +57,11 @@ router.post(
       // Get language code from request (default: Arabic)
       const languageCode = (req.body.languageCode as string) || 'ar-SA';
 
-      // Convert buffer to Blob
-      const audioBlob = new Blob([req.file.buffer], { type: req.file.mimetype });
+      // Use buffer directly (Node.js Buffer)
+      const audioBuffer = req.file.buffer;
 
       // Transcribe audio
-      const transcript = await transcribeAudio(audioBlob, languageCode);
+      const transcript = await transcribeAudio(audioBuffer, languageCode);
 
       if (!transcript || transcript.trim().length === 0) {
         return res.status(400).json({
