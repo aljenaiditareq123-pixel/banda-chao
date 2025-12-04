@@ -22,8 +22,17 @@ export default function FounderChatPanel({ user, loading: authLoading }: Founder
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isFirstMessage, setIsFirstMessage] = useState(true);
+  const [isRecording, setIsRecording] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
   const { kpis, loading: kpisLoading } = useFounderKpis();
+  
+  // Check if speech recognition is supported
+  const speechSupported = typeof window !== 'undefined' && 
+    typeof navigator !== 'undefined' && 
+    typeof navigator.mediaDevices !== 'undefined' && 
+    typeof navigator.mediaDevices.getUserMedia !== 'undefined';
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -91,108 +100,6 @@ export default function FounderChatPanel({ user, loading: authLoading }: Founder
 طلبات جديدة هذا الأسبوع: ${kpisData.newOrdersThisWeek}
 
 `;
-  };
-
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'audio/webm;codecs=opus',
-      });
-      
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        await transcribeAndSend(audioBlob);
-        
-        // Stop all tracks
-        stream.getTracks().forEach(track => track.stop());
-      };
-
-      mediaRecorder.start();
-      setIsRecording(true);
-    } catch (error: any) {
-      console.error('Error starting recording:', error);
-      const errorMessage: ChatMessage = {
-        id: 'error-' + Date.now(),
-        role: 'assistant',
-        content: `عذراً، لا يمكن الوصول إلى الميكروفون: ${error.message}. يرجى التحقق من صلاحيات الميكروفون.`,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-    }
-  };
-
-  const transcribeAndSend = async (audioBlob: Blob) => {
-    try {
-      setIsLoading(true);
-      
-      const formData = new FormData();
-      formData.append('audio', audioBlob, 'recording.webm');
-      formData.append('languageCode', 'ar-SA');
-
-      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-      if (!token) {
-        throw new Error('No authentication token');
-      }
-
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://banda-chao.onrender.com';
-      const response = await fetch(`${apiUrl}/api/v1/speech/transcribe`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to transcribe audio');
-      }
-
-      const data = await response.json();
-      const transcript = data.transcript;
-
-      if (transcript && transcript.trim()) {
-        // Set transcribed text in input and send
-        setInputValue(transcript);
-        await handleSendMessage(transcript);
-      } else {
-        const errorMessage: ChatMessage = {
-          id: 'error-' + Date.now(),
-          role: 'assistant',
-          content: 'عذراً، لم يتم التعرف على الكلام. يرجى المحاولة مرة أخرى.',
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, errorMessage]);
-      }
-    } catch (error: any) {
-      console.error('Error transcribing audio:', error);
-      const errorMessage: ChatMessage = {
-        id: 'error-' + Date.now(),
-        role: 'assistant',
-        content: `عذراً، حدث خطأ أثناء تحويل الصوت إلى نص: ${error.message}`,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   const startRecording = async () => {
