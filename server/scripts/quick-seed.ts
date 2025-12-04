@@ -16,7 +16,8 @@ async function quickSeed() {
 
     // 0. Create FOUNDER user (if not exists)
     console.log('👑 Creating/Updating FOUNDER user...');
-    const founderEmail = 'aljenaiditareq123@gmail.com';
+    // Normalize email to lowercase for consistency
+    const founderEmail = 'aljenaiditareq123@gmail.com'.toLowerCase().trim();
     const founderPassword = 'Founder123!';
     const founderName = 'Tareq';
     
