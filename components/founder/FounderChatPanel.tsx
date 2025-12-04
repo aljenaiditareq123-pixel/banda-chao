@@ -93,6 +93,210 @@ export default function FounderChatPanel({ user, loading: authLoading }: Founder
 `;
   };
 
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: 'audio/webm;codecs=opus',
+      });
+      
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        await transcribeAndSend(audioBlob);
+        
+        // Stop all tracks
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (error: any) {
+      console.error('Error starting recording:', error);
+      const errorMessage: ChatMessage = {
+        id: 'error-' + Date.now(),
+        role: 'assistant',
+        content: `عذراً، لا يمكن الوصول إلى الميكروفون: ${error.message}. يرجى التحقق من صلاحيات الميكروفون.`,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const transcribeAndSend = async (audioBlob: Blob) => {
+    try {
+      setIsLoading(true);
+      
+      const formData = new FormData();
+      formData.append('audio', audioBlob, 'recording.webm');
+      formData.append('languageCode', 'ar-SA');
+
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+      if (!token) {
+        throw new Error('No authentication token');
+      }
+
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://banda-chao.onrender.com';
+      const response = await fetch(`${apiUrl}/api/v1/speech/transcribe`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to transcribe audio');
+      }
+
+      const data = await response.json();
+      const transcript = data.transcript;
+
+      if (transcript && transcript.trim()) {
+        // Set transcribed text in input and send
+        setInputValue(transcript);
+        await handleSendMessage(transcript);
+      } else {
+        const errorMessage: ChatMessage = {
+          id: 'error-' + Date.now(),
+          role: 'assistant',
+          content: 'عذراً، لم يتم التعرف على الكلام. يرجى المحاولة مرة أخرى.',
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+      }
+    } catch (error: any) {
+      console.error('Error transcribing audio:', error);
+      const errorMessage: ChatMessage = {
+        id: 'error-' + Date.now(),
+        role: 'assistant',
+        content: `عذراً، حدث خطأ أثناء تحويل الصوت إلى نص: ${error.message}`,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: 'audio/webm;codecs=opus',
+      });
+      
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        await transcribeAndSend(audioBlob);
+        
+        // Stop all tracks
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (error: any) {
+      console.error('Error starting recording:', error);
+      const errorMessage: ChatMessage = {
+        id: 'error-' + Date.now(),
+        role: 'assistant',
+        content: `عذراً، لا يمكن الوصول إلى الميكروفون: ${error.message}. يرجى التحقق من صلاحيات الميكروفون.`,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const transcribeAndSend = async (audioBlob: Blob) => {
+    try {
+      setIsLoading(true);
+      
+      const formData = new FormData();
+      formData.append('audio', audioBlob, 'recording.webm');
+      formData.append('languageCode', 'ar-SA');
+
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+      if (!token) {
+        throw new Error('No authentication token');
+      }
+
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://banda-chao.onrender.com';
+      const response = await fetch(`${apiUrl}/api/v1/speech/transcribe`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to transcribe audio');
+      }
+
+      const data = await response.json();
+      const transcript = data.transcript;
+
+      if (transcript && transcript.trim()) {
+        // Set transcribed text in input and send
+        setInputValue(transcript);
+        await handleSendMessage(transcript);
+      } else {
+        const errorMessage: ChatMessage = {
+          id: 'error-' + Date.now(),
+          role: 'assistant',
+          content: 'عذراً، لم يتم التعرف على الكلام. يرجى المحاولة مرة أخرى.',
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+      }
+    } catch (error: any) {
+      console.error('Error transcribing audio:', error);
+      const errorMessage: ChatMessage = {
+        id: 'error-' + Date.now(),
+        role: 'assistant',
+        content: `عذراً، حدث خطأ أثناء تحويل الصوت إلى نص: ${error.message}`,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleSendMessage = async (messageText?: string) => {
     const text = messageText || inputValue.trim();
     if (!text) return;
@@ -270,16 +474,35 @@ export default function FounderChatPanel({ user, loading: authLoading }: Founder
             }}
             placeholder="اكتب رسالتك هنا..."
             className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E7D32] focus:border-transparent"
-            disabled={isLoading}
+            disabled={isLoading || isRecording}
           />
+          {speechSupported && (
+            <button
+              onClick={isRecording ? stopRecording : startRecording}
+              disabled={isLoading}
+              className={`px-4 py-2 rounded-lg transition-colors font-medium ${
+                isRecording
+                  ? 'bg-red-500 text-white hover:bg-red-600 animate-pulse'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+              title={isRecording ? 'إيقاف التسجيل' : 'بدء التسجيل الصوتي'}
+            >
+              {isRecording ? '⏹️' : '🎤'}
+            </button>
+          )}
           <button
             onClick={() => handleSendMessage()}
-            disabled={isLoading || !inputValue.trim()}
+            disabled={isLoading || !inputValue.trim() || isRecording}
             className="px-6 py-2 bg-[#2E7D32] text-white rounded-lg hover:bg-[#256628] disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
           >
             إرسال
           </button>
         </div>
+        {isRecording && (
+          <div className="mt-2 text-center">
+            <p className="text-sm text-red-600 animate-pulse">🎤 جاري التسجيل... اضغط على زر الإيقاف عند الانتهاء</p>
+          </div>
+        )}
       </div>
     </div>
   );
