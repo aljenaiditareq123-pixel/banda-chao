@@ -113,6 +113,130 @@ async function quickSeed() {
     }
     console.log('');
 
+    // 0.5. Create JUNDI users (3 soldiers)
+    console.log('🪖 Creating JUNDI users (3 soldiers)...');
+    const jundiNames = ['جندي ١', 'جندي ٢', 'جندي ٣'];
+    const jundiEmails = ['jundi1@bandachao.com', 'jundi2@bandachao.com', 'jundi3@bandachao.com'];
+    const jundiPassword = 'Jundi123!';
+    
+    for (let i = 0; i < 3; i++) {
+      try {
+        const jundiEmail = jundiEmails[i].toLowerCase().trim();
+        const jundiName = jundiNames[i];
+        
+        const existingJundi = await prisma.$queryRaw<Array<{ id: string }>>`
+          SELECT id FROM users WHERE email = ${jundiEmail} LIMIT 1;
+        `;
+        
+        if (existingJundi.length === 0) {
+          const jundiId = randomUUID();
+          const hashedJundiPassword = await bcrypt.hash(jundiPassword, 10);
+          
+          await prisma.$executeRaw`
+            INSERT INTO users (id, email, password, name, role, created_at, updated_at)
+            VALUES (${jundiId}, ${jundiEmail}, ${hashedJundiPassword}, ${jundiName}, 'JUNDI'::"UserRole", NOW(), NOW())
+            ON CONFLICT (email) DO NOTHING;
+          `;
+          
+          console.log(`  ✅ Created JUNDI ${i + 1}: ${jundiName} (${jundiEmail})`);
+          console.log(`     Password: ${jundiPassword}`);
+        } else {
+          // Update existing user to JUNDI role
+          const hashedJundiPassword = await bcrypt.hash(jundiPassword, 10);
+          await prisma.$executeRaw`
+            UPDATE users
+            SET role = 'JUNDI'::"UserRole", password = ${hashedJundiPassword}, updated_at = NOW()
+            WHERE email = ${jundiEmail};
+          `;
+          console.log(`  ✅ Updated user to JUNDI ${i + 1}: ${jundiEmail}`);
+        }
+      } catch (error: any) {
+        console.error(`  ❌ Error creating JUNDI ${i + 1}:`, error.message);
+      }
+    }
+    console.log('');
+
+    // 0.6. Create MECHANIC user
+    console.log('🔧 Creating MECHANIC user...');
+    const mechanicEmail = 'mechanic@bandachao.com'.toLowerCase().trim();
+    const mechanicPassword = 'Mechanic123!';
+    const mechanicName = 'الميكانيكي';
+    
+    try {
+      const existingMechanic = await prisma.$queryRaw<Array<{ id: string }>>`
+        SELECT id FROM users WHERE email = ${mechanicEmail} LIMIT 1;
+      `;
+      
+      if (existingMechanic.length === 0) {
+        const mechanicId = randomUUID();
+        const hashedMechanicPassword = await bcrypt.hash(mechanicPassword, 10);
+        
+        await prisma.$executeRaw`
+          INSERT INTO users (id, email, password, name, role, created_at, updated_at)
+          VALUES (${mechanicId}, ${mechanicEmail}, ${hashedMechanicPassword}, ${mechanicName}, 'MECHANIC'::"UserRole", NOW(), NOW())
+          ON CONFLICT (email) DO NOTHING;
+        `;
+        
+        // Verify creation
+        const verifyMechanic = await prisma.$queryRaw<Array<{ 
+          id: string; 
+          email: string; 
+          name: string | null; 
+          role: string;
+        }>>`
+          SELECT id, email, name, role FROM users WHERE email = ${mechanicEmail} LIMIT 1;
+        `;
+        
+        if (verifyMechanic.length > 0) {
+          console.log(`  ✅ MECHANIC user created successfully!`);
+          console.log(`     ID: ${verifyMechanic[0].id}`);
+          console.log(`     Email: ${verifyMechanic[0].email}`);
+          console.log(`     Name: ${verifyMechanic[0].name || 'N/A'}`);
+          console.log(`     Role: ${verifyMechanic[0].role}`);
+          console.log(`     Password: ${mechanicPassword}`);
+        } else {
+          console.log(`  ⚠️  MECHANIC creation may have failed - user not found after insert`);
+        }
+      } else {
+        // Update existing user to MECHANIC role
+        const hashedMechanicPassword = await bcrypt.hash(mechanicPassword, 10);
+        await prisma.$executeRaw`
+          UPDATE users
+          SET 
+            role = 'MECHANIC'::"UserRole",
+            password = ${hashedMechanicPassword},
+            name = ${mechanicName},
+            updated_at = NOW()
+          WHERE email = ${mechanicEmail};
+        `;
+        
+        // Verify update
+        const verifyMechanic = await prisma.$queryRaw<Array<{ 
+          id: string; 
+          email: string; 
+          name: string | null; 
+          role: string;
+        }>>`
+          SELECT id, email, name, role FROM users WHERE email = ${mechanicEmail} LIMIT 1;
+        `;
+        
+        if (verifyMechanic.length > 0) {
+          console.log(`  ✅ MECHANIC user updated successfully!`);
+          console.log(`     ID: ${verifyMechanic[0].id}`);
+          console.log(`     Email: ${verifyMechanic[0].email}`);
+          console.log(`     Name: ${verifyMechanic[0].name || 'N/A'}`);
+          console.log(`     Role: ${verifyMechanic[0].role}`);
+          console.log(`     Password: ${mechanicPassword} (updated)`);
+        }
+      }
+    } catch (error: any) {
+      console.error(`  ❌ Error creating/updating MECHANIC:`, {
+        message: error?.message || 'Unknown error',
+        code: error?.code || 'No error code',
+      });
+    }
+    console.log('');
+
     // 1. Create 5 Makers (Users + Makers profiles)
     console.log('📝 Creating 5 makers...');
     const makers = [];
@@ -243,9 +367,19 @@ async function quickSeed() {
     console.log('✅ Quick seeding completed successfully!');
     console.log('');
     console.log('📊 Summary:');
+    console.log(`   - 1 FOUNDER user created/updated`);
+    console.log(`   - 3 JUNDI users created/updated`);
+    console.log(`   - 1 MECHANIC user created/updated`);
     console.log(`   - ${makers.length} makers created`);
     console.log(`   - ${products.length} products created`);
     console.log(`   - 5 videos created`);
+    console.log('');
+    console.log('🔐 Default Login Credentials:');
+    console.log(`   FOUNDER: aljenaiditareq123@gmail.com / Founder123!`);
+    console.log(`   JUNDI 1: jundi1@bandachao.com / Jundi123!`);
+    console.log(`   JUNDI 2: jundi2@bandachao.com / Jundi123!`);
+    console.log(`   JUNDI 3: jundi3@bandachao.com / Jundi123!`);
+    console.log(`   MECHANIC: mechanic@bandachao.com / Mechanic123!`);
     console.log('');
 
   } catch (error: any) {

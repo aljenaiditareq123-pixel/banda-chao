@@ -298,4 +298,9 @@ enum OrderStatus {
 enum UserRole {
   USER
   FOUNDER
+  JUNDI
+  MECHANIC
+  MAKER
+  ADMIN
+  BUYER
 }
