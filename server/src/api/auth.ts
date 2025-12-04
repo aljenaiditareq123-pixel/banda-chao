@@ -85,11 +85,20 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response)
   try {
     const { email, password } = req.body;
 
-    // Note: email and password are already validated by Zod middleware
-    // No need to check again here
+    // Normalize email: trim and convert to lowercase for consistent comparison
+    const normalizedEmail = email.trim().toLowerCase();
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[LOGIN] Attempting login:', {
+        originalEmail: email,
+        normalizedEmail,
+        passwordLength: password?.length || 0,
+      });
+    }
 
     // Fetch user by email using raw SQL (consistent with register endpoint)
     // This ensures we use the exact column name from the database
+    // Use LOWER() in SQL to ensure case-insensitive comparison
     let users: Array<{
       id: string;
       email: string;
@@ -112,7 +121,7 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response)
       }>>`
         SELECT id, email, name, password as "passwordHash", profile_picture as "profilePicture", bio, role
         FROM users
-        WHERE email = ${email.trim()}
+        WHERE LOWER(TRIM(email)) = LOWER(TRIM(${normalizedEmail}))
         LIMIT 1;
       `;
     } catch (dbError: any) {
@@ -140,7 +149,10 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response)
     }
 
     // If user not found, return 401
-    if (users.length === 0 || !users[0].passwordHash) {
+    if (users.length === 0) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[LOGIN] User not found for email:', normalizedEmail);
+      }
       return res.status(401).json({ 
         success: false,
         message: 'Invalid email or password' 
@@ -149,12 +161,46 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response)
 
     const user = users[0];
 
-    // Compare password with stored hash (passwordHash is guaranteed to be non-null after the check above)
+    // Check if password hash exists
+    if (!user.passwordHash) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[LOGIN] User found but no password hash:', {
+          userId: user.id,
+          email: user.email,
+        });
+      }
+      return res.status(401).json({ 
+        success: false,
+        message: 'Invalid email or password' 
+      });
+    }
+
+    // Compare password with stored hash
     let isValidPassword: boolean;
     try {
-      isValidPassword = await bcrypt.compare(password, user.passwordHash!);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[LOGIN] Comparing password...', {
+          userId: user.id,
+          email: user.email,
+          passwordHashLength: user.passwordHash.length,
+          passwordHashPrefix: user.passwordHash.substring(0, 10) + '...',
+        });
+      }
+      
+      isValidPassword = await bcrypt.compare(password, user.passwordHash);
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[LOGIN] Password comparison result:', {
+          isValid: isValidPassword,
+          userId: user.id,
+          email: user.email,
+        });
+      }
     } catch (bcryptError: any) {
-      console.error('[LOGIN_ERROR] Password comparison failed:', bcryptError.message);
+      console.error('[LOGIN_ERROR] Password comparison failed:', {
+        message: bcryptError.message,
+        stack: process.env.NODE_ENV === 'development' ? bcryptError.stack : undefined,
+      });
       return res.status(500).json({
         success: false,
         message: 'Internal server error during authentication',
@@ -163,6 +209,12 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response)
 
     // If password mismatch, return 401
     if (!isValidPassword) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[LOGIN] Password mismatch for user:', {
+          userId: user.id,
+          email: user.email,
+        });
+      }
       return res.status(401).json({ 
         success: false,
         message: 'Invalid email or password' 
