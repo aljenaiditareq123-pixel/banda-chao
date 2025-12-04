@@ -15,34 +15,100 @@ async function quickSeed() {
     console.log('');
 
     // 0. Create FOUNDER user (if not exists)
-    console.log('👑 Creating FOUNDER user...');
+    console.log('👑 Creating/Updating FOUNDER user...');
     const founderEmail = 'aljenaiditareq123@gmail.com';
     const founderPassword = 'Founder123!';
     const founderName = 'Tareq';
     
-    const existingFounder = await prisma.$queryRaw<Array<{ id: string }>>`
-      SELECT id FROM users WHERE email = ${founderEmail} LIMIT 1;
-    `;
-    
-    if (existingFounder.length === 0) {
-      const founderId = randomUUID();
-      const hashedFounderPassword = await bcrypt.hash(founderPassword, 10);
+    try {
+      const existingFounder = await prisma.$queryRaw<Array<{ 
+        id: string; 
+        email: string; 
+        name: string | null; 
+        role: string;
+      }>>`
+        SELECT id, email, name, role FROM users WHERE email = ${founderEmail} LIMIT 1;
+      `;
       
-      await prisma.$executeRaw`
-        INSERT INTO users (id, email, password, name, role, created_at, updated_at)
-        VALUES (${founderId}, ${founderEmail}, ${hashedFounderPassword}, ${founderName}, 'FOUNDER'::"UserRole", NOW(), NOW())
-        ON CONFLICT (email) DO NOTHING;
-      `;
-      console.log(`  ✅ Created FOUNDER: ${founderName} (${founderEmail})`);
-      console.log(`     Password: ${founderPassword}`);
-    } else {
-      // Update existing user to FOUNDER role
-      await prisma.$executeRaw`
-        UPDATE users
-        SET role = 'FOUNDER'::"UserRole", updated_at = NOW()
-        WHERE email = ${founderEmail};
-      `;
-      console.log(`  ✅ Updated user to FOUNDER: ${founderEmail}`);
+      if (existingFounder.length === 0) {
+        // Create new FOUNDER user
+        console.log(`  📝 Creating new FOUNDER user...`);
+        const founderId = randomUUID();
+        const hashedFounderPassword = await bcrypt.hash(founderPassword, 10);
+        
+        console.log(`  🔐 Hashing password...`);
+        await prisma.$executeRaw`
+          INSERT INTO users (id, email, password, name, role, created_at, updated_at)
+          VALUES (${founderId}, ${founderEmail}, ${hashedFounderPassword}, ${founderName}, 'FOUNDER'::"UserRole", NOW(), NOW())
+          ON CONFLICT (email) DO NOTHING;
+        `;
+        
+        // Verify creation
+        const verifyUser = await prisma.$queryRaw<Array<{ 
+          id: string; 
+          email: string; 
+          name: string | null; 
+          role: string;
+        }>>`
+          SELECT id, email, name, role FROM users WHERE email = ${founderEmail} LIMIT 1;
+        `;
+        
+        if (verifyUser.length > 0) {
+          console.log(`  ✅ FOUNDER user created successfully!`);
+          console.log(`     ID: ${verifyUser[0].id}`);
+          console.log(`     Email: ${verifyUser[0].email}`);
+          console.log(`     Name: ${verifyUser[0].name || 'N/A'}`);
+          console.log(`     Role: ${verifyUser[0].role}`);
+          console.log(`     Password: ${founderPassword}`);
+        } else {
+          console.log(`  ⚠️  User creation may have failed - user not found after insert`);
+        }
+      } else {
+        // Update existing user to FOUNDER role and password
+        const existingUser = existingFounder[0];
+        console.log(`  📝 Found existing user, updating to FOUNDER...`);
+        console.log(`     Current Role: ${existingUser.role}`);
+        
+        const hashedFounderPassword = await bcrypt.hash(founderPassword, 10);
+        
+        await prisma.$executeRaw`
+          UPDATE users
+          SET 
+            role = 'FOUNDER'::"UserRole",
+            password = ${hashedFounderPassword},
+            name = ${founderName},
+            updated_at = NOW()
+          WHERE email = ${founderEmail};
+        `;
+        
+        // Verify update
+        const verifyUser = await prisma.$queryRaw<Array<{ 
+          id: string; 
+          email: string; 
+          name: string | null; 
+          role: string;
+        }>>`
+          SELECT id, email, name, role FROM users WHERE email = ${founderEmail} LIMIT 1;
+        `;
+        
+        if (verifyUser.length > 0) {
+          console.log(`  ✅ FOUNDER user updated successfully!`);
+          console.log(`     ID: ${verifyUser[0].id}`);
+          console.log(`     Email: ${verifyUser[0].email}`);
+          console.log(`     Name: ${verifyUser[0].name || 'N/A'}`);
+          console.log(`     Role: ${verifyUser[0].role}`);
+          console.log(`     Password: ${founderPassword} (updated)`);
+        } else {
+          console.log(`  ⚠️  User update may have failed - user not found after update`);
+        }
+      }
+    } catch (error: any) {
+      console.error(`  ❌ Error creating/updating FOUNDER user:`, {
+        message: error?.message || 'Unknown error',
+        code: error?.code || 'No error code',
+        meta: error?.meta || 'No metadata',
+      });
+      throw error;
     }
     console.log('');
 
