@@ -6,24 +6,28 @@ import { prisma } from '../utils/prisma';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { updateUserSchema } from '../validation/userSchemas';
+import { uploadToGCS, isGCSConfigured, deleteFromGCS } from '../lib/gcs';
 
 const router = Router();
 
-// Configure multer for file uploads
+// Configure multer for file uploads (in-memory for GCS, or disk for local fallback)
 const uploadDir = path.join(process.cwd(), 'uploads', 'avatars');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  },
-});
+// Use memory storage if GCS is configured, otherwise use disk storage (fallback)
+const storage = isGCSConfigured()
+  ? multer.memoryStorage() // Store in memory for GCS upload
+  : multer.diskStorage({
+      destination: (req, file, cb) => {
+        cb(null, uploadDir);
+      },
+      filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+        cb(null, uniqueSuffix + path.extname(file.originalname));
+      },
+    });
 
 const upload = multer({
   storage,
@@ -156,12 +160,31 @@ router.post('/avatar', authenticateToken, upload.single('avatar'), async (req: A
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    const filePath = `/uploads/avatars/${req.file.filename}`;
+    let imageUrl: string;
+
+    // Use GCS if configured, otherwise use local storage
+    if (isGCSConfigured() && req.file.buffer) {
+      // Upload to Google Cloud Storage
+      imageUrl = await uploadToGCS(req.file.buffer, req.file.originalname, 'avatars');
+      
+      // Delete old avatar from GCS if exists
+      const currentUser = await prisma.users.findUnique({
+        where: { id: req.userId! },
+        select: { profile_picture: true },
+      });
+      
+      if (currentUser?.profile_picture && currentUser.profile_picture.startsWith('https://storage.googleapis.com/')) {
+        await deleteFromGCS(currentUser.profile_picture);
+      }
+    } else {
+      // Fallback to local storage
+      imageUrl = `/uploads/avatars/${req.file.filename}`;
+    }
 
     const user = await prisma.users.update({
       where: { id: req.userId! },
       data: {
-        profile_picture: filePath,
+        profile_picture: imageUrl,
         updated_at: new Date(),
       },
       select: {
@@ -177,7 +200,7 @@ router.post('/avatar', authenticateToken, upload.single('avatar'), async (req: A
     res.json({
       message: 'Avatar uploaded successfully',
       user,
-      imageUrl: filePath,
+      imageUrl,
     });
   } catch (error: any) {
     console.error('Upload avatar error:', error);
