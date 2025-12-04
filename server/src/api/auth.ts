@@ -21,9 +21,13 @@ router.post('/register', validate(registerSchema), async (req: Request, res: Res
       return res.status(400).json({ error: 'Email, password, and name are required' });
     }
 
+    // Normalize email: trim and convert to lowercase for consistent storage
+    const normalizedEmail = email.trim().toLowerCase();
+
     // Check if user exists (using raw SQL since table is 'users' not 'User')
+    // Use LOWER() for case-insensitive comparison
     const existingUsers = await prisma.$queryRaw<Array<{id: string, email: string}>>`
-      SELECT id, email FROM users WHERE email = ${email} LIMIT 1;
+      SELECT id, email FROM users WHERE LOWER(TRIM(email)) = LOWER(TRIM(${normalizedEmail})) LIMIT 1;
     `;
 
     if (existingUsers.length > 0) {
@@ -39,10 +43,11 @@ router.post('/register', validate(registerSchema), async (req: Request, res: Res
       : 'BUYER';
 
     // Create user (using raw SQL since table is 'users' not 'User')
+    // Store email in lowercase for consistency
     const userId = randomUUID();
     await prisma.$executeRaw`
       INSERT INTO users (id, email, password, name, role, created_at, updated_at)
-      VALUES (${userId}, ${email}, ${hashedPassword}, ${name}, ${userRole}, NOW(), NOW());
+      VALUES (${userId}, ${normalizedEmail}, ${hashedPassword}, ${name}, ${userRole}::"UserRole", NOW(), NOW());
     `;
 
     // Fetch the created user
