@@ -28,14 +28,42 @@ export function useFounderKpis(): UseFounderKpisReturn {
       const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
       
       if (!token) {
-        throw new Error('No authentication token found');
+        console.warn('[useFounderKpis] No authentication token found');
+        setError('يرجى تسجيل الدخول أولاً');
+        setKpis(null);
+        setLoading(false);
+        return;
       }
 
       // Use centralized API client with retry logic
+      console.log('[useFounderKpis] Fetching KPIs...');
       const data = await founderAPI.getKPIs();
+      console.log('[useFounderKpis] KPIs fetched successfully:', data);
       setKpis(data);
     } catch (err: any) {
-      const errorMessage = err instanceof Error ? err.message : 'حدث خطأ أثناء جلب البيانات';
+      console.error('[useFounderKpis] Error fetching KPIs:', {
+        message: err?.message,
+        status: err?.response?.status,
+        statusText: err?.response?.statusText,
+        data: err?.response?.data,
+      });
+      
+      let errorMessage = 'حدث خطأ أثناء جلب البيانات';
+      
+      if (err?.response?.status === 401) {
+        errorMessage = 'انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى';
+        // Clear invalid token
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('auth_token');
+        }
+      } else if (err?.response?.status === 403) {
+        errorMessage = 'ليس لديك صلاحيات للوصول إلى هذه الصفحة';
+      } else if (err?.response?.status === 500) {
+        errorMessage = 'خطأ في الخادم. يرجى المحاولة مرة أخرى لاحقاً';
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      
       setError(errorMessage);
       setKpis(null);
     } finally {

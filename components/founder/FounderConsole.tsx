@@ -120,7 +120,16 @@ export default function FounderConsole() {
     }
   };
 
-  if (authLoading || kpisLoading || loadingData) {
+  // Show loading state
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50" dir="rtl">
+        <LoadingState fullScreen message="جاري التحقق من الجلسة..." />
+      </div>
+    );
+  }
+
+  if (kpisLoading || loadingData) {
     return (
       <div className="min-h-screen bg-gray-50" dir="rtl">
         <LoadingState fullScreen message="جاري تحميل لوحة التحكم..." />
