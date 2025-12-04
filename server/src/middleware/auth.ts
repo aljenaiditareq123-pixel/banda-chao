@@ -17,6 +17,7 @@ export function authenticateToken(req: AuthRequest, res: Response, next: NextFun
   const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
   if (!token) {
+    console.warn('[AUTH_MIDDLEWARE] No token provided for:', req.path);
     return res.status(401).json({
       success: false,
       message: 'Access token required',
@@ -25,7 +26,7 @@ export function authenticateToken(req: AuthRequest, res: Response, next: NextFun
 
   const jwtSecret = process.env.JWT_SECRET;
   if (!jwtSecret) {
-    console.error('JWT_SECRET is not set');
+    console.error('[AUTH_MIDDLEWARE] JWT_SECRET is not set');
     return res.status(500).json({
       success: false,
       message: 'Server configuration error',
@@ -50,9 +51,21 @@ export function authenticateToken(req: AuthRequest, res: Response, next: NextFun
       role: decoded.role,
     };
     
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[AUTH_MIDDLEWARE] User authenticated:', {
+        userId: req.user.id,
+        email: req.user.email,
+        role: req.user.role,
+        path: req.path,
+      });
+    }
+    
     next();
   } catch (error) {
-    console.error('[AUTH_MIDDLEWARE] Token verification failed:', error);
+    console.error('[AUTH_MIDDLEWARE] Token verification failed:', {
+      error: error instanceof Error ? error.message : String(error),
+      path: req.path,
+    });
     return res.status(403).json({
       success: false,
       message: 'Invalid or expired token',
@@ -63,6 +76,7 @@ export function authenticateToken(req: AuthRequest, res: Response, next: NextFun
 export function requireRole(roles: string[]) {
   return (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user?.role) {
+      console.warn('[AUTH_MIDDLEWARE] No user role found for:', req.path);
       return res.status(401).json({
         success: false,
         message: 'Authentication required',
@@ -70,9 +84,25 @@ export function requireRole(roles: string[]) {
     }
 
     if (!roles.includes(req.user.role)) {
+      console.warn('[AUTH_MIDDLEWARE] Insufficient permissions:', {
+        userRole: req.user.role,
+        requiredRoles: roles,
+        path: req.path,
+        email: req.user.email,
+      });
       return res.status(403).json({
         success: false,
         message: 'Insufficient permissions',
+        required: roles,
+        current: req.user.role,
+      });
+    }
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[AUTH_MIDDLEWARE] Role check passed:', {
+        userRole: req.user.role,
+        requiredRoles: roles,
+        path: req.path,
       });
     }
 
