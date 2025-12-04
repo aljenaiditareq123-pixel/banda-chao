@@ -14,6 +14,38 @@ async function quickSeed() {
     console.log('🌱 Starting quick database seeding...');
     console.log('');
 
+    // 0. Create FOUNDER user (if not exists)
+    console.log('👑 Creating FOUNDER user...');
+    const founderEmail = 'aljenaiditareq123@gmail.com';
+    const founderPassword = 'Founder123!';
+    const founderName = 'Tareq';
+    
+    const existingFounder = await prisma.$queryRaw<Array<{ id: string }>>`
+      SELECT id FROM users WHERE email = ${founderEmail} LIMIT 1;
+    `;
+    
+    if (existingFounder.length === 0) {
+      const founderId = randomUUID();
+      const hashedFounderPassword = await bcrypt.hash(founderPassword, 10);
+      
+      await prisma.$executeRaw`
+        INSERT INTO users (id, email, password, name, role, created_at, updated_at)
+        VALUES (${founderId}, ${founderEmail}, ${hashedFounderPassword}, ${founderName}, 'FOUNDER'::"UserRole", NOW(), NOW())
+        ON CONFLICT (email) DO NOTHING;
+      `;
+      console.log(`  ✅ Created FOUNDER: ${founderName} (${founderEmail})`);
+      console.log(`     Password: ${founderPassword}`);
+    } else {
+      // Update existing user to FOUNDER role
+      await prisma.$executeRaw`
+        UPDATE users
+        SET role = 'FOUNDER'::"UserRole", updated_at = NOW()
+        WHERE email = ${founderEmail};
+      `;
+      console.log(`  ✅ Updated user to FOUNDER: ${founderEmail}`);
+    }
+    console.log('');
+
     // 1. Create 5 Makers (Users + Makers profiles)
     console.log('📝 Creating 5 makers...');
     const makers = [];
