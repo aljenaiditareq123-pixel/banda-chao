@@ -89,7 +89,7 @@ ${message}
     console.log('[AIAssistant] Conversation ID:', convId);
     console.log('[AIAssistant] Message length:', message.length, 'characters');
 
-    // Call Gemini 1.5 Pro with error handling
+    // Call Gemini 1.0 Pro with error handling
     let response: string;
     try {
       response = await generateFounderAIResponse(prompt);
@@ -305,7 +305,7 @@ ${keyFeatures && Array.isArray(keyFeatures) && keyFeatures.length > 0
   }
 });
 
-// Founder AI endpoint - Uses real Gemini 1.5 Pro
+// Founder AI endpoint - Uses real Gemini 1.0 Pro
 router.post('/founder', authenticateToken, requireRole(['FOUNDER']), async (req: AuthRequest, res: Response) => {
   try {
     const { message, context: additionalContext } = req.body;
@@ -368,7 +368,7 @@ ${userMessage}
     console.log('[FounderPanda] User ID:', userId);
     console.log('[FounderPanda] Message length:', userMessage.length, 'characters');
 
-    // Call Gemini 1.5 Pro with error handling
+    // Call Gemini 1.0 Pro with error handling
     let reply: string;
     try {
       reply = await generateFounderAIResponse(prompt);
