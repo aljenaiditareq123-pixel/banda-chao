@@ -54,6 +54,7 @@ const apiClient: AxiosInstance = axios.create({
     'Content-Type': 'application/json',
   },
   timeout: 30000, // 30 seconds timeout
+  withCredentials: true, // Include cookies in requests
 });
 
 // Request interceptor to add auth token and CSRF token
@@ -234,6 +235,13 @@ export const authAPI = {
       headers: {
         'Content-Type': 'application/json',
       },
+      withCredentials: true, // Include cookies
+    });
+    return response.data;
+  },
+  logout: async () => {
+    const response = await apiClient.post('/auth/logout', {}, {
+      withCredentials: true, // Include cookies
     });
     return response.data;
   },

@@ -13,8 +13,14 @@ export interface AuthRequest extends Request {
 }
 
 export function authenticateToken(req: AuthRequest, res: Response, next: NextFunction) {
+  // Try to get token from Authorization header first
   const authHeader = req.headers.authorization;
-  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+  let token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+
+  // If no token in header, try to get from cookie
+  if (!token && req.cookies && req.cookies.auth_token) {
+    token = req.cookies.auth_token;
+  }
 
   if (!token) {
     console.warn('[AUTH_MIDDLEWARE] No token provided for:', req.path);

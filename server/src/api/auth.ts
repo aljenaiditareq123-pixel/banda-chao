@@ -74,10 +74,19 @@ router.post('/register', validate(registerSchema), async (req: Request, res: Res
       { expiresIn: JWT_EXPIRES_IN } as jwt.SignOptions
     );
 
+    // Set HttpOnly cookie for token
+    res.cookie('auth_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      path: '/',
+    });
+
     res.status(201).json({
       message: 'User created successfully',
       user,
-      token,
+      token, // Still return token for client-side storage (backward compatibility)
     });
   } catch (error: any) {
     console.error('Register error:', error);
@@ -242,10 +251,19 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response)
       });
     }
 
+    // Set HttpOnly cookie for token (more secure than localStorage)
+    res.cookie('auth_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      path: '/',
+    });
+
     // Return success response
     res.json({
       success: true,
-      token,
+      token, // Still return token for client-side storage (backward compatibility)
       user: {
         id: user.id,
         email: user.email,
@@ -347,8 +365,29 @@ router.get('/me', authenticateToken, async (req: AuthRequest, res: Response) => 
         } : null,
       }
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Get me error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Logout
+router.post('/logout', authenticateToken, async (req: AuthRequest, res: Response) => {
+  try {
+    // Clear the auth cookie
+    res.clearCookie('auth_token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+    });
+
+    res.json({
+      success: true,
+      message: 'Logged out successfully',
+    });
+  } catch (error: unknown) {
+    console.error('Logout error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

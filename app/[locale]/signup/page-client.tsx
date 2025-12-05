@@ -89,6 +89,9 @@ export default function SignupPageClient({ locale }: SignupPageClientProps) {
             });
           }
           
+          // Trigger a custom event to notify other components (like Navbar) that auth state changed
+          window.dispatchEvent(new Event('authStateChanged'));
+          
           // Redirect based on role
           if (response.user.role === 'FOUNDER') {
             router.push('/founder');

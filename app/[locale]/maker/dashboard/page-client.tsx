@@ -313,19 +313,20 @@ export default function MakerDashboardClient({ locale }: MakerDashboardClientPro
   } | null>(null);
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      // Redirect to login or maker join
-      window.location.href = `/${locale}/maker/join`;
-      return;
-    }
+    if (!authLoading) {
+      if (!user) {
+        // Redirect to login if not authenticated
+        window.location.href = `/${locale}/auth/login`;
+        return;
+      }
 
-    if (user && user.role !== 'MAKER') {
-      // Redirect to maker join if not a maker
-      window.location.href = `/${locale}/maker/join`;
-      return;
-    }
+      if (user.role !== 'MAKER') {
+        // Redirect to maker join if not a maker
+        window.location.href = `/${locale}/maker/join`;
+        return;
+      }
 
-    if (user) {
+      // User is authenticated and is a maker
       fetchDashboardData();
     }
   }, [user, authLoading, locale]);

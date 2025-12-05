@@ -25,83 +25,100 @@ export function useAuth(): UseAuthReturn {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+  const fetchUser = async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-        if (typeof window === 'undefined') {
-          setLoading(false);
-          return;
-        }
-
-        const token = localStorage.getItem('auth_token');
-        const storedUser = localStorage.getItem('bandaChao_user');
-        
-        // If we have stored user data, use it immediately (optimistic)
-        if (storedUser) {
-          try {
-            const parsedUser = JSON.parse(storedUser);
-            setUser(parsedUser);
-          } catch (e) {
-            // Invalid JSON, continue to API call
-          }
-        }
-        
-        if (!token) {
-          setUser(null);
-          setLoading(false);
-          return;
-        }
-
-        // Use centralized API client with retry logic to get fresh user data
-        try {
-          const data = await usersAPI.getMe();
-          const userData = data.user || data;
-          setUser(userData);
-          
-          // Update localStorage with fresh data
-          if (userData) {
-            localStorage.setItem('bandaChao_user', JSON.stringify(userData));
-            localStorage.setItem('bandaChao_userRole', userData.role || 'BUYER');
-            localStorage.setItem('bandaChao_userEmail', userData.email || '');
-            localStorage.setItem('bandaChao_userName', userData.name || '');
-          }
-        } catch (apiErr: any) {
-          // If API call fails but we have stored user, keep using it
-          if (storedUser) {
-            // Already set above, just log the error
-            if (process.env.NODE_ENV === 'development') {
-              console.warn('[useAuth] API call failed, using stored user data:', apiErr.message);
-            }
-          } else {
-            // No stored user and API failed - clear everything
-            if (apiErr?.response?.status === 401) {
-              localStorage.removeItem('auth_token');
-              localStorage.removeItem('bandaChao_isLoggedIn');
-              localStorage.removeItem('bandaChao_user');
-              localStorage.removeItem('bandaChao_userRole');
-              localStorage.removeItem('bandaChao_userEmail');
-              localStorage.removeItem('bandaChao_userName');
-              setUser(null);
-            } else {
-              const errorMessage = apiErr instanceof Error ? apiErr.message : 'حدث خطأ أثناء جلب بيانات المستخدم';
-              setError(errorMessage);
-              setUser(null);
-            }
-          }
-        }
-      } catch (err: any) {
-        console.error('[useAuth] Unexpected error:', err);
-        setError(err instanceof Error ? err.message : 'حدث خطأ غير متوقع');
-        setUser(null);
-      } finally {
+      if (typeof window === 'undefined') {
         setLoading(false);
+        return;
       }
+
+      const token = localStorage.getItem('auth_token');
+      const storedUser = localStorage.getItem('bandaChao_user');
+      
+      // If we have stored user data, use it immediately (optimistic)
+      if (storedUser) {
+        try {
+          const parsedUser = JSON.parse(storedUser);
+          setUser(parsedUser);
+        } catch (e) {
+          // Invalid JSON, continue to API call
+        }
+      }
+      
+      if (!token) {
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
+      // Use centralized API client with retry logic to get fresh user data
+      try {
+        const data = await usersAPI.getMe();
+        const userData = data.user || data;
+        setUser(userData);
+        
+        // Update localStorage with fresh data
+        if (userData) {
+          localStorage.setItem('bandaChao_user', JSON.stringify(userData));
+          localStorage.setItem('bandaChao_userRole', userData.role || 'BUYER');
+          localStorage.setItem('bandaChao_userEmail', userData.email || '');
+          localStorage.setItem('bandaChao_userName', userData.name || '');
+        }
+      } catch (apiErr: unknown) {
+        // If API call fails but we have stored user, keep using it
+        if (storedUser) {
+          // Already set above, just log the error
+          if (process.env.NODE_ENV === 'development') {
+            const errorMessage = apiErr && typeof apiErr === 'object' && 'message' in apiErr
+              ? (apiErr as { message?: string }).message
+              : 'Unknown error';
+            console.warn('[useAuth] API call failed, using stored user data:', errorMessage);
+          }
+        } else {
+          // No stored user and API failed - clear everything
+          const axiosError = apiErr as { response?: { status?: number } };
+          if (axiosError?.response?.status === 401) {
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('bandaChao_isLoggedIn');
+            localStorage.removeItem('bandaChao_user');
+            localStorage.removeItem('bandaChao_userRole');
+            localStorage.removeItem('bandaChao_userEmail');
+            localStorage.removeItem('bandaChao_userName');
+            setUser(null);
+          } else {
+            const errorMessage = apiErr instanceof Error ? apiErr.message : 'حدث خطأ أثناء جلب بيانات المستخدم';
+            setError(errorMessage);
+            setUser(null);
+          }
+        }
+      }
+    } catch (err: unknown) {
+      console.error('[useAuth] Unexpected error:', err);
+      setError(err instanceof Error ? err.message : 'حدث خطأ غير متوقع');
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUser();
+
+    // Listen for auth state changes (e.g., after login)
+    const handleAuthStateChange = () => {
+      fetchUser();
     };
 
-    fetchUser();
+    window.addEventListener('authStateChanged', handleAuthStateChange);
+    window.addEventListener('storage', handleAuthStateChange);
+
+    return () => {
+      window.removeEventListener('authStateChanged', handleAuthStateChange);
+      window.removeEventListener('storage', handleAuthStateChange);
+    };
   }, []);
 
   return { user, loading, error };

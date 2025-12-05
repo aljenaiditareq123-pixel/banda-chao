@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
+import { authAPI } from '@/lib/api';
 import AuthButtons from './AuthButtons';
 import UploadButton from './UploadButton';
 import NotificationBell from '@/components/common/NotificationBell';
@@ -11,58 +14,35 @@ interface NavbarProps {
 }
 
 export default function Navbar({ locale }: NavbarProps) {
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userName, setUserName] = useState<string | null>(null);
-  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
-    if (typeof window !== 'undefined') {
-      const loggedIn = localStorage.getItem('bandaChao_isLoggedIn') === 'true';
-      const name = localStorage.getItem('bandaChao_userName');
-      const role = localStorage.getItem('bandaChao_userRole');
-      setIsLoggedIn(loggedIn);
-      setUserName(name);
-      setUserRole(role);
-      
-      // Defensive logging (development only)
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[Navbar] Auth state loaded:', { loggedIn, name, role });
-      }
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      // Call logout API to clear server-side session
+      await authAPI.logout();
+    } catch (error) {
+      // Continue with client-side cleanup even if API call fails
+      console.error('Logout API error:', error);
     }
-  }, []);
 
-  // Listen for storage changes (e.g., login/logout from another tab)
-  useEffect(() => {
-    const handleStorageChange = () => {
-      if (typeof window !== 'undefined') {
-        const loggedIn = localStorage.getItem('bandaChao_isLoggedIn') === 'true';
-        const name = localStorage.getItem('bandaChao_userName');
-        const role = localStorage.getItem('bandaChao_userRole');
-        setIsLoggedIn(loggedIn);
-        setUserName(name);
-        setUserRole(role);
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
-
-  const handleLogout = () => {
+    // Clear client-side storage
     if (typeof window !== 'undefined') {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[Navbar] Logout called');
-      }
+      localStorage.removeItem('auth_token');
       localStorage.removeItem('bandaChao_isLoggedIn');
       localStorage.removeItem('bandaChao_userEmail');
       localStorage.removeItem('bandaChao_userName');
       localStorage.removeItem('bandaChao_userRole');
-      setIsLoggedIn(false);
-      setUserName(null);
-      setUserRole(null);
-      window.location.href = `/${locale}`;
+      localStorage.removeItem('bandaChao_user');
+      
+      // Redirect to home
+      router.push(`/${locale}`);
+      router.refresh();
     }
   };
 
@@ -142,15 +122,15 @@ export default function Navbar({ locale }: NavbarProps) {
             {/* Auth Buttons */}
             <AuthButtons 
               locale={locale} 
-              isLoggedIn={isLoggedIn}
-              userName={userName}
+              isLoggedIn={!!user && !authLoading}
+              userName={user?.name || null}
               onLogout={handleLogout}
             />
             {/* Upload Button */}
             <UploadButton 
               locale={locale}
-              isLoggedIn={isLoggedIn}
-              userRole={userRole || undefined}
+              isLoggedIn={!!user && !authLoading}
+              userRole={user?.role || undefined}
             />
             {/* Language Switcher */}
             <div className="flex items-center gap-2 relative z-[9999] pointer-events-auto">
