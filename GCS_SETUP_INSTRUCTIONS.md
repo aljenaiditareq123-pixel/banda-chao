@@ -159,7 +159,8 @@
 2. انقر على **"Add Environment Variable"**
 3. **Key**: `GOOGLE_SPEECH_API_KEY`
 4. **Value**: الصق الـ API Key الذي نسخته من الخطوة 5.2
-   - مثال: `AIzaSyAbCdEfGhIjKlMnOpQrStUvWxYz1234567`
+   - **⚠️ مهم:** استخدم الـ API Key الحقيقي من Google Cloud Console، وليس مثال
+   - **⚠️ أمني:** لا تشارك الـ API Key مع أي شخص ولا ترفعه إلى GitHub
 5. انقر على **"Save Changes"** (حفظ التغييرات)
 
 ---
