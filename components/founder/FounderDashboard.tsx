@@ -2,6 +2,8 @@
 
 import { FounderKPIs } from '@/types/founder';
 import { useFounderKpis } from '@/hooks/useFounderKpis';
+import Link from 'next/link';
+import Button from '@/components/Button';
 
 interface KPICardProps {
   title: string;
@@ -51,8 +53,24 @@ export default function FounderDashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">لوحة تحكم المؤسس</h1>
-          <p className="text-gray-600">نظرة شاملة على مؤشرات الأداء الرئيسية لمنصة Banda Chao</p>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">لوحة تحكم المؤسس</h1>
+              <p className="text-gray-600">نظرة شاملة على مؤشرات الأداء الرئيسية لمنصة Banda Chao</p>
+            </div>
+            <div className="flex gap-3">
+              <Link href="/founder">
+                <Button variant="outline" className="text-sm">
+                  لوحة التحكم الرئيسية
+                </Button>
+              </Link>
+              <Link href="/founder/assistant">
+                <Button variant="primary" className="text-sm">
+                  🐼 الباندا المستشار
+                </Button>
+              </Link>
+            </div>
+          </div>
         </div>
 
         {/* Error State */}

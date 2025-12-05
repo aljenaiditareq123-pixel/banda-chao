@@ -161,10 +161,26 @@ export default function FounderConsole() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-            لوحة تحكم المؤسس
-          </h1>
-          <p className="text-gray-600">نظرة شاملة على منصة Banda Chao</p>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+                لوحة تحكم المؤسس
+              </h1>
+              <p className="text-gray-600">نظرة شاملة على منصة Banda Chao</p>
+            </div>
+            <div className="flex gap-3">
+              <Link href="/founder/dashboard">
+                <Button variant="outline" className="text-sm">
+                  لوحة العمليات
+                </Button>
+              </Link>
+              <Link href="/founder/assistant">
+                <Button variant="primary" className="text-sm">
+                  🐼 الباندا المستشار
+                </Button>
+              </Link>
+            </div>
+          </div>
         </div>
 
         {/* KPIs Grid */}
