@@ -44,7 +44,7 @@ GEMINI_API_KEY=your_gemini_api_key_here
 ### Step 3: Add to Environment Variables
 Add the key to `server/.env`:
 ```bash
-GOOGLE_SPEECH_API_KEY=AIzaSy...your_key_here
+GOOGLE_SPEECH_API_KEY=your_actual_api_key_here
 ```
 
 ## 🚀 Features
