@@ -28,7 +28,7 @@ import speechRoutes from './api/speech';
 import { errorHandler } from './middleware/errorHandler';
 import * as Sentry from '@sentry/node';
 import { requestLogger } from './middleware/requestLogger';
-import { csrfProtection, csrfTokenHandler } from './middleware/csrf';
+import { csrfProtection, csrfTokenHandler, getCsrfToken } from './middleware/csrf';
 import { prisma } from './utils/prisma';
 
 // Load environment variables
@@ -217,6 +217,11 @@ app.get('/api/health', (req: Request, res: Response) => {
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
   });
+});
+
+// CSRF token endpoint (for authenticated users to get fresh token)
+app.get('/api/v1/csrf-token', authenticateToken, (req: Request, res: Response) => {
+  getCsrfToken(req, res);
 });
 
 // Temporary: Public endpoint to view last KPIs error (for debugging)

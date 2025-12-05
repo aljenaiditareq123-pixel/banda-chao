@@ -65,6 +65,13 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
     return next();
   }
 
+  // Skip CSRF for AI endpoints (they use JWT authentication which is sufficient)
+  // AI endpoints are protected by authenticateToken middleware
+  const aiEndpoints = ['/api/v1/ai/assistant', '/api/v1/ai/founder', '/api/v1/ai/pricing-suggestion', '/api/v1/ai/content-helper'];
+  if (aiEndpoints.some(endpoint => req.path.startsWith(endpoint))) {
+    return next();
+  }
+
   // Get CSRF token from header
   const csrfToken = req.headers['x-csrf-token'] as string | undefined;
   const cookieToken = req.cookies?.['csrf-token'] as string | undefined;
@@ -114,5 +121,29 @@ export function csrfTokenHandler(req: Request, res: Response, next: NextFunction
   res.setHeader('X-CSRF-Token', token);
 
   next();
+}
+
+/**
+ * Endpoint to get CSRF token (for authenticated users)
+ * This allows frontend to get a fresh CSRF token when needed
+ */
+export function getCsrfToken(req: Request, res: Response) {
+  // Generate token
+  const token = generateCsrfToken(req);
+
+  // Set cookie
+  res.cookie('csrf-token', token, {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+  });
+
+  // Return token in response
+  res.json({
+    success: true,
+    csrfToken: token,
+    message: 'CSRF token generated successfully',
+  });
 }
 
