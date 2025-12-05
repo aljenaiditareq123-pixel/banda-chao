@@ -5,6 +5,7 @@ import { LanguageProvider } from '@/contexts/LanguageContext';
 import { CartProvider } from '@/contexts/CartContext';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import CartDrawer from '@/components/CartDrawer';
 import '../globals.css';
 
 const validLocales = ['zh', 'en', 'ar'];
@@ -153,6 +154,7 @@ export default function LocaleLayout({ children, params }: LocaleLayoutProps) {
               </main>
               <Footer locale={validLocale} />
             </div>
+            <CartDrawer locale={validLocale} />
           </CartProvider>
         </LanguageProvider>
       </body>

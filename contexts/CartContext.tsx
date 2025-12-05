@@ -21,12 +21,15 @@ interface CartContextType {
   clearCart: () => void;
   total: number;
   itemCount: number;
+  isDrawerOpen?: boolean;
+  toggleDrawer?: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   // Load cart from localStorage on mount
   useEffect(() => {
@@ -76,6 +79,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
         return [...prevItems, newItem];
       }
     });
+    // Open drawer when item is added
+    setIsDrawerOpen(true);
+  };
+
+  const toggleDrawer = () => {
+    setIsDrawerOpen((prev) => !prev);
   };
 
   const removeItem = (productId: string) => {
@@ -118,6 +127,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         clearCart,
         total,
         itemCount,
+        isDrawerOpen,
+        toggleDrawer,
       }}
     >
       {children}
