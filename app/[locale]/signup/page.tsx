@@ -1,7 +1,6 @@
-import { notFound } from 'next/navigation';
-import SignupPageClient from './page-client';
+import { redirect } from 'next/navigation';
 
-interface PageProps {
+interface RegisterRedirectPageProps {
   params: {
     locale: string;
   };
@@ -9,14 +8,14 @@ interface PageProps {
 
 const validLocales = ['zh', 'en', 'ar'];
 
-export default function SignupPage({ params }: PageProps) {
+export default function RegisterRedirectPage({ params }: RegisterRedirectPageProps) {
   const { locale } = params;
 
   if (!validLocales.includes(locale)) {
-    notFound();
+    redirect('/en/auth/register');
   }
 
-  return <SignupPageClient locale={locale} />;
+  redirect(`/${locale}/auth/register`);
 }
 
 

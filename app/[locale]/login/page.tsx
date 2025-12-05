@@ -1,7 +1,6 @@
-import { notFound } from 'next/navigation';
-import LoginPageClient from './page-client';
+import { redirect } from 'next/navigation';
 
-interface PageProps {
+interface LoginRedirectPageProps {
   params: {
     locale: string;
   };
@@ -9,14 +8,14 @@ interface PageProps {
 
 const validLocales = ['zh', 'en', 'ar'];
 
-export default function LoginPage({ params }: PageProps) {
+export default function LoginRedirectPage({ params }: LoginRedirectPageProps) {
   const { locale } = params;
 
   if (!validLocales.includes(locale)) {
-    notFound();
+    redirect('/en/auth/login');
   }
 
-  return <LoginPageClient locale={locale} />;
+  redirect(`/${locale}/auth/login`);
 }
 
 
