@@ -92,15 +92,28 @@ const allowedOrigins = NODE_ENV === 'production'
 // CORS middleware with full support for OPTIONS requests
 app.use(cors({
   origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) {
+      callback(null, true);
+      return;
+    }
+    
     // In development, allow all origins temporarily
     if (NODE_ENV === 'development') {
       callback(null, true);
       return;
     }
-    // In production, check against allowed origins
-    if (!origin || allowedOrigins.includes(origin)) {
+    
+    // In production, check against allowed origins (case-insensitive)
+    const normalizedOrigin = origin.toLowerCase().trim();
+    const isAllowed = allowedOrigins.some(allowed => 
+      allowed.toLowerCase().trim() === normalizedOrigin
+    );
+    
+    if (isAllowed) {
       callback(null, true);
     } else {
+      console.warn(`[CORS] Blocked origin: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -113,15 +126,41 @@ app.use(cors({
     'Origin',
     'Access-Control-Request-Method',
     'Access-Control-Request-Headers',
+    'X-CSRF-Token', // Add CSRF token header
   ],
-  exposedHeaders: ['Content-Range', 'X-Content-Range'],
+  exposedHeaders: [
+    'Content-Range', 
+    'X-Content-Range',
+    'X-CSRF-Token', // Expose CSRF token in response
+  ],
   credentials: true,
   preflightContinue: false,
   optionsSuccessStatus: 204, // Some legacy browsers (IE11, various SmartTVs) choke on 204
 }));
 
-// Handle preflight OPTIONS requests explicitly
-app.options('*', cors());
+// Handle preflight OPTIONS requests explicitly with CORS
+app.options('*', cors({
+  origin: (origin, callback) => {
+    if (!origin) {
+      callback(null, true);
+      return;
+    }
+    if (NODE_ENV === 'development') {
+      callback(null, true);
+      return;
+    }
+    const normalizedOrigin = origin.toLowerCase().trim();
+    const isAllowed = allowedOrigins.some(allowed => 
+      allowed.toLowerCase().trim() === normalizedOrigin
+    );
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+}));
 
 // Rate Limiting
 const authLimiter = rateLimit({
