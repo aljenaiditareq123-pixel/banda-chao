@@ -426,6 +426,43 @@ export const productsAPI = {
 };
 
 // ============================================
+// Beta API
+// ============================================
+
+export const betaAPI = {
+  submitApplication: async (data: {
+    name: string;
+    email: string;
+    country: string;
+    mainPlatform?: string;
+    whatYouSell?: string;
+    preferredLang?: string;
+    whyJoin?: string;
+  }): Promise<{ success: boolean; error?: string; message?: string }> => {
+    try {
+      const response = await apiClient.post('/beta/applications', data);
+      return response.data;
+    } catch (error: unknown) {
+      const errorMessage = error && typeof error === 'object' && 'response' in error
+        ? (error as { response?: { data?: { error?: string } } }).response?.data?.error
+        : 'Failed to submit application';
+      return { success: false, error: errorMessage || 'Failed to submit application' };
+    }
+  },
+  getApplications: async (params?: { language?: string; country?: string }): Promise<{ success: boolean; applications?: unknown[]; total?: number; error?: string }> => {
+    try {
+      const response = await apiClient.get('/beta/applications', { params });
+      return response.data;
+    } catch (error: unknown) {
+      const errorMessage = error && typeof error === 'object' && 'response' in error
+        ? (error as { response?: { data?: { error?: string } } }).response?.data?.error
+        : 'Failed to fetch applications';
+      return { success: false, error: errorMessage || 'Failed to fetch applications' };
+    }
+  },
+};
+
+// ============================================
 // Videos API
 // ============================================
 

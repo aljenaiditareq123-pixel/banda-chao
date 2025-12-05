@@ -285,6 +285,21 @@ model videos {
   @@index([user_id])
 }
 
+model beta_applications {
+  id            Int      @id @default(autoincrement())
+  name          String
+  email         String
+  country       String
+  main_platform String?
+  what_you_sell String?
+  preferred_lang String?
+  why_join      String?
+  created_at    DateTime @default(now())
+
+  @@index([email])
+  @@index([created_at])
+}
+
 enum OrderStatus {
   PENDING
   PROCESSING
