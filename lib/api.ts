@@ -522,9 +522,34 @@ export const postsAPI = {
     const response = await apiClient.get(`/posts/${id}`);
     return response.data;
   },
-  create: async (data: { content: string; images?: string[] }) => {
-    const response = await apiClient.post('/posts', data);
-    return response.data;
+  create: async (data: { content?: string; images?: string[] }): Promise<{ success: boolean; post?: unknown; error?: string }> => {
+    try {
+      const response = await apiClient.post('/posts', data);
+      return response.data;
+    } catch (error: unknown) {
+      const errorMessage = error && typeof error === 'object' && 'response' in error
+        ? (error as { response?: { data?: { error?: string } } }).response?.data?.error
+        : 'Failed to create post';
+      return { success: false, error: errorMessage || 'Failed to create post' };
+    }
+  },
+  uploadImage: async (file: File): Promise<{ success: boolean; imageUrl?: string; error?: string }> => {
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await apiClient.post('/posts/upload-image', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error: unknown) {
+      const errorMessage = error && typeof error === 'object' && 'response' in error
+        ? (error as { response?: { data?: { error?: string } } }).response?.data?.error
+        : 'Failed to upload image';
+      return { success: false, error: errorMessage || 'Failed to upload image' };
+    }
   },
   getComments: async (postId: string, params?: { page?: number; limit?: number }) => {
     const response = await apiClient.get(`/posts/${postId}/comments`, { params });

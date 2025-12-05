@@ -1,8 +1,47 @@
 import { Router, Request, Response } from 'express';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 import { prisma } from '../utils/prisma';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
+import { uploadToGCS, isGCSConfigured } from '../lib/gcs';
 
 const router = Router();
+
+// Configure multer for image uploads
+const uploadDir = path.join(process.cwd(), 'uploads', 'posts');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Use memory storage if GCS is configured, otherwise use disk storage
+const storage = isGCSConfigured()
+  ? multer.memoryStorage()
+  : multer.diskStorage({
+      destination: (req, file, cb) => {
+        cb(null, uploadDir);
+      },
+      filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+        cb(null, `post-${uniqueSuffix}${path.extname(file.originalname)}`);
+      },
+    });
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB for post images
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif|webp/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed (jpeg, jpg, png, gif, webp)'));
+    }
+  },
+});
 
 // Get all posts (with pagination)
 router.get('/', async (req: Request, res: Response) => {
@@ -147,13 +186,48 @@ router.get('/:id/comments', async (req: Request, res: Response) => {
   }
 });
 
+// Upload post image (authenticated)
+router.post('/upload-image', authenticateToken, upload.single('image'), async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No image file provided' });
+    }
+
+    let imageUrl: string | null = null;
+    
+    if (isGCSConfigured() && req.file.buffer) {
+      // Upload to GCS
+      imageUrl = await uploadToGCS(req.file.buffer, req.file.originalname, 'posts');
+    } else if (req.file.path) {
+      // Fallback to local storage
+      imageUrl = `/uploads/posts/${path.basename(req.file.path)}`;
+    }
+
+    if (!imageUrl) {
+      return res.status(500).json({ error: 'Failed to upload image' });
+    }
+
+    res.json({
+      success: true,
+      imageUrl,
+    });
+  } catch (error: unknown) {
+    console.error('Upload post image error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
+    res.status(500).json({ error: errorMessage });
+  }
+});
+
 // Create post (authenticated)
 router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const { content, images } = req.body;
 
+    // Allow posts with only images (no content required)
     if (!content || content.trim().length === 0) {
-      return res.status(400).json({ error: 'Content is required' });
+      if (!images || !Array.isArray(images) || images.length === 0) {
+        return res.status(400).json({ error: 'Content or at least one image is required' });
+      }
     }
 
     const { randomUUID } = await import('crypto');
@@ -163,7 +237,7 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
       data: {
         id: postId,
         user_id: req.userId!,
-        content: content.trim(),
+        content: content?.trim() || '',
         images: images && Array.isArray(images) ? images : [],
         updated_at: new Date(),
       },
@@ -178,10 +252,14 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
       },
     });
 
-    res.status(201).json({ post });
-  } catch (error: any) {
+    res.status(201).json({ 
+      success: true,
+      post 
+    });
+  } catch (error: unknown) {
     console.error('Create post error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
+    res.status(500).json({ error: errorMessage });
   }
 });
 

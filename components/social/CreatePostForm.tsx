@@ -2,7 +2,6 @@
 
 import { useState, useRef } from 'react';
 import { postsAPI } from '@/lib/api';
-import { usersAPI } from '@/lib/api';
 import Button from '@/components/Button';
 
 interface CreatePostFormProps {
@@ -24,13 +23,17 @@ export default function CreatePostForm({
 
   const handleImageUpload = async (file: File) => {
     try {
-      const response = await usersAPI.uploadAvatar(file);
-      if (response.imageUrl) {
-        setImages((prev) => [...prev, response.imageUrl]);
+      const response = await postsAPI.uploadImage(file);
+      if (response.success && response.imageUrl) {
+        setImages((prev) => [...prev, response.imageUrl!]);
+        setError(null);
+      } else {
+        throw new Error(response.error || 'Failed to upload image');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : (locale === 'ar' ? 'فشل رفع الصورة' : locale === 'zh' ? '上传图片失败' : 'Failed to upload image');
       console.error('Error uploading image:', err);
-      setError(err.message || (locale === 'ar' ? 'فشل رفع الصورة' : locale === 'zh' ? '上传图片失败' : 'Failed to upload image'));
+      setError(errorMessage);
     }
   };
 
@@ -61,25 +64,30 @@ export default function CreatePostForm({
     setError(null);
 
     try {
-      await postsAPI.create({
-        content: content.trim(),
-        images,
+      const response = await postsAPI.create({
+        content: content.trim() || undefined,
+        images: images.length > 0 ? images : undefined,
       });
 
-      // Clear form
-      setContent('');
-      setImages([]);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+      if (response.success) {
+        // Clear form
+        setContent('');
+        setImages([]);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
 
-      // Notify parent
-      if (onPostCreated) {
-        onPostCreated();
+        // Notify parent
+        if (onPostCreated) {
+          onPostCreated();
+        }
+      } else {
+        throw new Error(response.error || (locale === 'ar' ? 'فشل إنشاء المنشور' : locale === 'zh' ? '创建帖子失败' : 'Failed to create post'));
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : (locale === 'ar' ? 'فشل إنشاء المنشور' : locale === 'zh' ? '创建帖子失败' : 'Failed to create post');
       console.error('Error creating post:', err);
-      setError(err.message || (locale === 'ar' ? 'فشل إنشاء المنشور' : locale === 'zh' ? '创建帖子失败' : 'Failed to create post'));
+      setError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
