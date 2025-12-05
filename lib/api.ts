@@ -58,7 +58,7 @@ const apiClient: AxiosInstance = axios.create({
 
 // Request interceptor to add auth token and CSRF token
 apiClient.interceptors.request.use(
-  (config) => {
+  async (config) => {
     if (typeof window !== 'undefined') {
       try {
         const token = localStorage.getItem('auth_token');
@@ -67,7 +67,35 @@ apiClient.interceptors.request.use(
         }
 
         // Get CSRF token from cookie
-        const csrfToken = getCookie('csrf-token');
+        let csrfToken = getCookie('csrf-token');
+        
+        // If no CSRF token and this is not a GET request, try to get one
+        if (!csrfToken && config.method !== 'get' && config.method !== 'GET') {
+          // For AI endpoints, CSRF is not required (they're excluded)
+          // But we still try to get token for other endpoints
+          const isAIEndpoint = config.url?.startsWith('/ai/');
+          if (!isAIEndpoint) {
+            try {
+              // Try to get CSRF token from API
+              const tokenResponse = await fetch(`${API_URL}/api/v1/csrf-token`, {
+                method: 'GET',
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                },
+                credentials: 'include',
+              });
+              if (tokenResponse.ok) {
+                const tokenData = await tokenResponse.json();
+                csrfToken = tokenData.csrfToken || getCookie('csrf-token');
+              }
+            } catch (err) {
+              // Silently fail - CSRF token fetch failed
+              console.warn('[API] Failed to fetch CSRF token:', err);
+            }
+          }
+        }
+        
+        // Add CSRF token to header (even if null, for AI endpoints it will be skipped)
         if (csrfToken) {
           config.headers['X-CSRF-Token'] = csrfToken;
         }

@@ -69,6 +69,17 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
   // AI endpoints are protected by authenticateToken middleware
   const aiEndpoints = ['/api/v1/ai/assistant', '/api/v1/ai/founder', '/api/v1/ai/pricing-suggestion', '/api/v1/ai/content-helper'];
   if (aiEndpoints.some(endpoint => req.path.startsWith(endpoint))) {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[CSRF] Skipping CSRF check for AI endpoint:', req.path);
+    }
+    return next();
+  }
+  
+  // Also check if path matches /api/v1/ai/* pattern (more flexible)
+  if (req.path.startsWith('/api/v1/ai/')) {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[CSRF] Skipping CSRF check for AI endpoint (pattern match):', req.path);
+    }
     return next();
   }
 
@@ -76,12 +87,31 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
   const csrfToken = req.headers['x-csrf-token'] as string | undefined;
   const cookieToken = req.cookies?.['csrf-token'] as string | undefined;
 
+  // Log CSRF check details in development
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[CSRF] Checking CSRF token for:', req.path, {
+      hasHeaderToken: !!csrfToken,
+      hasCookieToken: !!cookieToken,
+      tokensMatch: csrfToken === cookieToken,
+    });
+  }
+
   // Verify token
   if (!csrfToken || !cookieToken || csrfToken !== cookieToken) {
+    console.warn('[CSRF] CSRF token validation failed for:', req.path, {
+      hasHeaderToken: !!csrfToken,
+      hasCookieToken: !!cookieToken,
+      tokensMatch: csrfToken === cookieToken,
+    });
     return res.status(403).json({
       success: false,
       message: 'CSRF token validation failed',
       code: 'CSRF_ERROR',
+      details: process.env.NODE_ENV === 'development' ? {
+        path: req.path,
+        hasHeaderToken: !!csrfToken,
+        hasCookieToken: !!cookieToken,
+      } : undefined,
     });
   }
 
