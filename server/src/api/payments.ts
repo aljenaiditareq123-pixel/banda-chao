@@ -158,6 +158,32 @@ router.post(
         });
       }
 
+      // Inventory validation: Check available stock
+      // Initialize quantities map before use
+      const quantities: Record<string, number> = {};
+      
+      // Get ordered quantities for this product
+      const orderedItems = await prisma.order_items.findMany({
+        where: {
+          product_id: productId,
+          orders: {
+            status: {
+              in: ['PENDING', 'PAID'],
+            },
+          },
+        },
+        select: {
+          quantity: true,
+        },
+      });
+
+      // Calculate total ordered quantity
+      const totalOrdered = orderedItems.reduce((sum, item) => sum + item.quantity, 0);
+      quantities[productId] = totalOrdered;
+
+      // Note: Since products table doesn't have stock field, we skip stock validation
+      // In a real system, you would check: if (availableStock < quantity) { return error; }
+
       const totalPrice = product.price * quantity;
 
       // Calculate revenue split
