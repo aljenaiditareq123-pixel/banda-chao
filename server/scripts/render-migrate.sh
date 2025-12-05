@@ -69,3 +69,5 @@ echo "📝 Next steps:"
 echo "   1. Verify schema: psql \"\$DATABASE_URL\" -c \"\\d users\""
 echo "   2. Create user: npx ts-node scripts/render-create-user.ts"
 
+
+

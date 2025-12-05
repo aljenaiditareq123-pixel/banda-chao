@@ -45,3 +45,5 @@ fi
 echo ""
 echo "✅ All done! Database is fixed and user is created."
 
+
+

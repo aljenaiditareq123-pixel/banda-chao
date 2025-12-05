@@ -333,6 +333,14 @@ export const productsAPI = {
 // ============================================
 
 export const videosAPI = {
+  upload: async (formData: FormData) => {
+    const response = await apiClient.post('/videos', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
   getAll: async (params?: {
     page?: number;
     limit?: number;

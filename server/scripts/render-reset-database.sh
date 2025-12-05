@@ -75,3 +75,5 @@ echo "📝 Next steps:"
 echo "   1. Test login with: aljenaiditareq123@gmail.com / T123q123"
 echo "   2. Verify all tables: psql \"\$DATABASE_URL\" -c \"\\dt\""
 
+
+

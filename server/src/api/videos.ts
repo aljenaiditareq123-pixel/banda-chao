@@ -1,8 +1,49 @@
 import { Router, Request, Response } from 'express';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 import { prisma } from '../utils/prisma';
 import { getCache, setCache, invalidateCachePattern } from '../lib/cache';
+import { authenticateToken, AuthRequest } from '../middleware/auth';
+import { uploadToGCS, isGCSConfigured } from '../lib/gcs';
+import { randomUUID } from 'crypto';
 
 const router = Router();
+
+// Configure multer for video uploads
+const uploadDir = path.join(process.cwd(), 'uploads', 'videos');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Use memory storage if GCS is configured, otherwise use disk storage
+const storage = isGCSConfigured()
+  ? multer.memoryStorage()
+  : multer.diskStorage({
+      destination: (req, file, cb) => {
+        cb(null, uploadDir);
+      },
+      filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+        cb(null, uniqueSuffix + path.extname(file.originalname));
+      },
+    });
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 500 * 1024 * 1024 }, // 500MB for videos
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /mp4|webm|mov|avi/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = /video\/(mp4|webm|quicktime|x-msvideo)/.test(file.mimetype);
+
+    if (extname && mimetype) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only video files (mp4, webm, mov, avi) are allowed'));
+    }
+  },
+});
 
 // Get all videos (with pagination and filters)
 router.get('/', async (req: Request, res: Response) => {
@@ -224,6 +265,91 @@ router.get('/makers/:makerId', async (req: Request, res: Response) => {
       stack: error?.stack || 'No stack trace',
       code: error?.code || 'No error code',
       meta: error?.meta || 'No metadata',
+    });
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Create/Upload video (POST)
+router.post('/', authenticateToken, upload.single('video'), async (req: AuthRequest, res: Response) => {
+  try {
+    const { title, description, type, duration } = req.body;
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({ error: 'Video file is required' });
+    }
+
+    if (!title || !type || !['SHORT', 'LONG'].includes(type)) {
+      return res.status(400).json({ error: 'Title and type (SHORT or LONG) are required' });
+    }
+
+    // Upload video to GCS or save locally
+    let videoUrl: string;
+    let thumbnailUrl: string | null = null;
+
+    if (isGCSConfigured()) {
+      // Upload to GCS
+      const fileBuffer = file.buffer;
+      videoUrl = await uploadToGCS(fileBuffer, file.originalname, 'videos');
+      
+      // For now, use a placeholder thumbnail (in production, generate from video)
+      thumbnailUrl = null; // TODO: Generate thumbnail from video
+    } else {
+      // Save locally
+      const baseUrl = process.env.BACKEND_URL || 'http://localhost:3001';
+      videoUrl = `${baseUrl}/uploads/videos/${file.filename}`;
+    }
+
+    // Get user's maker profile
+    const maker = await prisma.makers.findUnique({
+      where: { user_id: req.userId! },
+    });
+
+    if (!maker) {
+      return res.status(403).json({ error: 'You must be a maker to upload videos' });
+    }
+
+    // Create video record using Prisma
+    const videoId = randomUUID();
+    const video = await prisma.videos.create({
+      data: {
+        id: videoId,
+        user_id: req.userId!,
+        title,
+        description: description || null,
+        video_url: videoUrl,
+        thumbnail_url: thumbnailUrl || '',
+        type: type as 'SHORT' | 'LONG',
+        duration: duration ? parseInt(duration) : 0,
+        views: 0,
+        likes: 0,
+      },
+    });
+
+    // Invalidate cache
+    invalidateCachePattern('videos:*');
+
+    res.status(201).json({
+      success: true,
+      video: {
+        id: videoId,
+        title,
+        description,
+        videoUrl,
+        thumbnailUrl,
+        type,
+        duration: duration ? parseInt(duration) : null,
+        viewsCount: 0,
+        likesCount: 0,
+      },
+    });
+  } catch (error: any) {
+    console.error('Create video error:', {
+      message: error?.message || 'Unknown error',
+      stack: error?.stack || 'No stack trace',
+      code: error?.code || 'No error code',
+      userId: req.userId,
     });
     res.status(500).json({ error: 'Internal server error' });
   }

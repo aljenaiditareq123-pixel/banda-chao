@@ -5,14 +5,56 @@ import type { NextRequest } from 'next/server';
 const locales = ['ar', 'en', 'zh'];
 const defaultLocale = 'ar';
 
+// Country to locale mapping (based on IP geolocation)
+const countryToLocale: Record<string, string> = {
+  // Arabic countries
+  'SA': 'ar', 'AE': 'ar', 'EG': 'ar', 'IQ': 'ar', 'JO': 'ar', 'KW': 'ar', 'LB': 'ar', 'LY': 'ar', 'MA': 'ar', 'OM': 'ar', 'QA': 'ar', 'SY': 'ar', 'TN': 'ar', 'YE': 'ar', 'DZ': 'ar', 'BH': 'ar', 'SD': 'ar', 'SO': 'ar',
+  // Chinese countries/regions
+  'CN': 'zh', 'TW': 'zh', 'HK': 'zh', 'MO': 'zh', 'SG': 'zh',
+  // Default to English for others
+};
+
+// Get locale from IP geolocation (using Cloudflare headers or similar)
+function getLocaleFromIP(request: NextRequest): string {
+  // Try to get country from Cloudflare CF-IPCountry header
+  const country = request.headers.get('cf-ipcountry') || 
+                  request.headers.get('x-vercel-ip-country') ||
+                  request.geo?.country ||
+                  null;
+
+  if (country && countryToLocale[country]) {
+    return countryToLocale[country];
+  }
+
+  // Fallback: try to detect from Accept-Language header
+  const acceptLanguage = request.headers.get('accept-language');
+  if (acceptLanguage) {
+    // Check for Arabic
+    if (acceptLanguage.includes('ar')) {
+      return 'ar';
+    }
+    // Check for Chinese
+    if (acceptLanguage.includes('zh') || acceptLanguage.includes('cn')) {
+      return 'zh';
+    }
+  }
+
+  return defaultLocale;
+}
+
 // Get locale from pathname
-function getLocale(pathname: string): string {
+function getLocale(pathname: string, request?: NextRequest): string {
   const segments = pathname.split('/').filter(Boolean);
   const firstSegment = segments[0];
   
   // Check if first segment is a valid locale
   if (firstSegment && locales.includes(firstSegment)) {
     return firstSegment;
+  }
+  
+  // If no locale in path, try to detect from IP
+  if (request) {
+    return getLocaleFromIP(request);
   }
   
   return defaultLocale;
@@ -52,10 +94,10 @@ export function middleware(request: NextRequest) {
   // Check if pathname already has a locale
   const pathnameHasLocale = hasLocale(pathname);
   
-  // If pathname doesn't have a locale, redirect to default locale
+  // If pathname doesn't have a locale, detect from IP and redirect
   if (!pathnameHasLocale) {
-    const locale = defaultLocale;
-    const newUrl = new URL(`/${locale}${pathname}`, request.url);
+    const detectedLocale = getLocale(pathname, request);
+    const newUrl = new URL(`/${detectedLocale}${pathname}`, request.url);
     
     // Preserve query parameters
     newUrl.search = request.nextUrl.search;

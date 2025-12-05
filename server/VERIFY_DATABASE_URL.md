@@ -122,3 +122,5 @@ postgresql://user:password@dpg-xxxxx-a.oregon-postgres.render.com:5432/banda_cha
 
 **آخر تحديث**: بعد إضافة تحسينات التحقق من DATABASE_URL
 
+
+

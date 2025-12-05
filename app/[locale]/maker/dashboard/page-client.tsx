@@ -31,6 +31,7 @@ export default function MakerDashboardClient({ locale }: MakerDashboardClientPro
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showVideoRecorder, setShowVideoRecorder] = useState<{ show: boolean; type?: 'SHORT' | 'LONG' }>({ show: false });
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -308,15 +309,39 @@ export default function MakerDashboardClient({ locale }: MakerDashboardClientPro
 
         {activeTab === 'videos' && (
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold text-gray-900">
-                {locale === 'ar' ? 'فيديوهاتي' : 'My Videos'}
-              </h2>
-              <Button variant="primary">
-                {locale === 'ar' ? 'إضافة فيديو جديد' : 'Add New Video'}
-              </Button>
-            </div>
-            {videos.length === 0 ? (
+            {showVideoRecorder.show && showVideoRecorder.type && (
+              <VideoRecorder
+                locale={locale}
+                type={showVideoRecorder.type}
+                onSuccess={() => {
+                  setShowVideoRecorder({ show: false });
+                  fetchDashboardData();
+                }}
+                onCancel={() => setShowVideoRecorder({ show: false })}
+              />
+            )}
+            {!showVideoRecorder.show && (
+              <>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-bold text-gray-900">
+                    {locale === 'ar' ? 'فيديوهاتي' : 'My Videos'}
+                  </h2>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="primary"
+                      onClick={() => setShowVideoRecorder({ show: true, type: 'SHORT' })}
+                    >
+                      {locale === 'ar' ? 'فيديو قصير' : 'Short Video'}
+                    </Button>
+                    <Button
+                      variant="primary"
+                      onClick={() => setShowVideoRecorder({ show: true, type: 'LONG' })}
+                    >
+                      {locale === 'ar' ? 'فيديو طويل' : 'Long Video'}
+                    </Button>
+                  </div>
+                </div>
+                {videos.length === 0 ? (
               <Card>
                 <div className="p-12 text-center">
                   <p className="text-gray-500 mb-4">
@@ -344,6 +369,8 @@ export default function MakerDashboardClient({ locale }: MakerDashboardClientPro
                   </Card>
                 ))}
               </div>
+            )}
+              </>
             )}
           </div>
         )}
