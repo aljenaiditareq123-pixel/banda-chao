@@ -51,6 +51,28 @@ export default function FounderChatPanel({ user, loading: authLoading }: Founder
     }
   }, [authLoading, user, kpis, kpisLoading, messages.length]);
 
+  // Ensure CSRF token is available before sending requests
+  useEffect(() => {
+    if (!authLoading && user && user.role === 'FOUNDER' && typeof window !== 'undefined') {
+      // Try to get CSRF token by making a GET request to any endpoint
+      // This will trigger csrfTokenHandler to set the cookie
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://banda-chao-backend.onrender.com';
+      const token = localStorage.getItem('auth_token');
+      if (token) {
+        fetch(`${apiUrl}/api/v1/csrf-token`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          credentials: 'include',
+        }).catch(err => {
+          // Silently fail - CSRF token will be handled by interceptor
+          console.warn('[FounderChatPanel] Failed to fetch CSRF token:', err);
+        });
+      }
+    }
+  }, [authLoading, user]);
+
   const generateWelcomeMessage = (kpisData: FounderKPIs | null): ChatMessage => {
     let content = 'مرحباً بك، المؤسس! 👋\n\n';
     
