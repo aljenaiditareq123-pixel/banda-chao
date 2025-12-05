@@ -312,6 +312,28 @@ export const makersAPI = {
 // Products API
 // ============================================
 
+export interface CreateProductData {
+  name: string;
+  description: string;
+  price?: number;
+  currency?: string;
+  category?: string;
+  external_link?: string;
+  stock?: number;
+  image?: File;
+}
+
+export interface UpdateProductData {
+  name?: string;
+  description?: string;
+  price?: number;
+  currency?: string;
+  category?: string;
+  external_link?: string;
+  stock?: number;
+  image?: File;
+}
+
 export const productsAPI = {
   getAll: async (params?: {
     page?: number;
@@ -331,6 +353,56 @@ export const productsAPI = {
   getByMaker: async (makerId: string, params?: { page?: number; limit?: number }) => {
     const response = await apiClient.get(`/products/makers/${makerId}`, { params });
     return response.data;
+  },
+  create: async (data: CreateProductData): Promise<{ success: boolean; product?: unknown; error?: string }> => {
+    try {
+      const formData = new FormData();
+      formData.append('name', data.name);
+      formData.append('description', data.description);
+      if (data.price !== undefined) formData.append('price', data.price.toString());
+      if (data.currency) formData.append('currency', data.currency);
+      if (data.category) formData.append('category', data.category);
+      if (data.external_link) formData.append('external_link', data.external_link);
+      if (data.stock !== undefined) formData.append('stock', data.stock.toString());
+      if (data.image) formData.append('image', data.image);
+
+      const response = await apiClient.post('/products', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error: unknown) {
+      const errorMessage = error && typeof error === 'object' && 'response' in error
+        ? (error as { response?: { data?: { error?: string } } }).response?.data?.error
+        : 'Failed to create product';
+      return { success: false, error: errorMessage || 'Failed to create product' };
+    }
+  },
+  update: async (id: string, data: UpdateProductData): Promise<{ success: boolean; product?: unknown; error?: string }> => {
+    try {
+      const formData = new FormData();
+      if (data.name !== undefined) formData.append('name', data.name);
+      if (data.description !== undefined) formData.append('description', data.description);
+      if (data.price !== undefined) formData.append('price', data.price.toString());
+      if (data.currency) formData.append('currency', data.currency);
+      if (data.category !== undefined) formData.append('category', data.category || '');
+      if (data.external_link !== undefined) formData.append('external_link', data.external_link);
+      if (data.stock !== undefined) formData.append('stock', data.stock.toString());
+      if (data.image) formData.append('image', data.image);
+
+      const response = await apiClient.put(`/products/${id}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error: unknown) {
+      const errorMessage = error && typeof error === 'object' && 'response' in error
+        ? (error as { response?: { data?: { error?: string } } }).response?.data?.error
+        : 'Failed to update product';
+      return { success: false, error: errorMessage || 'Failed to update product' };
+    }
   },
 };
 

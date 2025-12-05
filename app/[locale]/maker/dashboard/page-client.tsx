@@ -10,6 +10,7 @@ import Button from '@/components/Button';
 import Link from 'next/link';
 import { formatCurrency } from '@/lib/formatCurrency';
 import VideoRecorder from '@/components/maker/VideoRecorder';
+import AddProductForm from '@/components/maker/AddProductForm';
 
 interface MakerDashboardClientProps {
   locale: string;
@@ -300,6 +301,16 @@ export default function MakerDashboardClient({ locale }: MakerDashboardClientPro
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showVideoRecorder, setShowVideoRecorder] = useState<{ show: boolean; type?: 'SHORT' | 'LONG' }>({ show: false });
+  const [showAddProductForm, setShowAddProductForm] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<{
+    id: string;
+    name: string;
+    description: string;
+    price?: number;
+    category?: string;
+    image_url?: string;
+    external_link?: string;
+  } | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -526,14 +537,11 @@ export default function MakerDashboardClient({ locale }: MakerDashboardClientPro
               <Button 
                 variant="primary"
                 onClick={() => {
-                  alert(locale === 'ar' 
-                    ? 'ميزة إضافة المنتجات قيد التطوير. سيتم إضافتها قريباً.' 
-                    : locale === 'zh'
-                    ? '添加产品功能正在开发中。即将推出。'
-                    : 'Product creation feature is under development. Coming soon.');
+                  setEditingProduct(null);
+                  setShowAddProductForm(true);
                 }}
               >
-                {locale === 'ar' ? 'إضافة منتج جديد' : 'Add New Product'}
+                {locale === 'ar' ? 'إضافة منتج جديد' : locale === 'zh' ? '添加新产品' : 'Add New Product'}
               </Button>
             </div>
             {products.length === 0 ? (
@@ -553,11 +561,8 @@ export default function MakerDashboardClient({ locale }: MakerDashboardClientPro
                   <Button 
                     variant="primary"
                     onClick={() => {
-                      alert(locale === 'ar' 
-                        ? 'ميزة إضافة المنتجات قيد التطوير. سيتم إضافتها قريباً.' 
-                        : locale === 'zh'
-                        ? '添加产品功能正在开发中。即将推出。'
-                        : 'Product creation feature is under development. Coming soon.');
+                      setEditingProduct(null);
+                      setShowAddProductForm(true);
                     }}
                   >
                     {locale === 'ar' ? 'إضافة منتج جديد' : locale === 'zh' ? '添加新产品' : 'Add New Product'}
@@ -586,11 +591,23 @@ export default function MakerDashboardClient({ locale }: MakerDashboardClientPro
                         </span>
                       </div>
                       <div className="mt-4 flex gap-2">
-                        <Button variant="text" className="text-sm">
-                          {locale === 'ar' ? 'تعديل' : 'Edit'}
-                        </Button>
-                        <Button variant="text" className="text-sm">
-                          {product.status === 'PUBLISHED' ? (locale === 'ar' ? 'إخفاء' : 'Hide') : (locale === 'ar' ? 'نشر' : 'Publish')}
+                        <Button 
+                          variant="text" 
+                          className="text-sm"
+                          onClick={() => {
+                            setEditingProduct({
+                              id: product.id,
+                              name: product.name,
+                              description: product.description || '',
+                              price: product.price,
+                              category: (product as { category?: string }).category,
+                              image_url: product.images?.[0]?.url || product.imageUrl,
+                              external_link: '',
+                            });
+                            setShowAddProductForm(true);
+                          }}
+                        >
+                          {locale === 'ar' ? 'تعديل' : locale === 'zh' ? '编辑' : 'Edit'}
                         </Button>
                       </div>
                     </div>
@@ -699,6 +716,23 @@ export default function MakerDashboardClient({ locale }: MakerDashboardClientPro
           </Card>
         )}
       </div>
+
+      {/* Add Product Form Modal */}
+      {showAddProductForm && (
+        <AddProductForm
+          locale={locale}
+          product={editingProduct}
+          onSuccess={() => {
+            setShowAddProductForm(false);
+            setEditingProduct(null);
+            fetchDashboardData();
+          }}
+          onCancel={() => {
+            setShowAddProductForm(false);
+            setEditingProduct(null);
+          }}
+        />
+      )}
     </div>
   );
 }

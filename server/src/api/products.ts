@@ -1,9 +1,49 @@
 import { Router, Request, Response } from 'express';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 import { prisma } from '../utils/prisma';
-import { authenticateToken, AuthRequest } from '../middleware/auth';
+import { authenticateToken, AuthRequest, requireRole } from '../middleware/auth';
 import { getCache, setCache, invalidateCachePattern } from '../lib/cache';
+import { uploadToGCS, isGCSConfigured } from '../lib/gcs';
+import { randomUUID } from 'crypto';
 
 const router = Router();
+
+// Configure multer for image uploads
+const uploadDir = path.join(process.cwd(), 'uploads', 'products');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Use memory storage if GCS is configured, otherwise use disk storage
+const storage = isGCSConfigured()
+  ? multer.memoryStorage()
+  : multer.diskStorage({
+      destination: (req, file, cb) => {
+        cb(null, uploadDir);
+      },
+      filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+        cb(null, `product-${uniqueSuffix}${path.extname(file.originalname)}`);
+      },
+    });
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB for product images
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif|webp/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed (jpeg, jpg, png, gif, webp)'));
+    }
+  },
+});
 
 // Get all products (with pagination and filters)
 router.get('/', async (req: Request, res: Response) => {
@@ -174,9 +214,156 @@ router.get('/makers/:makerId', async (req: Request, res: Response) => {
     `, userId, limit, skip);
 
     res.json({ products });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Get maker products error:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Create product (authenticated, MAKER role)
+router.post('/', authenticateToken, requireRole(['MAKER']), upload.single('image'), async (req: AuthRequest, res: Response) => {
+  try {
+    // Invalidate products cache
+    invalidateCachePattern('products:');
+
+    const { name, description, price, currency, category, external_link, stock } = req.body;
+
+    // Validation
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: 'Product name is required' });
+    }
+
+    if (!description || !description.trim()) {
+      return res.status(400).json({ error: 'Product description is required' });
+    }
+
+    const priceNum = price ? parseFloat(price) : null;
+    if (priceNum !== null && (isNaN(priceNum) || priceNum < 0)) {
+      return res.status(400).json({ error: 'Price must be a valid positive number' });
+    }
+
+    // Handle image upload
+    let imageUrl: string | null = null;
+    if (req.file) {
+      if (isGCSConfigured() && req.file.buffer) {
+        // Upload to GCS
+        imageUrl = await uploadToGCS(req.file.buffer, req.file.originalname, 'products');
+      } else if (req.file.path) {
+        // Fallback to local storage
+        imageUrl = `/uploads/products/${path.basename(req.file.path)}`;
+      }
+    }
+
+    // Create product
+    const product = await prisma.products.create({
+      data: {
+        id: randomUUID(),
+        name: name.trim(),
+        description: description.trim(),
+        price: priceNum,
+        category: category?.trim() || null,
+        image_url: imageUrl,
+        external_link: external_link?.trim() || '',
+        user_id: req.userId!,
+        created_at: new Date(),
+        updated_at: new Date(),
+      },
+    });
+
+    res.status(201).json({
+      success: true,
+      product,
+      message: 'Product created successfully',
+    });
+  } catch (error: unknown) {
+    console.error('Create product error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
+    res.status(500).json({ error: errorMessage });
+  }
+});
+
+// Update product (authenticated, MAKER role, owner only)
+router.put('/:id', authenticateToken, requireRole(['MAKER']), upload.single('image'), async (req: AuthRequest, res: Response) => {
+  try {
+    // Invalidate products cache
+    invalidateCachePattern('products:');
+
+    const { name, description, price, currency, category, external_link, stock } = req.body;
+    const productId = req.params.id;
+
+    // Check if product exists and belongs to the user
+    const existingProduct = await prisma.products.findUnique({
+      where: { id: productId },
+    });
+
+    if (!existingProduct) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
+    if (existingProduct.user_id !== req.userId) {
+      return res.status(403).json({ error: 'You do not have permission to update this product' });
+    }
+
+    // Validation
+    if (name !== undefined && (!name || !name.trim())) {
+      return res.status(400).json({ error: 'Product name cannot be empty' });
+    }
+
+    if (description !== undefined && (!description || !description.trim())) {
+      return res.status(400).json({ error: 'Product description cannot be empty' });
+    }
+
+    const priceNum = price !== undefined ? (price ? parseFloat(price) : null) : undefined;
+    if (priceNum !== undefined && priceNum !== null && (isNaN(priceNum) || priceNum < 0)) {
+      return res.status(400).json({ error: 'Price must be a valid positive number' });
+    }
+
+    // Handle image upload if new image provided
+    let imageUrl: string | undefined = undefined;
+    if (req.file) {
+      if (isGCSConfigured() && req.file.buffer) {
+        // Upload to GCS
+        imageUrl = await uploadToGCS(req.file.buffer, req.file.originalname, 'products');
+      } else if (req.file.path) {
+        // Fallback to local storage
+        imageUrl = `/uploads/products/${path.basename(req.file.path)}`;
+      }
+    }
+
+    // Update product
+    const updateData: {
+      name?: string;
+      description?: string;
+      price?: number | null;
+      category?: string | null;
+      external_link?: string;
+      image_url?: string | null;
+      updated_at: Date;
+    } = {
+      updated_at: new Date(),
+    };
+
+    if (name !== undefined) updateData.name = name.trim();
+    if (description !== undefined) updateData.description = description.trim();
+    if (priceNum !== undefined) updateData.price = priceNum;
+    if (category !== undefined) updateData.category = category?.trim() || null;
+    if (external_link !== undefined) updateData.external_link = external_link.trim();
+    if (imageUrl !== undefined) updateData.image_url = imageUrl;
+
+    const product = await prisma.products.update({
+      where: { id: productId },
+      data: updateData,
+    });
+
+    res.json({
+      success: true,
+      product,
+      message: 'Product updated successfully',
+    });
+  } catch (error: unknown) {
+    console.error('Update product error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
+    res.status(500).json({ error: errorMessage });
   }
 });
 
