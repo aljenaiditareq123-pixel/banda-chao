@@ -28,6 +28,22 @@ export function errorHandler(
 
   console.error('❌ Error occurred:', JSON.stringify(errorContext, null, 2));
 
+  // Send to Sentry
+  captureException(err as Error, {
+    request: {
+      method: req.method,
+      path: req.path,
+      query: req.query,
+      headers: {
+        'user-agent': req.get('user-agent'),
+        'content-type': req.get('content-type'),
+      },
+    },
+    user: {
+      id: (req as any).userId || 'anonymous',
+    },
+  });
+
   // Handle Prisma errors
   if (err instanceof PrismaClientKnownRequestError) {
     // Don't expose database errors to client

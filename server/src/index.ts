@@ -25,11 +25,16 @@ import maintenanceRoutes from './api/maintenance';
 import opsRoutes from './api/ops';
 import speechRoutes from './api/speech';
 import { errorHandler } from './middleware/errorHandler';
+import * as Sentry from '@sentry/node';
 import { requestLogger } from './middleware/requestLogger';
 import { prisma } from './utils/prisma';
 
 // Load environment variables
 dotenv.config();
+
+// Initialize Sentry BEFORE anything else
+import { initSentry } from './utils/sentry';
+initSentry();
 
 // Check environment variables
 import { checkBackendEnv } from './utils/env-check';
@@ -140,6 +145,11 @@ app.use('/api/v1/payments/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Sentry request handler (must be before all other middleware)
+app.use(Sentry.Handlers.requestHandler());
+// Sentry tracing handler
+app.use(Sentry.Handlers.tracingHandler());
+
 // Request Logger (development only)
 app.use(requestLogger);
 
@@ -198,6 +208,9 @@ app.use((req: Request, res: Response) => {
     code: 'NOT_FOUND',
   });
 });
+
+// Sentry error handler (must be before custom error handler)
+app.use(Sentry.Handlers.errorHandler());
 
 // Error handler (must be last)
 app.use(errorHandler);

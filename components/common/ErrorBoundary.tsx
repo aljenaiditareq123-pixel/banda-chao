@@ -1,6 +1,7 @@
 'use client';
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
+import * as Sentry from '@sentry/nextjs';
 import { maintenanceLogger } from '@/lib/maintenance-logger';
 
 interface Props {
@@ -44,6 +45,19 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    // Send to Sentry
+    Sentry.captureException(error, {
+      contexts: {
+        react: {
+          componentStack: errorInfo.componentStack,
+        },
+      },
+      tags: {
+        errorBoundary: true,
+        retryCount: this.state.retryCount,
+      },
+    });
+
     // Log error to maintenance system
     maintenanceLogger.log('react_error_boundary', {
       message: error.message,
@@ -159,4 +173,6 @@ export class ErrorBoundary extends Component<Props, State> {
     return this.props.children;
   }
 }
+
+
 
