@@ -11,7 +11,7 @@ if (GEMINI_API_KEY) {
   try {
     genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
     model = genAI.getGenerativeModel({
-      model: "gemini-1.5-pro",
+      model: "gemini-1.0-pro",
     });
   } catch (error) {
     console.warn("[FounderAI] Failed to initialize Gemini client:", error);
@@ -21,7 +21,7 @@ if (GEMINI_API_KEY) {
 }
 
 /**
- * Generate AI response using Gemini 1.5 Pro
+ * Generate AI response using Gemini 1.0 Pro
  * @param prompt - The full prompt to send to Gemini
  * @returns The generated text response
  * @throws Error if Gemini API is not available or if API call fails
@@ -42,7 +42,7 @@ export async function generateFounderAIResponse(prompt: string): Promise<string>
   }
 
   try {
-    console.log("[FounderAI] Sending request to Gemini 1.5 Pro...");
+    console.log("[FounderAI] Sending request to Gemini 1.0 Pro...");
     console.log("[FounderAI] Prompt length:", prompt.length, "characters");
     
     const result = await model.generateContent(prompt);
