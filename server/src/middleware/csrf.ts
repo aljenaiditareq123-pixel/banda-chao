@@ -40,7 +40,7 @@ export function verifyCsrfToken(req: Request, token: string): boolean {
   
   // Verify token format (basic check)
   // In production, implement proper token validation
-  return token && token.length === 64; // SHA256 hex = 64 chars
+  return !!(token && typeof token === 'string' && token.length === 64); // SHA256 hex = 64 chars
 }
 
 /**
