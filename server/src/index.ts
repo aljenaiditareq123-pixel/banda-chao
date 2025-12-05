@@ -28,6 +28,7 @@ import speechRoutes from './api/speech';
 import { errorHandler } from './middleware/errorHandler';
 import * as Sentry from '@sentry/node';
 import { requestLogger } from './middleware/requestLogger';
+import { csrfProtection, csrfTokenHandler } from './middleware/csrf';
 import { prisma } from './utils/prisma';
 
 // Load environment variables
