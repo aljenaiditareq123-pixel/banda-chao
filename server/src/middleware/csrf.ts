@@ -48,6 +48,10 @@ export function verifyCsrfToken(req: Request, token: string): boolean {
  * Protects all state-changing operations (POST, PUT, DELETE, PATCH)
  */
 export function csrfProtection(req: Request, res: Response, next: NextFunction) {
+  // Get full path (including base path if mounted)
+  const fullPath = req.path;
+  const originalUrl = req.originalUrl || req.url;
+  
   // Skip CSRF for safe methods
   const safeMethods = ['GET', 'HEAD', 'OPTIONS'];
   if (safeMethods.includes(req.method)) {
@@ -56,38 +60,32 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
 
   // Skip CSRF for public endpoints (login, register)
   const publicEndpoints = ['/api/v1/auth/login', '/api/v1/auth/register'];
-  if (publicEndpoints.some(endpoint => req.path.startsWith(endpoint))) {
+  if (publicEndpoints.some(endpoint => fullPath.startsWith(endpoint) || originalUrl.startsWith(endpoint))) {
     return next();
   }
 
   // Skip CSRF for webhooks (they have their own signature verification)
-  if (req.path.includes('/webhook')) {
+  if (fullPath.includes('/webhook') || originalUrl.includes('/webhook')) {
     return next();
   }
 
   // Skip CSRF for AI endpoints (they use JWT authentication which is sufficient)
   // AI endpoints are protected by authenticateToken middleware
   const aiEndpoints = ['/api/v1/ai/assistant', '/api/v1/ai/founder', '/api/v1/ai/pricing-suggestion', '/api/v1/ai/content-helper'];
-  if (aiEndpoints.some(endpoint => req.path.startsWith(endpoint))) {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[CSRF] Skipping CSRF check for AI endpoint:', req.path);
-    }
+  if (aiEndpoints.some(endpoint => fullPath.startsWith(endpoint) || originalUrl.startsWith(endpoint))) {
+    console.log('[CSRF] ✅ Skipping CSRF check for AI endpoint:', fullPath, originalUrl);
     return next();
   }
   
   // Also check if path matches /api/v1/ai/* pattern (more flexible)
-  if (req.path.startsWith('/api/v1/ai/')) {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[CSRF] Skipping CSRF check for AI endpoint (pattern match):', req.path);
-    }
+  if (fullPath.startsWith('/api/v1/ai/') || originalUrl.startsWith('/api/v1/ai/')) {
+    console.log('[CSRF] ✅ Skipping CSRF check for AI endpoint (pattern match):', fullPath, originalUrl);
     return next();
   }
 
   // Skip CSRF for Speech-to-Text endpoint (it uses JWT authentication)
-  if (req.path.startsWith('/api/v1/speech/')) {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[CSRF] Skipping CSRF check for Speech endpoint:', req.path);
-    }
+  if (fullPath.startsWith('/api/v1/speech/') || originalUrl.startsWith('/api/v1/speech/')) {
+    console.log('[CSRF] ✅ Skipping CSRF check for Speech endpoint:', fullPath, originalUrl);
     return next();
   }
 
@@ -95,18 +93,22 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
   const csrfToken = req.headers['x-csrf-token'] as string | undefined;
   const cookieToken = req.cookies?.['csrf-token'] as string | undefined;
 
-  // Log CSRF check details in development
-  if (process.env.NODE_ENV === 'development') {
-    console.log('[CSRF] Checking CSRF token for:', req.path, {
-      hasHeaderToken: !!csrfToken,
-      hasCookieToken: !!cookieToken,
-      tokensMatch: csrfToken === cookieToken,
-    });
-  }
+  // Log CSRF check details
+  console.log('[CSRF] ⚠️ Checking CSRF token for:', {
+    path: fullPath,
+    originalUrl: originalUrl,
+    method: req.method,
+    hasHeaderToken: !!csrfToken,
+    hasCookieToken: !!cookieToken,
+    tokensMatch: csrfToken === cookieToken,
+  });
 
   // Verify token
   if (!csrfToken || !cookieToken || csrfToken !== cookieToken) {
-    console.warn('[CSRF] CSRF token validation failed for:', req.path, {
+    console.warn('[CSRF] ❌ CSRF token validation failed for:', {
+      path: fullPath,
+      originalUrl: originalUrl,
+      method: req.method,
       hasHeaderToken: !!csrfToken,
       hasCookieToken: !!cookieToken,
       tokensMatch: csrfToken === cookieToken,
@@ -116,12 +118,15 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
       message: 'CSRF token validation failed',
       code: 'CSRF_ERROR',
       details: process.env.NODE_ENV === 'development' ? {
-        path: req.path,
+        path: fullPath,
+        originalUrl: originalUrl,
         hasHeaderToken: !!csrfToken,
         hasCookieToken: !!cookieToken,
       } : undefined,
     });
   }
+  
+  console.log('[CSRF] ✅ CSRF token validated successfully for:', fullPath);
 
   // Verify token format
   if (!verifyCsrfToken(req, csrfToken)) {
