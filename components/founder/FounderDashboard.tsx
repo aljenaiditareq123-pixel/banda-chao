@@ -60,7 +60,7 @@ export default function FounderDashboard() {
             </div>
             <div className="flex gap-3">
               <Link href="/founder">
-                <Button variant="outline" className="text-sm">
+                <Button variant="secondary" className="text-sm">
                   لوحة التحكم الرئيسية
                 </Button>
               </Link>

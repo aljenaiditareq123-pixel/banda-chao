@@ -68,11 +68,12 @@ export default function VideoRecorder({ locale, type, onSuccess, onCancel }: Vid
         }
       };
 
+      const startTime = Date.now();
       mediaRecorder.onstop = () => {
         const blob = new Blob(chunksRef.current, { type: 'video/webm' });
         const url = URL.createObjectURL(blob);
         setRecordedVideo(url);
-        setDuration(Math.floor((Date.now() - (mediaRecorderRef.current?.startTime || Date.now())) / 1000));
+        setDuration(Math.floor((Date.now() - startTime) / 1000));
       };
 
       mediaRecorder.start();
@@ -250,15 +251,15 @@ export default function VideoRecorder({ locale, type, onSuccess, onCancel }: Vid
               </Button>
             ) : (
               <Button
-                variant="danger"
+                variant="primary"
                 onClick={stopRecording}
-                className="flex-1"
+                className="flex-1 bg-red-600 hover:bg-red-700"
               >
                 {t.stopRecording}
               </Button>
             )}
             {onCancel && (
-              <Button variant="outline" onClick={onCancel}>
+              <Button variant="secondary" onClick={onCancel}>
                 {t.cancel}
               </Button>
             )}
@@ -312,11 +313,11 @@ export default function VideoRecorder({ locale, type, onSuccess, onCancel }: Vid
             >
               {isUploading ? (locale === 'ar' ? 'جاري الرفع...' : 'Uploading...') : t.upload}
             </Button>
-            <Button variant="outline" onClick={handleRetake}>
+            <Button variant="secondary" onClick={handleRetake}>
               {t.retake}
             </Button>
             {onCancel && (
-              <Button variant="outline" onClick={onCancel}>
+              <Button variant="secondary" onClick={onCancel}>
                 {t.cancel}
               </Button>
             )}

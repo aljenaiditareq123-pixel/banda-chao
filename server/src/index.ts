@@ -14,6 +14,7 @@ import makerRoutes from './api/makers';
 import productRoutes from './api/products';
 import videoRoutes from './api/videos';
 import postRoutes from './api/posts';
+import likeRoutes from './api/likes';
 import commentRoutes from './api/comments';
 import aiRoutes from './api/ai';
 import paymentRoutes from './api/payments';
@@ -26,7 +27,6 @@ import maintenanceRoutes from './api/maintenance';
 import opsRoutes from './api/ops';
 import speechRoutes from './api/speech';
 import { errorHandler } from './middleware/errorHandler';
-import * as Sentry from '@sentry/node';
 import { requestLogger } from './middleware/requestLogger';
 import { authenticateToken } from './middleware/auth';
 import { csrfProtection, csrfTokenHandler, getCsrfToken } from './middleware/csrf';
@@ -35,7 +35,7 @@ import { prisma } from './utils/prisma';
 // Load environment variables
 dotenv.config();
 
-// Initialize Sentry BEFORE anything else
+// Initialize Sentry BEFORE anything else (if available)
 import { initSentry } from './utils/sentry';
 initSentry();
 
@@ -196,10 +196,14 @@ app.use(csrfTokenHandler);
 // CSRF Protection (for state-changing operations)
 app.use(csrfProtection);
 
-// Sentry request handler (must be before all other middleware)
-app.use(Sentry.Handlers.requestHandler());
-// Sentry tracing handler
-app.use(Sentry.Handlers.tracingHandler());
+// Sentry request handler (if available)
+try {
+  const Sentry = require('@sentry/node');
+  app.use(Sentry.Handlers.requestHandler());
+  app.use(Sentry.Handlers.tracingHandler());
+} catch (e) {
+  // Sentry not installed - skip
+}
 
 // Request Logger (development only)
 app.use(requestLogger);
@@ -244,6 +248,7 @@ app.use('/api/v1/makers', makerRoutes);
 app.use('/api/v1/products', productRoutes);
 app.use('/api/v1/videos', videoRoutes);
 app.use('/api/v1/posts', postRoutes);
+app.use('/api/v1/likes', likeRoutes);
 app.use('/api/v1/comments', commentRoutes);
 app.use('/api/v1/ai', aiLimiter, aiRoutes);
 app.use('/api/v1/payments', paymentRoutes);
@@ -265,8 +270,13 @@ app.use((req: Request, res: Response) => {
   });
 });
 
-// Sentry error handler (must be before custom error handler)
-app.use(Sentry.Handlers.errorHandler());
+// Sentry error handler (if available)
+try {
+  const Sentry = require('@sentry/node');
+  app.use(Sentry.Handlers.errorHandler());
+} catch (e) {
+  // Sentry not installed - skip
+}
 
 // Error handler (must be last)
 app.use(errorHandler);

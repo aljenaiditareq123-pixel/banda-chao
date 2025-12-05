@@ -9,6 +9,7 @@ import Card from '@/components/common/Card';
 import Button from '@/components/Button';
 import Link from 'next/link';
 import { formatCurrency } from '@/lib/formatCurrency';
+import VideoRecorder from '@/components/maker/VideoRecorder';
 
 interface MakerDashboardClientProps {
   locale: string;

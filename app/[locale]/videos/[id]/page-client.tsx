@@ -1,10 +1,15 @@
 'use client';
 
+import { useState } from 'react';
 import { Grid, GridItem } from '@/components/Grid';
 import VideoCard from '@/components/cards/VideoCard';
 import Link from 'next/link';
 import Button from '@/components/Button';
 import EmptyState from '@/components/common/EmptyState';
+import LikeButton from '@/components/social/LikeButton';
+import CommentList from '@/components/social/CommentList';
+import CommentForm from '@/components/social/CommentForm';
+import { useAuth } from '@/hooks/useAuth';
 
 interface VideoDetailClientProps {
   locale: string;
@@ -13,6 +18,9 @@ interface VideoDetailClientProps {
 }
 
 export default function VideoDetailClient({ locale, video, relatedVideos }: VideoDetailClientProps) {
+  const { user } = useAuth();
+  const [showComments, setShowComments] = useState(false);
+
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -51,9 +59,15 @@ export default function VideoDetailClient({ locale, video, relatedVideos }: Vide
                     {video.description}
                   </p>
                 )}
-                <div className="flex items-center gap-6 text-sm text-gray-600">
+                <div className="flex items-center gap-6 text-sm text-gray-600 mb-4">
                   <span>👁️ {video.viewsCount?.toLocaleString() || 0}</span>
-                  <span>❤️ {video.likesCount || video._count?.videoLikes || 0}</span>
+                  <LikeButton
+                    targetType="VIDEO"
+                    targetId={video.id}
+                    initialLikesCount={video.likesCount || video._count?.videoLikes || 0}
+                    locale={locale}
+                    showCount={true}
+                  />
                   <span>⏱️ {formatDuration(video.duration)}</span>
                   {video.type && (
                     <span className="px-2 py-1 bg-red-50 text-red-600 rounded text-xs font-medium">
@@ -61,6 +75,49 @@ export default function VideoDetailClient({ locale, video, relatedVideos }: Vide
                     </span>
                   )}
                 </div>
+                <div className="flex items-center gap-4 pt-4 border-t border-gray-100">
+                  <button
+                    onClick={() => setShowComments(!showComments)}
+                    className="flex items-center gap-2 text-gray-500 hover:text-primary transition-colors"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                      />
+                    </svg>
+                    <span className="text-sm">
+                      {locale === 'ar' ? 'التعليقات' : locale === 'zh' ? '评论' : 'Comments'}
+                    </span>
+                  </button>
+                </div>
+                {/* Comments Section */}
+                {showComments && (
+                  <div className="mt-4 pt-4 border-t border-gray-100">
+                    <CommentList
+                      targetType="VIDEO"
+                      targetId={video.id}
+                      locale={locale}
+                    />
+                    {user && (
+                      <div className="mt-4">
+                        <CommentForm
+                          targetType="VIDEO"
+                          targetId={video.id}
+                          locale={locale}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -103,14 +160,25 @@ export default function VideoDetailClient({ locale, video, relatedVideos }: Vide
               )}
               
               <div className="space-y-3">
-                <Button variant="primary" className="w-full">
-                  ❤️ {locale === 'ar' ? 'إعجاب' : 'Like'}
-                </Button>
-                <Button variant="secondary" className="w-full">
-                  💬 {locale === 'ar' ? 'تعليق' : 'Comment'}
+                <div className="flex items-center justify-center">
+                  <LikeButton
+                    targetType="VIDEO"
+                    targetId={video.id}
+                    initialLikesCount={video.likesCount || video._count?.videoLikes || 0}
+                    locale={locale}
+                    size="lg"
+                    showCount={true}
+                  />
+                </div>
+                <Button 
+                  variant="secondary" 
+                  className="w-full"
+                  onClick={() => setShowComments(!showComments)}
+                >
+                  💬 {locale === 'ar' ? 'تعليق' : locale === 'zh' ? '评论' : 'Comment'}
                 </Button>
                 <Button variant="text" className="w-full">
-                  🔗 {locale === 'ar' ? 'مشاركة' : 'Share'}
+                  🔗 {locale === 'ar' ? 'مشاركة' : locale === 'zh' ? '分享' : 'Share'}
                 </Button>
               </div>
             </div>

@@ -380,6 +380,10 @@ export const postsAPI = {
     const response = await apiClient.get(`/posts/${id}`);
     return response.data;
   },
+  create: async (data: { content: string; images?: string[] }) => {
+    const response = await apiClient.post('/posts', data);
+    return response.data;
+  },
   getComments: async (postId: string, params?: { page?: number; limit?: number }) => {
     const response = await apiClient.get(`/posts/${postId}/comments`, { params });
     return response.data;
@@ -399,6 +403,23 @@ export const commentsAPI = {
   },
   create: async (data: { targetType: 'POST' | 'VIDEO' | 'PRODUCT'; targetId: string; content: string }) => {
     const response = await apiClient.post('/comments', data);
+    return response.data;
+  },
+};
+
+// ============================================
+// Likes API
+// ============================================
+
+export const likesAPI = {
+  toggle: async (data: { targetType: 'POST' | 'PRODUCT' | 'VIDEO' | 'COMMENT'; targetId: string }) => {
+    const response = await apiClient.post('/likes/toggle', data);
+    return response.data;
+  },
+  getStatus: async (targetType: 'POST' | 'PRODUCT' | 'VIDEO' | 'COMMENT', targetId: string) => {
+    const response = await apiClient.get('/likes/status', {
+      params: { targetType, targetId },
+    });
     return response.data;
   },
 };

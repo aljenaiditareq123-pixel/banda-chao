@@ -128,6 +128,12 @@ export default function Navbar({ locale }: NavbarProps) {
               {locale === 'ar' ? 'الفيديوهات' : locale === 'zh' ? '视频' : 'Videos'}
             </Link>
             <Link 
+              href={`/${locale}/posts`} 
+              className="text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              {locale === 'ar' ? 'المنشورات' : locale === 'zh' ? '帖子' : 'Posts'}
+            </Link>
+            <Link 
               href={`/${locale}/about`} 
               className="text-gray-600 hover:text-gray-900 transition-colors"
             >
@@ -189,10 +195,92 @@ export default function Navbar({ locale }: NavbarProps) {
               </Link>
             </div>
             <NotificationBell />
+            {/* Cart Icon */}
+            <CartIcon locale={locale} />
           </div>
         </div>
       </div>
     </nav>
+  );
+}
+
+// Cart Icon Component
+function CartIcon({ locale }: { locale: string }) {
+  const [mounted, setMounted] = useState(false);
+  const [itemCount, setItemCount] = useState(0);
+
+  useEffect(() => {
+    setMounted(true);
+    const updateCartCount = () => {
+      if (typeof window !== 'undefined') {
+        const cart = localStorage.getItem('banda_chao_cart');
+        if (cart) {
+          try {
+            const items = JSON.parse(cart);
+            const count = items.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0);
+            setItemCount(count);
+          } catch (err) {
+            setItemCount(0);
+          }
+        }
+      }
+    };
+
+    updateCartCount();
+    // Listen for storage changes
+    window.addEventListener('storage', updateCartCount);
+    // Also listen for custom cart update events
+    window.addEventListener('cartUpdated', updateCartCount);
+
+    return () => {
+      window.removeEventListener('storage', updateCartCount);
+      window.removeEventListener('cartUpdated', updateCartCount);
+    };
+  }, []);
+
+  if (!mounted) {
+    return (
+      <Link href={`/${locale}/cart`} className="relative">
+        <svg
+          className="w-6 h-6 text-gray-600 hover:text-gray-900 transition-colors"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+          />
+        </svg>
+      </Link>
+    );
+  }
+
+  return (
+    <Link href={`/${locale}/cart`} className="relative">
+      <svg
+        className="w-6 h-6 text-gray-600 hover:text-gray-900 transition-colors"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+        />
+      </svg>
+      {itemCount > 0 && (
+        <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+          {itemCount > 9 ? '9+' : itemCount}
+        </span>
+      )}
+    </Link>
   );
 }
 

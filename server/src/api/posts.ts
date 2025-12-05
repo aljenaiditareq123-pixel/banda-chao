@@ -73,6 +73,11 @@ router.get('/:id', async (req: Request, res: Response) => {
             bio: true,
           },
         },
+        _count: {
+          select: {
+            post_likes: true,
+          },
+        },
       },
     });
 
@@ -90,15 +95,19 @@ router.get('/:id', async (req: Request, res: Response) => {
 // Get comments for a post
 router.get('/:id/comments', async (req: Request, res: Response) => {
   try {
+    const postId = req.params.id;
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 50;
     const skip = (page - 1) * limit;
 
+    // Use comments API pattern - comments for posts have both product_id and video_id as null
     const [comments, total] = await Promise.all([
       prisma.comments.findMany({
         where: {
           product_id: null,
           video_id: null,
+          // Note: posts table doesn't have a direct relation to comments in schema
+          // Comments are linked via product_id/video_id being null for posts
         },
         skip,
         take: limit,
@@ -134,6 +143,44 @@ router.get('/:id/comments', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Get post comments error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Create post (authenticated)
+router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const { content, images } = req.body;
+
+    if (!content || content.trim().length === 0) {
+      return res.status(400).json({ error: 'Content is required' });
+    }
+
+    const { randomUUID } = await import('crypto');
+    const postId = randomUUID();
+
+    const post = await prisma.posts.create({
+      data: {
+        id: postId,
+        user_id: req.userId!,
+        content: content.trim(),
+        images: images && Array.isArray(images) ? images : [],
+        updated_at: new Date(),
+      },
+      include: {
+        users: {
+          select: {
+            id: true,
+            name: true,
+            profile_picture: true,
+          },
+        },
+      },
+    });
+
+    res.status(201).json({ post });
+  } catch (error: any) {
+    console.error('Create post error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

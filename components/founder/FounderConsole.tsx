@@ -170,7 +170,7 @@ export default function FounderConsole() {
             </div>
             <div className="flex gap-3">
               <Link href="/founder/dashboard">
-                <Button variant="outline" className="text-sm">
+                <Button variant="secondary" className="text-sm">
                   لوحة العمليات
                 </Button>
               </Link>

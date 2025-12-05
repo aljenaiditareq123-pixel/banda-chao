@@ -324,6 +324,7 @@ router.post('/', authenticateToken, upload.single('video'), async (req: AuthRequ
         duration: duration ? parseInt(duration) : 0,
         views: 0,
         likes: 0,
+        updated_at: new Date(),
       },
     });
 

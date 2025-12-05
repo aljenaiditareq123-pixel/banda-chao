@@ -18,12 +18,12 @@ export default function FounderAssistantPageClient() {
         </div>
         <div className="flex gap-3">
           <Link href="/founder">
-            <Button variant="outline" className="text-sm">
+            <Button variant="secondary" className="text-sm">
               لوحة التحكم الرئيسية
             </Button>
           </Link>
           <Link href="/founder/dashboard">
-            <Button variant="outline" className="text-sm">
+            <Button variant="secondary" className="text-sm">
               لوحة العمليات
             </Button>
           </Link>

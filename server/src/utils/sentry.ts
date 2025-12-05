@@ -1,9 +1,21 @@
 /**
  * Sentry Configuration for Backend
  * Error tracking and monitoring
+ * 
+ * NOTE: Sentry is conditionally loaded - if @sentry/node is not installed,
+ * this file will not cause build errors.
  */
 
-import * as Sentry from '@sentry/node';
+let Sentry: any = null;
+let isSentryAvailable = false;
+
+try {
+  Sentry = require('@sentry/node');
+  isSentryAvailable = true;
+} catch (e) {
+  // Sentry not installed - use no-op functions
+  isSentryAvailable = false;
+}
 
 // Profiling integration (optional - only if package is installed)
 let nodeProfilingIntegration: (() => any) | null = null;
@@ -20,6 +32,11 @@ try {
  * Initialize Sentry for Backend
  */
 export function initSentry() {
+  if (!isSentryAvailable || !Sentry) {
+    console.warn('[Sentry] @sentry/node is not installed. Error tracking is disabled.');
+    return;
+  }
+
   const dsn = process.env.SENTRY_DSN;
   const environment = process.env.NODE_ENV || 'development';
 
@@ -41,7 +58,7 @@ export function initSentry() {
     // Release tracking
     release: process.env.SENTRY_RELEASE || undefined,
     // Filter sensitive data
-    beforeSend(event, hint) {
+    beforeSend(event: any, hint: any) {
       // Remove sensitive data from error events
       if (event.request) {
         // Remove sensitive headers
@@ -70,36 +87,68 @@ export function initSentry() {
  * Capture exception manually
  */
 export function captureException(error: Error, context?: Record<string, any>) {
-  if (context) {
-    Sentry.withScope((scope) => {
-      Object.keys(context).forEach((key) => {
-        scope.setContext(key, context[key]);
+  if (!isSentryAvailable || !Sentry) {
+    return; // No-op if Sentry not available
+  }
+
+  try {
+    if (context) {
+      Sentry.withScope((scope: any) => {
+        Object.keys(context).forEach((key) => {
+          scope.setContext(key, context[key]);
+        });
+        Sentry.captureException(error);
       });
+    } else {
       Sentry.captureException(error);
-    });
-  } else {
-    Sentry.captureException(error);
+    }
+  } catch (e) {
+    console.error('[Sentry] captureException failed:', e);
   }
 }
 
 /**
  * Capture message manually
  */
-export function captureMessage(message: string, level: Sentry.SeverityLevel = 'info') {
-  Sentry.captureMessage(message, level);
+export function captureMessage(message: string, level: 'info' | 'warning' | 'error' = 'info') {
+  if (!isSentryAvailable || !Sentry) {
+    return; // No-op if Sentry not available
+  }
+
+  try {
+    Sentry.captureMessage(message, level);
+  } catch (e) {
+    console.error('[Sentry] captureMessage failed:', e);
+  }
 }
 
 /**
  * Set user context
  */
 export function setUser(user: { id?: string; email?: string; username?: string }) {
-  Sentry.setUser(user);
+  if (!isSentryAvailable || !Sentry) {
+    return; // No-op if Sentry not available
+  }
+
+  try {
+    Sentry.setUser(user);
+  } catch (e) {
+    console.error('[Sentry] setUser failed:', e);
+  }
 }
 
 /**
  * Clear user context
  */
 export function clearUser() {
-  Sentry.setUser(null);
+  if (!isSentryAvailable || !Sentry) {
+    return; // No-op if Sentry not available
+  }
+
+  try {
+    Sentry.setUser(null);
+  } catch (e) {
+    console.error('[Sentry] clearUser failed:', e);
+  }
 }
 
