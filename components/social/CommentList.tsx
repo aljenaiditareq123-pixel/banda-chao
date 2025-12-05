@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { commentsAPI } from '@/lib/api';
 import LikeButton from './LikeButton';
 
@@ -33,11 +33,7 @@ export default function CommentList({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadComments();
-  }, [targetType, targetId]);
-
-  const loadComments = async () => {
+  const loadComments = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -54,7 +50,11 @@ export default function CommentList({
     } finally {
       setLoading(false);
     }
-  };
+  }, [targetType, targetId, onCommentsCountChange]);
+
+  useEffect(() => {
+    loadComments();
+  }, [loadComments]);
 
   const formatDate = (date: string | Date) => {
     const d = new Date(date);

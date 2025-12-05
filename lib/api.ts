@@ -296,6 +296,12 @@ export const makersAPI = {
     city?: string;
     languages?: string[];
     socialLinks?: any;
+    wechatLink?: string;
+    instagramLink?: string;
+    twitterLink?: string;
+    facebookLink?: string;
+    paypalLink?: string;
+    phone?: string;
   }) => {
     const response = await apiClient.post('/makers', data);
     return response.data;

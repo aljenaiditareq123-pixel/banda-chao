@@ -17,13 +17,280 @@ interface MakerDashboardClientProps {
 
 type Tab = 'overview' | 'products' | 'videos' | 'profile';
 
+interface Maker {
+  id?: string;
+  displayName?: string;
+  name?: string;
+  bio?: string;
+  country?: string;
+  city?: string;
+  timeZone?: string;
+  languages?: string[];
+  socialLinks?: Record<string, string>;
+  wechatLink?: string;
+  instagramLink?: string;
+  twitterLink?: string;
+  facebookLink?: string;
+  paypalLink?: string;
+  phone?: string;
+}
+
+interface ProfileFormProps {
+  maker: Maker;
+  locale: string;
+  onSave: () => void;
+}
+
+function ProfileForm({ maker, locale, onSave }: ProfileFormProps) {
+  const [displayName, setDisplayName] = useState(maker.displayName || maker.name || '');
+  const [bio, setBio] = useState(maker.bio || '');
+  const [country, setCountry] = useState(maker.country || '');
+  const [city, setCity] = useState(maker.city || '');
+  const [timeZone, setTimeZone] = useState(maker.timeZone || '');
+  const [wechatLink, setWechatLink] = useState(maker.wechatLink || '');
+  const [instagramLink, setInstagramLink] = useState(maker.instagramLink || '');
+  const [twitterLink, setTwitterLink] = useState(maker.twitterLink || '');
+  const [facebookLink, setFacebookLink] = useState(maker.facebookLink || '');
+  const [paypalLink, setPaypalLink] = useState(maker.paypalLink || '');
+  const [phone, setPhone] = useState(maker.phone || '');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      setError(null);
+      setSuccess(false);
+      
+      const response = await makersAPI.createOrUpdate({
+        displayName,
+        bio,
+        country,
+        city,
+        languages: maker.languages || [],
+        socialLinks: maker.socialLinks || {},
+        wechatLink: wechatLink || undefined,
+        instagramLink: instagramLink || undefined,
+        twitterLink: twitterLink || undefined,
+        facebookLink: facebookLink || undefined,
+        paypalLink: paypalLink || undefined,
+        phone: phone || undefined,
+      });
+
+      if (response.success) {
+        setSuccess(true);
+        setTimeout(() => {
+          setSuccess(false);
+          onSave();
+        }, 1500);
+      } else {
+        setError(response.error || (locale === 'ar' ? 'فشل حفظ التغييرات' : 'Failed to save changes'));
+      }
+    } catch (err: any) {
+      console.error('Error saving profile:', err);
+      setError(err.message || (locale === 'ar' ? 'حدث خطأ أثناء الحفظ' : 'Error saving profile'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+          <p className="text-sm text-red-800">{error}</p>
+        </div>
+      )}
+      {success && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+          <p className="text-sm text-green-800">
+            {locale === 'ar' ? 'تم حفظ التغييرات بنجاح' : locale === 'zh' ? '保存成功' : 'Changes saved successfully'}
+          </p>
+        </div>
+      )}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          {locale === 'ar' ? 'الاسم المعروض' : 'Display Name'}
+        </label>
+        <input
+          type="text"
+          value={displayName}
+          onChange={(e) => setDisplayName(e.target.value)}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          {locale === 'ar' ? 'نبذة' : 'Bio'}
+        </label>
+        <textarea
+          value={bio}
+          onChange={(e) => setBio(e.target.value)}
+          rows={4}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            {locale === 'ar' ? 'البلد' : 'Country'}
+          </label>
+          <input
+            type="text"
+            value={country}
+            onChange={(e) => setCountry(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            {locale === 'ar' ? 'المدينة' : 'City'}
+          </label>
+          <input
+            type="text"
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+          />
+        </div>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          {locale === 'ar' ? 'المنطقة الزمنية' : 'Time Zone'}
+        </label>
+        <input
+          type="text"
+          value={timeZone}
+          onChange={(e) => setTimeZone(e.target.value)}
+          placeholder={locale === 'ar' ? 'مثال: Asia/Dubai' : 'e.g., Asia/Dubai'}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+        />
+      </div>
+
+      {/* Social Links Section */}
+      <div className="pt-4 border-t border-gray-200">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          {locale === 'ar' ? 'وسائل التواصل' : locale === 'zh' ? '社交媒体' : 'Social Media & Contact'}
+        </h3>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {locale === 'ar' ? 'WeChat' : 'WeChat'} {locale === 'ar' ? '(اختياري)' : '(optional)'}
+            </label>
+            <input
+              type="url"
+              value={wechatLink}
+              onChange={(e) => setWechatLink(e.target.value)}
+              placeholder={locale === 'ar' ? 'رابط WeChat أو رقم الهاتف' : 'WeChat link or phone number'}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {locale === 'ar' ? 'Instagram' : 'Instagram'} {locale === 'ar' ? '(اختياري)' : '(optional)'}
+            </label>
+            <input
+              type="url"
+              value={instagramLink}
+              onChange={(e) => setInstagramLink(e.target.value)}
+              placeholder="https://instagram.com/..."
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {locale === 'ar' ? 'Twitter/X' : 'Twitter/X'} {locale === 'ar' ? '(اختياري)' : '(optional)'}
+            </label>
+            <input
+              type="url"
+              value={twitterLink}
+              onChange={(e) => setTwitterLink(e.target.value)}
+              placeholder="https://twitter.com/..."
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {locale === 'ar' ? 'Facebook' : 'Facebook'} {locale === 'ar' ? '(اختياري)' : '(optional)'}
+            </label>
+            <input
+              type="url"
+              value={facebookLink}
+              onChange={(e) => setFacebookLink(e.target.value)}
+              placeholder="https://facebook.com/..."
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {locale === 'ar' ? 'PayPal' : 'PayPal'} {locale === 'ar' ? '(اختياري)' : '(optional)'}
+            </label>
+            <input
+              type="url"
+              value={paypalLink}
+              onChange={(e) => setPaypalLink(e.target.value)}
+              placeholder="https://paypal.me/..."
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {locale === 'ar' ? 'رقم الهاتف' : locale === 'zh' ? '电话号码' : 'Phone Number'} {locale === 'ar' ? '(اختياري)' : '(optional)'}
+            </label>
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder={locale === 'ar' ? '+971 50 123 4567' : '+971 50 123 4567'}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+            />
+          </div>
+        </div>
+      </div>
+
+      <Button 
+        variant="primary" 
+        className="mt-4"
+        onClick={handleSave}
+        disabled={saving}
+      >
+        {saving 
+          ? (locale === 'ar' ? 'جاري الحفظ...' : locale === 'zh' ? '保存中...' : 'Saving...')
+          : (locale === 'ar' ? 'حفظ التغييرات' : locale === 'zh' ? '保存更改' : 'Save Changes')}
+      </Button>
+    </div>
+  );
+}
+
 export default function MakerDashboardClient({ locale }: MakerDashboardClientProps) {
   const { user, loading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('overview');
-  const [maker, setMaker] = useState<any>(null);
-  const [products, setProducts] = useState<any[]>([]);
-  const [videos, setVideos] = useState<any[]>([]);
-  const [orders, setOrders] = useState<any[]>([]);
+  const [maker, setMaker] = useState<Maker | null>(null);
+  const [products, setProducts] = useState<Array<{
+    id: string;
+    name: string;
+    description?: string;
+    price: number;
+    currency?: string;
+    status?: string;
+    images?: Array<{ url: string }>;
+    imageUrl?: string;
+  }>>([]);
+  const [videos, setVideos] = useState<Array<{
+    id: string;
+    title: string;
+    description?: string;
+    viewsCount?: number;
+    type?: string;
+  }>>([]);
+  const [orders, setOrders] = useState<Array<{
+    id: string;
+    totalPrice: number;
+    currency?: string;
+    status: string;
+    makerRevenue?: number;
+  }>>([]);
   const [stats, setStats] = useState({
     totalProducts: 0,
     totalVideos: 0,
@@ -75,9 +342,9 @@ export default function MakerDashboardClient({ locale }: MakerDashboardClientPro
       setOrders(ordersRes.orders || []);
 
       // Calculate stats
-      const totalEarnings = (ordersRes.orders || []).reduce((sum: number, order: any) => {
+      const totalEarnings = (ordersRes.orders || []).reduce((sum: number, order: { status: string; makerRevenue?: number; totalPrice?: number }) => {
         if (order.status === 'PAID') {
-          return sum + (order.makerRevenue || order.totalPrice * 0.9); // 90% to maker (10% commission)
+          return sum + (order.makerRevenue || (order.totalPrice || 0) * 0.9); // 90% to maker (10% commission)
         }
         return sum;
       }, 0);
@@ -222,7 +489,7 @@ export default function MakerDashboardClient({ locale }: MakerDashboardClientPro
                   </p>
                 ) : (
                   <div className="space-y-4">
-                    {orders.slice(0, 5).map((order: any) => (
+                    {orders.slice(0, 5).map((order) => (
                       <div key={order.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                         <div>
                           <p className="font-medium text-gray-900">Order #{order.id.slice(0, 8)}</p>
@@ -256,24 +523,50 @@ export default function MakerDashboardClient({ locale }: MakerDashboardClientPro
               <h2 className="text-xl font-bold text-gray-900">
                 {locale === 'ar' ? 'منتجاتي' : 'My Products'}
               </h2>
-              <Button variant="primary">
+              <Button 
+                variant="primary"
+                onClick={() => {
+                  alert(locale === 'ar' 
+                    ? 'ميزة إضافة المنتجات قيد التطوير. سيتم إضافتها قريباً.' 
+                    : locale === 'zh'
+                    ? '添加产品功能正在开发中。即将推出。'
+                    : 'Product creation feature is under development. Coming soon.');
+                }}
+              >
                 {locale === 'ar' ? 'إضافة منتج جديد' : 'Add New Product'}
               </Button>
             </div>
             {products.length === 0 ? (
               <Card>
                 <div className="p-12 text-center">
-                  <p className="text-gray-500 mb-4">
-                    {locale === 'ar' ? 'لا توجد منتجات بعد' : 'No products yet'}
+                  <div className="text-6xl mb-4">🛍️</div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    {locale === 'ar' ? 'لا توجد منتجات بعد' : locale === 'zh' ? '还没有产品' : 'No products yet'}
+                  </h3>
+                  <p className="text-gray-500 mb-6">
+                    {locale === 'ar' 
+                      ? 'ابدأ بإنشاء منتجك الأول لعرضه للمشترين حول العالم'
+                      : locale === 'zh'
+                      ? '创建您的第一个产品，向全球买家展示'
+                      : 'Start by creating your first product to showcase to buyers worldwide'}
                   </p>
-                  <Button variant="primary">
-                    {locale === 'ar' ? 'إضافة منتج جديد' : 'Add New Product'}
+                  <Button 
+                    variant="primary"
+                    onClick={() => {
+                      alert(locale === 'ar' 
+                        ? 'ميزة إضافة المنتجات قيد التطوير. سيتم إضافتها قريباً.' 
+                        : locale === 'zh'
+                        ? '添加产品功能正在开发中。即将推出。'
+                        : 'Product creation feature is under development. Coming soon.');
+                    }}
+                  >
+                    {locale === 'ar' ? 'إضافة منتج جديد' : locale === 'zh' ? '添加新产品' : 'Add New Product'}
                   </Button>
                 </div>
               </Card>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {products.map((product: any) => (
+                {products.map((product) => (
                   <Card key={product.id}>
                     <div className="p-6">
                       <h3 className="font-bold text-gray-900 mb-2">{product.name}</h3>
@@ -345,17 +638,36 @@ export default function MakerDashboardClient({ locale }: MakerDashboardClientPro
                 {videos.length === 0 ? (
               <Card>
                 <div className="p-12 text-center">
-                  <p className="text-gray-500 mb-4">
-                    {locale === 'ar' ? 'لا توجد فيديوهات بعد' : 'No videos yet'}
+                  <div className="text-6xl mb-4">🎬</div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    {locale === 'ar' ? 'لا توجد فيديوهات بعد' : locale === 'zh' ? '还没有视频' : 'No videos yet'}
+                  </h3>
+                  <p className="text-gray-500 mb-6">
+                    {locale === 'ar' 
+                      ? 'شارك قصتك ومنتجاتك مع المشترين من خلال الفيديو'
+                      : locale === 'zh'
+                      ? '通过视频与买家分享您的故事和产品'
+                      : 'Share your story and products with buyers through video'}
                   </p>
-                  <Button variant="primary">
-                    {locale === 'ar' ? 'إضافة فيديو جديد' : 'Add New Video'}
-                  </Button>
+                  <div className="flex gap-3 justify-center">
+                    <Button
+                      variant="primary"
+                      onClick={() => setShowVideoRecorder({ show: true, type: 'SHORT' })}
+                    >
+                      {locale === 'ar' ? 'فيديو قصير' : locale === 'zh' ? '短视频' : 'Short Video'}
+                    </Button>
+                    <Button
+                      variant="primary"
+                      onClick={() => setShowVideoRecorder({ show: true, type: 'LONG' })}
+                    >
+                      {locale === 'ar' ? 'فيديو طويل' : locale === 'zh' ? '长视频' : 'Long Video'}
+                    </Button>
+                  </div>
                 </div>
               </Card>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {videos.map((video: any) => (
+                {videos.map((video) => (
                   <Card key={video.id}>
                     <div className="p-6">
                       <h3 className="font-bold text-gray-900 mb-2">{video.title}</h3>
@@ -382,64 +694,7 @@ export default function MakerDashboardClient({ locale }: MakerDashboardClientPro
               <h2 className="text-xl font-bold text-gray-900 mb-6">
                 {locale === 'ar' ? 'الملف الشخصي' : 'Profile'}
               </h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {locale === 'ar' ? 'الاسم المعروض' : 'Display Name'}
-                  </label>
-                  <input
-                    type="text"
-                    defaultValue={maker.displayName}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {locale === 'ar' ? 'نبذة' : 'Bio'}
-                  </label>
-                  <textarea
-                    defaultValue={maker.bio}
-                    rows={4}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {locale === 'ar' ? 'البلد' : 'Country'}
-                    </label>
-                    <input
-                      type="text"
-                      defaultValue={maker.country || ''}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {locale === 'ar' ? 'المدينة' : 'City'}
-                    </label>
-                    <input
-                      type="text"
-                      defaultValue={maker.city || ''}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {locale === 'ar' ? 'المنطقة الزمنية' : 'Time Zone'}
-                  </label>
-                  <input
-                    type="text"
-                    defaultValue={maker.timeZone || ''}
-                    placeholder={locale === 'ar' ? 'مثال: Asia/Dubai' : 'e.g., Asia/Dubai'}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                  />
-                </div>
-                <Button variant="primary" className="mt-4">
-                  {locale === 'ar' ? 'حفظ التغييرات' : 'Save Changes'}
-                </Button>
-              </div>
+              <ProfileForm maker={maker} locale={locale} onSave={fetchDashboardData} />
             </div>
           </Card>
         )}

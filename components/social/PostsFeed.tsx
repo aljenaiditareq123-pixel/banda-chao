@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { postsAPI } from '@/lib/api';
+import { useState, useEffect, useCallback } from 'react';
+import { postsAPI, likesAPI } from '@/lib/api';
 import PostCard from './PostCard';
 import CreatePostForm from './CreatePostForm';
 import { useAuth } from '@/hooks/useAuth';
@@ -14,20 +14,33 @@ interface PostsFeedProps {
   makerId?: string;
 }
 
+interface Post {
+  id: string;
+  content?: string;
+  images?: string[];
+  created_at?: string | Date;
+  users?: {
+    id: string;
+    name: string | null;
+    profile_picture: string | null;
+  };
+  _count?: {
+    post_likes: number;
+  };
+  [key: string]: unknown;
+}
+
 export default function PostsFeed({ locale, makerId }: PostsFeedProps) {
   const { user } = useAuth();
-  const [posts, setPosts] = useState<any[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
-  useEffect(() => {
-    loadPosts();
-  }, [makerId, page]);
-
-  const loadPosts = async () => {
+  const loadPosts = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -37,12 +50,28 @@ export default function PostsFeed({ locale, makerId }: PostsFeedProps) {
         makerId,
       });
       if (response.posts) {
-        if (page === 1) {
-          setPosts(response.posts);
-        } else {
-          setPosts((prev) => [...prev, ...response.posts]);
-        }
+        const newPosts = page === 1 ? response.posts : [...posts, ...response.posts];
+        setPosts(newPosts);
         setHasMore(response.pagination.page < response.pagination.totalPages);
+        
+        // Check which posts the user liked (if authenticated)
+        if (user && newPosts.length > 0) {
+          const likedSet = new Set<string>();
+          await Promise.all(
+            newPosts.map(async (post: Post) => {
+              try {
+                const likeStatus = await likesAPI.getStatus('POST', post.id);
+                if (likeStatus.liked) {
+                  likedSet.add(post.id);
+                }
+              } catch (err) {
+                // Silently fail - user might not be authenticated or post might not exist
+                console.warn('Failed to check like status for post:', post.id);
+              }
+            })
+          );
+          setLikedPosts(likedSet);
+        }
       }
     } catch (err: any) {
       console.error('Error loading posts:', err);
@@ -50,11 +79,17 @@ export default function PostsFeed({ locale, makerId }: PostsFeedProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [makerId, page, user, posts]);
+
+  useEffect(() => {
+    loadPosts();
+  }, [loadPosts]);
 
   const handlePostCreated = () => {
     setShowCreateForm(false);
     setPage(1);
+    setPosts([]);
+    setLikedPosts(new Set());
     loadPosts();
   };
 
@@ -147,13 +182,21 @@ export default function PostsFeed({ locale, makerId }: PostsFeedProps) {
               <PostCard
                 key={post.id}
                 post={{
-                  ...post,
+                  id: post.id,
+                  content: post.content || '',
+                  images: post.images || [],
+                  created_at: post.created_at || new Date(),
+                  users: post.users || {
+                    id: '',
+                    name: null,
+                    profile_picture: null,
+                  },
                   _count: {
                     post_likes: post._count?.post_likes || 0,
                   },
                 }}
                 locale={locale}
-                initialLiked={false} // TODO: Check if user liked this post
+                initialLiked={likedPosts.has(post.id)}
               />
             ))}
 

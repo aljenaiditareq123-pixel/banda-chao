@@ -18,10 +18,38 @@ import CommentList from '@/components/social/CommentList';
 import CommentForm from '@/components/social/CommentForm';
 import { useAuth } from '@/hooks/useAuth';
 
+interface Maker {
+  id: string;
+  displayName?: string;
+  name?: string;
+  bio?: string;
+  country?: string;
+  city?: string;
+  avatarUrl?: string;
+  profile_picture_url?: string;
+}
+
+interface Product {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  currency?: string;
+  stock?: number;
+  category?: string;
+  images?: Array<{ url: string }>;
+  imageUrl?: string;
+  maker?: Maker;
+  makerId?: string;
+  userId?: string;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+}
+
 interface ProductDetailClientProps {
   locale: string;
-  product: any;
-  relatedProducts: any[];
+  product: Product;
+  relatedProducts: Product[];
 }
 
 export default function ProductDetailClient({ locale, product, relatedProducts }: ProductDetailClientProps) {
@@ -82,7 +110,7 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
             </div>
             {images.length > 1 && (
               <div className="grid grid-cols-4 gap-2 p-4">
-                {images.slice(1, 5).map((img: any, index: number) => (
+                {images.slice(1, 5).map((img, index) => (
                   <div key={index} className="aspect-square bg-gray-200 rounded-lg overflow-hidden relative">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
@@ -114,14 +142,45 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
             </h1>
             
             {product.maker && (
-              <div className="mb-6">
-                <p className="text-sm text-gray-600 mb-2">
+              <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <p className="text-sm font-medium text-gray-700 mb-3">
                   {locale === 'ar' ? 'من صنع' : locale === 'zh' ? '制作' : 'Made by'}
                 </p>
                 <Link href={`/${locale}/makers/${product.maker.id || product.makerId}`}>
-                  <Button variant="text" className="text-primary">
-                    {product.maker.displayName || product.maker.name}
-                  </Button>
+                  <div className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer">
+                    {product.maker.avatarUrl || product.maker.profile_picture_url ? (
+                      <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={product.maker.avatarUrl || product.maker.profile_picture_url}
+                          alt={product.maker.displayName || product.maker.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
+                        <span className="text-xl">👤</span>
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 truncate">
+                        {product.maker.displayName || product.maker.name}
+                      </p>
+                      {product.maker.bio && (
+                        <p className="text-sm text-gray-600 line-clamp-1">
+                          {product.maker.bio}
+                        </p>
+                      )}
+                      {product.maker.country && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          📍 {product.maker.city ? `${product.maker.city}, ` : ''}{product.maker.country}
+                        </p>
+                      )}
+                    </div>
+                    <Button variant="text" className="text-primary flex-shrink-0">
+                      {locale === 'ar' ? 'عرض الملف الشخصي →' : locale === 'zh' ? '查看个人资料 →' : 'View Profile →'}
+                    </Button>
+                  </div>
                 </Link>
               </div>
             )}
@@ -277,9 +336,12 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
                             : 'Failed to create checkout session'
                         );
                       }
-                    } catch (error: any) {
+                    } catch (error: unknown) {
+                      const errorMessage = error && typeof error === 'object' && 'response' in error
+                        ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+                        : undefined;
                       setCheckoutError(
-                        error.response?.data?.message ||
+                        errorMessage ||
                         (locale === 'ar' ? 'حدث خطأ أثناء بدء عملية الدفع' : 'Error starting checkout process')
                       );
                     } finally {
@@ -340,8 +402,16 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
                 <GridItem key={relatedProduct.id}>
                   <ProductCard
                     product={{
-                      ...relatedProduct,
+                      id: relatedProduct.id,
+                      name: relatedProduct.name,
+                      description: relatedProduct.description || '',
                       imageUrl: relatedProduct.images?.[0]?.url || relatedProduct.imageUrl || '',
+                      userId: relatedProduct.userId || '',
+                      price: relatedProduct.price,
+                      currency: relatedProduct.currency,
+                      category: relatedProduct.category,
+                      createdAt: relatedProduct.createdAt?.toString() || new Date().toISOString(),
+                      updatedAt: relatedProduct.updatedAt?.toString() || new Date().toISOString(),
                     }}
                     href={`/${locale}/products/${relatedProduct.id}`}
                   />
