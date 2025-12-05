@@ -247,8 +247,34 @@ export default function FounderChatPanel({ user, loading: authLoading }: Founder
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'حدث خطأ أثناء إرسال الرسالة';
+    } catch (error: any) {
+      console.error('[FounderChatPanel] Error sending message:', error);
+      
+      // Extract error message from axios error
+      let errorMessage = 'حدث خطأ أثناء إرسال الرسالة';
+      if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error?.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
+      // Check for specific error codes
+      if (error?.response?.status === 403) {
+        if (error?.response?.data?.code === 'CSRF_ERROR') {
+          errorMessage = 'خطأ في التحقق من CSRF token. يرجى تحديث الصفحة والمحاولة مرة أخرى.';
+        } else if (error?.response?.data?.code === 'UNAUTHORIZED') {
+          errorMessage = 'غير مصرح لك بالوصول. يرجى تسجيل الدخول مرة أخرى.';
+        } else {
+          errorMessage = 'غير مصرح لك بالوصول إلى هذه الخدمة. يرجى التحقق من صلاحياتك.';
+        }
+      } else if (error?.response?.status === 401) {
+        errorMessage = 'انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى.';
+      } else if (error?.response?.status === 500) {
+        errorMessage = 'خطأ في الخادم. يرجى المحاولة مرة أخرى لاحقاً.';
+      }
+      
       const errorChatMessage: ChatMessage = {
         id: 'error-' + Date.now(),
         role: 'assistant',
