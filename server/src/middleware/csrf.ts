@@ -83,6 +83,14 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
     return next();
   }
 
+  // Skip CSRF for Speech-to-Text endpoint (it uses JWT authentication)
+  if (req.path.startsWith('/api/v1/speech/')) {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[CSRF] Skipping CSRF check for Speech endpoint:', req.path);
+    }
+    return next();
+  }
+
   // Get CSRF token from header
   const csrfToken = req.headers['x-csrf-token'] as string | undefined;
   const cookieToken = req.cookies?.['csrf-token'] as string | undefined;
