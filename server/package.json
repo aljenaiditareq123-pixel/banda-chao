@@ -2,6 +2,7 @@
   "name": "banda-chao-server",
   "version": "1.0.0",
   "private": true,
+  "_comment": "Trigger rebuild after GCS setup",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "prebuild": "npx prisma generate",
