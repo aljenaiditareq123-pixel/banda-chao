@@ -311,6 +311,8 @@ export default function MakerDashboardClient({ locale }: MakerDashboardClientPro
     image_url?: string;
     external_link?: string;
   } | null>(null);
+  const [deletingProductId, setDeletingProductId] = useState<string | null>(null);
+  const [confirmDeleteProductId, setConfirmDeleteProductId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading) {
@@ -367,11 +369,40 @@ export default function MakerDashboardClient({ locale }: MakerDashboardClientPro
         totalOrders: ordersRes.orders?.length || 0,
         totalEarnings,
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load dashboard';
       console.error('Error fetching dashboard data:', err);
-      setError(err.message || 'Failed to load dashboard');
+      setError(errorMessage);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteProduct = async (productId: string) => {
+    try {
+      setDeletingProductId(productId);
+      setError(null);
+
+      const response = await productsAPI.delete(productId);
+
+      if (response.success) {
+        // Remove product from local state
+        setProducts(products.filter(p => p.id !== productId));
+        // Update stats
+        setStats(prev => ({
+          ...prev,
+          totalProducts: prev.totalProducts - 1,
+        }));
+        setConfirmDeleteProductId(null);
+      } else {
+        setError(response.error || (locale === 'ar' ? 'فشل حذف المنتج' : locale === 'zh' ? '删除产品失败' : 'Failed to delete product'));
+      }
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : (locale === 'ar' ? 'حدث خطأ أثناء حذف المنتج' : locale === 'zh' ? '删除产品时出错' : 'Error deleting product');
+      console.error('Error deleting product:', err);
+      setError(errorMessage);
+    } finally {
+      setDeletingProductId(null);
     }
   };
 
@@ -610,6 +641,19 @@ export default function MakerDashboardClient({ locale }: MakerDashboardClientPro
                         >
                           {locale === 'ar' ? 'تعديل' : locale === 'zh' ? '编辑' : 'Edit'}
                         </Button>
+                        <Button 
+                          variant="text" 
+                          className="text-sm text-red-600 hover:text-red-700"
+                          disabled={deletingProductId === product.id}
+                          onClick={() => {
+                            setConfirmDeleteProductId(product.id);
+                          }}
+                        >
+                          {deletingProductId === product.id 
+                            ? (locale === 'ar' ? 'جاري الحذف...' : locale === 'zh' ? '删除中...' : 'Deleting...')
+                            : (locale === 'ar' ? 'حذف' : locale === 'zh' ? '删除' : 'Delete')
+                          }
+                        </Button>
                       </div>
                     </div>
                   </Card>
@@ -733,6 +777,50 @@ export default function MakerDashboardClient({ locale }: MakerDashboardClientPro
             setEditingProduct(null);
           }}
         />
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {confirmDeleteProductId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+          <Card className="max-w-md w-full mx-4">
+            <div className="p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                {locale === 'ar' ? 'تأكيد الحذف' : locale === 'zh' ? '确认删除' : 'Confirm Delete'}
+              </h3>
+              <p className="text-gray-600 mb-6">
+                {locale === 'ar' 
+                  ? 'هل أنت متأكد أنك تريد حذف هذا المنتج؟ لا يمكن التراجع عن هذا الإجراء.'
+                  : locale === 'zh'
+                  ? '您确定要删除此产品吗？此操作无法撤销。'
+                  : 'Are you sure you want to delete this product? This action cannot be undone.'}
+              </p>
+              <div className="flex gap-3 justify-end">
+                <Button
+                  variant="text"
+                  onClick={() => setConfirmDeleteProductId(null)}
+                  disabled={deletingProductId === confirmDeleteProductId}
+                >
+                  {locale === 'ar' ? 'إلغاء' : locale === 'zh' ? '取消' : 'Cancel'}
+                </Button>
+                <Button
+                  variant="primary"
+                  className="bg-red-600 hover:bg-red-700"
+                  onClick={() => {
+                    if (confirmDeleteProductId) {
+                      handleDeleteProduct(confirmDeleteProductId);
+                    }
+                  }}
+                  disabled={deletingProductId === confirmDeleteProductId}
+                >
+                  {deletingProductId === confirmDeleteProductId
+                    ? (locale === 'ar' ? 'جاري الحذف...' : locale === 'zh' ? '删除中...' : 'Deleting...')
+                    : (locale === 'ar' ? 'حذف' : locale === 'zh' ? '删除' : 'Delete')
+                  }
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
       )}
     </div>
   );

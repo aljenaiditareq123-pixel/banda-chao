@@ -367,5 +367,51 @@ router.put('/:id', authenticateToken, requireRole(['MAKER']), upload.single('ima
   }
 });
 
+// Delete product (authenticated, MAKER role, owner only)
+router.delete('/:id', authenticateToken, requireRole(['MAKER']), async (req: AuthRequest, res: Response) => {
+  try {
+    // Invalidate products cache
+    invalidateCachePattern('products:');
+
+    const productId = req.params.id;
+
+    // Check if product exists and belongs to the user
+    const existingProduct = await prisma.products.findUnique({
+      where: { id: productId },
+    });
+
+    if (!existingProduct) {
+      return res.status(404).json({ 
+        success: false,
+        error: 'Product not found' 
+      });
+    }
+
+    if (existingProduct.user_id !== req.userId) {
+      return res.status(403).json({ 
+        success: false,
+        error: 'You do not have permission to delete this product' 
+      });
+    }
+
+    // Delete product (hard delete)
+    await prisma.products.delete({
+      where: { id: productId },
+    });
+
+    res.json({
+      success: true,
+      message: 'Product deleted successfully',
+    });
+  } catch (error: unknown) {
+    console.error('Delete product error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
+    res.status(500).json({ 
+      success: false,
+      error: errorMessage 
+    });
+  }
+});
+
 export default router;
 

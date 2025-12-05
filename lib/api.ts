@@ -412,6 +412,17 @@ export const productsAPI = {
       return { success: false, error: errorMessage || 'Failed to update product' };
     }
   },
+  delete: async (id: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const response = await apiClient.delete(`/products/${id}`);
+      return response.data;
+    } catch (error: unknown) {
+      const errorMessage = error && typeof error === 'object' && 'response' in error
+        ? (error as { response?: { data?: { error?: string } } }).response?.data?.error
+        : 'Failed to delete product';
+      return { success: false, error: errorMessage || 'Failed to delete product' };
+    }
+  },
 };
 
 // ============================================
