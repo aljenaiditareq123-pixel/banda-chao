@@ -6,10 +6,12 @@
 import * as Sentry from '@sentry/node';
 
 // Profiling integration (optional - only if package is installed)
-let nodeProfilingIntegration: any = null;
+let nodeProfilingIntegration: (() => any) | null = null;
 try {
   const profilingModule = require('@sentry/profiling-node');
-  nodeProfilingIntegration = profilingModule.nodeProfilingIntegration;
+  if (profilingModule && typeof profilingModule.nodeProfilingIntegration === 'function') {
+    nodeProfilingIntegration = profilingModule.nodeProfilingIntegration;
+  }
 } catch (e) {
   // Profiling package not installed - skip
 }
@@ -30,7 +32,7 @@ export function initSentry() {
     dsn,
     environment,
     integrations: nodeProfilingIntegration
-      ? [nodeProfilingIntegration()]
+      ? [nodeProfilingIntegration() as any]
       : [],
     // Performance Monitoring
     tracesSampleRate: environment === 'production' ? 0.1 : 1.0, // 10% in production, 100% in development
