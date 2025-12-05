@@ -51,7 +51,9 @@ export function initSentry() {
         }
         // Remove sensitive query params
         if (event.request.query_string) {
-          const queryString = event.request.query_string;
+          const queryString = typeof event.request.query_string === 'string' 
+            ? event.request.query_string 
+            : String(event.request.query_string);
           if (queryString.includes('password') || queryString.includes('token')) {
             event.request.query_string = '[Filtered]';
           }

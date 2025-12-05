@@ -66,8 +66,8 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
   }
 
   // Get CSRF token from header
-  const csrfToken = req.headers['x-csrf-token'] as string;
-  const cookieToken = req.cookies?.['csrf-token'];
+  const csrfToken = req.headers['x-csrf-token'] as string | undefined;
+  const cookieToken = req.cookies?.['csrf-token'] as string | undefined;
 
   // Verify token
   if (!csrfToken || !cookieToken || csrfToken !== cookieToken) {
