@@ -188,7 +188,7 @@
 | `GCLOUD_PROJECT_ID` | Project ID من Google Cloud | `banda-chao-123456` |
 | `GCS_BUCKET_NAME` | اسم الـ Bucket | `banda-chao-uploads` |
 | `GCS_SERVICE_ACCOUNT_KEY` | محتوى ملف JSON الكامل | `{"type":"service_account",...}` |
-| `GOOGLE_SPEECH_API_KEY` | API Key للـ Speech-to-Text | `AIzaSy...` |
+| `GOOGLE_SPEECH_API_KEY` | API Key للـ Speech-to-Text | `your-api-key-here` |
 
 ---
 
