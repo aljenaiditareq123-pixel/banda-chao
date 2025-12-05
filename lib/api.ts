@@ -342,15 +342,23 @@ export interface UpdateProductData {
   image?: File;
 }
 
+export interface GetProductsParams {
+  page?: number;
+  limit?: number;
+  status?: string;
+  category?: string;
+  category_id?: string;
+  makerId?: string;
+  search?: string;
+  search_term?: string;
+  min_price?: number;
+  max_price?: number;
+  sort_by?: 'created_at' | 'createdAt' | 'price' | 'name';
+  sort_order?: 'asc' | 'desc';
+}
+
 export const productsAPI = {
-  getAll: async (params?: {
-    page?: number;
-    limit?: number;
-    status?: string;
-    category?: string;
-    makerId?: string;
-    search?: string;
-  }) => {
+  getAll: async (params?: GetProductsParams) => {
     const response = await apiClient.get('/products', { params });
     return response.data;
   },

@@ -55,41 +55,76 @@ router.get('/', async (req: Request, res: Response) => {
     const category = req.query.category as string;
     const makerId = req.query.makerId as string;
     const search = req.query.search as string;
+    const search_term = req.query.search_term as string; // Alternative search parameter
+    const category_id = req.query.category_id as string; // Alternative category parameter
+    const min_price = req.query.min_price as string; // Minimum price filter
+    const max_price = req.query.max_price as string; // Maximum price filter
+    const sort_by = req.query.sort_by as string || 'created_at';
+    const sort_order = req.query.sort_order as string || 'desc';
 
-    const where: any = {
-      status: status === 'DRAFT' ? 'DRAFT' : 'PUBLISHED', // Only show published by default
-    };
-    
-    if (category) {
-      where.category = category;
-    }
-    
-    if (makerId) {
-      where.makerId = makerId;
-    }
-    
-    if (search) {
-      where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
-      ];
-    }
+    // Use the search_term if provided, otherwise fall back to search
+    const searchQuery = search_term || search;
 
     // Use raw SQL to match actual schema (products table doesn't have status, maker, or images)
     let whereClause = '1=1';
     const params: any[] = [];
     let paramIndex = 1;
 
-    if (category) {
+    // Filter by category (support both category and category_id)
+    const categoryFilter = category_id || category;
+    if (categoryFilter) {
       whereClause += ` AND p.category = $${paramIndex}`;
-      params.push(category);
+      params.push(categoryFilter);
       paramIndex++;
     }
 
-    if (search) {
+    // Filter by search term (search in name and description)
+    if (searchQuery) {
       whereClause += ` AND (p.name ILIKE $${paramIndex} OR p.description ILIKE $${paramIndex})`;
-      params.push(`%${search}%`);
+      params.push(`%${searchQuery}%`);
       paramIndex++;
+    }
+
+    // Filter by price range
+    if (min_price) {
+      const minPriceNum = parseFloat(min_price);
+      if (!isNaN(minPriceNum)) {
+        whereClause += ` AND p.price >= $${paramIndex}`;
+        params.push(minPriceNum);
+        paramIndex++;
+      }
+    }
+
+    if (max_price) {
+      const maxPriceNum = parseFloat(max_price);
+      if (!isNaN(maxPriceNum)) {
+        whereClause += ` AND p.price <= $${paramIndex}`;
+        params.push(maxPriceNum);
+        paramIndex++;
+      }
+    }
+
+    // Filter by makerId
+    if (makerId) {
+      whereClause += ` AND p."user_id" = $${paramIndex}`;
+      params.push(makerId);
+      paramIndex++;
+    }
+
+    // Build ORDER BY clause
+    let orderByClause = 'p.created_at DESC';
+    const validSortFields: Record<string, string> = {
+      'created_at': 'p.created_at',
+      'createdAt': 'p.created_at',
+      'price': 'p.price',
+      'name': 'p.name',
+    };
+    const validSortOrders = ['asc', 'desc', 'ASC', 'DESC'];
+    
+    if (sort_by && validSortFields[sort_by]) {
+      const sortField = validSortFields[sort_by];
+      const sortOrder = validSortOrders.includes(sort_order) ? sort_order.toUpperCase() : 'DESC';
+      orderByClause = `${sortField} ${sortOrder}`;
     }
 
     const products = await prisma.$queryRawUnsafe<Array<any>>(`
@@ -109,7 +144,7 @@ router.get('/', async (req: Request, res: Response) => {
       FROM products p
       LEFT JOIN users u ON p."user_id" = u.id
       WHERE ${whereClause}
-      ORDER BY p.created_at DESC
+      ORDER BY ${orderByClause}
       LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
     `, ...params, limit, skip);
 
@@ -130,8 +165,8 @@ router.get('/', async (req: Request, res: Response) => {
       },
     };
 
-    // Cache response for 60 seconds
-    const cacheKey = `products:${page}:${limit}:${category || ''}:${makerId || ''}:${search || ''}`;
+    // Cache response for 60 seconds (include all filter params in cache key)
+    const cacheKey = `products:${page}:${limit}:${categoryFilter || ''}:${makerId || ''}:${searchQuery || ''}:${min_price || ''}:${max_price || ''}:${sort_by}:${sort_order}`;
     setCache(cacheKey, response, 60 * 1000);
 
     res.json(response);
