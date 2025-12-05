@@ -86,11 +86,31 @@ ${message}
 - إذا كان هناك سياق محادثة سابقة، استخدمه لفهم السياق`;
 
     console.log('[AIAssistant] Processing request with Gemini...');
+    console.log('[AIAssistant] Conversation ID:', convId);
+    console.log('[AIAssistant] Message length:', message.length, 'characters');
 
-    // Call Gemini 1.5 Pro
-    const response = await generateFounderAIResponse(prompt);
-
-    console.log('[AIAssistant] Response generated successfully');
+    // Call Gemini 1.5 Pro with error handling
+    let response: string;
+    try {
+      response = await generateFounderAIResponse(prompt);
+      console.log('[AIAssistant] Response generated successfully, length:', response.length, 'characters');
+    } catch (error: any) {
+      console.error('[AIAssistant] Failed to generate response:', {
+        message: error?.message || 'Unknown error',
+        originalError: error?.originalError || error,
+      });
+      
+      // Return detailed error response
+      return res.status(500).json({
+        success: false,
+        error: 'AI_SERVICE_ERROR',
+        message: error?.message || 'Failed to generate AI response',
+        details: process.env.NODE_ENV === 'development' ? {
+          originalError: error?.originalError?.message || error?.message,
+          stack: error?.stack,
+        } : undefined,
+      });
+    }
 
     // Add assistant response to context
     context.push({ role: 'assistant', content: response });
@@ -110,11 +130,19 @@ ${message}
       timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
-    console.error('AI Assistant error:', error);
+    console.error('[AIAssistant] Unexpected error:', {
+      message: error?.message || 'Unknown error',
+      stack: error?.stack,
+      body: req.body,
+    });
+    
     res.status(500).json({ 
       success: false,
-      error: 'Internal server error',
-      message: error.message 
+      error: 'INTERNAL_SERVER_ERROR',
+      message: error?.message || 'An unexpected error occurred',
+      details: process.env.NODE_ENV === 'development' ? {
+        stack: error?.stack,
+      } : undefined,
     });
   }
 });
@@ -337,11 +365,31 @@ ${userMessage}
 - استخدم البيانات المقدمة أعلاه في إجابتك عند الحاجة`;
 
     console.log('[FounderPanda] Processing request for founder...');
+    console.log('[FounderPanda] User ID:', userId);
+    console.log('[FounderPanda] Message length:', userMessage.length, 'characters');
 
-    // Call Gemini 1.5 Pro
-    const reply = await generateFounderAIResponse(prompt);
-
-    console.log('[FounderPanda] Response generated successfully');
+    // Call Gemini 1.5 Pro with error handling
+    let reply: string;
+    try {
+      reply = await generateFounderAIResponse(prompt);
+      console.log('[FounderPanda] Response generated successfully, length:', reply.length, 'characters');
+    } catch (error: any) {
+      console.error('[FounderPanda] Failed to generate response:', {
+        message: error?.message || 'Unknown error',
+        originalError: error?.originalError || error,
+      });
+      
+      // Return detailed error response
+      return res.status(500).json({
+        success: false,
+        error: 'AI_SERVICE_ERROR',
+        message: error?.message || 'Failed to generate AI response',
+        details: process.env.NODE_ENV === 'development' ? {
+          originalError: error?.originalError?.message || error?.message,
+          stack: error?.stack,
+        } : undefined,
+      });
+    }
 
     return res.status(200).json({
       success: true,
@@ -349,11 +397,19 @@ ${userMessage}
       timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
-    console.error('[FounderAI] Error processing request:', error);
+    console.error('[FounderAI] Unexpected error:', {
+      message: error?.message || 'Unknown error',
+      stack: error?.stack,
+      body: req.body,
+    });
+    
     res.status(500).json({ 
       success: false,
-      error: 'Internal server error',
-      message: error.message 
+      error: 'INTERNAL_SERVER_ERROR',
+      message: error?.message || 'An unexpected error occurred',
+      details: process.env.NODE_ENV === 'development' ? {
+        stack: error?.stack,
+      } : undefined,
     });
   }
 });

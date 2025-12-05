@@ -24,21 +24,57 @@ if (GEMINI_API_KEY) {
  * Generate AI response using Gemini 1.5 Pro
  * @param prompt - The full prompt to send to Gemini
  * @returns The generated text response
+ * @throws Error if Gemini API is not available or if API call fails
  */
 export async function generateFounderAIResponse(prompt: string): Promise<string> {
-  // If Gemini is not available, return a friendly message
+  // Check if Gemini API key is set
+  if (!GEMINI_API_KEY) {
+    const error = new Error('GEMINI_API_KEY is not set in environment variables');
+    console.error("[FounderAI] Gemini API key missing:", error);
+    throw error;
+  }
+
+  // If Gemini is not initialized, throw error
   if (!model || !genAI) {
-    console.warn("[FounderAI] Gemini API is not available. Returning fallback message.");
-    return "عذراً، نظام الذكاء الاصطناعي غير متاح حالياً. يرجى المحاولة لاحقاً.";
+    const error = new Error('Gemini client is not initialized. Check GEMINI_API_KEY configuration.');
+    console.error("[FounderAI] Gemini client not initialized:", error);
+    throw error;
   }
 
   try {
+    console.log("[FounderAI] Sending request to Gemini 1.5 Pro...");
+    console.log("[FounderAI] Prompt length:", prompt.length, "characters");
+    
     const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    const response = result.response;
+    
+    if (!response) {
+      throw new Error('Empty response from Gemini API');
+    }
+    
+    const text = response.text();
+    
+    if (!text || text.trim().length === 0) {
+      throw new Error('Empty text response from Gemini API');
+    }
+    
+    console.log("[FounderAI] Response received successfully, length:", text.length, "characters");
     return text.trim();
   } catch (error: any) {
-    console.error("[FounderAI] Gemini error:", error);
-    // Return a user-friendly error message in Arabic
-    return "عذراً، حدث خطأ مؤقت في نظام الذكاء الاصطناعي الخاص بباندتشاو. حاول مرة أخرى بعد قليل.";
+    console.error("[FounderAI] Gemini API error:", {
+      message: error?.message || 'Unknown error',
+      status: error?.status || error?.statusCode || 'N/A',
+      code: error?.code || 'N/A',
+      details: error?.response?.data || error?.details || 'No additional details',
+    });
+    
+    // Re-throw error with more context
+    const enhancedError = new Error(
+      `Gemini API error: ${error?.message || 'Unknown error'}. ` +
+      `Status: ${error?.status || error?.statusCode || 'N/A'}. ` +
+      `Code: ${error?.code || 'N/A'}`
+    );
+    (enhancedError as any).originalError = error;
+    throw enhancedError;
   }
 }
