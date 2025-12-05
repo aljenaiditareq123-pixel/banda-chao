@@ -4,43 +4,114 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { randomBytes, createHmac } from 'crypto';
+import { randomBytes, createHmac, timingSafeEqual } from 'crypto';
 
-// Store CSRF secrets in memory (in production, consider Redis)
-const csrfSecrets = new Map<string, string>();
+// Store CSRF tokens in memory (in production, consider Redis)
+// Key: userId, Value: { token, expiresAt }
+const csrfTokens = new Map<string, { token: string; expiresAt: number }>();
+
+// CSRF secret from environment (fallback to a default for development)
+const CSRF_SECRET = process.env.CSRF_SECRET || process.env.JWT_SECRET || 'default-csrf-secret-change-in-production';
+
+// Token expiration time: 24 hours
+const TOKEN_EXPIRATION_MS = 24 * 60 * 60 * 1000;
 
 /**
- * Generate CSRF token
+ * Generate CSRF token with HMAC signing
+ * Structure: base64(payload + "." + HMAC(payload))
  */
 export function generateCsrfToken(req: Request): string {
   const userId = (req as any).userId || req.ip || 'anonymous';
-  const secret = randomBytes(32).toString('hex');
   
-  // Store secret (in production, use Redis with TTL)
-  csrfSecrets.set(userId, secret);
+  // Check if token already exists and is still valid
+  const existing = csrfTokens.get(userId);
+  if (existing && existing.expiresAt > Date.now()) {
+    return existing.token;
+  }
   
-  // Generate token
-  const token = createHmac('sha256', secret)
-    .update(userId + Date.now().toString())
-    .digest('hex');
+  // Generate payload (userId + timestamp)
+  const timestamp = Date.now().toString();
+  const payload = `${userId}:${timestamp}`;
+  
+  // Generate HMAC signature
+  const hmac = createHmac('sha256', CSRF_SECRET);
+  hmac.update(payload);
+  const signature = hmac.digest('base64url');
+  
+  // Structure: base64(payload + "." + signature)
+  const token = Buffer.from(`${payload}.${signature}`).toString('base64url');
+  
+  // Store token with expiration
+  csrfTokens.set(userId, {
+    token,
+    expiresAt: Date.now() + TOKEN_EXPIRATION_MS,
+  });
+  
+  // Clean up expired tokens periodically (simple cleanup)
+  if (csrfTokens.size > 1000) {
+    const now = Date.now();
+    for (const [key, value] of csrfTokens.entries()) {
+      if (value.expiresAt <= now) {
+        csrfTokens.delete(key);
+      }
+    }
+  }
   
   return token;
 }
 
 /**
- * Verify CSRF token
+ * Verify CSRF token with HMAC signature validation
  */
 export function verifyCsrfToken(req: Request, token: string): boolean {
-  const userId = (req as any).userId || req.ip || 'anonymous';
-  const secret = csrfSecrets.get(userId);
-  
-  if (!secret) {
+  if (!token || typeof token !== 'string') {
     return false;
   }
   
-  // Verify token format (basic check)
-  // In production, implement proper token validation
-  return !!(token && typeof token === 'string' && token.length === 64); // SHA256 hex = 64 chars
+  try {
+    // Decode base64 token
+    const decoded = Buffer.from(token, 'base64url').toString('utf-8');
+    const [payload, signature] = decoded.split('.');
+    
+    if (!payload || !signature) {
+      return false;
+    }
+    
+    // Recompute HMAC signature
+    const hmac = createHmac('sha256', CSRF_SECRET);
+    hmac.update(payload);
+    const expectedSignature = hmac.digest('base64url');
+    
+    // Use timing-safe comparison to prevent timing attacks
+    if (signature.length !== expectedSignature.length) {
+      return false;
+    }
+    
+    const signatureBuffer = Buffer.from(signature, 'base64url');
+    const expectedBuffer = Buffer.from(expectedSignature, 'base64url');
+    
+    if (!timingSafeEqual(signatureBuffer, expectedBuffer)) {
+      return false;
+    }
+    
+    // Verify token is stored and not expired
+    const userId = (req as any).userId || req.ip || 'anonymous';
+    const stored = csrfTokens.get(userId);
+    
+    if (!stored || stored.token !== token) {
+      return false;
+    }
+    
+    if (stored.expiresAt <= Date.now()) {
+      csrfTokens.delete(userId);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('[CSRF] Token verification error:', error);
+    return false;
+  }
 }
 
 /**

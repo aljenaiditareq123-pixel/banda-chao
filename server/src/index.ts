@@ -127,7 +127,8 @@ app.use(cors({
     'Origin',
     'Access-Control-Request-Method',
     'Access-Control-Request-Headers',
-    'X-CSRF-Token', // Add CSRF token header
+    'X-CSRF-Token', // CSRF token header (uppercase)
+    'x-csrf-token', // CSRF token header (lowercase - explicit for compatibility)
   ],
   exposedHeaders: [
     'Content-Range', 
