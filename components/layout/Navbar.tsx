@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import { useCart } from '@/contexts/CartContext';
 import { authAPI } from '@/lib/api';
 import AuthButtons from './AuthButtons';
 import UploadButton from './UploadButton';
@@ -186,43 +187,22 @@ export default function Navbar({ locale }: NavbarProps) {
 
 // Cart Icon Component
 function CartIcon({ locale }: { locale: string }) {
+  const { itemCount, toggleDrawer } = useCart();
   const [mounted, setMounted] = useState(false);
-  const [itemCount, setItemCount] = useState(0);
 
   useEffect(() => {
     setMounted(true);
-    const updateCartCount = () => {
-      if (typeof window !== 'undefined') {
-        const cart = localStorage.getItem('banda_chao_cart');
-        if (cart) {
-          try {
-            const items = JSON.parse(cart);
-            const count = items.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0);
-            setItemCount(count);
-          } catch (err) {
-            setItemCount(0);
-          }
-        }
-      }
-    };
-
-    updateCartCount();
-    // Listen for storage changes
-    window.addEventListener('storage', updateCartCount);
-    // Also listen for custom cart update events
-    window.addEventListener('cartUpdated', updateCartCount);
-
-    return () => {
-      window.removeEventListener('storage', updateCartCount);
-      window.removeEventListener('cartUpdated', updateCartCount);
-    };
   }, []);
 
   if (!mounted) {
     return (
-      <Link href={`/${locale}/cart`} className="relative">
+      <button
+        type="button"
+        className="relative p-2 text-gray-600 hover:text-gray-900 transition-colors"
+        aria-label={locale === 'ar' ? 'سلة التسوق' : locale === 'zh' ? '购物车' : 'Shopping Cart'}
+      >
         <svg
-          className="w-6 h-6 text-gray-600 hover:text-gray-900 transition-colors"
+          className="w-6 h-6"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -235,14 +215,19 @@ function CartIcon({ locale }: { locale: string }) {
             d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
           />
         </svg>
-      </Link>
+      </button>
     );
   }
 
   return (
-    <Link href={`/${locale}/cart`} className="relative">
+    <button
+      type="button"
+      onClick={toggleDrawer}
+      className="relative p-2 text-gray-600 hover:text-gray-900 transition-colors"
+      aria-label={locale === 'ar' ? 'سلة التسوق' : locale === 'zh' ? '购物车' : 'Shopping Cart'}
+    >
       <svg
-        className="w-6 h-6 text-gray-600 hover:text-gray-900 transition-colors"
+        className="w-6 h-6"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -256,11 +241,11 @@ function CartIcon({ locale }: { locale: string }) {
         />
       </svg>
       {itemCount > 0 && (
-        <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
           {itemCount > 9 ? '9+' : itemCount}
         </span>
       )}
-    </Link>
+    </button>
   );
 }
 

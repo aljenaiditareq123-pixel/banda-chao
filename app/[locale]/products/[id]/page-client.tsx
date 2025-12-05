@@ -279,7 +279,7 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      className="w-8 h-8 rounded border border-gray-300 flex items-center justify-center hover:bg-gray-50"
+                      className="w-8 h-8 rounded border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors"
                       disabled={quantity <= 1}
                     >
                       -
@@ -294,7 +294,7 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
                     />
                     <button
                       onClick={() => setQuantity(Math.min(product.stock || 100, quantity + 1))}
-                      className="w-8 h-8 rounded border border-gray-300 flex items-center justify-center hover:bg-gray-50"
+                      className="w-8 h-8 rounded border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors"
                       disabled={quantity >= (product.stock || 100)}
                     >
                       +
@@ -310,8 +310,28 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
               )}
 
               <div className="flex gap-4">
+                {/* Add to Cart Button */}
                 <Button
                   variant="primary"
+                  className="flex-1"
+                  onClick={() => {
+                    if (product && (product.stock === undefined || product.stock > 0)) {
+                      addItem({
+                        productId: product.id,
+                        name: product.name,
+                        imageUrl: mainImage,
+                        price: product.price,
+                        currency: product.currency || 'USD',
+                        quantity: quantity,
+                      });
+                    }
+                  }}
+                  disabled={product.stock !== undefined && product.stock === 0}
+                >
+                  {locale === 'ar' ? 'أضف إلى السلة' : locale === 'zh' ? '添加到购物车' : 'Add to Cart'}
+                </Button>
+                <Button
+                  variant="secondary"
                   className="flex-1"
                   onClick={async () => {
                     setCheckoutLoading(true);
@@ -353,13 +373,10 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
                   {checkoutLoading
                     ? (locale === 'ar' ? 'جاري المعالجة...' : 'Processing...')
                     : locale === 'ar'
-                    ? 'شراء تجريبي (Test Mode)'
+                    ? 'شراء مباشر'
                     : locale === 'zh'
-                    ? '测试购买'
-                    : 'Buy (Test Mode)'}
-                </Button>
-                <Button variant="secondary">
-                  ❤️
+                    ? '直接购买'
+                    : 'Buy Now'}
                 </Button>
               </div>
 
