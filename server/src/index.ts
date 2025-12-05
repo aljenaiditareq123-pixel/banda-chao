@@ -3,6 +3,7 @@ import { createServer } from 'http';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import path from 'path';
 import { initializeSocket } from './realtime/socket';
@@ -138,12 +139,21 @@ const aiLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Cookie parser (must be before CSRF middleware)
+app.use(cookieParser());
+
 // Middleware
 // Stripe webhook needs raw body for signature verification - must be before JSON middleware
 app.use('/api/v1/payments/webhook', express.raw({ type: 'application/json' }));
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// CSRF Token Handler (for GET requests - generates token)
+app.use(csrfTokenHandler);
+
+// CSRF Protection (for state-changing operations)
+app.use(csrfProtection);
 
 // Sentry request handler (must be before all other middleware)
 app.use(Sentry.Handlers.requestHandler());

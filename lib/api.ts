@@ -56,7 +56,7 @@ const apiClient: AxiosInstance = axios.create({
   timeout: 30000, // 30 seconds timeout
 });
 
-// Request interceptor to add auth token
+// Request interceptor to add auth token and CSRF token
 apiClient.interceptors.request.use(
   (config) => {
     if (typeof window !== 'undefined') {
@@ -64,6 +64,12 @@ apiClient.interceptors.request.use(
         const token = localStorage.getItem('auth_token');
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
+        }
+
+        // Get CSRF token from cookie
+        const csrfToken = getCookie('csrf-token');
+        if (csrfToken) {
+          config.headers['X-CSRF-Token'] = csrfToken;
         }
       } catch (error) {
         // localStorage may not be available (private browsing, etc.)
@@ -80,6 +86,17 @@ apiClient.interceptors.request.use(
     return Promise.reject(error);
   }
 );
+
+// Helper function to get cookie value
+function getCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null;
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) {
+    return parts.pop()?.split(';').shift() || null;
+  }
+  return null;
+}
 
 // Response interceptor with retry logic
 apiClient.interceptors.response.use(
