@@ -16,6 +16,7 @@ import { useCart } from '@/contexts/CartContext';
 import LikeButton from '@/components/social/LikeButton';
 import CommentList from '@/components/social/CommentList';
 import CommentForm from '@/components/social/CommentForm';
+import CommentsSection from '@/components/shared/CommentsSection';
 import { useAuth } from '@/hooks/useAuth';
 
 interface Maker {
@@ -253,20 +254,12 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
             {/* Comments Section */}
             {showComments && (
               <div className="mb-6 pt-6 border-t border-gray-200">
-                <CommentList
+                <CommentsSection
                   targetType="PRODUCT"
                   targetId={product.id}
                   locale={locale}
+                  showTitle={false}
                 />
-                {user && (
-                  <div className="mt-4">
-                    <CommentForm
-                      targetType="PRODUCT"
-                      targetId={product.id}
-                      locale={locale}
-                    />
-                  </div>
-                )}
               </div>
             )}
 
