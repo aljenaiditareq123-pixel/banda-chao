@@ -74,19 +74,19 @@ export async function generateFounderAIResponse(prompt: string): Promise<string>
         // Race between timeout and actual API call
         const result = await Promise.race([generatePromise, timeoutPromise]) as Awaited<ReturnType<typeof attemptModel.generateContent>>;
         const response = result.response;
-    
-    if (!response) {
-      throw new Error('Empty response from Gemini API');
-    }
-    
-    const text = response.text();
-    
-    if (!text || text.trim().length === 0) {
-      throw new Error('Empty text response from Gemini API');
-    }
-    
-    console.log("[FounderAI] Response received successfully, length:", text.length, "characters");
-    return text.trim();
+        
+        if (!response) {
+          throw new Error('Empty response from Gemini API');
+        }
+        
+        const text = response.text();
+        
+        if (!text || text.trim().length === 0) {
+          throw new Error('Empty text response from Gemini API');
+        }
+        
+        console.log(`[FounderAI] ✅ Response received successfully from ${modelName}, length:`, text.length, "characters");
+        return text.trim();
   } catch (error: any) {
     console.error("[FounderAI] Gemini API error:", {
       message: error?.message || 'Unknown error',
