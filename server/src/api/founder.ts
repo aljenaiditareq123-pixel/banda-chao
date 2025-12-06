@@ -100,7 +100,7 @@ router.get('/kpis', authenticateToken, requireRole(['FOUNDER']), async (req: Aut
       safePrismaCount(
         () => prisma.beta_applications.count({
           where: {
-            createdAt: { gte: oneWeekAgo },
+            created_at: { gte: oneWeekAgo },
           },
         }),
         0,
