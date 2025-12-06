@@ -26,6 +26,7 @@ if (GEMINI_API_KEY) {
 
 /**
  * Check which Gemini models are actually available via ListModels API
+ * Tries both v1 and v1beta endpoints
  */
 async function checkAvailableModels(): Promise<void> {
   if (!genAI || !GEMINI_API_KEY) return;
@@ -33,11 +34,20 @@ async function checkAvailableModels(): Promise<void> {
   try {
     console.log("[FounderAI] Checking available models...");
     
-    // Use REST API directly to list models
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models?key=' + GEMINI_API_KEY);
+    // Try v1 API first (more stable)
+    let response = await fetch('https://generativelanguage.googleapis.com/v1/models?key=' + GEMINI_API_KEY);
+    
+    // If v1 fails, try v1beta
+    if (!response.ok) {
+      console.log("[FounderAI] v1 API failed, trying v1beta...");
+      response = await fetch('https://generativelanguage.googleapis.com/v1beta/models?key=' + GEMINI_API_KEY);
+    }
     
     if (!response.ok) {
       console.warn(`[FounderAI] Failed to list models: ${response.status} ${response.statusText}`);
+      // Fallback to default models
+      availableModels = ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-pro"];
+      modelsChecked = true;
       return;
     }
     
@@ -55,11 +65,14 @@ async function checkAvailableModels(): Promise<void> {
     
     if (availableModels.length === 0) {
       console.error("[FounderAI] ⚠️ WARNING: No available models found! Check API key permissions.");
+      // Fallback to default models
+      availableModels = ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-pro"];
     }
   } catch (error: any) {
     console.warn("[FounderAI] Failed to check available models:", error?.message);
     // Fallback to default models if check fails
     availableModels = ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-pro"];
+    modelsChecked = true;
   }
 }
 
@@ -109,7 +122,46 @@ export async function generateFounderAIResponse(prompt: string): Promise<string>
         console.log(`[FounderAI] Trying model: ${modelName}...`);
         console.log("[FounderAI] Prompt length:", prompt.length, "characters");
         
-        // Create model instance for this attempt
+        // Try REST API directly with v1 endpoint first (more reliable)
+        let text: string | null = null;
+        
+        // First, try REST API v1 (bypass SDK which uses v1beta)
+        try {
+          const restResponse = await fetch(
+            `https://generativelanguage.googleapis.com/v1/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                contents: [{
+                  parts: [{ text: prompt }]
+                }]
+              }),
+            }
+          );
+          
+          if (restResponse.ok) {
+            const restData = await restResponse.json();
+            text = restData.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (text) {
+              console.log(`[FounderAI] ✅ Response received via REST API v1 from ${modelName}, length:`, text.length, "characters");
+              return text.trim();
+            }
+          } else if (restResponse.status !== 404) {
+            // If not 404, it's a different error (auth, quota, etc.) - throw it
+            throw new Error(`REST API error: ${restResponse.status} ${restResponse.statusText}`);
+          }
+          // If 404, fall through to SDK attempt
+        } catch (restError: any) {
+          // If REST API fails with non-404, log and continue to SDK
+          if (!restError.message?.includes('404')) {
+            console.warn(`[FounderAI] REST API v1 failed for ${modelName}:`, restError.message);
+          }
+        }
+        
+        // Fallback: Try SDK (which uses v1beta)
         const attemptModel = genAI!.getGenerativeModel({ model: modelName });
         
         // Add timeout wrapper for Gemini API call (90 seconds)
@@ -129,13 +181,13 @@ export async function generateFounderAIResponse(prompt: string): Promise<string>
           throw new Error('Empty response from Gemini API');
         }
         
-        const text = response.text();
+        text = response.text();
         
         if (!text || text.trim().length === 0) {
           throw new Error('Empty text response from Gemini API');
         }
         
-        console.log(`[FounderAI] ✅ Response received successfully from ${modelName}, length:`, text.length, "characters");
+        console.log(`[FounderAI] ✅ Response received via SDK from ${modelName}, length:`, text.length, "characters");
         return text.trim();
       } catch (error: any) {
         // Log full error structure for debugging
