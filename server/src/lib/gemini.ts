@@ -14,9 +14,12 @@ if (GEMINI_API_KEY) {
     console.log(`[FounderAI] ✅ Gemini client initialized`);
     
     // Check available models on startup (async, non-blocking)
-    checkAvailableModels().catch(err => {
-      console.warn("[FounderAI] Failed to check available models:", err);
-    });
+    // Use setTimeout to ensure it runs after initialization
+    setTimeout(() => {
+      checkAvailableModels().catch(err => {
+        console.warn("[FounderAI] Failed to check available models:", err?.message || err);
+      });
+    }, 100); // Small delay to ensure everything is ready
   } catch (error) {
     console.warn("[FounderAI] Failed to initialize Gemini client:", error);
   }
@@ -29,30 +32,60 @@ if (GEMINI_API_KEY) {
  * Tries both v1 and v1beta endpoints
  */
 async function checkAvailableModels(): Promise<void> {
-  if (!genAI || !GEMINI_API_KEY) return;
+  if (!genAI || !GEMINI_API_KEY) {
+    console.warn("[FounderAI] Cannot check available models: genAI or API key missing");
+    availableModels = ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-pro"];
+    modelsChecked = true;
+    return;
+  }
   
   try {
-    console.log("[FounderAI] Checking available models...");
+    console.log("[FounderAI] 🔍 Checking available models via ListModels API...");
     
     // Try v1 API first (more stable)
-    let response = await fetch('https://generativelanguage.googleapis.com/v1/models?key=' + GEMINI_API_KEY);
+    let response: Response | null = null;
+    let apiVersion = 'v1';
     
-    // If v1 fails, try v1beta
-    if (!response.ok) {
-      console.log("[FounderAI] v1 API failed, trying v1beta...");
-      response = await fetch('https://generativelanguage.googleapis.com/v1beta/models?key=' + GEMINI_API_KEY);
+    try {
+      const v1Url = `https://generativelanguage.googleapis.com/v1/models?key=${GEMINI_API_KEY}`;
+      console.log(`[FounderAI] Trying v1 API: ${v1Url.substring(0, 60)}...`);
+      response = await fetch(v1Url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        console.log(`[FounderAI] v1 API returned ${response.status}, trying v1beta...`);
+        apiVersion = 'v1beta';
+        const v1betaUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${GEMINI_API_KEY}`;
+        response = await fetch(v1betaUrl, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+      }
+    } catch (fetchError: any) {
+      console.error(`[FounderAI] ❌ Fetch error when checking models:`, fetchError?.message || fetchError);
+      throw fetchError;
     }
     
-    if (!response.ok) {
-      console.warn(`[FounderAI] Failed to list models: ${response.status} ${response.statusText}`);
+    if (!response || !response.ok) {
+      const status = response?.status || 'unknown';
+      const statusText = response?.statusText || 'unknown';
+      console.warn(`[FounderAI] ⚠️ Failed to list models (${apiVersion}): ${status} ${statusText}`);
       // Fallback to default models
       availableModels = ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-pro"];
       modelsChecked = true;
       return;
     }
     
-    const data = await response.json();
+    const data = await response.json() as { models?: Array<{ name: string; supportedGenerationMethods?: string[] }> };
     const models = data.models || [];
+    
+    console.log(`[FounderAI] 📋 Received ${models.length} total models from ${apiVersion} API`);
     
     // Filter models that support generateContent
     availableModels = models
@@ -61,18 +94,24 @@ async function checkAvailableModels(): Promise<void> {
       .filter((name: string) => !name.includes('embedding') && !name.includes('vision'));
     
     modelsChecked = true;
-    console.log(`[FounderAI] ✅ Found ${availableModels.length} available models:`, availableModels);
+    console.log(`[FounderAI] ✅ Found ${availableModels.length} available models for generateContent:`, availableModels);
     
     if (availableModels.length === 0) {
       console.error("[FounderAI] ⚠️ WARNING: No available models found! Check API key permissions.");
       // Fallback to default models
       availableModels = ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-pro"];
+      console.log(`[FounderAI] 🔄 Using fallback models:`, availableModels);
     }
   } catch (error: any) {
-    console.warn("[FounderAI] Failed to check available models:", error?.message);
+    console.error("[FounderAI] ❌ Failed to check available models:", {
+      message: error?.message || 'Unknown error',
+      stack: error?.stack,
+      name: error?.name,
+    });
     // Fallback to default models if check fails
     availableModels = ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-pro"];
     modelsChecked = true;
+    console.log(`[FounderAI] 🔄 Using fallback models due to error:`, availableModels);
   }
 }
 
@@ -143,9 +182,10 @@ export async function generateFounderAIResponse(prompt: string): Promise<string>
           );
           
           if (restResponse.ok) {
-            const restData = await restResponse.json();
-            text = restData.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (text) {
+            const restData = await restResponse.json() as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
+            const restText = restData.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (restText) {
+              text = restText;
               console.log(`[FounderAI] ✅ Response received via REST API v1 from ${modelName}, length:`, text.length, "characters");
               return text.trim();
             }
