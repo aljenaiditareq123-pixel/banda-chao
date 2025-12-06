@@ -33,8 +33,12 @@ export async function generateMetadata({ params }: LocaleLayoutProps): Promise<M
     en: 'Banda Chao - A platform that combines social media with e-commerce',
   };
 
-  const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://banda-chao.vercel.app';
-  const metadataBaseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://banda-chao.vercel.app';
+  // Use Render frontend URL in production, fallback to Vercel
+  const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 
+                  (process.env.NODE_ENV === 'production' 
+                    ? 'https://banda-chao-frontend.onrender.com' 
+                    : 'https://banda-chao.vercel.app');
+  const metadataBaseUrl = baseUrl;
   
   const keywords = {
     zh: '手作, 匠人, 原创, 手工作品, 手工艺品, 手作平台, 手作人社区, Banda Chao',
