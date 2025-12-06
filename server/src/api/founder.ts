@@ -45,6 +45,8 @@ router.get('/kpis', authenticateToken, requireRole(['FOUNDER']), async (req: Aut
       totalUsers,
       newArtisansThisWeek,
       newOrdersThisWeek,
+      totalBetaApplications,
+      newBetaApplicationsThisWeek,
     ] = await Promise.all([
       // Total Artisans (Makers) - count from makers table directly
       safePrismaCount(
@@ -88,6 +90,22 @@ router.get('/kpis', authenticateToken, requireRole(['FOUNDER']), async (req: Aut
       ),
       // New Orders This Week (placeholder)
       Promise.resolve(0),
+      // Total Beta Applications
+      safePrismaCount(
+        () => prisma.beta_applications.count(),
+        0,
+        'totalBetaApplications'
+      ),
+      // New Beta Applications This Week
+      safePrismaCount(
+        () => prisma.beta_applications.count({
+          where: {
+            createdAt: { gte: oneWeekAgo },
+          },
+        }),
+        0,
+        'newBetaApplicationsThisWeek'
+      ),
     ]);
 
     const kpis = {
@@ -98,6 +116,8 @@ router.get('/kpis', authenticateToken, requireRole(['FOUNDER']), async (req: Aut
       totalUsers,
       newArtisansThisWeek,
       newOrdersThisWeek,
+      totalBetaApplications,
+      newBetaApplicationsThisWeek,
     };
 
     res.json(kpis);

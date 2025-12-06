@@ -18,6 +18,10 @@ export interface FounderKPIs {
   newArtisansThisWeek: number;
   /** طلبات جديدة هذا الأسبوع - New Orders This Week */
   newOrdersThisWeek: number;
+  /** إجمالي طلبات البيتا - Total Beta Applications */
+  totalBetaApplications: number;
+  /** طلبات بيتا جديدة هذا الأسبوع - New Beta Applications This Week */
+  newBetaApplicationsThisWeek: number;
 }
 
 export interface FounderUser {

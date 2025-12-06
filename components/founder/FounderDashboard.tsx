@@ -9,17 +9,27 @@ interface KPICardProps {
   title: string;
   value: number | string;
   loading?: boolean;
+  highlight?: boolean;
 }
 
-function KPICard({ title, value, loading }: KPICardProps) {
+function KPICard({ title, value, loading, highlight }: KPICardProps) {
   return (
-    <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-200 p-6 border border-gray-100">
+    <div className={`rounded-xl shadow-md hover:shadow-lg transition-shadow duration-200 p-6 border ${
+      highlight 
+        ? 'bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200' 
+        : 'bg-white border-gray-100'
+    }`}>
       <div className="flex flex-col space-y-2">
-        <h3 className="text-sm font-medium text-gray-600">{title}</h3>
+        <h3 className={`text-sm font-medium ${highlight ? 'text-blue-700' : 'text-gray-600'}`}>
+          {title}
+          {highlight && <span className="ml-2 text-xs">🔥</span>}
+        </h3>
         {loading ? (
           <div className="h-10 w-24 bg-gray-200 animate-pulse rounded"></div>
         ) : (
-          <p className="text-3xl font-bold text-gray-900">{value.toLocaleString('ar-EG')}</p>
+          <p className={`text-3xl font-bold ${highlight ? 'text-blue-900' : 'text-gray-900'}`}>
+            {value.toLocaleString('ar-EG')}
+          </p>
         )}
       </div>
     </div>
@@ -44,8 +54,10 @@ export default function FounderDashboard() {
     { key: 'totalVideos' as const, label: 'إجمالي الفيديوهات' },
     { key: 'totalOrders' as const, label: 'إجمالي الطلبات' },
     { key: 'totalUsers' as const, label: 'إجمالي المستخدمين' },
+    { key: 'totalBetaApplications' as const, label: 'طلبات البيتا', highlight: true },
     { key: 'newArtisansThisWeek' as const, label: 'حرفيون جدد هذا الأسبوع' },
     { key: 'newOrdersThisWeek' as const, label: 'طلبات جديدة هذا الأسبوع' },
+    { key: 'newBetaApplicationsThisWeek' as const, label: 'طلبات بيتا جديدة هذا الأسبوع', highlight: true },
   ];
 
   return (
@@ -113,6 +125,7 @@ export default function FounderDashboard() {
                 title={item.label}
                 value={kpis[item.key] ?? 0}
                 loading={loading}
+                highlight={item.highlight}
               />
             ))
           ) : (
