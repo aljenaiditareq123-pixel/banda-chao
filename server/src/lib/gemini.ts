@@ -88,13 +88,20 @@ export async function generateFounderAIResponse(prompt: string): Promise<string>
         console.log(`[FounderAI] ✅ Response received successfully from ${modelName}, length:`, text.length, "characters");
         return text.trim();
       } catch (error: any) {
-        // If this is a 404 (model not found), try next model
-        if (error?.status === 404 || error?.message?.includes('404') || error?.message?.includes('not found')) {
-          console.warn(`[FounderAI] ⚠️ Model ${modelName} not available, trying next model...`);
+        // Check for 404 or "not found" errors (model not available)
+        const is404Error = error?.status === 404 || 
+                          error?.statusCode === 404 ||
+                          error?.message?.includes('404') || 
+                          error?.message?.includes('not found') ||
+                          error?.message?.includes('is not found for API version');
+        
+        if (is404Error) {
+          console.warn(`[FounderAI] ⚠️ Model ${modelName} not available (404), trying next model...`);
           lastError = error;
           continue; // Try next model
         }
-        // For other errors, throw immediately
+        // For other errors (timeout, auth, etc.), throw immediately
+        console.error(`[FounderAI] ❌ Non-404 error with model ${modelName}:`, error?.message);
         throw error;
       }
     }
