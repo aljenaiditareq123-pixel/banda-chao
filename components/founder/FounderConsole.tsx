@@ -175,8 +175,12 @@ export default function FounderConsole() {
                 </Button>
               </Link>
               <Link href="/founder/assistant">
-                <Button variant="primary" className="text-sm">
-                  🐼 الباندا المستشار
+                <Button 
+                  variant="primary" 
+                  className="text-sm bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2"
+                >
+                  <span className="text-xl">🐼</span>
+                  <span>الباندا المستشار</span>
                 </Button>
               </Link>
             </div>
