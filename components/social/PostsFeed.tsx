@@ -119,8 +119,10 @@ export default function PostsFeed({ locale, makerId }: PostsFeedProps) {
   }, [makerId, page, user, loading]); // 🌟 Removed 'posts' from dependencies to prevent infinite loop
 
   useEffect(() => {
+    // 🌟 Only load posts when page or makerId changes, not on every render
     loadPosts();
-  }, [loadPosts]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, makerId]); // 🌟 Removed loadPosts from dependencies to prevent infinite loop
 
   const handlePostCreated = () => {
     setShowCreateForm(false);
