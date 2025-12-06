@@ -457,7 +457,7 @@ export const betaAPI = {
       return { success: false, error: errorMessage || 'Failed to submit application' };
     }
   },
-  getApplications: async (params?: { language?: string; country?: string }): Promise<{ success: boolean; applications?: unknown[]; total?: number; error?: string }> => {
+  getApplications: async (params?: { language?: string; country?: string }): Promise<{ success: boolean; applications?: Array<{ id: number; name: string; email: string; country: string; main_platform?: string | null; what_you_sell?: string | null; preferred_lang?: string | null; why_join?: string | null; created_at: Date | string }>; total?: number; error?: string }> => {
     try {
       const response = await apiClient.get('/beta/applications', { params });
       return response.data;
