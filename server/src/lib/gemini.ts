@@ -10,9 +10,10 @@ let model: ReturnType<GoogleGenerativeAI['getGenerativeModel']> | null = null;
 if (GEMINI_API_KEY) {
   try {
     genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-    // Use gemini-pro (stable) or gemini-1.5-pro if available
-    // gemini-1.0-pro is not available in v1beta API
-    const modelName = process.env.GEMINI_MODEL || "gemini-pro";
+    // Use gemini-1.5-flash (fastest and most available) or gemini-1.5-pro
+    // gemini-pro and gemini-1.0-pro are not available in v1beta API
+    // Available models: gemini-1.5-flash, gemini-1.5-pro, gemini-2.0-flash-exp
+    const modelName = process.env.GEMINI_MODEL || "gemini-1.5-flash";
     model = genAI.getGenerativeModel({
       model: modelName,
     });
@@ -46,7 +47,7 @@ export async function generateFounderAIResponse(prompt: string): Promise<string>
   }
 
   try {
-    const modelName = process.env.GEMINI_MODEL || "gemini-pro";
+    const modelName = process.env.GEMINI_MODEL || "gemini-1.5-flash";
     console.log(`[FounderAI] Sending request to Gemini (${modelName})...`);
     console.log("[FounderAI] Prompt length:", prompt.length, "characters");
     
