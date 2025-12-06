@@ -5,7 +5,12 @@ import EnvCheckInit from '@/components/common/EnvCheckInit'
 import { ErrorBoundary } from '@/components/common/ErrorBoundary'
 import ChatWidget from '@/components/common/ChatWidget'
 
+// Get base URL for metadataBase
+const metadataBaseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 
+                        'https://banda-chao-frontend.onrender.com';
+
 export const metadata: Metadata = {
+  metadataBase: new URL(metadataBaseUrl),
   title: 'Banda Chao - Social E-commerce Platform',
   description: 'A global social-commerce platform connecting independent artisans worldwide with buyers. Support for Arabic, English, and Chinese.',
   keywords: ['handmade', 'artisans', 'e-commerce', 'social commerce', 'crafts', 'Banda Chao'],

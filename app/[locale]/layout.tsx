@@ -34,11 +34,16 @@ export async function generateMetadata({ params }: LocaleLayoutProps): Promise<M
   };
 
   // Use Render frontend URL in production, fallback to Vercel
-  const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 
-                  (process.env.NODE_ENV === 'production' 
-                    ? 'https://banda-chao-frontend.onrender.com' 
-                    : 'https://banda-chao.vercel.app');
-  const metadataBaseUrl = baseUrl;
+  // Always set a proper base URL for metadataBase
+  // Check if we're in production by checking RENDER environment or NODE_ENV
+  const isProduction = process.env.NODE_ENV === 'production' || 
+                       process.env.RENDER === 'true' ||
+                       process.env.RENDER_SERVICE_NAME !== undefined;
+  
+  // Always use a production URL for metadataBase to avoid localhost warnings
+  const metadataBaseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 
+                          'https://banda-chao-frontend.onrender.com'; // Default to Render URL
+  const baseUrl = metadataBaseUrl;
   
   const keywords = {
     zh: '手作, 匠人, 原创, 手工作品, 手工艺品, 手作平台, 手作人社区, Banda Chao',

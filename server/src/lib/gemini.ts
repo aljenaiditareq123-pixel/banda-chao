@@ -95,6 +95,7 @@ async function checkAvailableModels(): Promise<void> {
     
     modelsChecked = true;
     console.log(`[FounderAI] ✅ Found ${availableModels.length} available models for generateContent:`, availableModels);
+    console.log(`[FounderAI] ✅ modelsChecked set to: ${modelsChecked}, availableModels.length: ${availableModels.length}`);
     
     if (availableModels.length === 0) {
       console.error("[FounderAI] ⚠️ WARNING: No available models found! Check API key permissions.");
@@ -137,6 +138,9 @@ export async function generateFounderAIResponse(prompt: string): Promise<string>
   }
 
   try {
+    // Log initial state before waiting
+    console.log(`[FounderAI] 📊 Initial state: modelsChecked=${modelsChecked}, availableModels.length=${availableModels.length}`);
+    
     // Wait for models check if not done yet (with timeout)
     if (!modelsChecked) {
       console.log("[FounderAI] ⏳ Models check not complete yet, waiting...");
@@ -145,9 +149,12 @@ export async function generateFounderAIResponse(prompt: string): Promise<string>
           checkAvailableModels(),
           new Promise(resolve => setTimeout(resolve, 5000)), // 5 second timeout (increased)
         ]);
+        console.log(`[FounderAI] 📊 After waiting: modelsChecked=${modelsChecked}, availableModels.length=${availableModels.length}`);
       } catch (waitError) {
         console.warn("[FounderAI] ⚠️ Error while waiting for models check:", waitError);
       }
+    } else {
+      console.log(`[FounderAI] ✅ Models already checked: modelsChecked=${modelsChecked}, availableModels.length=${availableModels.length}`);
     }
     
     // Use available models if checked and found, otherwise use default list
