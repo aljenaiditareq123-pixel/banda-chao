@@ -88,16 +88,33 @@ export async function generateFounderAIResponse(prompt: string): Promise<string>
         console.log(`[FounderAI] ✅ Response received successfully from ${modelName}, length:`, text.length, "characters");
         return text.trim();
       } catch (error: any) {
+        // Log full error structure for debugging
+        console.error(`[FounderAI] Error with model ${modelName}:`, {
+          status: error?.status,
+          statusCode: error?.statusCode,
+          message: error?.message,
+          originalError: error?.originalError ? {
+            status: error.originalError.status,
+            statusCode: error.originalError.statusCode,
+            message: error.originalError.message,
+          } : null,
+        });
+        
         // Check for 404 or "not found" errors (model not available)
-        // Gemini API errors can be nested in originalError
-        const errorStatus = error?.status || error?.statusCode || error?.originalError?.status || error?.originalError?.statusCode;
-        const errorMessage = error?.message || error?.originalError?.message || '';
+        // Gemini API errors can be nested in originalError or have different structures
+        const errorStatus = error?.status || 
+                           error?.statusCode || 
+                           error?.originalError?.status || 
+                           error?.originalError?.statusCode ||
+                           error?.response?.status ||
+                           error?.response?.statusCode;
+        const errorMessage = (error?.message || error?.originalError?.message || '').toLowerCase();
         
         const is404Error = errorStatus === 404 || 
                           errorMessage.includes('404') || 
                           errorMessage.includes('not found') ||
-                          errorMessage.includes('is not found for API version') ||
-                          errorMessage.includes('models/') && errorMessage.includes('is not found');
+                          errorMessage.includes('is not found for api version') ||
+                          (errorMessage.includes('models/') && errorMessage.includes('is not found'));
         
         if (is404Error) {
           console.warn(`[FounderAI] ⚠️ Model ${modelName} not available (404), trying next model...`);

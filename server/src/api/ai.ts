@@ -97,16 +97,34 @@ ${message}
     } catch (error: any) {
       console.error('[AIAssistant] Failed to generate response:', {
         message: error?.message || 'Unknown error',
-        originalError: error?.originalError || error,
+        status: error?.status || error?.statusCode || 'N/A',
+        originalError: error?.originalError ? {
+          message: error.originalError.message,
+          status: error.originalError.status || error.originalError.statusCode,
+        } : null,
+        fullError: process.env.NODE_ENV === 'development' ? error : undefined,
       });
+      
+      // Return user-friendly error message
+      let userMessage = 'عذراً، حدث خطأ أثناء معالجة طلبك. يرجى المحاولة مرة أخرى.';
+      
+      // Provide more specific error messages based on error type
+      if (error?.message?.includes('timeout')) {
+        userMessage = 'استغرق الرد وقتاً طويلاً. يرجى المحاولة مرة أخرى أو تبسيط الرسالة.';
+      } else if (error?.message?.includes('All Gemini models failed') || error?.message?.includes('not found')) {
+        userMessage = 'خدمة الذكاء الاصطناعي غير متاحة حالياً. يرجى المحاولة لاحقاً.';
+      } else if (error?.message?.includes('GEMINI_API_KEY')) {
+        userMessage = 'خدمة الذكاء الاصطناعي غير مُعدة بشكل صحيح. يرجى الاتصال بالدعم.';
+      }
       
       // Return detailed error response
       return res.status(500).json({
         success: false,
         error: 'AI_SERVICE_ERROR',
-        message: error?.message || 'Failed to generate AI response',
+        message: userMessage,
         details: process.env.NODE_ENV === 'development' ? {
           originalError: error?.originalError?.message || error?.message,
+          status: error?.status || error?.statusCode,
           stack: error?.stack,
         } : undefined,
       });
