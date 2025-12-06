@@ -10,9 +10,13 @@ let model: ReturnType<GoogleGenerativeAI['getGenerativeModel']> | null = null;
 if (GEMINI_API_KEY) {
   try {
     genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+    // Use gemini-pro (stable) or gemini-1.5-pro if available
+    // gemini-1.0-pro is not available in v1beta API
+    const modelName = process.env.GEMINI_MODEL || "gemini-pro";
     model = genAI.getGenerativeModel({
-      model: "gemini-1.0-pro",
+      model: modelName,
     });
+    console.log(`[FounderAI] ✅ Gemini client initialized with model: ${modelName}`);
   } catch (error) {
     console.warn("[FounderAI] Failed to initialize Gemini client:", error);
   }
@@ -42,7 +46,8 @@ export async function generateFounderAIResponse(prompt: string): Promise<string>
   }
 
   try {
-    console.log("[FounderAI] Sending request to Gemini 1.0 Pro...");
+    const modelName = process.env.GEMINI_MODEL || "gemini-pro";
+    console.log(`[FounderAI] Sending request to Gemini (${modelName})...`);
     console.log("[FounderAI] Prompt length:", prompt.length, "characters");
     
     // Add timeout wrapper for Gemini API call (90 seconds)

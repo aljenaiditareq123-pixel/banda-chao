@@ -68,6 +68,10 @@ const PORT = process.env.PORT || 3001;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
+// Trust proxy (required for Render, Vercel, and other hosting platforms)
+// This allows express-rate-limit to correctly identify users behind proxies
+app.set('trust proxy', true);
+
 // Initialize Socket.IO
 initializeSocket(server);
 
