@@ -67,12 +67,23 @@ router.get('/', async (req: Request, res: Response) => {
         where,
         skip,
         take: limit,
-        include: {
+        select: {
+          id: true,
+          content: true,
+          images: true,
+          created_at: true,
+          updated_at: true,
+          user_id: true,
           users: {
             select: {
               id: true,
               name: true,
               profile_picture: true,
+            },
+          },
+          _count: {
+            select: {
+              post_likes: true,
             },
           },
         },
@@ -103,7 +114,13 @@ router.get('/:id', async (req: Request, res: Response) => {
   try {
     const post = await prisma.posts.findUnique({
       where: { id: req.params.id },
-      include: {
+      select: {
+        id: true,
+        content: true,
+        images: true,
+        created_at: true,
+        updated_at: true,
+        user_id: true,
         users: {
           select: {
             id: true,
@@ -150,7 +167,13 @@ router.get('/:id/comments', async (req: Request, res: Response) => {
         },
         skip,
         take: limit,
-        include: {
+        select: {
+          id: true,
+          content: true,
+          likes: true,
+          created_at: true,
+          updated_at: true,
+          user_id: true,
           users: {
             select: {
               id: true,

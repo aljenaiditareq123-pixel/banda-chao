@@ -329,6 +329,11 @@ router.put('/:id', authenticateToken, requireRole(['MAKER']), upload.single('ima
     // Check if product exists and belongs to the user
     const existingProduct = await prisma.products.findUnique({
       where: { id: productId },
+      select: {
+        id: true,
+        user_id: true,
+        name: true,
+      },
     });
 
     if (!existingProduct) {
@@ -413,6 +418,10 @@ router.delete('/:id', authenticateToken, requireRole(['MAKER']), async (req: Aut
     // Check if product exists and belongs to the user
     const existingProduct = await prisma.products.findUnique({
       where: { id: productId },
+      select: {
+        id: true,
+        user_id: true,
+      },
     });
 
     if (!existingProduct) {

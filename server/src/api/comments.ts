@@ -39,7 +39,13 @@ router.get('/', async (req: Request, res: Response) => {
         where,
         skip,
         take: limit,
-        include: {
+        select: {
+          id: true,
+          content: true,
+          likes: true,
+          created_at: true,
+          updated_at: true,
+          user_id: true,
           users: {
             select: {
               id: true,
@@ -103,7 +109,13 @@ router.post('/', authenticateToken, validate(createCommentSchema), async (req: A
 
     const comment = await prisma.comments.create({
       data,
-      include: {
+      select: {
+        id: true,
+        content: true,
+        likes: true,
+        created_at: true,
+        updated_at: true,
+        user_id: true,
         users: {
           select: {
             id: true,

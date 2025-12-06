@@ -284,6 +284,18 @@ router.get('/me/products', authenticateToken, async (req: AuthRequest, res: Resp
         where,
         skip,
         take: pageSize,
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          price: true,
+          category: true,
+          image_url: true,
+          external_link: true,
+          created_at: true,
+          updated_at: true,
+          user_id: true,
+        },
         orderBy: {
           created_at: 'desc',
         },
