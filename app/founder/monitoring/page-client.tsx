@@ -212,7 +212,7 @@ export default function MonitoringPageClient() {
         </Card>
 
         {/* Quick Actions */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-4">
           <Link href="/founder/dashboard">
             <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
               <h3 className="font-bold text-gray-900 mb-2">📊 لوحة العمليات</h3>
@@ -226,11 +226,18 @@ export default function MonitoringPageClient() {
             </Card>
           </Link>
           <Link href="/founder/assistant">
-            <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
+            <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer bg-gradient-to-br from-green-50 to-green-100 border-green-200">
               <h3 className="font-bold text-gray-900 mb-2">🐼 الباندا المستشار</h3>
-              <p className="text-sm text-gray-600">استشارة حول البيانات</p>
+              <p className="text-sm text-gray-600">تنسيق فريق AI Staff</p>
+              <p className="text-xs text-green-700 mt-1 font-semibold">✨ المهمة الأولى جاهزة</p>
             </Card>
           </Link>
+          <a href="/BETA_DAY_1_AI_STAFF_MISSIONS.md" target="_blank" rel="noopener noreferrer">
+            <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+              <h3 className="font-bold text-gray-900 mb-2">📋 خطة اليوم الأول</h3>
+              <p className="text-sm text-gray-600">مهام فريق AI Staff</p>
+            </Card>
+          </a>
         </div>
       </div>
     </div>
