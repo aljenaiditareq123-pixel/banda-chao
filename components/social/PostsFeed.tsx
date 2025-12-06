@@ -50,6 +50,7 @@ export default function PostsFeed({ locale, makerId }: PostsFeedProps) {
     try {
       setLoading(true);
       setError(null);
+      
       const response = await postsAPI.getAll({
         page,
         limit: 20,
@@ -57,9 +58,12 @@ export default function PostsFeed({ locale, makerId }: PostsFeedProps) {
       });
       
       // 🌟 Handle both 200 OK and 304 Not Modified responses
-      // 304 responses may not have a body, but axios still resolves successfully
-      if (response && (response.posts || response.data)) {
-        const postsData = response.posts || response.data || [];
+      // 304 responses may have empty or undefined response.data
+      // axios treats 304 as success, but response.data might be undefined
+      const postsData = response?.posts || response?.data || [];
+      
+      if (Array.isArray(postsData) && postsData.length > 0) {
+        // We have posts data
         setPosts((prevPosts) => {
           // Use functional update to avoid dependency on posts
           const newPosts = page === 1 ? postsData : [...prevPosts, ...postsData];
@@ -67,7 +71,7 @@ export default function PostsFeed({ locale, makerId }: PostsFeedProps) {
         });
         
         // Handle pagination if available
-        if (response.pagination) {
+        if (response?.pagination) {
           setHasMore(response.pagination.page < response.pagination.totalPages);
         } else {
           // If no pagination info, assume there's more if we got a full page
@@ -98,20 +102,26 @@ export default function PostsFeed({ locale, makerId }: PostsFeedProps) {
           });
         }
       } else {
-        // 🌟 Handle empty response (304 Not Modified with no body)
+        // 🌟 Handle empty response (304 Not Modified with no body, or empty array)
         // If we have existing posts, keep them. Otherwise, show empty state.
         setPosts((prevPosts) => {
-          if (prevPosts.length === 0) {
+          // If this is page 1 and we have no data, clear posts
+          if (page === 1) {
             return [];
           }
-          return prevPosts; // Keep existing posts
+          // Otherwise, keep existing posts (for pagination)
+          return prevPosts;
         });
         setHasMore(false);
-        // Don't set error - 304 is a valid response
+        // Don't set error - 304 is a valid response, and empty array is also valid
       }
     } catch (err: any) {
       console.error('Error loading posts:', err);
       setError(err.message || 'Failed to load posts');
+      // 🌟 On error, clear posts only if it's the first page
+      if (page === 1) {
+        setPosts([]);
+      }
     } finally {
       // 🌟 CRITICAL: Always stop loading regardless of response status (200, 304, or error)
       setLoading(false);
