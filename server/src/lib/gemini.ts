@@ -87,6 +87,20 @@ export async function generateFounderAIResponse(prompt: string): Promise<string>
         
         console.log(`[FounderAI] ✅ Response received successfully from ${modelName}, length:`, text.length, "characters");
         return text.trim();
+      } catch (error: any) {
+        // If this is a 404 (model not found), try next model
+        if (error?.status === 404 || error?.message?.includes('404') || error?.message?.includes('not found')) {
+          console.warn(`[FounderAI] ⚠️ Model ${modelName} not available, trying next model...`);
+          lastError = error;
+          continue; // Try next model
+        }
+        // For other errors, throw immediately
+        throw error;
+      }
+    }
+    
+    // If all models failed, throw the last error
+    throw lastError || new Error('All Gemini models failed');
   } catch (error: any) {
     console.error("[FounderAI] Gemini API error:", {
       message: error?.message || 'Unknown error',
