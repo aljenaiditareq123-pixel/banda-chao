@@ -41,6 +41,12 @@ export default function PostsFeed({ locale, makerId }: PostsFeedProps) {
   const [hasMore, setHasMore] = useState(true);
 
   const loadPosts = useCallback(async () => {
+    // 🌟 Prevent multiple simultaneous requests
+    if (loading) {
+      console.log('[PostsFeed] Already loading, skipping duplicate request');
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -54,8 +60,11 @@ export default function PostsFeed({ locale, makerId }: PostsFeedProps) {
       // 304 responses may not have a body, but axios still resolves successfully
       if (response && (response.posts || response.data)) {
         const postsData = response.posts || response.data || [];
-        const newPosts = page === 1 ? postsData : [...posts, ...postsData];
-        setPosts(newPosts);
+        setPosts((prevPosts) => {
+          // Use functional update to avoid dependency on posts
+          const newPosts = page === 1 ? postsData : [...prevPosts, ...postsData];
+          return newPosts;
+        });
         
         // Handle pagination if available
         if (response.pagination) {
@@ -66,10 +75,10 @@ export default function PostsFeed({ locale, makerId }: PostsFeedProps) {
         }
         
         // Check which posts the user liked (if authenticated)
-        if (user && newPosts.length > 0) {
+        if (user && postsData.length > 0) {
           const likedSet = new Set<string>();
           await Promise.all(
-            newPosts.map(async (post: Post) => {
+            postsData.map(async (post: Post) => {
               try {
                 const likeStatus = await likesAPI.getStatus('POST', post.id);
                 if (likeStatus.liked) {
@@ -81,27 +90,33 @@ export default function PostsFeed({ locale, makerId }: PostsFeedProps) {
               }
             })
           );
-          setLikedPosts(likedSet);
+          setLikedPosts((prevLiked) => {
+            // Merge with existing liked posts
+            const merged = new Set(prevLiked);
+            likedSet.forEach((id) => merged.add(id));
+            return merged;
+          });
         }
       } else {
         // 🌟 Handle empty response (304 Not Modified with no body)
         // If we have existing posts, keep them. Otherwise, show empty state.
-        if (posts.length === 0) {
-          setPosts([]);
-          setHasMore(false);
-        }
+        setPosts((prevPosts) => {
+          if (prevPosts.length === 0) {
+            return [];
+          }
+          return prevPosts; // Keep existing posts
+        });
+        setHasMore(false);
         // Don't set error - 304 is a valid response
       }
     } catch (err: any) {
       console.error('Error loading posts:', err);
       setError(err.message || 'Failed to load posts');
-      // 🌟 Ensure loading is stopped even on error
-      setLoading(false);
     } finally {
       // 🌟 CRITICAL: Always stop loading regardless of response status (200, 304, or error)
       setLoading(false);
     }
-  }, [makerId, page, user, posts]);
+  }, [makerId, page, user, loading]); // 🌟 Removed 'posts' from dependencies to prevent infinite loop
 
   useEffect(() => {
     loadPosts();
