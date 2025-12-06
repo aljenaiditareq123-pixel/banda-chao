@@ -49,10 +49,21 @@ export default function PostsFeed({ locale, makerId }: PostsFeedProps) {
         limit: 20,
         makerId,
       });
-      if (response.posts) {
-        const newPosts = page === 1 ? response.posts : [...posts, ...response.posts];
+      
+      // 🌟 Handle both 200 OK and 304 Not Modified responses
+      // 304 responses may not have a body, but axios still resolves successfully
+      if (response && (response.posts || response.data)) {
+        const postsData = response.posts || response.data || [];
+        const newPosts = page === 1 ? postsData : [...posts, ...postsData];
         setPosts(newPosts);
-        setHasMore(response.pagination.page < response.pagination.totalPages);
+        
+        // Handle pagination if available
+        if (response.pagination) {
+          setHasMore(response.pagination.page < response.pagination.totalPages);
+        } else {
+          // If no pagination info, assume there's more if we got a full page
+          setHasMore(postsData.length === 20);
+        }
         
         // Check which posts the user liked (if authenticated)
         if (user && newPosts.length > 0) {
@@ -72,11 +83,22 @@ export default function PostsFeed({ locale, makerId }: PostsFeedProps) {
           );
           setLikedPosts(likedSet);
         }
+      } else {
+        // 🌟 Handle empty response (304 Not Modified with no body)
+        // If we have existing posts, keep them. Otherwise, show empty state.
+        if (posts.length === 0) {
+          setPosts([]);
+          setHasMore(false);
+        }
+        // Don't set error - 304 is a valid response
       }
     } catch (err: any) {
       console.error('Error loading posts:', err);
       setError(err.message || 'Failed to load posts');
+      // 🌟 Ensure loading is stopped even on error
+      setLoading(false);
     } finally {
+      // 🌟 CRITICAL: Always stop loading regardless of response status (200, 304, or error)
       setLoading(false);
     }
   }, [makerId, page, user, posts]);
