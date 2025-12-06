@@ -15,12 +15,17 @@ const validLocales = ['zh', 'en', 'ar'];
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale, id } = params;
   
+  // Get base URL for metadataBase
+  const metadataBaseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 
+                          'https://banda-chao-frontend.onrender.com';
+  
   try {
     const response = await productsAPI.getById(id);
     const product = response.product;
 
     if (product) {
       return {
+        metadataBase: new URL(metadataBaseUrl),
         title: `${product.name} - Banda Chao`,
         description: product.description || `Buy ${product.name} from Banda Chao`,
         openGraph: {
@@ -35,6 +40,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   return {
+    metadataBase: new URL(metadataBaseUrl),
     title: 'Product - Banda Chao',
   };
 }

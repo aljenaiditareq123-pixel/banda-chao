@@ -15,12 +15,17 @@ const validLocales = ['zh', 'en', 'ar'];
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale, id } = params;
   
+  // Get base URL for metadataBase
+  const metadataBaseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 
+                          'https://banda-chao-frontend.onrender.com';
+  
   try {
     const response = await makersAPI.getById(id);
     const maker = response.maker;
 
     if (maker) {
       return {
+        metadataBase: new URL(metadataBaseUrl),
         title: `${maker.displayName} - Banda Chao`,
         description: maker.bio || `View ${maker.displayName}'s profile and products on Banda Chao`,
         openGraph: {
@@ -35,6 +40,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   return {
+    metadataBase: new URL(metadataBaseUrl),
     title: 'Maker - Banda Chao',
   };
 }
