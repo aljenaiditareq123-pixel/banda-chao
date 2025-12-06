@@ -51,10 +51,19 @@ export default function PostsFeed({ locale, makerId }: PostsFeedProps) {
       setLoading(true);
       setError(null);
       
+      console.log('[PostsFeed] Fetching posts...', { page, makerId });
       const response = await postsAPI.getAll({
         page,
         limit: 20,
         makerId,
+      });
+      
+      console.log('[PostsFeed] Response received:', { 
+        hasResponse: !!response,
+        hasPosts: !!(response?.posts),
+        hasData: !!(response?.data),
+        responseType: typeof response,
+        responseKeys: response ? Object.keys(response) : [],
       });
       
       // 🌟 Handle both 200 OK and 304 Not Modified responses
@@ -62,8 +71,14 @@ export default function PostsFeed({ locale, makerId }: PostsFeedProps) {
       // axios treats 304 as success, but response.data might be undefined
       const postsData = response?.posts || response?.data || [];
       
+      console.log('[PostsFeed] Posts data:', { 
+        isArray: Array.isArray(postsData),
+        length: Array.isArray(postsData) ? postsData.length : 0,
+      });
+      
       if (Array.isArray(postsData) && postsData.length > 0) {
         // We have posts data
+        console.log('[PostsFeed] Setting posts:', postsData.length);
         setPosts((prevPosts) => {
           // Use functional update to avoid dependency on posts
           const newPosts = page === 1 ? postsData : [...prevPosts, ...postsData];
@@ -103,20 +118,23 @@ export default function PostsFeed({ locale, makerId }: PostsFeedProps) {
         }
       } else {
         // 🌟 Handle empty response (304 Not Modified with no body, or empty array)
+        console.log('[PostsFeed] Empty response - 304 or no data');
         // If we have existing posts, keep them. Otherwise, show empty state.
         setPosts((prevPosts) => {
           // If this is page 1 and we have no data, clear posts
           if (page === 1) {
+            console.log('[PostsFeed] Page 1 with no data - clearing posts');
             return [];
           }
           // Otherwise, keep existing posts (for pagination)
+          console.log('[PostsFeed] Keeping existing posts:', prevPosts.length);
           return prevPosts;
         });
         setHasMore(false);
         // Don't set error - 304 is a valid response, and empty array is also valid
       }
     } catch (err: any) {
-      console.error('Error loading posts:', err);
+      console.error('[PostsFeed] Error loading posts:', err);
       setError(err.message || 'Failed to load posts');
       // 🌟 On error, clear posts only if it's the first page
       if (page === 1) {
@@ -124,6 +142,7 @@ export default function PostsFeed({ locale, makerId }: PostsFeedProps) {
       }
     } finally {
       // 🌟 CRITICAL: Always stop loading regardless of response status (200, 304, or error)
+      console.log('[PostsFeed] Stopping loading state');
       setLoading(false);
     }
   }, [makerId, page, user, loading]); // 🌟 Removed 'posts' from dependencies to prevent infinite loop
