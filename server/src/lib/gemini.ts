@@ -45,7 +45,17 @@ export async function generateFounderAIResponse(prompt: string): Promise<string>
     console.log("[FounderAI] Sending request to Gemini 1.0 Pro...");
     console.log("[FounderAI] Prompt length:", prompt.length, "characters");
     
-    const result = await model.generateContent(prompt);
+    // Add timeout wrapper for Gemini API call (90 seconds)
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => {
+        reject(new Error('Gemini API request timeout after 90 seconds'));
+      }, 90000); // 90 seconds timeout
+    });
+    
+    const generatePromise = model.generateContent(prompt);
+    
+    // Race between timeout and actual API call
+    const result = await Promise.race([generatePromise, timeoutPromise]) as Awaited<ReturnType<typeof model.generateContent>>;
     const response = result.response;
     
     if (!response) {

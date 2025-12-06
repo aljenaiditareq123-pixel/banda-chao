@@ -53,68 +53,84 @@ const apiClient: AxiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 30000, // 30 seconds timeout
+  timeout: 30000, // 30 seconds timeout (default)
   withCredentials: true, // Include cookies in requests
 });
 
-// Request interceptor to add auth token and CSRF token
-apiClient.interceptors.request.use(
-  async (config) => {
-    if (typeof window !== 'undefined') {
-      try {
-        const token = localStorage.getItem('auth_token');
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
+// Special axios instance for AI endpoints with longer timeout
+const aiApiClient: AxiosInstance = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  timeout: 120000, // 120 seconds (2 minutes) for AI processing
+  withCredentials: true,
+});
 
-        // Get CSRF token from cookie
-        let csrfToken = getCookie('csrf-token');
-        
-        // If no CSRF token and this is not a GET request, try to get one
-        if (!csrfToken && config.method !== 'get' && config.method !== 'GET') {
-          // For AI endpoints, CSRF is not required (they're excluded)
-          // But we still try to get token for other endpoints
-          const isAIEndpoint = config.url?.startsWith('/ai/');
-          if (!isAIEndpoint) {
-            try {
-              // Try to get CSRF token from API
-              const tokenResponse = await fetch(`${API_URL}/api/v1/csrf-token`, {
-                method: 'GET',
-                headers: {
-                  'Authorization': `Bearer ${token}`,
-                },
-                credentials: 'include',
-              });
-              if (tokenResponse.ok) {
-                const tokenData = await tokenResponse.json();
-                csrfToken = tokenData.csrfToken || getCookie('csrf-token');
+// Shared request interceptor function
+const addAuthInterceptor = (client: AxiosInstance) => {
+  client.interceptors.request.use(
+    async (config) => {
+      if (typeof window !== 'undefined') {
+        try {
+          const token = localStorage.getItem('auth_token');
+          if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+          }
+
+          // Get CSRF token from cookie
+          let csrfToken = getCookie('csrf-token');
+          
+          // If no CSRF token and this is not a GET request, try to get one
+          if (!csrfToken && config.method !== 'get' && config.method !== 'GET') {
+            // For AI endpoints, CSRF is not required (they're excluded)
+            // But we still try to get token for other endpoints
+            const isAIEndpoint = config.url?.startsWith('/ai/');
+            if (!isAIEndpoint) {
+              try {
+                // Try to get CSRF token from API
+                const tokenResponse = await fetch(`${API_URL}/api/v1/csrf-token`, {
+                  method: 'GET',
+                  headers: {
+                    'Authorization': `Bearer ${token}`,
+                  },
+                  credentials: 'include',
+                });
+                if (tokenResponse.ok) {
+                  const tokenData = await tokenResponse.json();
+                  csrfToken = tokenData.csrfToken || getCookie('csrf-token');
+                }
+              } catch (err) {
+                // Silently fail - CSRF token fetch failed
+                console.warn('[API] Failed to fetch CSRF token:', err);
               }
-            } catch (err) {
-              // Silently fail - CSRF token fetch failed
-              console.warn('[API] Failed to fetch CSRF token:', err);
             }
           }
+          
+          // Add CSRF token to header (even if null, for AI endpoints it will be skipped)
+          if (csrfToken) {
+            config.headers['X-CSRF-Token'] = csrfToken;
+          }
+        } catch (error) {
+          // localStorage may not be available (private browsing, etc.)
+          // Silently fail - request will proceed without token
         }
-        
-        // Add CSRF token to header (even if null, for AI endpoints it will be skipped)
-        if (csrfToken) {
-          config.headers['X-CSRF-Token'] = csrfToken;
-        }
-      } catch (error) {
-        // localStorage may not be available (private browsing, etc.)
-        // Silently fail - request will proceed without token
       }
+      // If FormData is being sent, let axios set Content-Type automatically with boundary
+      if (config.data instanceof FormData) {
+        delete config.headers['Content-Type'];
+      }
+      return config;
+    },
+    (error) => {
+      return Promise.reject(error);
     }
-    // If FormData is being sent, let axios set Content-Type automatically with boundary
-    if (config.data instanceof FormData) {
-      delete config.headers['Content-Type'];
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+  );
+};
+
+// Add auth interceptor to both clients
+addAuthInterceptor(apiClient);
+addAuthInterceptor(aiApiClient);
 
 // Helper function to get cookie value
 function getCookie(name: string): string | null {
@@ -127,10 +143,11 @@ function getCookie(name: string): string | null {
   return null;
 }
 
-// Response interceptor with retry logic
-apiClient.interceptors.response.use(
-  (response) => response,
-  async (error: AxiosError) => {
+// Shared response interceptor function
+const addResponseInterceptor = (client: AxiosInstance, isAI: boolean = false) => {
+  client.interceptors.response.use(
+    (response) => response,
+    async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean; _retryCount?: number };
     const status = error.response?.status;
 
@@ -179,13 +196,21 @@ apiClient.interceptors.response.use(
       // Wait before retrying
       await new Promise((resolve) => setTimeout(resolve, delay));
 
-      // Retry the request
+      // Retry the request (use the same client that made the original request)
       try {
-        return await apiClient(originalRequest);
+        const clientToUse = isAI ? aiApiClient : apiClient;
+        return await clientToUse(originalRequest);
       } catch (retryError) {
         // If retry fails, reject the error
         return Promise.reject(retryError);
       }
+    }
+    
+    // Special handling for timeout errors in AI requests
+    if (isAI && error.code === 'ECONNABORTED' && error.message.includes('timeout')) {
+      console.error('[AI API] Request timeout - Gemini API is taking longer than expected');
+      // Enhance error message for timeout
+      error.message = 'استغرق الرد وقتاً طويلاً. يرجى المحاولة مرة أخرى أو تبسيط الرسالة.';
     }
 
     // Log error details (excluding sensitive data) - only in client-side
@@ -218,8 +243,13 @@ apiClient.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
-);
+    }
+  );
+};
+
+// Add response interceptor to both clients
+addResponseInterceptor(apiClient, false);
+addResponseInterceptor(aiApiClient, true);
 
 // ============================================
 // Auth API
@@ -637,7 +667,8 @@ export const aiAPI = {
     conversationId?: string; 
     clearContext?: boolean;
   }) => {
-    const response = await apiClient.post('/ai/assistant', data);
+    // Use aiApiClient with longer timeout (120 seconds) for AI processing
+    const response = await aiApiClient.post('/ai/assistant', data);
     return response.data;
   },
   pricingSuggestion: async (data: {
