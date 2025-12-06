@@ -145,7 +145,7 @@ export default function PostsFeed({ locale, makerId }: PostsFeedProps) {
       console.log('[PostsFeed] Stopping loading state');
       setLoading(false);
     }
-  }, [makerId, page, user, loading]); // 🌟 Removed 'posts' from dependencies to prevent infinite loop
+  }, [makerId, page, user]); // 🌟 Removed 'posts' and 'loading' from dependencies to prevent infinite loop
 
   useEffect(() => {
     // 🌟 Only load posts when page or makerId changes, not on every render
