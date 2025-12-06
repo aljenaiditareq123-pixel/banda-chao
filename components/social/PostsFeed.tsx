@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { postsAPI, likesAPI } from '@/lib/api';
 import PostCard from './PostCard';
 import CreatePostForm from './CreatePostForm';
@@ -39,15 +39,17 @@ export default function PostsFeed({ locale, makerId }: PostsFeedProps) {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const isLoadingRef = useRef(false); // 🌟 Use ref to prevent duplicate requests
 
   const loadPosts = useCallback(async () => {
-    // 🌟 Prevent multiple simultaneous requests
-    if (loading) {
+    // 🌟 Prevent multiple simultaneous requests using ref
+    if (isLoadingRef.current) {
       console.log('[PostsFeed] Already loading, skipping duplicate request');
       return;
     }
 
     try {
+      isLoadingRef.current = true;
       setLoading(true);
       setError(null);
       
@@ -143,6 +145,7 @@ export default function PostsFeed({ locale, makerId }: PostsFeedProps) {
     } finally {
       // 🌟 CRITICAL: Always stop loading regardless of response status (200, 304, or error)
       console.log('[PostsFeed] Stopping loading state');
+      isLoadingRef.current = false;
       setLoading(false);
     }
   }, [makerId, page, user]); // 🌟 Removed 'posts' and 'loading' from dependencies to prevent infinite loop
