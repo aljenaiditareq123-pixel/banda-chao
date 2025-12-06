@@ -47,22 +47,33 @@ export async function generateFounderAIResponse(prompt: string): Promise<string>
   }
 
   try {
-    const modelName = process.env.GEMINI_MODEL || "gemini-1.5-pro";
-    console.log(`[FounderAI] Sending request to Gemini (${modelName})...`);
-    console.log("[FounderAI] Prompt length:", prompt.length, "characters");
+    // Try multiple models in order of preference (fallback mechanism)
+    const modelNames = process.env.GEMINI_MODEL 
+      ? [process.env.GEMINI_MODEL] 
+      : ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-pro"];
     
-    // Add timeout wrapper for Gemini API call (90 seconds)
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => {
-        reject(new Error('Gemini API request timeout after 90 seconds'));
-      }, 90000); // 90 seconds timeout
-    });
+    let lastError: any = null;
     
-    const generatePromise = model.generateContent(prompt);
-    
-    // Race between timeout and actual API call
-    const result = await Promise.race([generatePromise, timeoutPromise]) as Awaited<ReturnType<typeof model.generateContent>>;
-    const response = result.response;
+    for (const modelName of modelNames) {
+      try {
+        console.log(`[FounderAI] Trying model: ${modelName}...`);
+        console.log("[FounderAI] Prompt length:", prompt.length, "characters");
+        
+        // Create model instance for this attempt
+        const attemptModel = genAI!.getGenerativeModel({ model: modelName });
+        
+        // Add timeout wrapper for Gemini API call (90 seconds)
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => {
+            reject(new Error('Gemini API request timeout after 90 seconds'));
+          }, 90000); // 90 seconds timeout
+        });
+        
+        const generatePromise = attemptModel.generateContent(prompt);
+        
+        // Race between timeout and actual API call
+        const result = await Promise.race([generatePromise, timeoutPromise]) as Awaited<ReturnType<typeof attemptModel.generateContent>>;
+        const response = result.response;
     
     if (!response) {
       throw new Error('Empty response from Gemini API');
