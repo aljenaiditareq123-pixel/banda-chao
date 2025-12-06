@@ -1,12 +1,13 @@
 import CartPageClient from './page-client';
 
 interface CartPageProps {
-  params: {
+  params: Promise<{
     locale: string;
-  };
+  }>;
 }
 
-export default function CartPage({ params }: CartPageProps) {
-  return <CartPageClient locale={params.locale} />;
+export default async function CartPage({ params }: CartPageProps) {
+  const { locale } = await params;
+  return <CartPageClient locale={locale} />;
 }
 

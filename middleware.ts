@@ -17,9 +17,9 @@ const countryToLocale: Record<string, string> = {
 // Get locale from IP geolocation (using Cloudflare headers or similar)
 function getLocaleFromIP(request: NextRequest): string {
   // Try to get country from Cloudflare CF-IPCountry header
+  // Note: request.geo is deprecated in Next.js 16, using headers only
   const country = request.headers.get('cf-ipcountry') || 
                   request.headers.get('x-vercel-ip-country') ||
-                  request.geo?.country ||
                   null;
 
   if (country && countryToLocale[country]) {

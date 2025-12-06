@@ -12,13 +12,13 @@ const validLocales = ['zh', 'en', 'ar'];
 
 interface LocaleLayoutProps {
   children: React.ReactNode;
-  params: {
+  params: Promise<{
     locale: string;
-  };
+  }>;
 }
 
 export async function generateMetadata({ params }: LocaleLayoutProps): Promise<Metadata> {
-  const { locale } = params;
+  const { locale } = await params;
   const validLocale = (locale === 'zh' || locale === 'ar' || locale === 'en') ? locale : 'ar';
 
   const titles = {
@@ -86,8 +86,8 @@ export async function generateMetadata({ params }: LocaleLayoutProps): Promise<M
   return metadata;
 }
 
-export default function LocaleLayout({ children, params }: LocaleLayoutProps) {
-  const { locale } = params;
+export default async function LocaleLayout({ children, params }: LocaleLayoutProps) {
+  const { locale } = await params;
   
   // Validate locale
   if (!validLocales.includes(locale)) {
