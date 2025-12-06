@@ -673,6 +673,27 @@ export const ordersAPI = {
     const response = await apiClient.get('/orders');
     return response.data;
   },
+  createOrder: async (data: {
+    items: Array<{ productId: string; quantity: number; price: number }>;
+    shipping: {
+      name: string;
+      address: string;
+      city: string;
+      zip: string;
+      country: string;
+      phone?: string;
+    };
+    payment?: {
+      cardName?: string;
+      cardNumber?: string;
+      expiry?: string;
+      cvc?: string;
+    };
+    total: number;
+  }) => {
+    const response = await apiClient.post('/orders', data);
+    return response.data;
+  },
 };
 
 // ============================================

@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Button from '@/components/Button';
 import { Grid, GridItem } from '@/components/Grid';
-import { paymentsAPI } from '@/lib/api';
-import { redirectToCheckout, saveOrderDraft, getOrderDraft, clearOrderDraft } from '@/lib/stripe-client';
-import { maintenanceLogger } from '@/lib/maintenance-logger';
+import { ordersAPI } from '@/lib/api';
+import { useCart } from '@/contexts/CartContext';
+import { formatCurrency } from '@/lib/formatCurrency';
+import Card from '@/components/common/Card';
 
 interface CheckoutPageClientProps {
   locale: string;
@@ -21,11 +23,16 @@ interface ShippingAddress {
   phone?: string;
 }
 
+interface PaymentDetails {
+  cardName: string;
+  cardNumber: string;
+  expiry: string;
+  cvc: string;
+}
+
 export default function CheckoutPageClient({ locale }: CheckoutPageClientProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const productId = searchParams.get('productId');
-  const quantity = parseInt(searchParams.get('quantity') || '1');
+  const { items, total: cartTotal, clearCart } = useCart();
   
   const [shippingAddress, setShippingAddress] = useState<ShippingAddress>({
     fullName: '',
@@ -35,28 +42,33 @@ export default function CheckoutPageClient({ locale }: CheckoutPageClientProps) 
     zipCode: '',
     phone: '',
   });
+
+  const [paymentDetails, setPaymentDetails] = useState<PaymentDetails>({
+    cardName: '',
+    cardNumber: '',
+    expiry: '',
+    cvc: '',
+  });
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
-  const [orderSummary, setOrderSummary] = useState<{
-    subtotal: number;
-    shipping: number;
-    total: number;
-    currency: string;
-  } | null>(null);
+  const [orderStatus, setOrderStatus] = useState<{ type: 'success' | 'error'; message: string; orderId?: string } | null>(null);
 
-  // Load saved draft on mount
+  // Calculate order summary
+  const MOCK_SHIPPING_COST = 10.00;
+  const MOCK_TAX_RATE = 0.15;
+  const subtotal = cartTotal;
+  const taxAmount = subtotal * MOCK_TAX_RATE;
+  const shipping = items.length > 0 ? MOCK_SHIPPING_COST : 0;
+  const grandTotal = subtotal + shipping + taxAmount;
+  const currency = items[0]?.currency || 'USD';
+
+  // Redirect if cart is empty
   useEffect(() => {
-    const draft = getOrderDraft();
-    if (draft && draft.productId === productId) {
-      setShippingAddress(draft.shippingAddress || shippingAddress);
-      maintenanceLogger.log('order_draft_loaded', {
-        message: 'Order draft loaded from local storage',
-        productId: draft.productId,
-      }, 'info');
+    if (items.length === 0 && !orderStatus) {
+      router.push(`/${locale}/cart`);
     }
-  }, [productId]);
+  }, [items.length, locale, router, orderStatus]);
 
   // Translations
   const texts = {
@@ -78,12 +90,21 @@ export default function CheckoutPageClient({ locale }: CheckoutPageClientProps) 
       phonePlaceholder: 'أدخل رقم الهاتف',
       subtotal: 'المجموع الفرعي',
       shipping: 'رسوم الشحن',
+      tax: 'الضرائب (15%)',
       total: 'الإجمالي',
-      secureCheckout: 'إتمام الدفع الآمن',
+      secureCheckout: 'تأكيد الطلب',
       processing: 'جاري المعالجة...',
       error: 'حدث خطأ',
       required: 'هذا الحقل مطلوب',
       backToProducts: 'العودة إلى المنتجات',
+      continueShopping: 'متابعة التسوق',
+      paymentInfo: 'معلومات الدفع',
+      cardName: 'الاسم على البطاقة',
+      cardNumber: 'رقم البطاقة',
+      expiry: 'تاريخ الانتهاء (MM/YY)',
+      cvc: 'رمز الأمان (CVC)',
+      emptyCart: 'لا يمكن إتمام الشراء. سلتك فارغة.',
+      success: 'تم تأكيد طلبك بنجاح! رقم الطلب هو:',
     },
     en: {
       title: 'Checkout',
@@ -103,12 +124,21 @@ export default function CheckoutPageClient({ locale }: CheckoutPageClientProps) 
       phonePlaceholder: 'Enter phone number',
       subtotal: 'Subtotal',
       shipping: 'Shipping',
+      tax: 'Tax (15%)',
       total: 'Total',
-      secureCheckout: 'Complete Secure Payment',
+      secureCheckout: 'Place Order',
       processing: 'Processing...',
       error: 'An error occurred',
       required: 'This field is required',
       backToProducts: 'Back to Products',
+      continueShopping: 'Continue Shopping',
+      paymentInfo: 'Payment Information',
+      cardName: 'Name on Card',
+      cardNumber: 'Card Number',
+      expiry: 'Expiry (MM/YY)',
+      cvc: 'CVC',
+      emptyCart: 'Cannot proceed to checkout. Your cart is empty.',
+      success: 'Your order has been placed successfully! Order ID:',
     },
     zh: {
       title: '结账',
@@ -128,35 +158,39 @@ export default function CheckoutPageClient({ locale }: CheckoutPageClientProps) 
       phonePlaceholder: '输入电话号码',
       subtotal: '小计',
       shipping: '运费',
+      tax: '税费 (15%)',
       total: '总计',
-      secureCheckout: '完成安全支付',
+      secureCheckout: '确认订单',
       processing: '处理中...',
       error: '发生错误',
       required: '此字段为必填项',
       backToProducts: '返回产品',
+      continueShopping: '继续购物',
+      paymentInfo: '支付信息',
+      cardName: '持卡人姓名',
+      cardNumber: '卡号',
+      expiry: '有效期 (MM/YY)',
+      cvc: '安全码',
+      emptyCart: '无法结账。购物车为空。',
+      success: '订单已成功确认！订单号：',
     },
   };
 
   const t = texts[locale as keyof typeof texts] || texts.en;
 
-  // Load order summary (mock data for now - should be fetched from API)
-  useEffect(() => {
-    // In a real implementation, fetch order details from API
-    // For now, use mock data
-    setOrderSummary({
-      subtotal: 100.00,
-      shipping: 10.00,
-      total: 110.00,
-      currency: 'USD',
-    });
-  }, []);
-
-  const handleInputChange = (field: keyof ShippingAddress, value: string) => {
+  const handleShippingChange = (field: keyof ShippingAddress, value: string) => {
     setShippingAddress((prev) => ({
       ...prev,
       [field]: value,
     }));
-    // Clear error when user starts typing
+    if (error) setError(null);
+  };
+
+  const handlePaymentChange = (field: keyof PaymentDetails, value: string) => {
+    setPaymentDetails((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
     if (error) setError(null);
   };
 
@@ -181,8 +215,8 @@ export default function CheckoutPageClient({ locale }: CheckoutPageClientProps) 
       setError(t.required + ': ' + t.zipCode);
       return false;
     }
-    if (!productId) {
-      setError('Product ID is missing');
+    if (items.length === 0) {
+      setError(t.emptyCart);
       return false;
     }
     return true;
@@ -197,85 +231,101 @@ export default function CheckoutPageClient({ locale }: CheckoutPageClientProps) 
 
     setLoading(true);
     setError(null);
+    setOrderStatus(null);
 
     try {
-      // Call checkout API
-      const response = await paymentsAPI.createCheckout({
-        productId: productId!,
-        quantity: quantity,
-        currency: orderSummary?.currency || 'USD',
-      });
+      // Prepare order data
+      const orderData = {
+        items: items.map(item => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+        shipping: {
+          name: shippingAddress.fullName,
+          address: shippingAddress.street,
+          city: shippingAddress.city,
+          zip: shippingAddress.zipCode,
+          country: shippingAddress.country,
+          phone: shippingAddress.phone,
+        },
+        payment: {
+          cardName: paymentDetails.cardName,
+          cardNumber: paymentDetails.cardNumber,
+          expiry: paymentDetails.expiry,
+          cvc: paymentDetails.cvc,
+        },
+        total: grandTotal,
+      };
 
-      if (response.success && response.sessionId) {
-        try {
-          // Redirect to Stripe Checkout using Stripe.js (with built-in retry)
-          await redirectToCheckout(response.sessionId);
-          // Clear draft on success
-          clearOrderDraft();
-        } catch (stripeError: any) {
-          // The Backup Plan: Save order as draft if Stripe fails
-          saveOrderDraft({
-            productId: productId!,
-            quantity: quantity,
-            shippingAddress: shippingAddress,
-            total: orderSummary?.total || 0,
-          });
+      // Create order via API
+      const response = await ordersAPI.createOrder(orderData);
 
-          maintenanceLogger.log('stripe_checkout_failed', {
-            message: 'Stripe checkout failed, order saved as draft',
-            error: stripeError.message,
-            sessionId: response.sessionId,
-          }, 'error');
-
-          setError(
-            locale === 'ar'
-              ? 'فشل الاتصال بخدمة الدفع. تم حفظ طلبك كمسودة. يرجى المحاولة مرة أخرى.'
-              : 'Payment service connection failed. Your order has been saved as draft. Please try again.'
-          );
-          setLoading(false);
-        }
-      } else if (response.success && response.checkoutUrl) {
-        // Fallback: redirect directly if sessionId not available
-        window.location.href = response.checkoutUrl;
+      if (response.success || response.orderId) {
+        setOrderStatus({
+          type: 'success',
+          message: `${t.success} ${response.orderId || response.id || 'N/A'}`,
+          orderId: response.orderId || response.id,
+        });
+        clearCart(); // Clear cart after successful order
       } else {
-        setError(response.message || t.error);
+        setError(response.message || response.error || t.error);
         setLoading(false);
       }
     } catch (err: any) {
       console.error('Checkout error:', err);
-      
-      // The Backup Plan: Save order as draft on API failure
-      saveOrderDraft({
-        productId: productId!,
-        quantity: quantity,
-        shippingAddress: shippingAddress,
-        total: orderSummary?.total || 0,
-      });
-
-      maintenanceLogger.log('checkout_api_failed', {
-        message: 'Checkout API failed, order saved as draft',
-        error: err.message,
-      }, 'error');
-
-      setError(
-        locale === 'ar'
-          ? 'حدث خطأ في الاتصال. تم حفظ طلبك كمسودة. يرجى المحاولة مرة أخرى.'
-          : 'Connection error. Your order has been saved as draft. Please try again.'
-      );
+      setError(err.response?.data?.error || err.message || t.error);
       setLoading(false);
     }
   };
 
-  const handleRetry = () => {
-    setRetryCount(prev => prev + 1);
-    setError(null);
-    handleCheckout({ preventDefault: () => {} } as React.FormEvent);
-  };
+  // Show success screen
+  if (orderStatus?.type === 'success') {
+    return (
+      <div className="min-h-screen bg-gray-50 py-16" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="bg-white rounded-lg shadow-lg p-8">
+            <svg className="w-16 h-16 text-green-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">
+              {locale === 'ar' ? 'تم تأكيد طلبك!' : locale === 'zh' ? '订单已确认！' : 'Order Confirmed!'}
+            </h1>
+            <p className="text-lg text-gray-600 mb-8">{orderStatus.message}</p>
+            <Link
+              href={`/${locale}/products`}
+              className="inline-block px-6 py-3 bg-sky-600 text-white font-semibold rounded-lg hover:bg-sky-700 transition duration-150"
+            >
+              {t.continueShopping}
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show empty cart message
+  if (items.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-16" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">{t.title}</h1>
+          <p className="text-xl text-gray-600 mb-8">{t.emptyCart}</p>
+          <Link
+            href={`/${locale}/products`}
+            className="inline-block px-6 py-3 bg-sky-600 text-white font-semibold rounded-lg hover:bg-sky-700 transition duration-150"
+          >
+            {t.continueShopping}
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">{t.title}</h1>
+        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8">{t.title}</h1>
 
         <form onSubmit={handleCheckout}>
           <Grid
@@ -284,8 +334,8 @@ export default function CheckoutPageClient({ locale }: CheckoutPageClientProps) 
             className="mb-8"
           >
             {/* Main Column - Shipping Address Form */}
-            <GridItem className="lg:col-span-2">
-              <div className="bg-white rounded-lg shadow-sm p-6 md:p-8">
+            <GridItem className="lg:col-span-2 space-y-6">
+              <Card className="p-6 md:p-8">
                 <h2 className="text-xl font-semibold text-gray-900 mb-6">
                   {t.shippingAddress}
                 </h2>
@@ -300,7 +350,7 @@ export default function CheckoutPageClient({ locale }: CheckoutPageClientProps) 
                       type="text"
                       id="fullName"
                       value={shippingAddress.fullName}
-                      onChange={(e) => handleInputChange('fullName', e.target.value)}
+                      onChange={(e) => handleShippingChange('fullName', e.target.value)}
                       placeholder={t.fullNamePlaceholder}
                       required
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E7D32] focus:border-transparent"
@@ -317,7 +367,7 @@ export default function CheckoutPageClient({ locale }: CheckoutPageClientProps) 
                       type="text"
                       id="street"
                       value={shippingAddress.street}
-                      onChange={(e) => handleInputChange('street', e.target.value)}
+                      onChange={(e) => handleShippingChange('street', e.target.value)}
                       placeholder={t.streetPlaceholder}
                       required
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E7D32] focus:border-transparent"
@@ -334,8 +384,8 @@ export default function CheckoutPageClient({ locale }: CheckoutPageClientProps) 
                       <input
                         type="text"
                         id="city"
-                        value={shippingAddress.city}
-                        onChange={(e) => handleInputChange('city', e.target.value)}
+                      value={shippingAddress.city}
+                      onChange={(e) => handleShippingChange('city', e.target.value)}
                         placeholder={t.cityPlaceholder}
                         required
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E7D32] focus:border-transparent"
@@ -350,8 +400,8 @@ export default function CheckoutPageClient({ locale }: CheckoutPageClientProps) 
                       <input
                         type="text"
                         id="country"
-                        value={shippingAddress.country}
-                        onChange={(e) => handleInputChange('country', e.target.value)}
+                      value={shippingAddress.country}
+                      onChange={(e) => handleShippingChange('country', e.target.value)}
                         placeholder={t.countryPlaceholder}
                         required
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E7D32] focus:border-transparent"
@@ -369,8 +419,8 @@ export default function CheckoutPageClient({ locale }: CheckoutPageClientProps) 
                       <input
                         type="text"
                         id="zipCode"
-                        value={shippingAddress.zipCode}
-                        onChange={(e) => handleInputChange('zipCode', e.target.value)}
+                      value={shippingAddress.zipCode}
+                      onChange={(e) => handleShippingChange('zipCode', e.target.value)}
                         placeholder={t.zipCodePlaceholder}
                         required
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E7D32] focus:border-transparent"
@@ -385,8 +435,8 @@ export default function CheckoutPageClient({ locale }: CheckoutPageClientProps) 
                       <input
                         type="tel"
                         id="phone"
-                        value={shippingAddress.phone}
-                        onChange={(e) => handleInputChange('phone', e.target.value)}
+                      value={shippingAddress.phone || ''}
+                      onChange={(e) => handleShippingChange('phone', e.target.value)}
                         placeholder={t.phonePlaceholder}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E7D32] focus:border-transparent"
                         disabled={loading}
@@ -394,90 +444,167 @@ export default function CheckoutPageClient({ locale }: CheckoutPageClientProps) 
                     </div>
                   </div>
                 </div>
-              </div>
+              </Card>
+
+              {/* Payment Information */}
+              <Card className="p-6 md:p-8">
+                <h2 className="text-xl font-semibold text-gray-900 mb-6">
+                  {t.paymentInfo}
+                </h2>
+                <div className="p-3 mb-4 text-sm text-yellow-800 bg-yellow-100 dark:bg-yellow-900 dark:text-yellow-100 rounded-lg">
+                  {locale === 'ar' 
+                    ? '**ملاحظة:** يتم استخدام بيانات دفع وهمية (Mock Payment) حاليًا لغرض الاختبار.'
+                    : locale === 'zh'
+                    ? '**注意：** 当前使用模拟支付数据进行测试。'
+                    : '**Note:** Mock payment data is currently used for testing purposes.'}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="cardName" className="block text-sm font-medium text-gray-700 mb-2">
+                      {t.cardName} <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="cardName"
+                      value={paymentDetails.cardName}
+                      onChange={(e) => handlePaymentChange('cardName', e.target.value)}
+                      required
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E7D32] focus:border-transparent"
+                      disabled={loading}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="cardNumber" className="block text-sm font-medium text-gray-700 mb-2">
+                      {t.cardNumber} <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="cardNumber"
+                      value={paymentDetails.cardNumber}
+                      onChange={(e) => handlePaymentChange('cardNumber', e.target.value.replace(/\s/g, ''))}
+                      pattern="[0-9]{16}"
+                      placeholder="**** **** **** ****"
+                      required
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E7D32] focus:border-transparent"
+                      disabled={loading}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="expiry" className="block text-sm font-medium text-gray-700 mb-2">
+                      {t.expiry} <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="expiry"
+                      value={paymentDetails.expiry}
+                      onChange={(e) => handlePaymentChange('expiry', e.target.value)}
+                      pattern="(0[1-9]|1[0-2])\/\d{2}"
+                      placeholder="MM/YY"
+                      required
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E7D32] focus:border-transparent"
+                      disabled={loading}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="cvc" className="block text-sm font-medium text-gray-700 mb-2">
+                      {t.cvc} <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="cvc"
+                      value={paymentDetails.cvc}
+                      onChange={(e) => handlePaymentChange('cvc', e.target.value)}
+                      pattern="[0-9]{3,4}"
+                      required
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E7D32] focus:border-transparent"
+                      disabled={loading}
+                    />
+                  </div>
+                </div>
+              </Card>
             </GridItem>
 
             {/* Side Column - Order Summary */}
             <GridItem className="lg:col-span-1">
-              <div className="bg-white rounded-lg shadow-sm p-6 md:p-8 sticky top-8">
+              <Card className="p-6 md:p-8 sticky top-8">
                 <h2 className="text-xl font-semibold text-gray-900 mb-6">
                   {t.orderSummary}
                 </h2>
 
-                {orderSummary ? (
-                  <div className="space-y-4">
-                    {/* Subtotal */}
-                    <div className="flex justify-between text-gray-700">
-                      <span>{t.subtotal}</span>
-                      <span className="font-medium">
-                        {orderSummary.currency} {orderSummary.subtotal.toFixed(2)}
-                      </span>
-                    </div>
-
-                    {/* Shipping */}
-                    <div className="flex justify-between text-gray-700">
-                      <span>{t.shipping}</span>
-                      <span className="font-medium">
-                        {orderSummary.currency} {orderSummary.shipping.toFixed(2)}
-                      </span>
-                    </div>
-
-                    {/* Divider */}
-                    <div className="border-t border-gray-200 pt-4"></div>
-
-                    {/* Total */}
-                    <div className="flex justify-between text-lg font-bold text-gray-900">
-                      <span>{t.total}</span>
-                      <span>
-                        {orderSummary.currency} {orderSummary.total.toFixed(2)}
-                      </span>
-                    </div>
-
-                    {/* Error Message with Retry */}
-                    {error && (
-                      <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                        <p className="text-sm text-red-800 mb-2">{error}</p>
-                        {retryCount < 3 && (
-                          <button
-                            type="button"
-                            onClick={handleRetry}
-                            disabled={loading}
-                            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {locale === 'ar' ? 'إعادة المحاولة' : locale === 'zh' ? '重试' : 'Retry'}
-                          </button>
-                        )}
+                <div className="space-y-4">
+                  {/* Cart Items List */}
+                  <div className="space-y-2 mb-4 max-h-48 overflow-y-auto border-b border-gray-200 pb-4">
+                    {items.map((item) => (
+                      <div key={item.id} className="flex justify-between text-sm text-gray-600">
+                        <span className="truncate pr-2">{item.name} (x{item.quantity})</span>
+                        <span className="font-medium">{formatCurrency(item.subtotal, item.currency, locale)}</span>
                       </div>
-                    )}
+                    ))}
+                  </div>
 
-                    {/* Checkout Button */}
-                    <Button
-                      type="submit"
-                      variant="primary"
-                      className="w-full mt-6 py-3 text-lg"
-                      disabled={loading || !productId}
-                    >
-                      {loading ? t.processing : t.secureCheckout}
-                    </Button>
+                  {/* Subtotal */}
+                  <div className="flex justify-between text-gray-700">
+                    <span>{t.subtotal}</span>
+                    <span className="font-medium">
+                      {formatCurrency(subtotal, currency, locale)}
+                    </span>
+                  </div>
 
-                    {/* Back Link */}
-                    <div className="mt-4 text-center">
-                      <a
-                        href={`/${locale}/products`}
-                        className="text-sm text-[#2E7D32] hover:text-[#256628] underline"
-                      >
-                        {t.backToProducts}
-                      </a>
+                  {/* Shipping */}
+                  <div className="flex justify-between text-gray-700">
+                    <span>{t.shipping}</span>
+                    <span className="font-medium">
+                      {formatCurrency(shipping, currency, locale)}
+                    </span>
+                  </div>
+
+                  {/* Tax */}
+                  <div className="flex justify-between text-gray-700">
+                    <span>{t.tax}</span>
+                    <span className="font-medium">
+                      {formatCurrency(taxAmount, currency, locale)}
+                    </span>
+                  </div>
+
+                  {/* Divider */}
+                  <div className="border-t border-gray-200 pt-4"></div>
+
+                  {/* Total */}
+                  <div className="flex justify-between text-lg font-bold text-gray-900">
+                    <span>{t.total}</span>
+                    <span className="text-sky-600">
+                      {formatCurrency(grandTotal, currency, locale)}
+                    </span>
+                  </div>
+
+                  {/* Error Message */}
+                  {error && (
+                    <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-sm text-red-800">{error}</p>
                     </div>
+                  )}
+
+                  {/* Checkout Button */}
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    className="w-full mt-6 py-3 text-lg"
+                    disabled={loading || items.length === 0}
+                  >
+                    {loading ? t.processing : t.secureCheckout}
+                  </Button>
+
+                  {/* Back Link */}
+                  <div className="mt-4 text-center">
+                    <Link
+                      href={`/${locale}/cart`}
+                      className="text-sm text-[#2E7D32] hover:text-[#256628] underline"
+                    >
+                      {t.backToProducts}
+                    </Link>
                   </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <p className="text-gray-500">
-                      {locale === 'ar' ? 'جاري التحميل...' : locale === 'zh' ? '加载中...' : 'Loading...'}
-                    </p>
-                  </div>
-                )}
-              </div>
+                </div>
+              </Card>
             </GridItem>
           </Grid>
         </form>
@@ -485,3 +612,4 @@ export default function CheckoutPageClient({ locale }: CheckoutPageClientProps) 
     </div>
   );
 }
+
