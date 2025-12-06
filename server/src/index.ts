@@ -77,18 +77,31 @@ app.use(helmet({
 }));
 
 // CORS Configuration
-const allowedOrigins = NODE_ENV === 'production'
+// Support both string patterns and RegExp patterns for dynamic Vercel URLs
+const allowedOriginPatterns: (string | RegExp)[] = NODE_ENV === 'production'
   ? [
+      // Production URLs (exact matches)
       FRONTEND_URL,
-      'https://banda-chao-frontend.onrender.com',
-      'https://banda-chao.onrender.com',
-    ].filter(Boolean)
-  : [
-      FRONTEND_URL,
-      'http://localhost:3000',
       'https://banda-chao.vercel.app',
       'https://banda-chao-frontend.onrender.com',
       'https://banda-chao.onrender.com',
+      // Vercel Preview URLs (dynamic - using regex pattern)
+      /^https:\/\/.*\.vercel\.app$/, // Matches all *.vercel.app subdomains
+      // Render URLs
+      /^https:\/\/.*\.onrender\.com$/, // Matches all *.onrender.com subdomains
+    ].filter(Boolean)
+  : [
+      // Development URLs
+      FRONTEND_URL,
+      'http://localhost:3000',
+      'http://localhost:10000',
+      'https://banda-chao.vercel.app',
+      'https://banda-chao-frontend.onrender.com',
+      'https://banda-chao.onrender.com',
+      // Vercel Preview URLs (for development/testing)
+      /^https:\/\/.*\.vercel\.app$/, // Matches all *.vercel.app subdomains
+      // Render URLs
+      /^https:\/\/.*\.onrender\.com$/, // Matches all *.onrender.com subdomains
     ].filter(Boolean);
 
 // CORS middleware with full support for OPTIONS requests
@@ -106,16 +119,26 @@ app.use(cors({
       return;
     }
     
-    // In production, check against allowed origins (case-insensitive)
+    // In production, check against allowed origin patterns
     const normalizedOrigin = origin.toLowerCase().trim();
-    const isAllowed = allowedOrigins.some(allowed => 
-      allowed.toLowerCase().trim() === normalizedOrigin
-    );
+    const isAllowed = allowedOriginPatterns.some(pattern => {
+      if (typeof pattern === 'string') {
+        // Exact string match (case-insensitive)
+        return pattern.toLowerCase().trim() === normalizedOrigin;
+      } else if (pattern instanceof RegExp) {
+        // Regex pattern match
+        return pattern.test(origin);
+      }
+      return false;
+    });
     
     if (isAllowed) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[CORS] ✅ Allowed origin: ${origin}`);
+      }
       callback(null, true);
     } else {
-      console.warn(`[CORS] Blocked origin: ${origin}`);
+      console.error(`[CORS] ❌ Blocked origin: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -148,17 +171,27 @@ app.options('*', cors({
       callback(null, true);
       return;
     }
+    
+    // Use the same origin pattern matching logic
     if (NODE_ENV === 'development') {
       callback(null, true);
       return;
     }
+    
     const normalizedOrigin = origin.toLowerCase().trim();
-    const isAllowed = allowedOrigins.some(allowed => 
-      allowed.toLowerCase().trim() === normalizedOrigin
-    );
+    const isAllowed = allowedOriginPatterns.some(pattern => {
+      if (typeof pattern === 'string') {
+        return pattern.toLowerCase().trim() === normalizedOrigin;
+      } else if (pattern instanceof RegExp) {
+        return pattern.test(origin);
+      }
+      return false;
+    });
+    
     if (isAllowed) {
       callback(null, true);
     } else {
+      console.error(`[CORS] ❌ Blocked OPTIONS request from: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
