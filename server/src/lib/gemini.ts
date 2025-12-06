@@ -89,11 +89,15 @@ export async function generateFounderAIResponse(prompt: string): Promise<string>
         return text.trim();
       } catch (error: any) {
         // Check for 404 or "not found" errors (model not available)
-        const is404Error = error?.status === 404 || 
-                          error?.statusCode === 404 ||
-                          error?.message?.includes('404') || 
-                          error?.message?.includes('not found') ||
-                          error?.message?.includes('is not found for API version');
+        // Gemini API errors can be nested in originalError
+        const errorStatus = error?.status || error?.statusCode || error?.originalError?.status || error?.originalError?.statusCode;
+        const errorMessage = error?.message || error?.originalError?.message || '';
+        
+        const is404Error = errorStatus === 404 || 
+                          errorMessage.includes('404') || 
+                          errorMessage.includes('not found') ||
+                          errorMessage.includes('is not found for API version') ||
+                          errorMessage.includes('models/') && errorMessage.includes('is not found');
         
         if (is404Error) {
           console.warn(`[FounderAI] ⚠️ Model ${modelName} not available (404), trying next model...`);
@@ -101,7 +105,7 @@ export async function generateFounderAIResponse(prompt: string): Promise<string>
           continue; // Try next model
         }
         // For other errors (timeout, auth, etc.), throw immediately
-        console.error(`[FounderAI] ❌ Non-404 error with model ${modelName}:`, error?.message);
+        console.error(`[FounderAI] ❌ Non-404 error with model ${modelName}:`, errorMessage);
         throw error;
       }
     }
