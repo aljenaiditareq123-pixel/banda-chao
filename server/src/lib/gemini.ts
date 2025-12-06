@@ -138,21 +138,34 @@ export async function generateFounderAIResponse(prompt: string): Promise<string>
 
   try {
     // Wait for models check if not done yet (with timeout)
-    if (!modelsChecked && availableModels.length === 0) {
-      console.log("[FounderAI] Waiting for models check...");
-      await Promise.race([
-        checkAvailableModels(),
-        new Promise(resolve => setTimeout(resolve, 2000)), // 2 second timeout
-      ]);
+    if (!modelsChecked) {
+      console.log("[FounderAI] ⏳ Models check not complete yet, waiting...");
+      try {
+        await Promise.race([
+          checkAvailableModels(),
+          new Promise(resolve => setTimeout(resolve, 5000)), // 5 second timeout (increased)
+        ]);
+      } catch (waitError) {
+        console.warn("[FounderAI] ⚠️ Error while waiting for models check:", waitError);
+      }
     }
     
-    // Use available models if checked, otherwise use default list
+    // Use available models if checked and found, otherwise use default list
     const defaultModels = ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-pro"];
+    
+    // Debug: Log current state
+    console.log(`[FounderAI] 🔍 Current state: modelsChecked=${modelsChecked}, availableModels.length=${availableModels.length}, availableModels=`, availableModels);
+    
     const modelNames = process.env.GEMINI_MODEL 
       ? [process.env.GEMINI_MODEL] 
-      : (availableModels.length > 0 ? availableModels : defaultModels);
+      : (modelsChecked && availableModels.length > 0 ? availableModels : defaultModels);
     
-    console.log(`[FounderAI] Will try models in order:`, modelNames);
+    if (modelsChecked && availableModels.length > 0) {
+      console.log(`[FounderAI] ✅ Using discovered models (${availableModels.length} available):`, modelNames);
+    } else {
+      console.log(`[FounderAI] ⚠️ Using fallback models (check not complete or no models found):`, modelNames);
+      console.log(`[FounderAI] ⚠️ Debug: modelsChecked=${modelsChecked}, availableModels.length=${availableModels.length}`);
+    }
     
     let lastError: any = null;
     
