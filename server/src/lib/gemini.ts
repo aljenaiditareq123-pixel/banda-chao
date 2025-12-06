@@ -5,24 +5,62 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 // Initialize Gemini client only if API key is available
 let genAI: GoogleGenerativeAI | null = null;
-let model: ReturnType<GoogleGenerativeAI['getGenerativeModel']> | null = null;
+let availableModels: string[] = [];
+let modelsChecked = false;
 
 if (GEMINI_API_KEY) {
   try {
     genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-    // Use gemini-1.5-pro (most reliable) or try gemini-1.5-flash
-    // Note: Model availability depends on API key and region
-    // If gemini-1.5-pro fails, try: gemini-1.5-flash, gemini-pro, or gemini-2.0-flash-exp
-    const modelName = process.env.GEMINI_MODEL || "gemini-1.5-pro";
-    model = genAI.getGenerativeModel({
-      model: modelName,
+    console.log(`[FounderAI] ✅ Gemini client initialized`);
+    
+    // Check available models on startup (async, non-blocking)
+    checkAvailableModels().catch(err => {
+      console.warn("[FounderAI] Failed to check available models:", err);
     });
-    console.log(`[FounderAI] ✅ Gemini client initialized with model: ${modelName}`);
   } catch (error) {
     console.warn("[FounderAI] Failed to initialize Gemini client:", error);
   }
 } else {
   console.warn("[FounderAI] GEMINI_API_KEY is not set. AI features will be disabled.");
+}
+
+/**
+ * Check which Gemini models are actually available via ListModels API
+ */
+async function checkAvailableModels(): Promise<void> {
+  if (!genAI || !GEMINI_API_KEY) return;
+  
+  try {
+    console.log("[FounderAI] Checking available models...");
+    
+    // Use REST API directly to list models
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models?key=' + GEMINI_API_KEY);
+    
+    if (!response.ok) {
+      console.warn(`[FounderAI] Failed to list models: ${response.status} ${response.statusText}`);
+      return;
+    }
+    
+    const data = await response.json();
+    const models = data.models || [];
+    
+    // Filter models that support generateContent
+    availableModels = models
+      .filter((m: any) => m.supportedGenerationMethods?.includes('generateContent'))
+      .map((m: any) => m.name.replace('models/', ''))
+      .filter((name: string) => !name.includes('embedding') && !name.includes('vision'));
+    
+    modelsChecked = true;
+    console.log(`[FounderAI] ✅ Found ${availableModels.length} available models:`, availableModels);
+    
+    if (availableModels.length === 0) {
+      console.error("[FounderAI] ⚠️ WARNING: No available models found! Check API key permissions.");
+    }
+  } catch (error: any) {
+    console.warn("[FounderAI] Failed to check available models:", error?.message);
+    // Fallback to default models if check fails
+    availableModels = ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-pro"];
+  }
 }
 
 /**
@@ -40,17 +78,29 @@ export async function generateFounderAIResponse(prompt: string): Promise<string>
   }
 
   // If Gemini is not initialized, throw error
-  if (!model || !genAI) {
+  if (!genAI) {
     const error = new Error('Gemini client is not initialized. Check GEMINI_API_KEY configuration.');
     console.error("[FounderAI] Gemini client not initialized:", error);
     throw error;
   }
 
   try {
-    // Try multiple models in order of preference (fallback mechanism)
+    // Wait for models check if not done yet (with timeout)
+    if (!modelsChecked && availableModels.length === 0) {
+      console.log("[FounderAI] Waiting for models check...");
+      await Promise.race([
+        checkAvailableModels(),
+        new Promise(resolve => setTimeout(resolve, 2000)), // 2 second timeout
+      ]);
+    }
+    
+    // Use available models if checked, otherwise use default list
+    const defaultModels = ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-pro"];
     const modelNames = process.env.GEMINI_MODEL 
       ? [process.env.GEMINI_MODEL] 
-      : ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-pro"];
+      : (availableModels.length > 0 ? availableModels : defaultModels);
+    
+    console.log(`[FounderAI] Will try models in order:`, modelNames);
     
     let lastError: any = null;
     
