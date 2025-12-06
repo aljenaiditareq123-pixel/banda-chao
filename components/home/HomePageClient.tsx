@@ -143,6 +143,80 @@ export default function HomePageClient({
         </section>
       )}
 
+      {/* Daily Deals Section (Chinese UX Focus) */}
+      {locale === 'zh' && featuredProducts.length > 0 && (
+        <section className="py-16 bg-gradient-to-br from-red-50 to-orange-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between mb-10">
+              <div>
+                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+                  🔥 每日特惠
+                  <span className="text-lg font-normal text-red-600">限时抢购</span>
+                </h2>
+                <p className="text-gray-600">今日独家优惠，即将结束！</p>
+              </div>
+              <Link href={`/${locale}/deals`}>
+                <Button variant="primary" className="bg-red-500 hover:bg-red-600">
+                  查看全部 →
+                </Button>
+              </Link>
+            </div>
+            <Grid columns={{ base: 1, sm: 2, md: 3, lg: 4 }} gap="gap-6">
+              {featuredProducts.slice(0, 4).map((product) => {
+                // Add discount simulation for Chinese market
+                const discount = Math.floor(Math.random() * 30) + 10;
+                const originalPrice = product.price;
+                const discountedPrice = originalPrice * (1 - discount / 100);
+
+                return (
+                  <GridItem key={product.id}>
+                    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
+                      <div className="relative">
+                        <div className="absolute top-2 left-2 z-10 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
+                          -{discount}% 折扣
+                        </div>
+                        <Link href={`/${locale}/products/${product.id}`}>
+                          {product.imageUrl || product.images?.[0]?.url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={product.imageUrl || product.images?.[0]?.url}
+                              alt={product.name}
+                              className="w-full h-48 object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
+                              <span className="text-4xl">🛍️</span>
+                            </div>
+                          )}
+                        </Link>
+                      </div>
+                      <div className="p-4">
+                        <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
+                          {product.name}
+                        </h3>
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="text-2xl font-bold text-red-600">
+                            {product.currency || 'CNY'} {discountedPrice.toFixed(2)}
+                          </span>
+                          <span className="text-sm text-gray-500 line-through">
+                            {product.currency || 'CNY'} {originalPrice.toFixed(2)}
+                          </span>
+                        </div>
+                        <Link href={`/${locale}/products/${product.id}`}>
+                          <Button variant="primary" className="w-full bg-red-500 hover:bg-red-600">
+                            立即查看
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  </GridItem>
+                );
+              })}
+            </Grid>
+          </div>
+        </section>
+      )}
+
       {/* Featured Products */}
       {featuredProducts.length > 0 && (
         <section className="py-16 bg-white">

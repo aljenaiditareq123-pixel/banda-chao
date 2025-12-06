@@ -96,6 +96,14 @@ export default function Navbar({ locale }: NavbarProps) {
             >
               {locale === 'ar' ? 'الحرفيون' : locale === 'zh' ? '手工艺人' : 'Makers'}
             </Link>
+            {locale === 'zh' && (
+              <Link 
+                href={`/${locale}/deals`} 
+                className="text-red-600 hover:text-red-700 font-semibold transition-colors flex items-center gap-1"
+              >
+                🔥 每日特惠
+              </Link>
+            )}
             <Link 
               href={`/${locale}/products`} 
               className="text-gray-600 hover:text-gray-900 transition-colors"
