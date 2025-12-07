@@ -1,26 +1,43 @@
-import { notFound } from 'next/navigation';
 import ProductsPageClient from './page-client';
 import { productsAPI } from '@/lib/api';
 
 interface PageProps {
-  params: {
+  params: Promise<{
     locale: string;
-  };
-  searchParams: {
+  }>;
+  searchParams: Promise<{
     page?: string;
     category?: string;
     makerId?: string;
     search?: string;
-  };
+  }>;
 }
 
 const validLocales = ['zh', 'en', 'ar'];
 
 export default async function ProductsPage({ params, searchParams }: PageProps) {
-  const { locale } = params;
+  let locale: string;
+  let resolvedSearchParams: {
+    page?: string;
+    category?: string;
+    makerId?: string;
+    search?: string;
+  };
+  
+  try {
+    const resolvedParams = await params;
+    locale = resolvedParams.locale;
+    resolvedSearchParams = await searchParams;
+  } catch (error) {
+    console.error('Error resolving params:', error);
+    locale = 'ar';
+    resolvedSearchParams = {};
+  }
 
+  // Validate locale and fallback to default if invalid
   if (!validLocales.includes(locale)) {
-    notFound();
+    console.warn(`Invalid locale: ${locale}, falling back to 'ar'`);
+    locale = 'ar';
   }
 
   // Fetch products from API with error handling
@@ -30,11 +47,11 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
 
   try {
     const response = await productsAPI.getAll({
-      page: parseInt(searchParams.page || '1'),
+      page: parseInt(resolvedSearchParams.page || '1'),
       limit: 100, // Fetch more for client-side filtering/pagination
-      category: searchParams.category,
-      makerId: searchParams.makerId,
-      search: searchParams.search,
+      category: resolvedSearchParams.category,
+      makerId: resolvedSearchParams.makerId,
+      search: resolvedSearchParams.search,
     });
     products = response.products || [];
     // Map API response pagination to component expected format
