@@ -1,4 +1,4 @@
-import CheckoutPageClient from './page-client';
+import TestPaymentClient from './page-client';
 
 interface PageProps {
   params: Promise<{
@@ -8,7 +8,7 @@ interface PageProps {
 
 const validLocales = ['zh', 'en', 'ar'];
 
-export default async function CheckoutPage({ params }: PageProps) {
+export default async function TestPaymentPage({ params }: PageProps) {
   let locale: string;
   
   try {
@@ -25,8 +25,6 @@ export default async function CheckoutPage({ params }: PageProps) {
     locale = 'ar';
   }
 
-  return <CheckoutPageClient locale={locale} />;
+  return <TestPaymentClient locale={locale} />;
 }
-
-
 
