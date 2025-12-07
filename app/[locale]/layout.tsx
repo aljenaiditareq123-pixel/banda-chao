@@ -96,11 +96,21 @@ export async function generateMetadata({ params }: LocaleLayoutProps): Promise<M
 }
 
 export default async function LocaleLayout({ children, params }: LocaleLayoutProps) {
-  const { locale } = await params;
+  let locale: string;
   
-  // Validate locale
+  try {
+    const resolvedParams = await params;
+    locale = resolvedParams.locale;
+  } catch (error) {
+    console.error('Error resolving params in layout:', error);
+    // Fallback to default locale if params resolution fails
+    locale = 'ar';
+  }
+  
+  // Validate locale and fallback to default if invalid (don't call notFound())
   if (!validLocales.includes(locale)) {
-    notFound();
+    console.warn(`Invalid locale in layout: ${locale}, falling back to 'ar'`);
+    locale = 'ar';
   }
 
   const validLocale = (locale === 'zh' || locale === 'ar' || locale === 'en') ? locale : 'ar';

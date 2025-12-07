@@ -11,10 +11,21 @@ interface PageProps {
 const validLocales = ['zh', 'en', 'ar'];
 
 export default async function HomePage({ params }: PageProps) {
-  const { locale } = await params;
+  let locale: string;
+  
+  try {
+    const resolvedParams = await params;
+    locale = resolvedParams.locale;
+  } catch (error) {
+    console.error('Error resolving params:', error);
+    // Fallback to default locale if params resolution fails
+    locale = 'ar';
+  }
 
+  // Validate locale and fallback to default if invalid
   if (!validLocales.includes(locale)) {
-    notFound();
+    console.warn(`Invalid locale: ${locale}, falling back to 'ar'`);
+    locale = 'ar';
   }
 
   // Fetch featured content from API with caching
@@ -24,17 +35,17 @@ export default async function HomePage({ params }: PageProps) {
 
   try {
     const [makersResponse, productsResponse, videosResponse] = await Promise.all([
-      makersAPI.getAll({ limit: 6 }),
-      productsAPI.getAll({ limit: 8 }),
-      videosAPI.getAll({ limit: 6 }),
+      makersAPI.getAll({ limit: 6 }).catch(() => ({ makers: [] })),
+      productsAPI.getAll({ limit: 8 }).catch(() => ({ products: [] })),
+      videosAPI.getAll({ limit: 6 }).catch(() => ({ videos: [] })),
     ]);
 
-    featuredMakers = makersResponse.makers || [];
-    featuredProducts = productsResponse.products || [];
-    featuredVideos = videosResponse.videos || [];
+    featuredMakers = makersResponse?.makers || [];
+    featuredProducts = productsResponse?.products || [];
+    featuredVideos = videosResponse?.videos || [];
   } catch (error) {
     console.error('Error fetching featured content:', error);
-    // Continue with empty arrays
+    // Continue with empty arrays - don't throw error
   }
 
   return (
