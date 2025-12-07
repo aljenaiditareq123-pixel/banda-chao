@@ -2,6 +2,10 @@
 const nextConfig = {
   reactStrictMode: true,
   // swcMinify is enabled by default in Next.js 16, no need to specify
+  
+  // Ensure trailing slash is handled correctly for Render
+  trailingSlash: false,
+  
   images: {
     // domains is deprecated, using remotePatterns only
     remotePatterns: [
@@ -23,6 +27,17 @@ const nextConfig = {
         hostname: 'banda-chao.onrender.com',
       },
     ],
+  },
+  
+  // Rewrites for proper routing on Render
+  async rewrites() {
+    return [
+      // Rewrite root to default locale
+      {
+        source: '/',
+        destination: '/ar',
+      },
+    ];
   },
 }
 

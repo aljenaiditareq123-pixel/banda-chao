@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: banda-chao-frontend
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_FRONTEND_URL
+        value: https://banda-chao-frontend.onrender.com
+      - key: NEXT_PUBLIC_API_URL
+        fromService:
+          type: web
+          name: banda-chao-backend
+          property: host
+
