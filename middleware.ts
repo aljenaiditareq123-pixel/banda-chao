@@ -97,15 +97,25 @@ export function middleware(request: NextRequest) {
   // If pathname doesn't have a locale, detect from IP and redirect
   if (!pathnameHasLocale) {
     const detectedLocale = getLocale(pathname, request);
-    const newUrl = new URL(`/${detectedLocale}${pathname}`, request.url);
+    const newUrl = new URL(`/${detectedLocale}${pathname === '/' ? '' : pathname}`, request.url);
     
     // Preserve query parameters
     newUrl.search = request.nextUrl.search;
     
-    return NextResponse.redirect(newUrl);
+    // Use 307 (Temporary Redirect) instead of 302 for better SEO
+    return NextResponse.redirect(newUrl, 307);
   }
   
-  // If pathname has a locale, continue
+  // If pathname has a locale, validate it and continue
+  const locale = getLocale(pathname);
+  if (!locales.includes(locale)) {
+    // Invalid locale, redirect to default locale
+    const newUrl = new URL(`/${defaultLocale}${pathname.replace(`/${locale}`, '')}`, request.url);
+    newUrl.search = request.nextUrl.search;
+    return NextResponse.redirect(newUrl, 307);
+  }
+  
+  // Valid locale in path, continue to Next.js
   return NextResponse.next();
 }
 

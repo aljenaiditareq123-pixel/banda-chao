@@ -3,15 +3,15 @@ import HomePageClient from '@/components/home/HomePageClient';
 import { makersAPI, productsAPI, videosAPI } from '@/lib/api';
 
 interface PageProps {
-  params: {
+  params: Promise<{
     locale: string;
-  };
+  }>;
 }
 
 const validLocales = ['zh', 'en', 'ar'];
 
 export default async function HomePage({ params }: PageProps) {
-  const { locale } = params;
+  const { locale } = await params;
 
   if (!validLocales.includes(locale)) {
     notFound();

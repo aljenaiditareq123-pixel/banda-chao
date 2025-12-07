@@ -6,6 +6,10 @@ const nextConfig = {
   // Ensure trailing slash is handled correctly for Render
   trailingSlash: false,
   
+  // IMPORTANT: Do NOT use output: 'export' - it disables Server-Side Rendering
+  // and breaks dynamic routes like /[locale] on Render
+  // output: 'export', // ❌ REMOVED - breaks i18n routing
+  
   images: {
     // domains is deprecated, using remotePatterns only
     remotePatterns: [
@@ -29,16 +33,8 @@ const nextConfig = {
     ],
   },
   
-  // Rewrites for proper routing on Render
-  async rewrites() {
-    return [
-      // Rewrite root to default locale
-      {
-        source: '/',
-        destination: '/ar',
-      },
-    ];
-  },
+  // Note: Rewrites removed - middleware handles locale routing
+  // Rewrites can conflict with middleware in App Router
 }
 
 module.exports = nextConfig
