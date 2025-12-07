@@ -1,19 +1,28 @@
-import { notFound } from 'next/navigation';
 import TermsOfServiceClient from './page-client';
 
 interface PageProps {
-  params: {
+  params: Promise<{
     locale: string;
-  };
+  }>;
 }
 
 const validLocales = ['zh', 'en', 'ar'];
 
-export default function TermsOfServicePage({ params }: PageProps) {
-  const { locale } = params;
+export default async function TermsOfServicePage({ params }: PageProps) {
+  let locale: string;
+  
+  try {
+    const resolvedParams = await params;
+    locale = resolvedParams.locale;
+  } catch (error) {
+    console.error('Error resolving params:', error);
+    locale = 'ar';
+  }
 
+  // Validate locale and fallback to default if invalid
   if (!validLocales.includes(locale)) {
-    notFound();
+    console.warn(`Invalid locale: ${locale}, falling back to 'ar'`);
+    locale = 'ar';
   }
 
   return <TermsOfServiceClient locale={locale} />;

@@ -1,19 +1,28 @@
-import { notFound } from 'next/navigation';
 import PrivacyPolicyClient from './page-client';
 
 interface PageProps {
-  params: {
+  params: Promise<{
     locale: string;
-  };
+  }>;
 }
 
 const validLocales = ['zh', 'en', 'ar'];
 
-export default function PrivacyPolicyPage({ params }: PageProps) {
-  const { locale } = params;
+export default async function PrivacyPolicyPage({ params }: PageProps) {
+  let locale: string;
+  
+  try {
+    const resolvedParams = await params;
+    locale = resolvedParams.locale;
+  } catch (error) {
+    console.error('Error resolving params:', error);
+    locale = 'ar';
+  }
 
+  // Validate locale and fallback to default if invalid
   if (!validLocales.includes(locale)) {
-    notFound();
+    console.warn(`Invalid locale: ${locale}, falling back to 'ar'`);
+    locale = 'ar';
   }
 
   return <PrivacyPolicyClient locale={locale} />;
