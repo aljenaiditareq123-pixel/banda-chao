@@ -9,10 +9,43 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
+    // Log request for debugging
+    console.log('[Checkout API] Received request:', {
+      productId: body.productId,
+      productName: body.productName,
+      quantity: body.quantity,
+      amount: body.amount,
+      currency: body.currency,
+      locale: body.locale,
+    });
+    
     // Validate required fields
-    if (!body.productId || !body.quantity || !body.amount) {
+    if (!body.productId || body.quantity === undefined || body.amount === undefined) {
+      console.error('[Checkout API] Missing required fields:', {
+        hasProductId: !!body.productId,
+        hasQuantity: body.quantity !== undefined,
+        hasAmount: body.amount !== undefined,
+      });
       return NextResponse.json(
         { success: false, error: 'Missing required fields: productId, quantity, amount' },
+        { status: 400 }
+      );
+    }
+    
+    // Validate data types
+    const quantity = Number(body.quantity);
+    const amount = Number(body.amount);
+    
+    if (isNaN(quantity) || quantity < 1) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid quantity: must be a number >= 1' },
+        { status: 400 }
+      );
+    }
+    
+    if (isNaN(amount) || amount <= 0) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid amount: must be a number > 0' },
         { status: 400 }
       );
     }
@@ -31,9 +64,9 @@ export async function POST(request: NextRequest) {
     // Prepare request body based on endpoint
     const requestBody = isTestMode
       ? {
-          productName: body.productName || body.productId,
-          amount: body.amount,
-          quantity: body.quantity,
+          productName: body.productName || body.productId || 'Test Product',
+          amount: amount, // Use validated number
+          quantity: quantity, // Use validated number
           currency: body.currency || 'USD',
           successUrl: `${frontendUrl}/${locale}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
           cancelUrl: `${frontendUrl}/${locale}/checkout/cancel`,
@@ -41,10 +74,17 @@ export async function POST(request: NextRequest) {
         }
       : {
           productId: body.productId,
-          quantity: body.quantity,
+          quantity: quantity, // Use validated number
           currency: body.currency || 'USD',
         };
 
+    // Log backend request
+    console.log('[Checkout API] Calling backend:', {
+      endpoint: `${API_URL}${endpoint}`,
+      isTestMode,
+      requestBody,
+    });
+    
     // Call backend API to create checkout session
     const response = await fetch(`${API_URL}${endpoint}`, {
       method: 'POST',
@@ -57,10 +97,21 @@ export async function POST(request: NextRequest) {
     });
 
     const data = await response.json();
+    
+    console.log('[Checkout API] Backend response:', {
+      status: response.status,
+      ok: response.ok,
+      data: data,
+    });
 
     if (!response.ok) {
+      console.error('[Checkout API] Backend error:', {
+        status: response.status,
+        error: data.error || data.message,
+        data: data,
+      });
       return NextResponse.json(
-        { success: false, error: data.error || 'Failed to create checkout session' },
+        { success: false, error: data.error || data.message || 'Failed to create checkout session' },
         { status: response.status }
       );
     }

@@ -56,8 +56,9 @@ export default function StripeCheckoutButton({
         credentials: 'include',
         body: JSON.stringify({
           productId,
-          quantity,
-          amount,
+          productName, // Include productName for test mode
+          quantity: Number(quantity), // Ensure it's a number
+          amount: Number(amount), // Ensure it's a number
           currency,
           locale,
         }),
