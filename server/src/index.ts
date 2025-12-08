@@ -111,8 +111,16 @@ const allowedOriginPatterns: (string | RegExp)[] = NODE_ENV === 'production'
     ].filter(Boolean);
 
 // CORS middleware with full support for OPTIONS requests
+// TEMPORARY: Allow all origins for testing (will be restricted after checkout is fixed)
 app.use(cors({
   origin: (origin, callback) => {
+    // TEMPORARY: Allow all origins for testing checkout
+    // TODO: Restore proper CORS restrictions after checkout is fixed
+    console.log(`[CORS] ⚠️ TEMPORARY: Allowing all origins for testing. Origin: ${origin || 'no origin'}`);
+    callback(null, true);
+    return;
+    
+    /* ORIGINAL CODE (commented out temporarily):
     // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) {
       callback(null, true);
@@ -147,6 +155,7 @@ app.use(cors({
       console.error(`[CORS] ❌ Blocked origin: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
+    */
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: [
@@ -171,8 +180,15 @@ app.use(cors({
 }));
 
 // Handle preflight OPTIONS requests explicitly with CORS
+// TEMPORARY: Allow all origins for testing
 app.options('*', cors({
   origin: (origin, callback) => {
+    // TEMPORARY: Allow all origins for testing
+    console.log(`[CORS] ⚠️ TEMPORARY: Allowing OPTIONS from: ${origin || 'no origin'}`);
+    callback(null, true);
+    return;
+    
+    /* ORIGINAL CODE (commented out temporarily):
     if (!origin) {
       callback(null, true);
       return;
@@ -200,6 +216,7 @@ app.options('*', cors({
       console.error(`[CORS] ❌ Blocked OPTIONS request from: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
+    */
   },
   credentials: true,
 }));

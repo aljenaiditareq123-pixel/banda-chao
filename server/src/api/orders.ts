@@ -127,6 +127,120 @@ router.get('/my', authenticateToken, async (req: AuthRequest, res: Response) => 
   }
 });
 
+// Create order (POST /orders)
+router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
+  try {
+    console.log('[Orders] ✅ Payment Request Received - Create order endpoint called');
+    console.log('[Orders] Request details:', {
+      method: req.method,
+      path: req.path,
+      hasUser: !!req.user,
+      userId: req.user?.id,
+      userEmail: req.user?.email,
+      body: req.body,
+      headers: {
+        origin: req.headers.origin,
+        authorization: req.headers.authorization ? 'Present' : 'Missing',
+        'authorization-preview': req.headers.authorization ? req.headers.authorization.substring(0, 20) + '...' : 'Missing',
+      },
+    });
+
+    const userId = req.user?.id;
+    if (!userId) {
+      console.error('[Orders] ❌ Unauthorized: No user ID found');
+      return res.status(401).json({
+        success: false,
+        message: 'Unauthorized - Please log in to create order',
+        code: 'UNAUTHORIZED',
+      });
+    }
+
+    const { items, shipping, payment, total } = req.body;
+
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Order items are required',
+        code: 'MISSING_ITEMS',
+      });
+    }
+
+    if (!shipping || !shipping.name || !shipping.address || !shipping.city || !shipping.country || !shipping.zip) {
+      return res.status(400).json({
+        success: false,
+        message: 'Complete shipping address is required',
+        code: 'MISSING_SHIPPING',
+      });
+    }
+
+    // Create order in database
+    const { randomUUID } = await import('crypto');
+    const orderId = randomUUID();
+
+    // Calculate total from items if not provided
+    const calculatedTotal = total || items.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
+
+    const order = await prisma.orders.create({
+      data: {
+        id: orderId,
+        user_id: userId,
+        status: 'PENDING',
+        totalAmount: calculatedTotal,
+        created_at: new Date(),
+        updated_at: new Date(),
+      },
+    });
+
+    // Create order items
+    const orderItems = await Promise.all(
+      items.map(async (item: any) => {
+        const itemId = randomUUID();
+        return prisma.order_items.create({
+          data: {
+            id: itemId,
+            order_id: order.id,
+            product_id: item.productId,
+            quantity: item.quantity,
+            price: item.price * item.quantity,
+            created_at: new Date(),
+          },
+        });
+      })
+    );
+
+    console.log('[Orders] ✅ Order created successfully:', {
+      orderId: order.id,
+      userId: order.user_id,
+      total: order.totalAmount,
+      itemsCount: orderItems.length,
+    });
+
+    res.json({
+      success: true,
+      orderId: order.id,
+      id: order.id,
+      message: 'Order created successfully',
+      order: {
+        id: order.id,
+        status: order.status,
+        totalAmount: order.totalAmount,
+        items: orderItems,
+      },
+    });
+  } catch (error: any) {
+    console.error('[Orders] ❌ Error creating order:', {
+      error: error.message,
+      stack: error.stack,
+    });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create order',
+      code: 'ORDER_CREATION_ERROR',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+});
+
 // Get maker's orders (orders for maker's products)
 router.get('/maker', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {

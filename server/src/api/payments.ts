@@ -168,15 +168,20 @@ router.post(
   validate(checkoutSchema),
   async (req: AuthRequest, res: Response) => {
     try {
-      console.log('[Payments] Checkout request received:', {
+      console.log('[Payments] ✅ Payment Request Received - Checkout endpoint called');
+      console.log('[Payments] Request details:', {
         method: req.method,
         path: req.path,
+        fullUrl: req.originalUrl || req.url,
         hasUser: !!req.user,
         userId: req.user?.id,
+        userEmail: req.user?.email,
         body: { productId: req.body.productId, quantity: req.body.quantity, currency: req.body.currency },
         headers: {
           origin: req.headers.origin,
           authorization: req.headers.authorization ? 'Present' : 'Missing',
+          'authorization-preview': req.headers.authorization ? req.headers.authorization.substring(0, 20) + '...' : 'Missing',
+          'x-csrf-token': req.headers['x-csrf-token'] ? 'Present' : 'Missing',
         },
       });
 
