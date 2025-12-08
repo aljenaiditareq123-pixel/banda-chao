@@ -17,24 +17,7 @@ export async function getLowStockProducts(threshold: number = 5): Promise<Array<
   status: 'LOW_STOCK' | 'OUT_OF_STOCK';
 }>> {
   try {
-    // Get all products with their order quantities
-    const products = await prisma.$queryRawUnsafe<Array<{
-      id: string;
-      name: string;
-      total_ordered: bigint;
-    }>>(`
-      SELECT 
-        p.id,
-        p.name,
-        COALESCE(SUM(oi.quantity), 0) as total_ordered
-      FROM products p
-      LEFT JOIN order_items oi ON p.id = oi.product_id
-      LEFT JOIN orders o ON oi.order_id = o.id
-      WHERE o.status = 'PAID' OR o.status IS NULL
-      GROUP BY p.id, p.name
-    `);
-
-    // Since we don't have actual stock, we'll use a different approach:
+    // Since we don't have actual stock field, we'll use a different approach:
     // Calculate "available" based on recent sales velocity
     // For now, we'll flag products with high sales as potentially needing restock
     const lowStockProducts: Array<{
@@ -109,21 +92,20 @@ export async function getDailySalesStats(date?: Date): Promise<{
     const endOfDay = new Date(targetDate);
     endOfDay.setHours(23, 59, 59, 999);
 
-    // Get today's paid orders
-    const todayOrders = await prisma.$queryRawUnsafe<Array<{
-      id: string;
-      totalAmount: number;
-      order_count: bigint;
-    }>>(`
-      SELECT 
-        id,
-        "totalAmount",
-        COUNT(*) OVER() as order_count
-      FROM orders
-      WHERE status = 'PAID'
-        AND created_at >= $1
-        AND created_at <= $2
-    `, startOfDay.toISOString(), endOfDay.toISOString());
+    // Get today's paid orders using Prisma query
+    const todayOrders = await prisma.orders.findMany({
+      where: {
+        status: 'PAID',
+        created_at: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+      },
+      select: {
+        id: true,
+        totalAmount: true,
+      },
+    });
 
     const numberOfOrders = todayOrders.length;
     const totalRevenue = todayOrders.reduce((sum, order) => sum + Number(order.totalAmount), 0);
