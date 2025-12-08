@@ -157,9 +157,12 @@ const addResponseInterceptor = (client: AxiosInstance, isAI: boolean = false) =>
       if (typeof window !== 'undefined') {
         try {
           localStorage.removeItem('auth_token');
-          // Only redirect if not already on login/register page
+          // Only redirect if not already on login/register page or public pages
           const pathname = window.location.pathname;
-          if (!pathname.includes('/login') && !pathname.includes('/register') && !pathname.includes('/signup')) {
+          const publicPages = ['/login', '/register', '/signup', '/test-payment', '/products', '/makers', '/videos', '/posts', '/about', '/privacy-policy', '/terms-of-service', '/cart', '/checkout'];
+          const isPublicPage = publicPages.some(page => pathname.includes(page));
+          
+          if (!isPublicPage) {
             // Extract locale from current path (e.g., /ar/... or /en/... or /zh/...)
             const localeMatch = pathname.match(/^\/(ar|en|zh)/);
             const locale = localeMatch ? localeMatch[1] : 'en'; // Default to 'en' if no locale found

@@ -94,6 +94,37 @@ function shouldExcludePath(pathname: string): boolean {
   return false;
 }
 
+// Check if pathname is a public route (no auth required)
+function isPublicRoute(pathname: string): boolean {
+  // Public routes that don't require authentication
+  const publicRoutes = [
+    '/test-payment', // Test payment page - public
+    '/products',
+    '/makers',
+    '/videos',
+    '/posts',
+    '/about',
+    '/login',
+    '/signup',
+    '/register',
+    '/privacy-policy',
+    '/terms-of-service',
+    '/cart',
+    '/checkout',
+  ];
+  
+  // Check if pathname starts with any public route (with or without locale)
+  return publicRoutes.some(route => {
+    // Match exact route or route with locale prefix
+    return pathname === route || 
+           pathname.startsWith(`/ar${route}`) ||
+           pathname.startsWith(`/en${route}`) ||
+           pathname.startsWith(`/zh${route}`) ||
+           // Match with locale as first segment
+           new RegExp(`^/[a-z]{2}${route.replace(/^\//, '')}`).test(pathname);
+  });
+}
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
