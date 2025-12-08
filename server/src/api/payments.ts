@@ -168,13 +168,26 @@ router.post(
   validate(checkoutSchema),
   async (req: AuthRequest, res: Response) => {
     try {
+      console.log('[Payments] Checkout request received:', {
+        method: req.method,
+        path: req.path,
+        hasUser: !!req.user,
+        userId: req.user?.id,
+        body: { productId: req.body.productId, quantity: req.body.quantity, currency: req.body.currency },
+        headers: {
+          origin: req.headers.origin,
+          authorization: req.headers.authorization ? 'Present' : 'Missing',
+        },
+      });
+
       const { productId, quantity, currency = 'USD' } = req.body;
       const userId = req.user?.id;
 
       if (!userId) {
+        console.error('[Payments] ❌ Unauthorized: No user ID found in request');
         return res.status(401).json({
           success: false,
-          message: 'Unauthorized',
+          message: 'Unauthorized - Please log in to complete checkout',
           code: 'UNAUTHORIZED',
         });
       }

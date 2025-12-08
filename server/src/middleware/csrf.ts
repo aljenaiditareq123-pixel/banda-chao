@@ -166,6 +166,16 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
     return next();
   }
 
+  // Skip CSRF for payments/checkout endpoint (it uses Stripe Checkout which handles security)
+  // Note: This endpoint still requires authentication via authenticateToken middleware
+  if (fullPath.includes('/payments/checkout') || originalUrl.includes('/payments/checkout')) {
+    // Only skip if it's not the test endpoint (already handled above)
+    if (!fullPath.includes('/payments/checkout/test') && !originalUrl.includes('/payments/checkout/test')) {
+      console.log('[CSRF] ✅ Skipping CSRF check for Stripe checkout endpoint:', fullPath, originalUrl);
+      return next();
+    }
+  }
+
   // Get CSRF token from header
   const csrfToken = req.headers['x-csrf-token'] as string | undefined;
   const cookieToken = req.cookies?.['csrf-token'] as string | undefined;

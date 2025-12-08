@@ -85,13 +85,41 @@ export async function POST(request: NextRequest) {
       requestBody,
     });
     
+    // Get auth token from request headers (passed from frontend)
+    const authHeader = request.headers.get('Authorization');
+    const authToken = authHeader || (typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null);
+    
+    // Prepare headers
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+    };
+    
+    // Add Authorization header if not in test mode and token exists
+    if (!isTestMode && authToken) {
+      headers['Authorization'] = authToken.startsWith('Bearer ') ? authToken : `Bearer ${authToken}`;
+    }
+    
+    // Get CSRF token from cookie (passed from frontend via request)
+    const csrfToken = request.headers.get('X-CSRF-Token') || 
+                      request.cookies?.get('csrf-token')?.value ||
+                      null;
+    
+    if (csrfToken) {
+      headers['X-CSRF-Token'] = csrfToken;
+    }
+    
+    console.log('[Checkout API] Request details:', {
+      endpoint: `${API_URL}${endpoint}`,
+      isTestMode,
+      hasAuth: !!headers['Authorization'],
+      hasCsrf: !!headers['X-CSRF-Token'],
+      productId: body.productId,
+    });
+    
     // Call backend API to create checkout session
     const response = await fetch(`${API_URL}${endpoint}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(isTestMode ? {} : { 'Authorization': request.headers.get('Authorization') || '' }),
-      },
+      headers,
       body: JSON.stringify(requestBody),
       credentials: 'include',
     });
