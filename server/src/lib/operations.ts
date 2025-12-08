@@ -28,32 +28,43 @@ export async function getLowStockProducts(threshold: number = 5): Promise<Array<
     }> = [];
 
     // Alternative approach: Check products with no recent orders (might be out of stock)
-    // Or products with very high order volume (might need restock)
-    const productsWithOrders = await prisma.$queryRawUnsafe<Array<{
-      product_id: string;
-      product_name: string;
-      recent_orders: bigint;
-    }>>(`
-      SELECT 
-        p.id as product_id,
-        p.name as product_name,
-        COUNT(DISTINCT o.id) as recent_orders
-      FROM products p
-      LEFT JOIN order_items oi ON p.id = oi.product_id
-      LEFT JOIN orders o ON oi.order_id = o.id
-      WHERE o.created_at >= NOW() - INTERVAL '30 days' OR o.id IS NULL
-      GROUP BY p.id, p.name
-      HAVING COUNT(DISTINCT o.id) < ${threshold}
-    `);
+    // Use Prisma queries instead of raw SQL for better type safety
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    // Get all products
+    const allProducts = await prisma.products.findMany({
+      select: {
+        id: true,
+        name: true,
+      },
+    });
 
-    for (const product of productsWithOrders) {
-      const recentOrders = Number(product.recent_orders);
+    // Check each product for recent orders
+    for (const product of allProducts) {
+      // Count recent paid orders for this product
+      const recentOrderItems = await prisma.order_items.findMany({
+        where: {
+          product_id: product.id,
+          orders: {
+            status: 'PAID',
+            created_at: {
+              gte: thirtyDaysAgo,
+            },
+          },
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      const recentOrders = recentOrderItems.length;
+      
       // If product has very few or no recent orders, flag as low stock
-      // (This is a heuristic - in real system, you'd have actual stock field)
       if (recentOrders < threshold) {
         lowStockProducts.push({
-          id: product.product_id,
-          name: product.product_name,
+          id: product.id,
+          name: product.name,
           currentStock: recentOrders,
           status: recentOrders === 0 ? 'OUT_OF_STOCK' : 'LOW_STOCK',
         });

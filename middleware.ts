@@ -80,7 +80,18 @@ function shouldExcludePath(pathname: string): boolean {
     '/founder', // Founder pages don't use locale
   ];
   
-  return excludePatterns.some(pattern => pathname.startsWith(pattern));
+  // Check exact matches first
+  if (excludePatterns.some(pattern => pathname === pattern || pathname.startsWith(pattern))) {
+    return true;
+  }
+  
+  // Exclude file extensions (images, fonts, etc.)
+  const fileExtensionPattern = /\.(ico|png|jpg|jpeg|gif|webp|svg|css|js|woff|woff2|ttf|eot|json|xml|txt)$/i;
+  if (fileExtensionPattern.test(pathname)) {
+    return true;
+  }
+  
+  return false;
 }
 
 export function middleware(request: NextRequest) {

@@ -4,24 +4,43 @@ import MakerDetailClient from './page-client';
 import { makersAPI, productsAPI, videosAPI } from '@/lib/api';
 
 interface PageProps {
-  params: {
+  params: Promise<{
     locale: string;
     id: string;
-  };
+  }>;
 }
 
 const validLocales = ['zh', 'en', 'ar'];
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { locale, id } = params;
+  let locale: string;
+  let id: string;
+  
+  try {
+    const resolvedParams = await params;
+    locale = resolvedParams.locale;
+    id = resolvedParams.id;
+  } catch (error) {
+    console.error('Error resolving params in generateMetadata:', error);
+    locale = 'ar';
+    id = '';
+  }
   
   // Get base URL for metadataBase
   const metadataBaseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 
                           'https://banda-chao-frontend.onrender.com';
   
+  // Validate id before making API call
+  if (!id || id === 'favicon.ico' || id.includes('.')) {
+    return {
+      metadataBase: new URL(metadataBaseUrl),
+      title: 'Maker - Banda Chao',
+    };
+  }
+  
   try {
     const response = await makersAPI.getById(id);
-    const maker = response.maker;
+    const maker = response?.maker;
 
     if (maker) {
       return {
@@ -35,8 +54,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         },
       };
     }
-  } catch (error) {
-    console.error('Error generating metadata:', error);
+  } catch (error: any) {
+    // Silently handle 404 errors - they're expected for invalid maker IDs
+    if (error?.response?.status !== 404) {
+      console.error('Error generating metadata:', error);
+    }
   }
 
   return {
@@ -46,9 +68,24 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function MakerDetailPage({ params }: PageProps) {
-  const { locale, id } = params;
+  let locale: string;
+  let id: string;
+  
+  try {
+    const resolvedParams = await params;
+    locale = resolvedParams.locale;
+    id = resolvedParams.id;
+  } catch (error) {
+    console.error('Error resolving params:', error);
+    notFound();
+  }
 
   if (!validLocales.includes(locale)) {
+    notFound();
+  }
+  
+  // Validate id - reject file-like paths
+  if (!id || id === 'favicon.ico' || id.includes('.')) {
     notFound();
   }
 

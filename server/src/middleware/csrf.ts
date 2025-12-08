@@ -160,6 +160,12 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
     return next();
   }
 
+  // Skip CSRF for test checkout endpoint (testing only, no auth required)
+  if (fullPath.includes('/payments/checkout/test') || originalUrl.includes('/payments/checkout/test')) {
+    console.log('[CSRF] ✅ Skipping CSRF check for test checkout endpoint:', fullPath, originalUrl);
+    return next();
+  }
+
   // Get CSRF token from header
   const csrfToken = req.headers['x-csrf-token'] as string | undefined;
   const cookieToken = req.cookies?.['csrf-token'] as string | undefined;
