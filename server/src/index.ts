@@ -184,7 +184,10 @@ app.use(cors({
 app.options('*', cors({
   origin: (origin, callback) => {
     // TEMPORARY: Allow all origins for testing
-    console.log(`[CORS] ⚠️ TEMPORARY: Allowing OPTIONS from: ${origin || 'no origin'}`);
+    // Reduced logging - only log occasionally
+    if (process.env.NODE_ENV === 'development' || Math.random() < 0.01) {
+      console.log(`[CORS] ⚠️ TEMPORARY: Allowing OPTIONS from: ${origin || 'no origin'}`);
+    }
     callback(null, true);
     return;
     
