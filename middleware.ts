@@ -78,6 +78,7 @@ function shouldExcludePath(pathname: string): boolean {
     '/robots.txt',
     '/sitemap.xml',
     '/founder', // Founder pages don't use locale
+    '/admin', // Admin pages don't use locale (like /founder)
   ];
   
   // Check exact matches first
@@ -128,8 +129,18 @@ function isPublicRoute(pathname: string): boolean {
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
-  // Skip locale routing for excluded paths
+  // Skip locale routing for excluded paths (check this FIRST)
   if (shouldExcludePath(pathname)) {
+    return NextResponse.next();
+  }
+  
+  // Additional check: if pathname is a static file, skip locale routing
+  // This catches cases where static files might slip through
+  if (pathname.includes('favicon.ico') || 
+      pathname.includes('.ico') || 
+      pathname.includes('.png') || 
+      pathname.includes('.jpg') || 
+      pathname.includes('.svg')) {
     return NextResponse.next();
   }
   

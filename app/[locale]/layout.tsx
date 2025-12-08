@@ -18,7 +18,14 @@ interface LocaleLayoutProps {
 }
 
 export async function generateMetadata({ params }: LocaleLayoutProps): Promise<Metadata> {
-  const { locale } = await params;
+  let locale: string;
+  try {
+    const resolvedParams = await params;
+    locale = resolvedParams.locale;
+  } catch (error) {
+    console.error("Error resolving locale params in layout metadata, falling back to 'ar':", error);
+    locale = 'ar'; // Fallback to default locale
+  }
   const validLocale = (locale === 'zh' || locale === 'ar' || locale === 'en') ? locale : 'ar';
 
   const titles = {
@@ -51,11 +58,14 @@ export async function generateMetadata({ params }: LocaleLayoutProps): Promise<M
     en: 'social commerce, e-commerce, makers, handmade, artisans',
   };
 
+  // Safely get keywords array
+  const keywordsArray = keywords[validLocale]?.split(', ') || keywords.ar.split(', ');
+
   const metadata: Metadata = {
     metadataBase: new URL(metadataBaseUrl),
-    title: titles[validLocale],
-    description: descriptions[validLocale],
-    keywords: keywords[validLocale].split(', '),
+    title: titles[validLocale] || titles.ar,
+    description: descriptions[validLocale] || descriptions.ar,
+    keywords: keywordsArray,
     alternates: {
       canonical: `${baseUrl}/${validLocale}`,
       languages: {
