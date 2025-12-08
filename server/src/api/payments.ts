@@ -110,7 +110,58 @@ async function notifyOrderStatusChange(orderId: string, userId: string, status: 
   }
 }
 
-// Create checkout session
+// Test checkout endpoint (no auth required for testing)
+router.post(
+  '/checkout/test',
+  async (req: Request, res: Response) => {
+    try {
+      const { productName, amount, quantity, currency = 'USD', successUrl, cancelUrl, customerEmail } = req.body;
+
+      if (!productName || !amount || !quantity) {
+        return res.status(400).json({
+          success: false,
+          message: 'Missing required fields: productName, amount, quantity',
+          code: 'MISSING_FIELDS',
+        });
+      }
+
+      // Create a test order ID
+      const { randomUUID } = await import('crypto');
+      const testOrderId = randomUUID();
+
+      // Create Stripe checkout session directly (for testing)
+      const session = await createCheckoutSession({
+        orderId: testOrderId,
+        productName: productName,
+        amount: parseFloat(amount),
+        currency: currency,
+        quantity: parseInt(quantity),
+        successUrl: successUrl || `${process.env.FRONTEND_URL || 'http://localhost:3000'}/ar/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancelUrl: cancelUrl || `${process.env.FRONTEND_URL || 'http://localhost:3000'}/ar/checkout/cancel`,
+        customerEmail: customerEmail,
+      });
+
+      res.json({
+        success: true,
+        checkoutUrl: session.url,
+        sessionId: session.id,
+        orderId: testOrderId,
+        testMode: isTestMode,
+        message: 'Test checkout session created successfully',
+      });
+    } catch (error) {
+      console.error('Error creating test checkout session:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to create test checkout session',
+        code: 'CHECKOUT_ERROR',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  }
+);
+
+// Create checkout session (requires authentication)
 router.post(
   '/checkout',
   authenticateToken,

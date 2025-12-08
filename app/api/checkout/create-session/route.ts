@@ -24,20 +24,35 @@ export async function POST(request: NextRequest) {
     // Get locale from request or default to 'ar'
     const locale = body.locale || 'ar';
     
+    // Use test endpoint if productId starts with 'test-' (for testing without auth)
+    const isTestMode = body.productId?.startsWith('test-');
+    const endpoint = isTestMode ? '/payments/checkout/test' : '/payments/checkout';
+    
+    // Prepare request body based on endpoint
+    const requestBody = isTestMode
+      ? {
+          productName: body.productName || body.productId,
+          amount: body.amount,
+          quantity: body.quantity,
+          currency: body.currency || 'USD',
+          successUrl: `${frontendUrl}/${locale}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+          cancelUrl: `${frontendUrl}/${locale}/checkout/cancel`,
+          customerEmail: body.customerEmail,
+        }
+      : {
+          productId: body.productId,
+          quantity: body.quantity,
+          currency: body.currency || 'USD',
+        };
+
     // Call backend API to create checkout session
-    const response = await fetch(`${API_URL}/orders/checkout`, {
+    const response = await fetch(`${API_URL}${endpoint}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': request.headers.get('Authorization') || '',
+        ...(isTestMode ? {} : { 'Authorization': request.headers.get('Authorization') || '' }),
       },
-      body: JSON.stringify({
-        productId: body.productId,
-        quantity: body.quantity,
-        currency: body.currency || 'USD',
-        successUrl: `${frontendUrl}/${locale}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancelUrl: `${frontendUrl}/${locale}/checkout/cancel`,
-      }),
+      body: JSON.stringify(requestBody),
       credentials: 'include',
     });
 

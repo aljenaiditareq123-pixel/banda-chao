@@ -13,6 +13,9 @@ export default function TestPaymentClient({ locale }: TestPaymentClientProps) {
   const [productName, setProductName] = useState('منتج تجريبي / Test Product');
   const [amount, setAmount] = useState(100);
   const [quantity, setQuantity] = useState(1);
+  
+  // Ensure productId starts with 'test-' for test mode
+  const testProductId = productId.startsWith('test-') ? productId : `test-${productId}`;
 
   const texts = {
     ar: {
@@ -112,7 +115,7 @@ export default function TestPaymentClient({ locale }: TestPaymentClientProps) {
           </div>
 
           <StripeCheckoutButton
-            productId={productId}
+            productId={testProductId}
             productName={productName}
             amount={amount}
             quantity={quantity}
