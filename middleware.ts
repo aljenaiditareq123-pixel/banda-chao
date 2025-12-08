@@ -81,14 +81,19 @@ function shouldExcludePath(pathname: string): boolean {
     '/admin', // Admin pages don't use locale (like /founder)
   ];
   
-  // Check exact matches first
+  // Check exact matches first (including favicon.ico)
   if (excludePatterns.some(pattern => pathname === pattern || pathname.startsWith(pattern))) {
     return true;
   }
   
-  // Exclude file extensions (images, fonts, etc.)
+  // Exclude file extensions (images, fonts, etc.) - this should catch favicon.ico
   const fileExtensionPattern = /\.(ico|png|jpg|jpeg|gif|webp|svg|css|js|woff|woff2|ttf|eot|json|xml|txt)$/i;
   if (fileExtensionPattern.test(pathname)) {
+    return true;
+  }
+  
+  // Additional check: if pathname contains favicon.ico anywhere, exclude it
+  if (pathname.toLowerCase().includes('favicon.ico')) {
     return true;
   }
   

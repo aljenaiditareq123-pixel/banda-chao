@@ -22,6 +22,11 @@ export async function generateMetadata({ params }: LocaleLayoutProps): Promise<M
   try {
     const resolvedParams = await params;
     locale = resolvedParams.locale;
+    
+    // Additional check: if locale is invalid or looks like a file path, use default
+    if (!locale || typeof locale !== 'string' || locale.includes('.')) {
+      locale = 'ar';
+    }
   } catch (error) {
     console.error("Error resolving locale params in layout metadata, falling back to 'ar':", error);
     locale = 'ar'; // Fallback to default locale
@@ -58,8 +63,18 @@ export async function generateMetadata({ params }: LocaleLayoutProps): Promise<M
     en: 'social commerce, e-commerce, makers, handmade, artisans',
   };
 
-  // Safely get keywords array
-  const keywordsArray = keywords[validLocale]?.split(', ') || keywords.ar.split(', ');
+  // Safely get keywords array with multiple fallbacks
+  let keywordsArray: string[] = [];
+  try {
+    const keywordsString = keywords[validLocale] || keywords.ar || '';
+    keywordsArray = keywordsString.split(', ').filter(k => k.trim().length > 0);
+    if (keywordsArray.length === 0) {
+      keywordsArray = ['Banda Chao', 'Social Commerce'];
+    }
+  } catch (error) {
+    console.error('Error processing keywords:', error);
+    keywordsArray = ['Banda Chao', 'Social Commerce'];
+  }
 
   const metadata: Metadata = {
     metadataBase: new URL(metadataBaseUrl),
