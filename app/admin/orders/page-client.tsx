@@ -3,7 +3,9 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Button from '@/components/Button';
+import Card from '@/components/common/Card';
 import OrdersTable from '@/components/admin/OrdersTable';
+import { useOrders } from '@/hooks/useOrders';
 
 /**
  * Admin Orders Page Client Component
@@ -11,6 +13,7 @@ import OrdersTable from '@/components/admin/OrdersTable';
  */
 export default function AdminOrdersPageClient() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const { stats } = useOrders('all'); // Get all orders stats for summary cards
 
   return (
     <div className="min-h-screen bg-gray-50" dir="rtl">
@@ -30,6 +33,27 @@ export default function AdminOrdersPageClient() {
               </Link>
             </div>
           </div>
+        </div>
+
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          <Card className="bg-white border border-gray-100 p-6 shadow-sm">
+            <p className="text-sm font-medium text-gray-600 mb-2">إجمالي الطلبات</p>
+            <p className="text-3xl font-bold text-gray-900">{stats.total.toLocaleString('ar-EG')}</p>
+          </Card>
+          <Card className="bg-white border border-gray-100 p-6 shadow-sm">
+            <p className="text-sm font-medium text-gray-600 mb-2">الطلبات المدفوعة</p>
+            <p className="text-3xl font-bold text-gray-900">{stats.paid.toLocaleString('ar-EG')}</p>
+            {stats.total > 0 && (
+              <p className="text-xs text-green-600 mt-1">
+                نسبة نجاح: {Math.round((stats.paid / stats.total) * 100)}%
+              </p>
+            )}
+          </Card>
+          <Card className="bg-white border border-gray-100 p-6 shadow-sm">
+            <p className="text-sm font-medium text-gray-600 mb-2">الطلبات قيد الانتظار</p>
+            <p className="text-3xl font-bold text-gray-900">{(stats.total - stats.paid).toLocaleString('ar-EG')}</p>
+          </Card>
         </div>
 
         {/* Filters */}
