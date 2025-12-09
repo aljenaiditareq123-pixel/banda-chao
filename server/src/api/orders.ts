@@ -8,7 +8,7 @@ const router = Router();
 // Calculate shipping cost (GET /orders/shipping/calculate)
 router.get('/shipping/calculate', async (req: Request, res: Response) => {
   try {
-    const { country, items } = req.query;
+    const { country, items, originCountry } = req.query;
 
     if (!country || typeof country !== 'string') {
       return res.status(400).json({
@@ -34,8 +34,18 @@ router.get('/shipping/calculate', async (req: Request, res: Response) => {
       parsedItems = [{ weightInKg: 1, quantity: 1 }];
     }
 
-    // Calculate shipping using Hub Model
-    const shippingCalculation = calculateHubShippingForItems(country, parsedItems);
+    // Determine origin country (default to 'CN' - China)
+    // Frontend can pass originCountry if products are from different origins
+    const origin = (originCountry && typeof originCountry === 'string') 
+      ? originCountry.toUpperCase() 
+      : 'CN';
+
+    // Calculate shipping using Hub Model or Domestic China shipping
+    const shippingCalculation = calculateHubShippingForItems(
+      country, 
+      parsedItems,
+      origin
+    );
 
     res.json({
       success: true,
@@ -46,6 +56,8 @@ router.get('/shipping/calculate', async (req: Request, res: Response) => {
           handling: shippingCalculation.handling,
           uaeToCustomer: shippingCalculation.uaeToCustomer,
           region: shippingCalculation.region,
+          isDomestic: shippingCalculation.isDomestic,
+          originCountry: origin,
         },
       },
     });
@@ -236,14 +248,71 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
     // حساب تكلفة المنتجات (بدون الشحن)
     const productsTotal = total || items.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
 
-    // حساب تكلفة الشحن باستخدام استراتيجية Hub Model (الصين -> الإمارات -> العالم)
+    // جلب معلومات المنتجات لتحديد بلد المنشأ (Origin Country)
+    // Fetch product information to determine origin country
+    const productIds = items.map((item: any) => item.productId).filter(Boolean);
+    let originCountry = 'CN'; // Default to China (assume all products are from China artisans)
+    
+    if (productIds.length > 0) {
+      try {
+        // Fetch products with their makers to get origin country
+        const products = await prisma.products.findMany({
+          where: {
+            id: { in: productIds },
+          },
+          include: {
+            users: {
+              include: {
+                makers: {
+                  select: {
+                    country: true,
+                  },
+                },
+              },
+            },
+          },
+        });
+
+        // Determine origin country:
+        // - If all products are from China makers, use 'CN' (domestic)
+        // - If mixed origins, use the first product's maker country (or default to 'CN')
+        const makerCountries = products
+          .map(p => p.users?.makers?.[0]?.country)
+          .filter(Boolean)
+          .map((country: string) => country?.toUpperCase());
+
+        if (makerCountries.length > 0) {
+          // Check if all products are from China
+          const allFromChina = makerCountries.every((country: string) => 
+            country === 'CHINA' || country === 'CN' || country === '中国'
+          );
+          
+          if (allFromChina) {
+            originCountry = 'CN';
+          } else {
+            // Use first product's maker country (or default to 'CN')
+            originCountry = makerCountries[0] === 'CHINA' || makerCountries[0] === 'CN' || makerCountries[0] === '中国' 
+              ? 'CN' 
+              : 'CN'; // Default to CN for now (can be extended later)
+          }
+        }
+      } catch (error) {
+        console.warn('[Orders] Could not fetch product origin, defaulting to CN:', error);
+        // Default to China if we can't determine origin
+        originCountry = 'CN';
+      }
+    }
+
+    // حساب تكلفة الشحن باستخدام استراتيجية Hub Model أو الشحن المحلي
+    // Calculate shipping using Hub Model or Domestic China shipping
     // نفترض أن وزن كل منتج 1 كجم إذا لم يحدد (يمكن تحديثه لاحقاً من قاعدة البيانات)
     const shippingCalculation = calculateHubShippingForItems(
       shipping.country,
       items.map((item: any) => ({
         weightInKg: item.weightInKg || 1, // وزن افتراضي 1 كجم
         quantity: item.quantity,
-      }))
+      })),
+      originCountry // Pass origin country to determine if domestic shipping applies
     );
 
     const shippingCost = shippingCalculation.total;
@@ -251,14 +320,17 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
     // المبلغ الإجمالي = سعر المنتجات + تكلفة الشحن
     const calculatedTotal = productsTotal + shippingCost;
 
-    console.log('[Orders] 📦 Shipping calculation (Hub Model):', {
+    console.log('[Orders] 📦 Shipping calculation:', {
+      originCountry,
       destinationCountry: shipping.country,
+      shippingType: shippingCalculation.isDomestic ? 'DOMESTIC_CN' : 'HUB_MODEL',
       shippingRegion: shippingCalculation.region,
       shippingDetails: {
         chinaToUae: shippingCalculation.chinaToUae,
         handling: shippingCalculation.handling,
         uaeToCustomer: shippingCalculation.uaeToCustomer,
         total: shippingCalculation.total,
+        isDomestic: shippingCalculation.isDomestic,
       },
       productsTotal,
       shippingCost,
@@ -320,6 +392,8 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
           handling: shippingCalculation.handling,
           uaeToCustomer: shippingCalculation.uaeToCustomer,
           total: shippingCalculation.total,
+          isDomestic: shippingCalculation.isDomestic,
+          originCountry,
         },
         items: orderItems,
       },

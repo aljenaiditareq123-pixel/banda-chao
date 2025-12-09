@@ -710,11 +710,15 @@ export const ordersAPI = {
   calculateShipping: async (data: {
     country: string;
     items?: Array<{ weightInKg?: number; quantity: number }>;
+    originCountry?: string; // Optional: defaults to 'CN' if not provided
   }) => {
     const params = new URLSearchParams();
     params.append('country', data.country);
     if (data.items && data.items.length > 0) {
       params.append('items', JSON.stringify(data.items));
+    }
+    if (data.originCountry) {
+      params.append('originCountry', data.originCountry);
     }
     const response = await apiClient.get(`/orders/shipping/calculate?${params.toString()}`);
     return response.data;

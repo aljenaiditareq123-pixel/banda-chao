@@ -6,6 +6,11 @@
  * 1. المرحلة الأولى: الشحن من الصين → مخازن رأس الخيمة (الإمارات)
  * 2. المرحلة الثانية: رسوم المناولة والتجهيز في الإمارات
  * 3. المرحلة الثالثة: الشحن من رأس الخيمة → العميل (حسب الدولة)
+ * 
+ * Domestic China Shipping (الصين -> الصين):
+ * - شحن محلي مباشر من الحرفي إلى العميل داخل الصين
+ * - بدون المرور عبر مخازن الإمارات
+ * - أسعار منخفضة ومباشرة
  */
 
 // الأسعار بالدرهم الإماراتي (AED)
@@ -23,6 +28,11 @@ export const SHIPPING_STRATEGY = {
     GCC: 20,     // الخليج - 20 درهم للكيلو
     DEFAULT: 50, // باقي دول العالم - 50 درهم للكيلو
   },
+
+  // أسعار الشحن المحلي داخل الصين (الصين -> الصين)
+  // Domestic China shipping rates (flat rate or per kg)
+  DOMESTIC_CN_RATE_PER_KG: 5, // 5 درهم للكيلو (شحن محلي مباشر)
+  DOMESTIC_CN_FLAT_FEE: 10,   // 10 درهم رسوم ثابتة (أو يمكن استخدامها كحد أدنى)
 } as const;
 
 // قائمة الدول الأوروبية
@@ -52,25 +62,60 @@ function getShippingRegion(countryCode: string): 'US' | 'EU' | 'GCC' | 'DEFAULT'
  * واجهة تفاصيل حساب الشحن
  */
 export interface ShippingCalculationDetails {
-  chinaToUae: number;      // تكلفة المرحلة الأولى (الصين -> الإمارات)
-  handling: number;        // رسوم المناولة في الإمارات
-  uaeToCustomer: number;   // تكلفة المرحلة الثالثة (الإمارات -> العميل)
+  chinaToUae: number;      // تكلفة المرحلة الأولى (الصين -> الإمارات) - 0 للشحن المحلي
+  handling: number;         // رسوم المناولة في الإمارات - 0 للشحن المحلي
+  uaeToCustomer: number;    // تكلفة المرحلة الثالثة (الإمارات -> العميل) - 0 للشحن المحلي
   total: number;           // المجموع الكلي
-  region: 'US' | 'EU' | 'GCC' | 'DEFAULT'; // منطقة الشحن
+  region: 'US' | 'EU' | 'GCC' | 'DEFAULT' | 'DOMESTIC_CN'; // منطقة الشحن
+  isDomestic: boolean;     // true إذا كان الشحن محلي (CN -> CN)
+}
+
+/**
+ * حساب تكلفة الشحن المحلي داخل الصين (الصين -> الصين)
+ * Domestic China shipping calculation (CN -> CN)
+ * 
+ * @param weightInKg - الوزن بالكيلوجرام
+ * @returns تفاصيل حساب الشحن المحلي
+ */
+export function calculateDomesticChinaShipping(
+  weightInKg: number
+): ShippingCalculationDetails {
+  // حساب الشحن المحلي: سعر ثابت + (الوزن × السعر لكل كيلو)
+  const domesticCost = SHIPPING_STRATEGY.DOMESTIC_CN_FLAT_FEE + 
+                       (weightInKg * SHIPPING_STRATEGY.DOMESTIC_CN_RATE_PER_KG);
+  
+  return {
+    chinaToUae: 0,        // لا يوجد شحن إلى الإمارات
+    handling: 0,          // لا توجد رسوم معالجة في الإمارات
+    uaeToCustomer: 0,     // لا يوجد شحن من الإمارات
+    total: Math.ceil(domesticCost), // تقريب للأعلى
+    region: 'DOMESTIC_CN',
+    isDomestic: true,
+  };
 }
 
 /**
  * حساب تكلفة الشحن الكلية بناءً على استراتيجية Hub Model
  * 
- * @param destinationCountry - رمز الدولة (مثل: 'US', 'DE', 'SA')
+ * @param destinationCountry - رمز الدولة (مثل: 'US', 'DE', 'SA', 'CN')
  * @param weightInKg - الوزن بالكيلوجرام
+ * @param originCountry - رمز دولة المنشأ (افتراضي: 'CN' - الصين)
  * @returns تفاصيل حساب الشحن
  */
 export function calculateHubShipping(
   destinationCountry: string,
-  weightInKg: number
+  weightInKg: number,
+  originCountry: string = 'CN'
 ): ShippingCalculationDetails {
-  // تحديد منطقة الشحن
+  // التحقق من الشحن المحلي (الصين -> الصين)
+  const isDomestic = originCountry.toUpperCase() === 'CN' && 
+                     destinationCountry.toUpperCase() === 'CN';
+  
+  if (isDomestic) {
+    return calculateDomesticChinaShipping(weightInKg);
+  }
+
+  // تحديد منطقة الشحن (للمبيعات الدولية)
   const region = getShippingRegion(destinationCountry);
 
   // 1. حساب تكلفة المرحلة الأولى (الصين -> الإمارات)
@@ -89,19 +134,22 @@ export function calculateHubShipping(
     uaeToCustomer: Math.ceil(leg2Cost * 100) / 100,
     total: Math.ceil(totalShipping),                  // تقريب للأعلى
     region,
+    isDomestic: false,
   };
 }
 
 /**
  * حساب تكلفة الشحن لعدة منتجات (مجموع الأوزان)
  * 
- * @param destinationCountry - رمز الدولة
+ * @param destinationCountry - رمز الدولة الوجهة
  * @param items - قائمة المنتجات مع أوزانها
+ * @param originCountry - رمز دولة المنشأ (افتراضي: 'CN' - الصين)
  * @returns تفاصيل حساب الشحن
  */
 export function calculateHubShippingForItems(
   destinationCountry: string,
-  items: Array<{ weightInKg?: number; quantity: number }>
+  items: Array<{ weightInKg?: number; quantity: number }>,
+  originCountry: string = 'CN'
 ): ShippingCalculationDetails {
   // حساب الوزن الإجمالي (الوزن الافتراضي 1 كجم إذا لم يحدد)
   const totalWeight = items.reduce((sum, item) => {
@@ -109,5 +157,5 @@ export function calculateHubShippingForItems(
     return sum + (itemWeight * item.quantity);
   }, 0);
 
-  return calculateHubShipping(destinationCountry, totalWeight);
+  return calculateHubShipping(destinationCountry, totalWeight, originCountry);
 }
