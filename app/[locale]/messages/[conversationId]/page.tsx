@@ -3,16 +3,26 @@ import ChatPageClient from './page-client';
 import axios from 'axios';
 
 interface PageProps {
-  params: {
+  params: Promise<{
     locale: string;
     conversationId: string;
-  };
+  }>;
 }
 
 const validLocales = ['zh', 'en', 'ar'];
 
 export default async function ChatPage({ params }: PageProps) {
-  const { locale, conversationId } = params;
+  let locale: string;
+  let conversationId: string;
+  
+  try {
+    const resolvedParams = await params;
+    locale = resolvedParams.locale;
+    conversationId = resolvedParams.conversationId;
+  } catch (error) {
+    console.error('Error resolving params in chat page:', error);
+    notFound();
+  }
 
   if (!validLocales.includes(locale)) {
     notFound();

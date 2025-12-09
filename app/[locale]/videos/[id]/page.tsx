@@ -3,16 +3,26 @@ import VideoDetailClient from './page-client';
 import { videosAPI } from '@/lib/api';
 
 interface PageProps {
-  params: {
+  params: Promise<{
     locale: string;
     id: string;
-  };
+  }>;
 }
 
 const validLocales = ['zh', 'en', 'ar'];
 
 export default async function VideoDetailPage({ params }: PageProps) {
-  const { locale, id } = params;
+  let locale: string;
+  let id: string;
+  
+  try {
+    const resolvedParams = await params;
+    locale = resolvedParams.locale;
+    id = resolvedParams.id;
+  } catch (error) {
+    console.error('Error resolving params in video detail page:', error);
+    notFound();
+  }
 
   if (!validLocales.includes(locale)) {
     notFound();

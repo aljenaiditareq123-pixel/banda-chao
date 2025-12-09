@@ -3,9 +3,9 @@ import VideosPageClient from './page-client';
 import { videosAPI } from '@/lib/api';
 
 interface PageProps {
-  params: {
+  params: Promise<{
     locale: string;
-  };
+  }>;
   searchParams: {
     page?: string;
     type?: 'SHORT' | 'LONG';
@@ -18,7 +18,15 @@ interface PageProps {
 const validLocales = ['zh', 'en', 'ar'];
 
 export default async function VideosPage({ params, searchParams }: PageProps) {
-  const { locale } = params;
+  let locale: string;
+  
+  try {
+    const resolvedParams = await params;
+    locale = resolvedParams.locale;
+  } catch (error) {
+    console.error('Error resolving params in videos page:', error);
+    notFound();
+  }
 
   if (!validLocales.includes(locale)) {
     notFound();

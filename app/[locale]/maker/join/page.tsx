@@ -2,15 +2,23 @@ import { notFound } from 'next/navigation';
 import MakerJoinClient from './page-client';
 
 interface PageProps {
-  params: {
+  params: Promise<{
     locale: string;
-  };
+  }>;
 }
 
 const validLocales = ['zh', 'en', 'ar'];
 
 export default async function MakerJoinPage({ params }: PageProps) {
-  const { locale } = params;
+  let locale: string;
+  
+  try {
+    const resolvedParams = await params;
+    locale = resolvedParams.locale;
+  } catch (error) {
+    console.error('Error resolving params in maker join page:', error);
+    notFound();
+  }
 
   if (!validLocales.includes(locale)) {
     notFound();

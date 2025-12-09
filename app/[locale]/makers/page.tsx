@@ -3,9 +3,9 @@ import MakersPageClient from './page-client';
 import { makersAPI } from '@/lib/api';
 
 interface PageProps {
-  params: {
+  params: Promise<{
     locale: string;
-  };
+  }>;
   searchParams: {
     page?: string;
     country?: string;
@@ -17,7 +17,15 @@ interface PageProps {
 const validLocales = ['zh', 'en', 'ar'];
 
 export default async function MakersPage({ params, searchParams }: PageProps) {
-  const { locale } = params;
+  let locale: string;
+  
+  try {
+    const resolvedParams = await params;
+    locale = resolvedParams.locale;
+  } catch (error) {
+    console.error('Error resolving params in makers page:', error);
+    notFound();
+  }
 
   if (!validLocales.includes(locale)) {
     notFound();

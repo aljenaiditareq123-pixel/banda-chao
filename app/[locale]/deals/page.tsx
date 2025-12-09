@@ -3,15 +3,23 @@ import DailyDealsPageClient from './page-client';
 import { productsAPI } from '@/lib/api';
 
 interface PageProps {
-  params: {
+  params: Promise<{
     locale: string;
-  };
+  }>;
 }
 
 const validLocales = ['zh', 'en', 'ar'];
 
 export default async function DailyDealsPage({ params }: PageProps) {
-  const { locale } = params;
+  let locale: string;
+  
+  try {
+    const resolvedParams = await params;
+    locale = resolvedParams.locale;
+  } catch (error) {
+    console.error('Error resolving params in deals page:', error);
+    notFound();
+  }
 
   if (!validLocales.includes(locale)) {
     notFound();

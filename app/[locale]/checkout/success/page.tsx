@@ -2,9 +2,9 @@ import { notFound } from 'next/navigation';
 import CheckoutSuccessClient from './page-client';
 
 interface PageProps {
-  params: {
+  params: Promise<{
     locale: string;
-  };
+  }>;
   searchParams: {
     session_id?: string;
   };
@@ -13,7 +13,15 @@ interface PageProps {
 const validLocales = ['zh', 'en', 'ar'];
 
 export default async function CheckoutSuccessPage({ params, searchParams }: PageProps) {
-  const { locale } = params;
+  let locale: string;
+  
+  try {
+    const resolvedParams = await params;
+    locale = resolvedParams.locale;
+  } catch (error) {
+    console.error('Error resolving params in checkout success page:', error);
+    notFound();
+  }
 
   if (!validLocales.includes(locale)) {
     notFound();
