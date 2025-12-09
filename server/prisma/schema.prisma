@@ -387,9 +387,13 @@ enum UserRole {
 }
 
 enum ServiceType {
-  DRIVER   // Delivery/transport service
-  AGENT    // Sales/representation service
-  ARTISAN  // Craft/creative service
+  DRIVER     // Delivery/transport service
+  AGENT      // Sales/representation service
+  ARTISAN    // Craft/creative service
+  TECH       // Technology/Programming services (Web developers, App developers, etc.)
+  MEDIA      // Media/Photography services (Photographers, Designers, Videographers, etc.)
+  EDUCATION  // Education/Training services (Translators, Tutors, Language teachers, etc.)
+  OTHER      // Other services (catch-all category)
 }
 
 enum SocialPlatform {

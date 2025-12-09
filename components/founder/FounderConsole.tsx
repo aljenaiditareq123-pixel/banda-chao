@@ -216,7 +216,7 @@ export default function FounderConsole() {
         )}
 
         {/* KPIs Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
           <Card className="bg-gradient-to-br from-primary-50 to-primary-100 border-primary-200 shadow-md">
             <div className="p-6">
               <p className="text-sm font-medium text-primary-700 mb-2">إجمالي الحرفيين</p>
@@ -242,6 +242,17 @@ export default function FounderConsole() {
                 {kpis?.totalVideos?.toLocaleString('ar-EG') || 0}
               </p>
               <p className="text-xs text-blue-600 mt-1">↗ +18% هذا الشهر</p>
+            </div>
+          </Card>
+          <Card className="bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200 shadow-md">
+            <div className="p-6">
+              <p className="text-sm font-medium text-amber-700 mb-2">إجمالي الخدمات</p>
+              <p className="text-3xl font-bold text-amber-900">
+                {kpis?.totalServices?.toLocaleString('ar-EG') || 0}
+              </p>
+              <p className="text-xs text-amber-600 mt-1">
+                {kpis?.newServicesThisWeek ? `+${kpis.newServicesThisWeek} هذا الأسبوع` : '↗ +10% هذا الشهر'}
+              </p>
             </div>
           </Card>
           <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 shadow-md">
@@ -403,7 +414,7 @@ export default function FounderConsole() {
         </Card>
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
           {/* Recent Makers */}
           <Card>
             <div className="p-6">
@@ -506,6 +517,78 @@ export default function FounderConsole() {
                 </div>
               ) : (
                 <p className="text-gray-500 text-sm">لا توجد منتجات بعد</p>
+              )}
+            </div>
+          </Card>
+
+          {/* Latest Services */}
+          <Card>
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900">أحدث الخدمات</h2>
+              </div>
+              {kpis?.latestServices && kpis.latestServices.length > 0 ? (
+                <div className="space-y-3">
+                  {kpis.latestServices.map((service) => {
+                    const getServiceTypeIcon = (type: string) => {
+                      switch (type) {
+                        case 'DRIVER':
+                          return '🚚';
+                        case 'AGENT':
+                          return '🤝';
+                        case 'ARTISAN':
+                          return '🎨';
+                        case 'TECH':
+                          return '💻';
+                        case 'MEDIA':
+                          return '📸';
+                        case 'EDUCATION':
+                          return '📚';
+                        case 'OTHER':
+                          return '📦';
+                        default:
+                          return '📦';
+                      }
+                    };
+                    const getServiceTypeLabel = (type: string) => {
+                      const labels: Record<string, string> = {
+                        DRIVER: 'نقل',
+                        AGENT: 'وكيل',
+                        ARTISAN: 'حرفي',
+                        TECH: 'تقنية/برمجة',
+                        MEDIA: 'إعلامية/تصوير',
+                        EDUCATION: 'تعليمية/ترجمة',
+                        OTHER: 'أخرى',
+                      };
+                      return labels[type] || type;
+                    };
+                    return (
+                      <div
+                        key={service.id}
+                        className="p-3 rounded-lg hover:bg-gray-50 transition-colors border border-gray-100"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
+                            <span className="text-xl">{getServiceTypeIcon(service.type)}</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-gray-900 truncate">
+                              {service.title}
+                            </p>
+                            <p className="text-sm text-gray-600 truncate">
+                              {service.makers?.name || '—'} • {getServiceTypeLabel(service.type)}
+                            </p>
+                          </div>
+                          <span className="text-sm font-medium text-amber-600">
+                            ${service.price?.toFixed(0) || 0}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-sm">لا توجد خدمات بعد</p>
               )}
             </div>
           </Card>

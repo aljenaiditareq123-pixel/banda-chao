@@ -14,14 +14,31 @@ export interface FounderKPIs {
   totalOrders: number;
   /** إجمالي المستخدمين - Total Users */
   totalUsers: number;
+  /** إجمالي الخدمات - Total Services */
+  totalServices: number;
   /** حرفيون جدد هذا الأسبوع - New Artisans This Week */
   newArtisansThisWeek: number;
   /** طلبات جديدة هذا الأسبوع - New Orders This Week */
   newOrdersThisWeek: number;
+  /** خدمات جديدة هذا الأسبوع - New Services This Week */
+  newServicesThisWeek: number;
   /** إجمالي طلبات البيتا - Total Beta Applications */
   totalBetaApplications: number;
   /** طلبات بيتا جديدة هذا الأسبوع - New Beta Applications This Week */
   newBetaApplicationsThisWeek: number;
+  /** أحدث الخدمات - Latest Services */
+  latestServices?: Array<{
+    id: string;
+    title: string;
+    description: string;
+    price: number;
+    type: 'DRIVER' | 'AGENT' | 'ARTISAN' | 'TECH' | 'MEDIA' | 'EDUCATION' | 'OTHER';
+    created_at: Date | string;
+    makers?: {
+      id: string;
+      name: string;
+    };
+  }>;
 }
 
 export interface FounderUser {

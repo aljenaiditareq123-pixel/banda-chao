@@ -12,7 +12,7 @@ interface Service {
   title: string;
   description: string;
   price: number;
-  type: 'DRIVER' | 'AGENT' | 'ARTISAN';
+  type: 'DRIVER' | 'AGENT' | 'ARTISAN' | 'TECH' | 'MEDIA' | 'EDUCATION' | 'OTHER';
   created_at?: string;
 }
 
@@ -32,7 +32,7 @@ export default function ServiceList({ locale, onRefresh }: ServiceListProps) {
     title: '',
     description: '',
     price: '',
-    type: 'DRIVER' as 'DRIVER' | 'AGENT' | 'ARTISAN',
+    type: 'DRIVER' as 'DRIVER' | 'AGENT' | 'ARTISAN' | 'TECH' | 'MEDIA' | 'EDUCATION' | 'OTHER',
   });
   const [saving, setSaving] = useState(false);
 
@@ -95,7 +95,7 @@ export default function ServiceList({ locale, onRefresh }: ServiceListProps) {
         title: formData.title.trim(),
         description: formData.description.trim(),
         price,
-        type: formData.type,
+        type: formData.type as 'DRIVER' | 'AGENT' | 'ARTISAN' | 'TECH' | 'MEDIA' | 'EDUCATION' | 'OTHER',
       };
 
       let response;
@@ -143,9 +143,33 @@ export default function ServiceList({ locale, onRefresh }: ServiceListProps) {
 
   const getServiceTypeLabel = (type: string) => {
     const labels = {
-      ar: { DRIVER: 'خدمة النقل', AGENT: 'خدمة الوكيل', ARTISAN: 'خدمة الحرفي' },
-      en: { DRIVER: 'Transport Service', AGENT: 'Agent Service', ARTISAN: 'Artisan Service' },
-      zh: { DRIVER: '运输服务', AGENT: '代理服务', ARTISAN: '手工艺服务' },
+      ar: {
+        DRIVER: 'خدمة النقل',
+        AGENT: 'خدمة الوكيل',
+        ARTISAN: 'خدمة الحرفي',
+        TECH: 'خدمة تقنية/برمجة',
+        MEDIA: 'خدمة إعلامية/تصوير',
+        EDUCATION: 'خدمة تعليمية/ترجمة',
+        OTHER: 'خدمة أخرى',
+      },
+      en: {
+        DRIVER: 'Transport Service',
+        AGENT: 'Agent Service',
+        ARTISAN: 'Artisan Service',
+        TECH: 'Technology/Programming',
+        MEDIA: 'Media/Photography',
+        EDUCATION: 'Education/Translation',
+        OTHER: 'Other Service',
+      },
+      zh: {
+        DRIVER: '运输服务',
+        AGENT: '代理服务',
+        ARTISAN: '手工艺服务',
+        TECH: '技术/编程',
+        MEDIA: '媒体/摄影',
+        EDUCATION: '教育/翻译',
+        OTHER: '其他服务',
+      },
     };
     return labels[locale as keyof typeof labels]?.[type as keyof typeof labels.ar] || type;
   };
@@ -158,6 +182,14 @@ export default function ServiceList({ locale, onRefresh }: ServiceListProps) {
         return '🤝';
       case 'ARTISAN':
         return '🎨';
+      case 'TECH':
+        return '💻';
+      case 'MEDIA':
+        return '📸';
+      case 'EDUCATION':
+        return '📚';
+      case 'OTHER':
+        return '📦';
       default:
         return '📦';
     }
@@ -283,12 +315,16 @@ export default function ServiceList({ locale, onRefresh }: ServiceListProps) {
                   </label>
                   <select
                     value={formData.type}
-                    onChange={(e) => setFormData({ ...formData, type: e.target.value as 'DRIVER' | 'AGENT' | 'ARTISAN' })}
+                    onChange={(e) => setFormData({ ...formData, type: e.target.value as 'DRIVER' | 'AGENT' | 'ARTISAN' | 'TECH' | 'MEDIA' | 'EDUCATION' | 'OTHER' })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     <option value="DRIVER">{getServiceTypeLabel('DRIVER')}</option>
                     <option value="AGENT">{getServiceTypeLabel('AGENT')}</option>
                     <option value="ARTISAN">{getServiceTypeLabel('ARTISAN')}</option>
+                    <option value="TECH">{getServiceTypeLabel('TECH')}</option>
+                    <option value="MEDIA">{getServiceTypeLabel('MEDIA')}</option>
+                    <option value="EDUCATION">{getServiceTypeLabel('EDUCATION')}</option>
+                    <option value="OTHER">{getServiceTypeLabel('OTHER')}</option>
                   </select>
                 </div>
               </div>

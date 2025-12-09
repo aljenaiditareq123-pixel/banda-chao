@@ -43,8 +43,10 @@ router.get('/kpis', authenticateToken, requireRole(['FOUNDER']), async (req: Aut
       totalVideos,
       totalOrders,
       totalUsers,
+      totalServices,
       newArtisansThisWeek,
       newOrdersThisWeek,
+      newServicesThisWeek,
       totalBetaApplications,
       newBetaApplicationsThisWeek,
     ] = await Promise.all([
@@ -78,6 +80,12 @@ router.get('/kpis', authenticateToken, requireRole(['FOUNDER']), async (req: Aut
         0,
         'totalUsers'
       ),
+      // Total Services
+      safePrismaCount(
+        () => prisma.services.count(),
+        0,
+        'totalServices'
+      ),
       // New Artisans This Week - count makers created in the last week
       safePrismaCount(
         () => prisma.makers.count({
@@ -90,6 +98,16 @@ router.get('/kpis', authenticateToken, requireRole(['FOUNDER']), async (req: Aut
       ),
       // New Orders This Week (placeholder)
       Promise.resolve(0),
+      // New Services This Week
+      safePrismaCount(
+        () => prisma.services.count({
+          where: {
+            created_at: { gte: oneWeekAgo },
+          },
+        }),
+        0,
+        'newServicesThisWeek'
+      ),
       // Total Beta Applications
       safePrismaCount(
         () => prisma.beta_applications.count(),
@@ -108,16 +126,47 @@ router.get('/kpis', authenticateToken, requireRole(['FOUNDER']), async (req: Aut
       ),
     ]);
 
+    // Fetch latest services (top 5 most recent)
+    let latestServices: any[] = [];
+    try {
+      latestServices = await prisma.services.findMany({
+        take: 5,
+        orderBy: {
+          created_at: 'desc',
+        },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          price: true,
+          type: true,
+          created_at: true,
+          makers: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      });
+    } catch (error: any) {
+      console.error('[KPIs] Error fetching latest services:', error);
+      // Continue with empty array if services fetch fails
+    }
+
     const kpis = {
       totalArtisans,
       totalProducts,
       totalVideos,
       totalOrders,
       totalUsers,
+      totalServices,
       newArtisansThisWeek,
       newOrdersThisWeek,
+      newServicesThisWeek,
       totalBetaApplications,
       newBetaApplicationsThisWeek,
+      latestServices, // Include latest services in response
     };
 
     res.json(kpis);
@@ -144,8 +193,11 @@ router.get('/kpis', authenticateToken, requireRole(['FOUNDER']), async (req: Aut
       totalVideos: 0,
       totalOrders: 0,
       totalUsers: 0,
+      totalServices: 0,
       newArtisansThisWeek: 0,
       newOrdersThisWeek: 0,
+      newServicesThisWeek: 0,
+      latestServices: [],
       error: 'Some data could not be loaded',
     });
   }

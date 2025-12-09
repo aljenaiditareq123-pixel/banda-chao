@@ -91,10 +91,10 @@ router.post('/', authenticateToken, requireRole(['MAKER']), async (req: AuthRequ
       });
     }
 
-    if (!type || !['DRIVER', 'AGENT', 'ARTISAN'].includes(type)) {
+    if (!type || !['DRIVER', 'AGENT', 'ARTISAN', 'TECH', 'MEDIA', 'EDUCATION', 'OTHER'].includes(type)) {
       return res.status(400).json({
         success: false,
-        message: 'Type must be DRIVER, AGENT, or ARTISAN',
+        message: 'Type must be DRIVER, AGENT, ARTISAN, TECH, MEDIA, EDUCATION, or OTHER',
         code: 'INVALID_TYPE',
       });
     }
@@ -120,7 +120,7 @@ router.post('/', authenticateToken, requireRole(['MAKER']), async (req: AuthRequ
         title: title.trim(),
         description: description.trim(),
         price: Number(price),
-        type: type as 'DRIVER' | 'AGENT' | 'ARTISAN',
+        type: type as 'DRIVER' | 'AGENT' | 'ARTISAN' | 'TECH' | 'MEDIA' | 'EDUCATION' | 'OTHER',
         maker_id: maker.id,
         created_at: new Date(),
         updated_at: new Date(),
@@ -225,10 +225,10 @@ router.put('/:id', authenticateToken, requireRole(['MAKER']), async (req: AuthRe
     }
 
     if (type !== undefined) {
-      if (!['DRIVER', 'AGENT', 'ARTISAN'].includes(type)) {
+      if (!['DRIVER', 'AGENT', 'ARTISAN', 'TECH', 'MEDIA', 'EDUCATION', 'OTHER'].includes(type)) {
         return res.status(400).json({
           success: false,
-          message: 'Type must be DRIVER, AGENT, or ARTISAN',
+          message: 'Type must be DRIVER, AGENT, ARTISAN, TECH, MEDIA, EDUCATION, or OTHER',
         });
       }
       updateData.type = type;
