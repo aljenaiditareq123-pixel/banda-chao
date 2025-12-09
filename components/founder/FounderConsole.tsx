@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useFounderKpis } from '@/hooks/useFounderKpis';
 import { makersAPI, productsAPI, videosAPI, ordersAPI } from '@/lib/api';
@@ -34,21 +34,27 @@ export default function FounderConsole() {
   const [chatLoading, setChatLoading] = useState(false);
   const [conversationId] = useState(`founder-${user?.id || 'default'}`);
 
-  useEffect(() => {
-    if (!authLoading && user?.role === 'FOUNDER') {
-      fetchRecentData();
-    }
-  }, [authLoading, user]);
-
-  const fetchRecentData = async () => {
+  const fetchRecentData = useCallback(async () => {
     try {
       setLoadingData(true);
 
       const [makersRes, productsRes, videosRes, ordersRes] = await Promise.all([
-        makersAPI.getAll({ limit: 5 }),
-        productsAPI.getAll({ limit: 5 }),
-        videosAPI.getAll({ limit: 5 }),
-        ordersAPI.getAll().catch(() => ({ orders: [], stats: { total: 0, paid: 0 } })),
+        makersAPI.getAll({ limit: 5 }).catch((err) => {
+          console.error('Error fetching makers:', err);
+          return { makers: [] };
+        }),
+        productsAPI.getAll({ limit: 5 }).catch((err) => {
+          console.error('Error fetching products:', err);
+          return { products: [] };
+        }),
+        videosAPI.getAll({ limit: 5 }).catch((err) => {
+          console.error('Error fetching videos:', err);
+          return { videos: [] };
+        }),
+        ordersAPI.getAll().catch((err) => {
+          console.error('Error fetching orders:', err);
+          return { orders: [], stats: { total: 0, paid: 0 } };
+        }),
       ]);
 
       setRecentMakers(makersRes.makers || []);
@@ -76,7 +82,13 @@ export default function FounderConsole() {
     } finally {
       setLoadingData(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!authLoading && user?.role === 'FOUNDER') {
+      fetchRecentData();
+    }
+  }, [authLoading, user, fetchRecentData]);
 
   const handleSendMessage = async () => {
     if (!chatInput.trim() || chatLoading) return;
@@ -120,7 +132,7 @@ export default function FounderConsole() {
     }
   };
 
-  // Show loading state
+  // Show loading state for authentication
   if (authLoading) {
     return (
       <div className="min-h-screen bg-gray-50" dir="rtl">
@@ -129,6 +141,19 @@ export default function FounderConsole() {
     );
   }
 
+  // Check authentication and authorization BEFORE checking data loading
+  if (!user || user.role !== 'FOUNDER') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir="rtl">
+        <ErrorState
+          message={!user ? "يرجى تسجيل الدخول أولاً" : "هذه المساحة مخصصة للمؤسس فقط"}
+          fullScreen
+        />
+      </div>
+    );
+  }
+
+  // Show loading state for data (only if user is authenticated and authorized)
   if (kpisLoading || loadingData) {
     return (
       <div className="min-h-screen bg-gray-50" dir="rtl">
@@ -137,24 +162,8 @@ export default function FounderConsole() {
     );
   }
 
-  if (!user || user.role !== 'FOUNDER') {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir="rtl">
-        <ErrorState
-          message="هذه المساحة مخصصة للمؤسس فقط"
-          fullScreen
-        />
-      </div>
-    );
-  }
-
-  if (kpisError) {
-    return (
-      <div className="min-h-screen bg-gray-50" dir="rtl">
-        <ErrorState message={kpisError} onRetry={refetchKpis} fullScreen />
-      </div>
-    );
-  }
+  // Show error state for KPIs (but still allow UI to render with other data)
+  // We'll handle kpisError in the UI instead of blocking everything
 
   return (
     <div className="min-h-screen bg-gray-50" dir="rtl">
@@ -186,6 +195,25 @@ export default function FounderConsole() {
             </div>
           </div>
         </div>
+
+        {/* KPI Error Banner */}
+        {kpisError && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-red-600">⚠️</span>
+                <p className="text-red-800">{kpisError}</p>
+              </div>
+              <Button
+                onClick={refetchKpis}
+                variant="secondary"
+                className="text-sm"
+              >
+                إعادة المحاولة
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* KPIs Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

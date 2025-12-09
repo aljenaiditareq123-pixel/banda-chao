@@ -1,8 +1,64 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../utils/prisma';
 import { authenticateToken, requireRole, AuthRequest } from '../middleware/auth';
+import { calculateHubShippingForItems } from '../config/shippingRates';
 
 const router = Router();
+
+// Calculate shipping cost (GET /orders/shipping/calculate)
+router.get('/shipping/calculate', async (req: Request, res: Response) => {
+  try {
+    const { country, items } = req.query;
+
+    if (!country || typeof country !== 'string') {
+      return res.status(400).json({
+        success: false,
+        message: 'Country code is required',
+        code: 'MISSING_COUNTRY',
+      });
+    }
+
+    // Parse items if provided (for multiple products)
+    let parsedItems: Array<{ weightInKg?: number; quantity: number }> = [];
+    
+    if (items && typeof items === 'string') {
+      try {
+        parsedItems = JSON.parse(items);
+      } catch (e) {
+        // If parsing fails, use default weight
+      }
+    }
+
+    // If no items provided, use default (1 item, 1 kg)
+    if (parsedItems.length === 0) {
+      parsedItems = [{ weightInKg: 1, quantity: 1 }];
+    }
+
+    // Calculate shipping using Hub Model
+    const shippingCalculation = calculateHubShippingForItems(country, parsedItems);
+
+    res.json({
+      success: true,
+      shipping: {
+        cost: shippingCalculation.total,
+        details: {
+          chinaToUae: shippingCalculation.chinaToUae,
+          handling: shippingCalculation.handling,
+          uaeToCustomer: shippingCalculation.uaeToCustomer,
+          region: shippingCalculation.region,
+        },
+      },
+    });
+  } catch (error: any) {
+    console.error('[Orders] Error calculating shipping:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to calculate shipping',
+      code: 'SHIPPING_CALCULATION_ERROR',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+});
 
 // Get orders (for founder/admin)
 router.get('/', authenticateToken, requireRole(['FOUNDER', 'ADMIN']), async (req: AuthRequest, res: Response) => {
@@ -177,8 +233,37 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
     const { randomUUID } = await import('crypto');
     const orderId = randomUUID();
 
-    // Calculate total from items if not provided
-    const calculatedTotal = total || items.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
+    // حساب تكلفة المنتجات (بدون الشحن)
+    const productsTotal = total || items.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
+
+    // حساب تكلفة الشحن باستخدام استراتيجية Hub Model (الصين -> الإمارات -> العالم)
+    // نفترض أن وزن كل منتج 1 كجم إذا لم يحدد (يمكن تحديثه لاحقاً من قاعدة البيانات)
+    const shippingCalculation = calculateHubShippingForItems(
+      shipping.country,
+      items.map((item: any) => ({
+        weightInKg: item.weightInKg || 1, // وزن افتراضي 1 كجم
+        quantity: item.quantity,
+      }))
+    );
+
+    const shippingCost = shippingCalculation.total;
+
+    // المبلغ الإجمالي = سعر المنتجات + تكلفة الشحن
+    const calculatedTotal = productsTotal + shippingCost;
+
+    console.log('[Orders] 📦 Shipping calculation (Hub Model):', {
+      destinationCountry: shipping.country,
+      shippingRegion: shippingCalculation.region,
+      shippingDetails: {
+        chinaToUae: shippingCalculation.chinaToUae,
+        handling: shippingCalculation.handling,
+        uaeToCustomer: shippingCalculation.uaeToCustomer,
+        total: shippingCalculation.total,
+      },
+      productsTotal,
+      shippingCost,
+      finalTotal: calculatedTotal,
+    });
 
     const order = await prisma.orders.create({
       data: {
@@ -190,6 +275,9 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
         updated_at: new Date(),
       },
     });
+
+    // حفظ تفاصيل الشحن في metadata (يمكن إضافتها كحقل منفصل لاحقاً)
+    // Store shipping details in order metadata (can be added as separate field later)
 
     // Create order items
     const orderItems = await Promise.all(
@@ -224,6 +312,15 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
         id: order.id,
         status: order.status,
         totalAmount: order.totalAmount,
+        productsTotal,
+        shippingCost,
+        shippingDetails: {
+          region: shippingCalculation.region,
+          chinaToUae: shippingCalculation.chinaToUae,
+          handling: shippingCalculation.handling,
+          uaeToCustomer: shippingCalculation.uaeToCustomer,
+          total: shippingCalculation.total,
+        },
         items: orderItems,
       },
     });

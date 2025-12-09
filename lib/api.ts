@@ -707,6 +707,18 @@ export const ordersAPI = {
     const response = await apiClient.get('/orders');
     return response.data;
   },
+  calculateShipping: async (data: {
+    country: string;
+    items?: Array<{ weightInKg?: number; quantity: number }>;
+  }) => {
+    const params = new URLSearchParams();
+    params.append('country', data.country);
+    if (data.items && data.items.length > 0) {
+      params.append('items', JSON.stringify(data.items));
+    }
+    const response = await apiClient.get(`/orders/shipping/calculate?${params.toString()}`);
+    return response.data;
+  },
   createOrder: async (data: {
     items: Array<{ productId: string; quantity: number; price: number }>;
     shipping: {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Button from '@/components/Button';
@@ -17,18 +17,9 @@ export default function LoginPageClient({ locale }: LoginPageClientProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Check if already logged in
-  useEffect(() => {
-    if (typeof window !== 'undefined' && !loading) {
-      const isLoggedIn = localStorage.getItem('bandaChao_isLoggedIn');
-      const token = localStorage.getItem('auth_token');
-      if (isLoggedIn === 'true' && token) {
-        // Already logged in, redirect to home
-        router.push(`/${locale}`);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [locale]);
+  // ✅ تم تعطيل إعادة التوجيه التلقائية - الصفحة تظهر مباشرة وثابتة
+  // لا يوجد أي useEffect يقوم بالتحقق من localStorage أو إعادة التوجيه
+  // المستخدم يمكنه كتابة بياناته بثبات دون أي وميض أو إعادة توجيه
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

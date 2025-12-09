@@ -53,13 +53,20 @@ export default function CheckoutPageClient({ locale }: CheckoutPageClientProps) 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [orderStatus, setOrderStatus] = useState<{ type: 'success' | 'error'; message: string; orderId?: string } | null>(null);
+  const [shippingCost, setShippingCost] = useState<number>(0);
+  const [shippingLoading, setShippingLoading] = useState(false);
+  const [shippingDetails, setShippingDetails] = useState<{
+    chinaToUae: number;
+    handling: number;
+    uaeToCustomer: number;
+    region: string;
+  } | null>(null);
 
   // Calculate order summary
-  const MOCK_SHIPPING_COST = 10.00;
   const MOCK_TAX_RATE = 0.15;
   const subtotal = cartTotal;
   const taxAmount = subtotal * MOCK_TAX_RATE;
-  const shipping = items.length > 0 ? MOCK_SHIPPING_COST : 0;
+  const shipping = shippingCost; // Use dynamic shipping cost from API
   const grandTotal = subtotal + shipping + taxAmount;
   const currency = items[0]?.currency || 'USD';
 
@@ -69,6 +76,64 @@ export default function CheckoutPageClient({ locale }: CheckoutPageClientProps) 
       router.push(`/${locale}/cart`);
     }
   }, [items.length, locale, router, orderStatus]);
+
+  // Calculate shipping when country changes
+  useEffect(() => {
+    const calculateShipping = async () => {
+      if (!shippingAddress.country || shippingAddress.country.trim() === '') {
+        setShippingCost(0);
+        setShippingDetails(null);
+        return;
+      }
+
+      if (items.length === 0) {
+        setShippingCost(0);
+        setShippingDetails(null);
+        return;
+      }
+
+      setShippingLoading(true);
+      try {
+        // Prepare items for shipping calculation (use default weight 1kg if not specified)
+        const shippingItems = items.map(item => ({
+          weightInKg: (item as any).weightInKg || 1, // Default 1kg per item
+          quantity: item.quantity,
+        }));
+
+        const response = await ordersAPI.calculateShipping({
+          country: shippingAddress.country.trim(),
+          items: shippingItems,
+        });
+
+        if (response.success && response.shipping) {
+          // Convert from AED to USD (approximate rate: 1 AED = 0.27 USD)
+          // Or keep in AED if currency is AED
+          const costInAED = response.shipping.cost;
+          const costInCurrency = currency === 'AED' ? costInAED : costInAED * 0.27;
+          
+          setShippingCost(costInCurrency);
+          setShippingDetails(response.shipping.details);
+        } else {
+          setShippingCost(0);
+          setShippingDetails(null);
+        }
+      } catch (err: any) {
+        console.error('Error calculating shipping:', err);
+        // On error, set shipping to 0 (will show error or use fallback)
+        setShippingCost(0);
+        setShippingDetails(null);
+      } finally {
+        setShippingLoading(false);
+      }
+    };
+
+    // Debounce the API call (wait 500ms after user stops typing)
+    const timeoutId = setTimeout(() => {
+      calculateShipping();
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [shippingAddress.country, items, currency]);
 
   // Translations
   const texts = {
@@ -177,6 +242,30 @@ export default function CheckoutPageClient({ locale }: CheckoutPageClientProps) 
   };
 
   const t = texts[locale as keyof typeof texts] || texts.en;
+
+  // List of countries with codes for dropdown
+  const countries = [
+    { code: 'US', name: { ar: 'الولايات المتحدة', en: 'United States', zh: '美国' } },
+    { code: 'DE', name: { ar: 'ألمانيا', en: 'Germany', zh: '德国' } },
+    { code: 'FR', name: { ar: 'فرنسا', en: 'France', zh: '法国' } },
+    { code: 'GB', name: { ar: 'بريطانيا', en: 'United Kingdom', zh: '英国' } },
+    { code: 'IT', name: { ar: 'إيطاليا', en: 'Italy', zh: '意大利' } },
+    { code: 'ES', name: { ar: 'إسبانيا', en: 'Spain', zh: '西班牙' } },
+    { code: 'NL', name: { ar: 'هولندا', en: 'Netherlands', zh: '荷兰' } },
+    { code: 'BE', name: { ar: 'بلجيكا', en: 'Belgium', zh: '比利时' } },
+    { code: 'SA', name: { ar: 'السعودية', en: 'Saudi Arabia', zh: '沙特阿拉伯' } },
+    { code: 'AE', name: { ar: 'الإمارات', en: 'United Arab Emirates', zh: '阿拉伯联合酋长国' } },
+    { code: 'KW', name: { ar: 'الكويت', en: 'Kuwait', zh: '科威特' } },
+    { code: 'QA', name: { ar: 'قطر', en: 'Qatar', zh: '卡塔尔' } },
+    { code: 'BH', name: { ar: 'البحرين', en: 'Bahrain', zh: '巴林' } },
+    { code: 'OM', name: { ar: 'عمان', en: 'Oman', zh: '阿曼' } },
+    { code: 'EG', name: { ar: 'مصر', en: 'Egypt', zh: '埃及' } },
+    { code: 'IN', name: { ar: 'الهند', en: 'India', zh: '印度' } },
+    { code: 'AU', name: { ar: 'أستراليا', en: 'Australia', zh: '澳大利亚' } },
+    { code: 'CA', name: { ar: 'كندا', en: 'Canada', zh: '加拿大' } },
+    { code: 'JP', name: { ar: 'اليابان', en: 'Japan', zh: '日本' } },
+    { code: 'CN', name: { ar: 'الصين', en: 'China', zh: '中国' } },
+  ];
 
   const handleShippingChange = (field: keyof ShippingAddress, value: string) => {
     setShippingAddress((prev) => ({
@@ -397,16 +486,26 @@ export default function CheckoutPageClient({ locale }: CheckoutPageClientProps) 
                       <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-2">
                         {t.country} <span className="text-red-500">*</span>
                       </label>
-                      <input
-                        type="text"
+                      <select
                         id="country"
-                      value={shippingAddress.country}
-                      onChange={(e) => handleShippingChange('country', e.target.value)}
-                        placeholder={t.countryPlaceholder}
+                        value={shippingAddress.country}
+                        onChange={(e) => handleShippingChange('country', e.target.value)}
                         required
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E7D32] focus:border-transparent"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E7D32] focus:border-transparent bg-white"
                         disabled={loading}
-                      />
+                      >
+                        <option value="">{t.countryPlaceholder}</option>
+                        {countries.map((country) => (
+                          <option key={country.code} value={country.code}>
+                            {country.name[locale as keyof typeof country.name] || country.name.en} ({country.code})
+                          </option>
+                        ))}
+                      </select>
+                      {shippingLoading && shippingAddress.country && (
+                        <p className="mt-1 text-xs text-gray-500">
+                          {locale === 'ar' ? 'جاري حساب الشحن...' : locale === 'zh' ? '正在计算运费...' : 'Calculating shipping...'}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -552,9 +651,20 @@ export default function CheckoutPageClient({ locale }: CheckoutPageClientProps) 
 
                   {/* Shipping */}
                   <div className="flex justify-between text-gray-700">
-                    <span>{t.shipping}</span>
+                    <span>
+                      {t.shipping}
+                      {shippingLoading && shippingAddress.country && (
+                        <span className="ml-2 text-xs text-gray-400">
+                          {locale === 'ar' ? '(جاري الحساب...)' : locale === 'zh' ? '(计算中...)' : '(calculating...)'}
+                        </span>
+                      )}
+                    </span>
                     <span className="font-medium">
-                      {formatCurrency(shipping, currency, locale)}
+                      {shippingLoading && shippingAddress.country ? (
+                        <span className="text-gray-400">...</span>
+                      ) : (
+                        formatCurrency(shipping, currency, locale)
+                      )}
                     </span>
                   </div>
 
