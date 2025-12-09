@@ -3,7 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { prisma } from '../utils/prisma';
-import { authenticateToken, AuthRequest } from '../middleware/auth';
+import { authenticateToken, requireRole, AuthRequest } from '../middleware/auth';
 import { uploadToGCS, isGCSConfigured } from '../lib/gcs';
 
 const router = Router();
@@ -241,16 +241,100 @@ router.post('/upload-image', authenticateToken, upload.single('image'), async (r
   }
 });
 
+// Get maker's posts (authenticated, maker only)
+router.get('/me', authenticateToken, requireRole(['MAKER']), async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Unauthorized',
+      });
+    }
+
+    // Find maker by user_id
+    const maker = await prisma.makers.findUnique({
+      where: { user_id: userId },
+      select: { id: true },
+    });
+
+    if (!maker) {
+      return res.status(404).json({
+        success: false,
+        message: 'Maker profile not found',
+      });
+    }
+
+    // Get all posts for this maker
+    const posts = await prisma.posts.findMany({
+      where: {
+        maker_id: maker.id,
+      },
+      select: {
+        id: true,
+        content: true,
+        images: true,
+        created_at: true,
+        updated_at: true,
+        user_id: true,
+        _count: {
+          select: {
+            post_likes: true,
+          },
+        },
+      },
+      orderBy: {
+        created_at: 'desc',
+      },
+    });
+
+    res.json({
+      success: true,
+      posts: posts.map(post => ({
+        id: post.id,
+        content: post.content,
+        images: post.images,
+        created_at: post.created_at,
+        likes: post._count.post_likes,
+      })),
+    });
+  } catch (error: any) {
+    console.error('[Posts] Error fetching maker posts:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch posts',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+});
+
 // Create post (authenticated)
 router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const { content, images } = req.body;
+    const userId = req.userId!;
 
     // Allow posts with only images (no content required)
     if (!content || content.trim().length === 0) {
       if (!images || !Array.isArray(images) || images.length === 0) {
-        return res.status(400).json({ error: 'Content or at least one image is required' });
+        return res.status(400).json({ 
+          success: false,
+          error: 'Content or at least one image is required' 
+        });
       }
+    }
+
+    // Find maker by user_id (optional - for linking posts to makers)
+    let makerId: string | null = null;
+    try {
+      const maker = await prisma.makers.findUnique({
+        where: { user_id: userId },
+        select: { id: true },
+      });
+      makerId = maker?.id || null;
+    } catch (err) {
+      // Maker not found - post can still be created without maker_id
+      console.warn('[Posts] Maker not found for user:', userId);
     }
 
     const { randomUUID } = await import('crypto');
@@ -259,7 +343,8 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
     const post = await prisma.posts.create({
       data: {
         id: postId,
-        user_id: req.userId!,
+        user_id: userId,
+        maker_id: makerId,
         content: content?.trim() || '',
         images: images && Array.isArray(images) ? images : [],
         updated_at: new Date(),
@@ -282,7 +367,75 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
   } catch (error: unknown) {
     console.error('Create post error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Internal server error';
-    res.status(500).json({ error: errorMessage });
+    res.status(500).json({ 
+      success: false,
+      error: errorMessage 
+    });
+  }
+});
+
+// Delete post (authenticated, maker only)
+router.delete('/:id', authenticateToken, requireRole(['MAKER']), async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    const postId = req.params.id;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Unauthorized',
+      });
+    }
+
+    // Find maker by user_id
+    const maker = await prisma.makers.findUnique({
+      where: { user_id: userId },
+      select: { id: true },
+    });
+
+    if (!maker) {
+      return res.status(404).json({
+        success: false,
+        message: 'Maker profile not found',
+      });
+    }
+
+    // Check if post exists and belongs to this maker or user
+    const existingPost = await prisma.posts.findUnique({
+      where: { id: postId },
+    });
+
+    if (!existingPost) {
+      return res.status(404).json({
+        success: false,
+        message: 'Post not found',
+      });
+    }
+
+    // Check ownership: either user_id matches or maker_id matches
+    if (existingPost.user_id !== userId && existingPost.maker_id !== maker.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'You do not have permission to delete this post',
+      });
+    }
+
+    // Delete post
+    await prisma.posts.delete({
+      where: { id: postId },
+    });
+
+    res.json({
+      success: true,
+      message: 'Post deleted successfully',
+    });
+  } catch (error: any) {
+    console.error('[Posts] Error deleting post:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete post',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
   }
 });
 

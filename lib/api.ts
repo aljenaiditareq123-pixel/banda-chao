@@ -555,6 +555,17 @@ export const postsAPI = {
     const response = await apiClient.get(`/posts/${id}`);
     return response.data;
   },
+  getMe: async (): Promise<{ success: boolean; posts?: Array<{ id: string; content: string; images?: string[]; created_at: string; likes: number }>; error?: string }> => {
+    try {
+      const response = await apiClient.get('/posts/me');
+      return response.data;
+    } catch (error: unknown) {
+      const errorMessage = error && typeof error === 'object' && 'response' in error
+        ? (error as { response?: { data?: { error?: string; message?: string } } }).response?.data?.error || (error as { response?: { data?: { error?: string; message?: string } } }).response?.data?.message
+        : 'Failed to fetch posts';
+      return { success: false, error: errorMessage || 'Failed to fetch posts' };
+    }
+  },
   create: async (data: { content?: string; images?: string[] }): Promise<{ success: boolean; post?: unknown; error?: string }> => {
     try {
       const response = await apiClient.post('/posts', data);
@@ -564,6 +575,17 @@ export const postsAPI = {
         ? (error as { response?: { data?: { error?: string } } }).response?.data?.error
         : 'Failed to create post';
       return { success: false, error: errorMessage || 'Failed to create post' };
+    }
+  },
+  delete: async (id: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const response = await apiClient.delete(`/posts/${id}`);
+      return response.data;
+    } catch (error: unknown) {
+      const errorMessage = error && typeof error === 'object' && 'response' in error
+        ? (error as { response?: { data?: { error?: string; message?: string } } }).response?.data?.error || (error as { response?: { data?: { error?: string; message?: string } } }).response?.data?.message
+        : 'Failed to delete post';
+      return { success: false, error: errorMessage || 'Failed to delete post' };
     }
   },
   uploadImage: async (file: File): Promise<{ success: boolean; imageUrl?: string; error?: string }> => {
@@ -743,6 +765,67 @@ export const ordersAPI = {
   }) => {
     const response = await apiClient.post('/orders', data);
     return response.data;
+  },
+};
+
+// ============================================
+// Services API
+// ============================================
+
+export const servicesAPI = {
+  getAll: async (): Promise<{ success: boolean; services?: Array<{ id: string; title: string; description: string; price: number; type: 'DRIVER' | 'AGENT' | 'ARTISAN'; created_at: string }>; error?: string }> => {
+    try {
+      const response = await apiClient.get('/services');
+      return response.data;
+    } catch (error: unknown) {
+      const errorMessage = error && typeof error === 'object' && 'response' in error
+        ? (error as { response?: { data?: { error?: string; message?: string } } }).response?.data?.error || (error as { response?: { data?: { error?: string; message?: string } } }).response?.data?.message
+        : 'Failed to fetch services';
+      return { success: false, error: errorMessage || 'Failed to fetch services' };
+    }
+  },
+  create: async (data: {
+    title: string;
+    description: string;
+    price: number;
+    type: 'DRIVER' | 'AGENT' | 'ARTISAN';
+  }): Promise<{ success: boolean; service?: unknown; error?: string }> => {
+    try {
+      const response = await apiClient.post('/services', data);
+      return response.data;
+    } catch (error: unknown) {
+      const errorMessage = error && typeof error === 'object' && 'response' in error
+        ? (error as { response?: { data?: { error?: string; message?: string } } }).response?.data?.error || (error as { response?: { data?: { error?: string; message?: string } } }).response?.data?.message
+        : 'Failed to create service';
+      return { success: false, error: errorMessage || 'Failed to create service' };
+    }
+  },
+  update: async (id: string, data: {
+    title?: string;
+    description?: string;
+    price?: number;
+    type?: 'DRIVER' | 'AGENT' | 'ARTISAN';
+  }): Promise<{ success: boolean; service?: unknown; error?: string }> => {
+    try {
+      const response = await apiClient.put(`/services/${id}`, data);
+      return response.data;
+    } catch (error: unknown) {
+      const errorMessage = error && typeof error === 'object' && 'response' in error
+        ? (error as { response?: { data?: { error?: string; message?: string } } }).response?.data?.error || (error as { response?: { data?: { error?: string; message?: string } } }).response?.data?.message
+        : 'Failed to update service';
+      return { success: false, error: errorMessage || 'Failed to update service' };
+    }
+  },
+  delete: async (id: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const response = await apiClient.delete(`/services/${id}`);
+      return response.data;
+    } catch (error: unknown) {
+      const errorMessage = error && typeof error === 'object' && 'response' in error
+        ? (error as { response?: { data?: { error?: string; message?: string } } }).response?.data?.error || (error as { response?: { data?: { error?: string; message?: string } } }).response?.data?.message
+        : 'Failed to delete service';
+      return { success: false, error: errorMessage || 'Failed to delete service' };
+    }
   },
 };
 

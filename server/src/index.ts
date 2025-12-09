@@ -28,6 +28,7 @@ import opsRoutes from './api/ops';
 import speechRoutes from './api/speech';
 import betaRoutes from './api/beta';
 import adminRoutes from './api/admin';
+import serviceRoutes from './api/services';
 import { errorHandler } from './middleware/errorHandler';
 import { requestLogger } from './middleware/requestLogger';
 import { authenticateToken } from './middleware/auth';
@@ -323,6 +324,7 @@ app.use('/api/v1/ops', opsRoutes);
 app.use('/api/v1/speech', speechRoutes);
 app.use('/api/v1/beta', betaRoutes);
 app.use('/api/v1/admin', adminRoutes);
+app.use('/api/v1/services', serviceRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {

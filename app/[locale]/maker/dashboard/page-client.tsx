@@ -11,12 +11,15 @@ import Link from 'next/link';
 import { formatCurrency } from '@/lib/formatCurrency';
 import VideoRecorder from '@/components/maker/VideoRecorder';
 import AddProductForm from '@/components/maker/AddProductForm';
+import ServiceList from '@/components/maker/ServiceList';
+import SocialConnect from '@/components/maker/SocialConnect';
+import Feed from '@/components/maker/Feed';
 
 interface MakerDashboardClientProps {
   locale: string;
 }
 
-type Tab = 'overview' | 'products' | 'videos' | 'profile';
+type Tab = 'overview' | 'products' | 'services' | 'social' | 'feed' | 'videos' | 'profile';
 
 interface Maker {
   id?: string;
@@ -285,6 +288,13 @@ export default function MakerDashboardClient({ locale }: MakerDashboardClientPro
     viewsCount?: number;
     type?: string;
   }>>([]);
+  const [socialConnections, setSocialConnections] = useState<Array<{
+    id: string;
+    platform: 'TIKTOK' | 'YOUTUBE' | 'INSTAGRAM';
+    connected: boolean;
+    username?: string;
+    expires_at?: string;
+  }>>([]);
   const [orders, setOrders] = useState<Array<{
     id: string;
     totalPrice: number;
@@ -344,6 +354,16 @@ export default function MakerDashboardClient({ locale }: MakerDashboardClientPro
         makersAPI.getMeVideos().catch(() => ({ success: false, videos: [] })),
         ordersAPI.getMyOrders().catch(() => ({ success: false, orders: [] })),
       ]);
+
+      // Social connections - placeholder for now (OAuth coming later)
+      setSocialConnections([
+        { id: '1', platform: 'TIKTOK', connected: false },
+        { id: '2', platform: 'YOUTUBE', connected: false },
+        { id: '3', platform: 'INSTAGRAM', connected: false },
+      ]);
+      
+      // Services and Posts are now fetched by their respective components
+      // No need to fetch here - components handle their own data fetching
 
       if (!makerRes.success || !('maker' in makerRes) || !makerRes.maker) {
         setError('Maker profile not found. Please complete onboarding.');
@@ -438,10 +458,13 @@ export default function MakerDashboardClient({ locale }: MakerDashboardClientPro
   }
 
   const tabs = [
-    { id: 'overview' as Tab, label: locale === 'ar' ? 'نظرة عامة' : 'Overview' },
-    { id: 'products' as Tab, label: locale === 'ar' ? 'المنتجات' : 'Products' },
-    { id: 'videos' as Tab, label: locale === 'ar' ? 'الفيديوهات' : 'Videos' },
-    { id: 'profile' as Tab, label: locale === 'ar' ? 'الملف الشخصي' : 'Profile' },
+    { id: 'overview' as Tab, label: locale === 'ar' ? 'نظرة عامة' : locale === 'zh' ? '概览' : 'Overview' },
+    { id: 'products' as Tab, label: locale === 'ar' ? 'المنتجات' : locale === 'zh' ? '产品' : 'Products' },
+    { id: 'services' as Tab, label: locale === 'ar' ? 'الخدمات' : locale === 'zh' ? '服务' : 'Services' },
+    { id: 'social' as Tab, label: locale === 'ar' ? 'استوديو التواصل' : locale === 'zh' ? '社交工作室' : 'Social Studio' },
+    { id: 'feed' as Tab, label: locale === 'ar' ? 'سجلي' : locale === 'zh' ? '我的动态' : 'My Feed' },
+    { id: 'videos' as Tab, label: locale === 'ar' ? 'الفيديوهات' : locale === 'zh' ? '视频' : 'Videos' },
+    { id: 'profile' as Tab, label: locale === 'ar' ? 'الملف الشخصي' : locale === 'zh' ? '个人资料' : 'Profile' },
   ];
 
   return (
@@ -458,13 +481,13 @@ export default function MakerDashboardClient({ locale }: MakerDashboardClientPro
         </div>
 
         {/* Tabs */}
-        <div className="border-b border-gray-200 mb-6">
-          <nav className="flex space-x-8" aria-label="Tabs">
+        <div className="border-b border-gray-200 mb-6 overflow-x-auto">
+          <nav className="flex space-x-8 min-w-max" aria-label="Tabs">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                   activeTab === tab.id
                     ? 'border-primary text-primary'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -558,6 +581,39 @@ export default function MakerDashboardClient({ locale }: MakerDashboardClientPro
               </div>
             </Card>
           </div>
+        )}
+
+        {activeTab === 'services' && (
+          <ServiceList
+            locale={locale}
+            onRefresh={fetchDashboardData}
+          />
+        )}
+
+        {activeTab === 'social' && (
+          <SocialConnect
+            locale={locale}
+            connections={socialConnections}
+            onConnect={(platform) => {
+              const platformName = platform === 'TIKTOK' ? 'TikTok' : platform === 'YOUTUBE' ? 'YouTube' : 'Instagram';
+              alert(locale === 'ar' 
+                ? `ميزة الاتصال بـ ${platformName} قريباً!`
+                : locale === 'zh'
+                ? `${platformName} 连接功能即将推出！`
+                : `${platformName} connection coming soon!`);
+            }}
+            onDisconnect={async (connectionId) => {
+              // TODO: Implement disconnection API call
+              setSocialConnections(socialConnections.filter(c => c.id !== connectionId));
+            }}
+          />
+        )}
+
+        {activeTab === 'feed' && (
+          <Feed
+            locale={locale}
+            onRefresh={fetchDashboardData}
+          />
         )}
 
         {activeTab === 'products' && (
