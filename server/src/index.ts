@@ -117,7 +117,10 @@ app.use(cors({
   origin: (origin, callback) => {
     // TEMPORARY: Allow all origins for testing checkout
     // TODO: Restore proper CORS restrictions after checkout is fixed
-    console.log(`[CORS] ⚠️ TEMPORARY: Allowing all origins for testing. Origin: ${origin || 'no origin'}`);
+    // Only log CORS in development mode to reduce production noise
+    if (NODE_ENV === 'development') {
+      console.log(`[CORS] ⚠️ TEMPORARY: Allowing all origins for testing. Origin: ${origin || 'no origin'}`);
+    }
     callback(null, true);
     return;
     
@@ -187,7 +190,10 @@ app.options('*', cors({
     // TEMPORARY: Allow all origins for testing
     // Reduced logging - only log occasionally
     if (process.env.NODE_ENV === 'development' || Math.random() < 0.01) {
-      console.log(`[CORS] ⚠️ TEMPORARY: Allowing OPTIONS from: ${origin || 'no origin'}`);
+      // Only log CORS in development mode to reduce production noise
+      if (NODE_ENV === 'development') {
+        console.log(`[CORS] ⚠️ TEMPORARY: Allowing OPTIONS from: ${origin || 'no origin'}`);
+      }
     }
     callback(null, true);
     return;
