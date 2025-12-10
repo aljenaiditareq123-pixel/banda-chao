@@ -277,9 +277,13 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
         // - If all products are from China makers, use 'CN' (domestic)
         // - If mixed origins, use the first product's maker country (or default to 'CN')
         const makerCountries = products
-          .map(p => p.users?.makers?.[0]?.country)
-          .filter(Boolean)
-          .map((country: string) => country?.toUpperCase());
+          .map(p => {
+            // makers is a one-to-one relation, so it's a single object or null
+            const maker = Array.isArray(p.users?.makers) ? p.users.makers[0] : p.users?.makers;
+            return maker?.country;
+          })
+          .filter((country): country is string => Boolean(country))
+          .map((country: string) => country.toUpperCase());
 
         if (makerCountries.length > 0) {
           // Check if all products are from China

@@ -33,16 +33,12 @@ export async function generateMetadata({ params }: LocaleLayoutProps): Promise<M
   }
   
   // Final validation - ensure locale is valid
-  const validLocale = (locale === 'zh' || locale === 'ar' || locale === 'en') ? locale : 'ar';
-  
-  // Additional safety check - if locale still looks like a file, force to default
-  if (validLocale.includes('.') || validLocale === 'robots.txt' || validLocale === 'favicon.ico') {
-    return {
-      metadataBase: new URL(process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://banda-chao-frontend.onrender.com'),
-      title: 'Banda Chao - Social Commerce Platform',
-      description: 'Banda Chao - A platform that combines social media with e-commerce',
-    };
+  // Additional safety check - if locale looks like a file, force to default BEFORE validation
+  if (locale.includes('.') || locale === 'robots.txt' || locale === 'favicon.ico') {
+    locale = 'ar';
   }
+  
+  const validLocale = (locale === 'zh' || locale === 'ar' || locale === 'en') ? locale : 'ar';
 
   const titles = {
     zh: 'Banda Chao 手作平台 — 全球手作人的温暖之家',

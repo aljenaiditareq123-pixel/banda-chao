@@ -10,9 +10,9 @@ interface Service {
   created_at?: string;
   makers?: {
     id: string;
-    displayName: string;
+    name: string;
     country?: string;
-    avatarUrl?: string;
+    profile_picture_url?: string;
   };
 }
 
@@ -114,9 +114,9 @@ export default function ServiceCard({ service, href, locale = 'en' }: ServiceCar
                 {formatPrice(service.price, 'USD')}
               </p>
             )}
-            {service.makers?.displayName && (
+            {service.makers?.name && (
               <p className="text-sm text-gray-500 truncate">
-                {locale === 'ar' ? 'بواسطة' : locale === 'zh' ? '由' : 'By'} {service.makers.displayName}
+                {locale === 'ar' ? 'بواسطة' : locale === 'zh' ? '由' : 'By'} {service.makers.name}
               </p>
             )}
           </div>

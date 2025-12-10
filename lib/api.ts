@@ -774,7 +774,7 @@ export const ordersAPI = {
 
 export const servicesAPI = {
   // Get public services (for buyers/homepage) - NO AUTH REQUIRED
-  getPublicServices: async (options?: { limit?: number; offset?: number }): Promise<{ success: boolean; services?: Array<{ id: string; title: string; description: string; price: number; type: 'DRIVER' | 'AGENT' | 'ARTISAN' | 'TECH' | 'MEDIA' | 'EDUCATION' | 'OTHER'; created_at: string; makers?: { id: string; displayName: string; country?: string; avatarUrl?: string } }>; error?: string }> => {
+  getPublicServices: async (options?: { limit?: number; offset?: number }): Promise<{ success: boolean; services?: Array<{ id: string; title: string; description: string; price: number; type: 'DRIVER' | 'AGENT' | 'ARTISAN' | 'TECH' | 'MEDIA' | 'EDUCATION' | 'OTHER'; created_at: string; makers?: { id: string; name: string; country?: string; profile_picture_url?: string } }>; error?: string }> => {
     try {
       const params = new URLSearchParams();
       if (options?.limit) params.append('limit', options.limit.toString());
@@ -808,7 +808,7 @@ export const servicesAPI = {
     title: string;
     description: string;
     price: number;
-    type: 'DRIVER' | 'AGENT' | 'ARTISAN';
+    type: 'DRIVER' | 'AGENT' | 'ARTISAN' | 'TECH' | 'MEDIA' | 'EDUCATION' | 'OTHER';
   }): Promise<{ success: boolean; service?: unknown; error?: string }> => {
     try {
       const response = await apiClient.post('/services', data);
@@ -824,7 +824,7 @@ export const servicesAPI = {
     title?: string;
     description?: string;
     price?: number;
-    type?: 'DRIVER' | 'AGENT' | 'ARTISAN';
+    type?: 'DRIVER' | 'AGENT' | 'ARTISAN' | 'TECH' | 'MEDIA' | 'EDUCATION' | 'OTHER';
   }): Promise<{ success: boolean; service?: unknown; error?: string }> => {
     try {
       const response = await apiClient.put(`/services/${id}`, data);

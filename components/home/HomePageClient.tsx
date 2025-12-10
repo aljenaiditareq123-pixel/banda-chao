@@ -345,7 +345,6 @@ export default function HomePageClient({
                 ) : (
                   <EmptyState
                     title={locale === 'ar' ? 'لا توجد خدمات متاحة' : locale === 'zh' ? '暂无可用服务' : 'No services available'}
-                    description={locale === 'ar' ? 'لم يتم إضافة خدمات بعد' : locale === 'zh' ? '尚未添加服务' : 'No services have been added yet'}
                   />
                 )}
               </>

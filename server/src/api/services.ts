@@ -23,9 +23,9 @@ router.get('/public', async (req: Request, res: Response) => {
         makers: {
           select: {
             id: true,
-            displayName: true,
+            name: true,
             country: true,
-            avatarUrl: true,
+            profile_picture_url: true,
           },
         },
       },
