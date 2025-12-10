@@ -153,7 +153,7 @@ function isPublicRoute(pathname: string): boolean {
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
-  // Skip locale routing for excluded paths (check this FIRST)
+  // CRITICAL: Skip locale routing for excluded paths (check this FIRST)
   // This is the most important check - do it before anything else
   if (shouldExcludePath(pathname)) {
     return NextResponse.next();
@@ -161,16 +161,28 @@ export function middleware(request: NextRequest) {
   
   // Additional check: if pathname is a static file, skip locale routing
   // This catches cases where static files might slip through
-  const normalizedPath = pathname.toLowerCase();
-  if (normalizedPath.includes('favicon.ico') || 
-      normalizedPath.includes('robots.txt') ||
-      normalizedPath.includes('.ico') || 
-      normalizedPath.includes('.png') || 
-      normalizedPath.includes('.jpg') || 
-      normalizedPath.includes('.svg') ||
-      normalizedPath.includes('.txt') ||
-      normalizedPath.includes('.xml') ||
-      normalizedPath.includes('.json')) {
+  const normalizedPath = pathname.toLowerCase().trim();
+  
+  // Check for common static file patterns
+  if (
+    normalizedPath === 'favicon.ico' ||
+    normalizedPath === '/favicon.ico' ||
+    normalizedPath.endsWith('/favicon.ico') ||
+    normalizedPath === 'robots.txt' ||
+    normalizedPath === '/robots.txt' ||
+    normalizedPath.endsWith('/robots.txt') ||
+    normalizedPath.includes('.ico') || 
+    normalizedPath.includes('.png') || 
+    normalizedPath.includes('.jpg') || 
+    normalizedPath.includes('.svg') ||
+    normalizedPath.includes('.txt') ||
+    normalizedPath.includes('.xml') ||
+    normalizedPath.includes('.json') ||
+    normalizedPath.includes('.woff') ||
+    normalizedPath.includes('.woff2') ||
+    normalizedPath.includes('.ttf') ||
+    normalizedPath.includes('.eot')
+  ) {
     return NextResponse.next();
   }
   
@@ -213,7 +225,7 @@ export const config = {
      * - favicon.ico, robots.txt, sitemap.xml, etc.
      * - static files (images, fonts, etc.)
      */
-    '/((?!api|_next/static|_next/image|favicon\\.ico|manifest\\.json|og-image\\.png|robots\\.txt|sitemap\\.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|woff|woff2|ttf|eot|json|xml|txt)).*)',
+    '/((?!api|_next/static|_next/image|favicon\\.ico|manifest\\.json|og-image\\.png|robots\\.txt|sitemap\\.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|woff|woff2|ttf|eot|json|xml|txt|woff|woff2)).*)',
   ],
 };
 

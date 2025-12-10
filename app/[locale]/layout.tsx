@@ -164,49 +164,55 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
         {validLocale === 'zh' && (
           <Script
             id="baidu-meta-tags"
-            strategy="beforeInteractive"
+            strategy="afterInteractive"
             dangerouslySetInnerHTML={{
               __html: `
                 (function() {
-                  if (typeof document === 'undefined') return;
-                  const head = document.getElementsByTagName('head')[0];
-                  if (!head) return;
-                  
-                  if (document.querySelector('meta[name="renderer"]') === null) {
-                    const meta1 = document.createElement('meta');
-                    meta1.name = 'renderer';
-                    meta1.content = 'webkit';
-                    head.appendChild(meta1);
-                  }
-                  if (document.querySelector('meta[http-equiv="X-UA-Compatible"]') === null) {
-                    const meta2 = document.createElement('meta');
-                    meta2.httpEquiv = 'X-UA-Compatible';
-                    meta2.content = 'IE=Edge,chrome=1';
-                    head.appendChild(meta2);
-                  }
-                  if (document.querySelector('meta[name="force-rendering"]') === null) {
-                    const meta3 = document.createElement('meta');
-                    meta3.name = 'force-rendering';
-                    meta3.content = 'webkit';
-                    head.appendChild(meta3);
-                  }
-                  if (document.querySelector('meta[name="keywords"]') === null) {
-                    const meta4 = document.createElement('meta');
-                    meta4.name = 'keywords';
-                    meta4.content = '手作, 匠人, 原创, 手工作品, 手工艺品, 手作平台, 手作人社区, Banda Chao';
-                    head.appendChild(meta4);
-                  }
-                  if (document.querySelector('meta[itemprop="name"]') === null) {
-                    const meta5 = document.createElement('meta');
-                    meta5.setAttribute('itemprop', 'name');
-                    meta5.content = 'Banda Chao 手作平台';
-                    head.appendChild(meta5);
-                  }
-                  if (document.querySelector('meta[itemprop="description"]') === null) {
-                    const meta6 = document.createElement('meta');
-                    meta6.setAttribute('itemprop', 'description');
-                    meta6.content = '全球手作人的温暖之家';
-                    head.appendChild(meta6);
+                  try {
+                    if (typeof document === 'undefined' || typeof window === 'undefined') return;
+                    const headElements = document.getElementsByTagName('head');
+                    if (!headElements || headElements.length === 0) return;
+                    const head = headElements[0];
+                    if (!head) return;
+                    
+                    if (document.querySelector('meta[name="renderer"]') === null) {
+                      const meta1 = document.createElement('meta');
+                      meta1.name = 'renderer';
+                      meta1.content = 'webkit';
+                      head.appendChild(meta1);
+                    }
+                    if (document.querySelector('meta[http-equiv="X-UA-Compatible"]') === null) {
+                      const meta2 = document.createElement('meta');
+                      meta2.httpEquiv = 'X-UA-Compatible';
+                      meta2.content = 'IE=Edge,chrome=1';
+                      head.appendChild(meta2);
+                    }
+                    if (document.querySelector('meta[name="force-rendering"]') === null) {
+                      const meta3 = document.createElement('meta');
+                      meta3.name = 'force-rendering';
+                      meta3.content = 'webkit';
+                      head.appendChild(meta3);
+                    }
+                    if (document.querySelector('meta[name="keywords"]') === null) {
+                      const meta4 = document.createElement('meta');
+                      meta4.name = 'keywords';
+                      meta4.content = '手作, 匠人, 原创, 手工作品, 手工艺品, 手作平台, 手作人社区, Banda Chao';
+                      head.appendChild(meta4);
+                    }
+                    if (document.querySelector('meta[itemprop="name"]') === null) {
+                      const meta5 = document.createElement('meta');
+                      meta5.setAttribute('itemprop', 'name');
+                      meta5.content = 'Banda Chao 手作平台';
+                      head.appendChild(meta5);
+                    }
+                    if (document.querySelector('meta[itemprop="description"]') === null) {
+                      const meta6 = document.createElement('meta');
+                      meta6.setAttribute('itemprop', 'description');
+                      meta6.content = '全球手作人的温暖之家';
+                      head.appendChild(meta6);
+                    }
+                  } catch (e) {
+                    // Silently fail - these are optional meta tags
                   }
                 })();
               `,
