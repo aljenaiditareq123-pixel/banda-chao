@@ -18,23 +18,24 @@ interface LocaleLayoutProps {
 }
 
 export async function generateMetadata({ params }: LocaleLayoutProps): Promise<Metadata> {
-  let locale: string;
+  let locale: string = 'ar'; // Default fallback
+  
   try {
     const resolvedParams = await params;
-    locale = resolvedParams?.locale;
+    locale = resolvedParams?.locale || 'ar';
     
     // Additional check: if locale is invalid or looks like a file path, use default
     if (!locale || typeof locale !== 'string' || locale.includes('.') || locale === 'robots.txt' || locale === 'favicon.ico') {
       locale = 'ar';
     }
   } catch (error) {
-    console.error("Error resolving locale params in layout metadata, falling back to 'ar':", error);
-    locale = 'ar'; // Fallback to default locale
+    // Silently fallback to default - don't log errors for static files
+    locale = 'ar';
   }
   
   // Final validation - ensure locale is valid
   // Additional safety check - if locale looks like a file, force to default BEFORE validation
-  if (locale.includes('.') || locale === 'robots.txt' || locale === 'favicon.ico') {
+  if (!locale || typeof locale !== 'string' || locale.includes('.') || locale === 'robots.txt' || locale === 'favicon.ico') {
     locale = 'ar';
   }
   
@@ -128,25 +129,25 @@ export async function generateMetadata({ params }: LocaleLayoutProps): Promise<M
 }
 
 export default async function LocaleLayout({ children, params }: LocaleLayoutProps) {
-  let locale: string;
+  let locale: string = 'ar'; // Default fallback
   
   try {
     const resolvedParams = await params;
-    locale = resolvedParams?.locale;
+    locale = resolvedParams?.locale || 'ar';
     
     // Check if locale looks like a static file
     if (!locale || typeof locale !== 'string' || locale.includes('.') || locale === 'robots.txt' || locale === 'favicon.ico') {
       locale = 'ar';
     }
   } catch (error) {
-    console.error('Error resolving params in layout:', error);
-    // Fallback to default locale if params resolution fails
+    // Silently fallback - don't log errors for static files
     locale = 'ar';
   }
   
   // Validate locale and fallback to default if invalid (don't call notFound())
   if (!locale || !validLocales.includes(locale) || locale.includes('.') || locale === 'robots.txt' || locale === 'favicon.ico') {
-    if (locale && locale !== 'ar') {
+    // Only log warning if it's a real locale issue, not a static file
+    if (locale && locale !== 'ar' && !locale.includes('.') && locale !== 'robots.txt' && locale !== 'favicon.ico') {
       console.warn(`Invalid locale in layout: ${locale}, falling back to 'ar'`);
     }
     locale = 'ar';

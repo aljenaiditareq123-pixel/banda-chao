@@ -213,7 +213,7 @@ export const config = {
      * - favicon.ico, robots.txt, sitemap.xml, etc.
      * - static files (images, fonts, etc.)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|manifest.json|og-image.png|robots.txt|sitemap.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|woff|woff2|ttf|eot)).*)',
+    '/((?!api|_next/static|_next/image|favicon\\.ico|manifest\\.json|og-image\\.png|robots\\.txt|sitemap\\.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|woff|woff2|ttf|eot|json|xml|txt)).*)',
   ],
 };
 
