@@ -114,20 +114,32 @@ router.get('/:id', async (req: Request, res: Response) => {
   }
 });
 
-// Create or update maker profile (authenticated, MAKER role)
-router.post('/', authenticateToken, requireRole(['MAKER']), validate(createMakerSchema), async (req: AuthRequest, res: Response) => {
+// Create or update maker profile (authenticated, USER or MAKER role allowed)
+// This allows regular users to upgrade to MAKER by creating a maker profile
+router.post('/', authenticateToken, validate(createMakerSchema), async (req: AuthRequest, res: Response) => {
     // Invalidate makers cache when a maker is created/updated
     invalidateCachePattern('makers:');
   try {
+    const userId = req.user?.id || req.userId;
+    if (!userId) {
+      return res.status(401).json({ 
+        success: false,
+        error: 'Unauthorized' 
+      });
+    }
+
     const { displayName, bio, country, city, languages, socialLinks, wechatLink, instagramLink, twitterLink, facebookLink, paypalLink } = req.body;
 
     if (!displayName) {
-      return res.status(400).json({ error: 'Display name is required' });
+      return res.status(400).json({ 
+        success: false,
+        error: 'Display name is required' 
+      });
     }
 
     // Check if maker profile already exists
     const existingMaker = await prisma.makers.findFirst({
-      where: { user_id: req.userId! },
+      where: { user_id: userId },
     });
 
     let maker;
@@ -160,14 +172,20 @@ router.post('/', authenticateToken, requireRole(['MAKER']), validate(createMaker
         },
       });
     } else {
-      // Create new maker
+      // Create new maker profile
+      const { randomUUID } = await import('crypto');
+      const makerId = randomUUID();
+      const slug = displayName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') + '-' + makerId.substring(0, 8);
+      
       maker = await prisma.makers.create({
         data: {
-          user_id: req.userId!,
-          displayName,
-          bio,
-          country,
-          city,
+          id: makerId,
+          user_id: userId,
+          slug: slug,
+          name: displayName,
+          bio: bio || null,
+          country: country || null,
+          city: city || null,
           languages: languages || [],
           socialLinks: socialLinks || {},
           wechatLink: wechatLink || null,
@@ -175,6 +193,8 @@ router.post('/', authenticateToken, requireRole(['MAKER']), validate(createMaker
           twitterLink: twitterLink || null,
           facebookLink: facebookLink || null,
           paypalLink: paypalLink || null,
+          created_at: new Date(),
+          updated_at: new Date(),
         } as any, // Type assertion needed until Prisma Client is regenerated
         include: {
           users: {
@@ -187,15 +207,36 @@ router.post('/', authenticateToken, requireRole(['MAKER']), validate(createMaker
           },
         },
       });
+
+      // Upgrade user role to MAKER if not already
+      const user = await prisma.users.findUnique({
+        where: { id: userId },
+        select: { role: true },
+      });
+
+      if (user && user.role !== 'MAKER') {
+        await prisma.users.update({
+          where: { id: userId },
+          data: {
+            role: 'MAKER' as any,
+          },
+        });
+        console.log(`[Makers] User ${userId} upgraded to MAKER role`);
+      }
     }
 
     res.json({
+      success: true,
       message: existingMaker ? 'Maker profile updated' : 'Maker profile created',
       maker,
     });
   } catch (error: any) {
     console.error('Create/update maker error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ 
+      success: false,
+      error: 'Internal server error',
+      message: error.message 
+    });
   }
 });
 
