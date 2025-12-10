@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import HomePageClient from '@/components/home/HomePageClient';
-import { makersAPI, productsAPI, videosAPI } from '@/lib/api';
+import { makersAPI, productsAPI, videosAPI, servicesAPI } from '@/lib/api';
 
 interface PageProps {
   params: Promise<{
@@ -32,17 +32,20 @@ export default async function HomePage({ params }: PageProps) {
   let featuredMakers: any[] = [];
   let featuredProducts: any[] = [];
   let featuredVideos: any[] = [];
+  let featuredServices: any[] = [];
 
   try {
-    const [makersResponse, productsResponse, videosResponse] = await Promise.all([
+    const [makersResponse, productsResponse, videosResponse, servicesResponse] = await Promise.all([
       makersAPI.getAll({ limit: 6 }).catch(() => ({ makers: [] })),
       productsAPI.getAll({ limit: 8 }).catch(() => ({ products: [] })),
       videosAPI.getAll({ limit: 6 }).catch(() => ({ videos: [] })),
+      servicesAPI.getPublicServices({ limit: 8 }).catch(() => ({ success: false, services: [] })),
     ]);
 
     featuredMakers = makersResponse?.makers || [];
     featuredProducts = productsResponse?.products || [];
     featuredVideos = videosResponse?.videos || [];
+    featuredServices = servicesResponse?.services || [];
   } catch (error) {
     console.error('Error fetching featured content:', error);
     // Continue with empty arrays - don't throw error
@@ -54,6 +57,7 @@ export default async function HomePage({ params }: PageProps) {
       featuredMakers={featuredMakers}
       featuredProducts={featuredProducts}
       featuredVideos={featuredVideos}
+      featuredServices={featuredServices}
     />
   );
 }

@@ -773,7 +773,27 @@ export const ordersAPI = {
 // ============================================
 
 export const servicesAPI = {
-  getAll: async (): Promise<{ success: boolean; services?: Array<{ id: string; title: string; description: string; price: number; type: 'DRIVER' | 'AGENT' | 'ARTISAN'; created_at: string }>; error?: string }> => {
+  // Get public services (for buyers/homepage) - NO AUTH REQUIRED
+  getPublicServices: async (options?: { limit?: number; offset?: number }): Promise<{ success: boolean; services?: Array<{ id: string; title: string; description: string; price: number; type: 'DRIVER' | 'AGENT' | 'ARTISAN' | 'TECH' | 'MEDIA' | 'EDUCATION' | 'OTHER'; created_at: string; makers?: { id: string; displayName: string; country?: string; avatarUrl?: string } }>; error?: string }> => {
+    try {
+      const params = new URLSearchParams();
+      if (options?.limit) params.append('limit', options.limit.toString());
+      if (options?.offset) params.append('offset', options.offset.toString());
+
+      const response = await apiClient.get(`/services/public?${params.toString()}`);
+      return {
+        success: true,
+        services: response.data.services || [],
+      };
+    } catch (error: any) {
+      console.error('Error fetching public services:', error);
+      return {
+        success: false,
+        error: error.response?.data?.message || error.message || 'Failed to fetch services',
+      };
+    }
+  },
+  getAll: async (): Promise<{ success: boolean; services?: Array<{ id: string; title: string; description: string; price: number; type: 'DRIVER' | 'AGENT' | 'ARTISAN' | 'TECH' | 'MEDIA' | 'EDUCATION' | 'OTHER'; created_at: string }>; error?: string }> => {
     try {
       const response = await apiClient.get('/services');
       return response.data;

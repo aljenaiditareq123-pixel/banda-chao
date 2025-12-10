@@ -68,6 +68,9 @@ function hasLocale(pathname: string): boolean {
 
 // Check if pathname should be excluded from locale routing
 function shouldExcludePath(pathname: string): boolean {
+  // Normalize pathname for comparison
+  const normalizedPath = pathname.toLowerCase().trim();
+  
   // Exclude static files, API routes, and special paths
   const excludePatterns = [
     '/api',
@@ -81,20 +84,36 @@ function shouldExcludePath(pathname: string): boolean {
     '/admin', // Admin pages don't use locale (like /founder)
   ];
   
-  // Check exact matches first (including favicon.ico)
-  if (excludePatterns.some(pattern => pathname === pattern || pathname.startsWith(pattern))) {
+  // Check exact matches first (including favicon.ico and robots.txt)
+  if (excludePatterns.some(pattern => {
+    const normalizedPattern = pattern.toLowerCase();
+    return normalizedPath === normalizedPattern || 
+           normalizedPath === normalizedPattern.replace(/^\//, '') ||
+           normalizedPath.startsWith(normalizedPattern);
+  })) {
     return true;
   }
   
-  // Exclude file extensions (images, fonts, etc.) - this should catch favicon.ico
+  // Exclude file extensions (images, fonts, etc.) - this should catch favicon.ico, robots.txt
   const fileExtensionPattern = /\.(ico|png|jpg|jpeg|gif|webp|svg|css|js|woff|woff2|ttf|eot|json|xml|txt)$/i;
-  if (fileExtensionPattern.test(pathname)) {
+  if (fileExtensionPattern.test(normalizedPath)) {
     return true;
   }
   
-  // Additional check: if pathname contains favicon.ico anywhere, exclude it
-  if (pathname.toLowerCase().includes('favicon.ico')) {
+  // Additional check: if pathname contains static file names anywhere, exclude it
+  const staticFileNames = ['favicon.ico', 'robots.txt', 'sitemap.xml', 'manifest.json'];
+  if (staticFileNames.some(fileName => normalizedPath.includes(fileName))) {
     return true;
+  }
+  
+  // Check if pathname ends with a locale but is actually a static file
+  // e.g., /ar/robots.txt or /en/favicon.ico
+  const pathSegments = normalizedPath.split('/').filter(Boolean);
+  if (pathSegments.length >= 2) {
+    const lastSegment = pathSegments[pathSegments.length - 1];
+    if (staticFileNames.includes(lastSegment) || fileExtensionPattern.test(lastSegment)) {
+      return true;
+    }
   }
   
   return false;
@@ -135,17 +154,23 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
   // Skip locale routing for excluded paths (check this FIRST)
+  // This is the most important check - do it before anything else
   if (shouldExcludePath(pathname)) {
     return NextResponse.next();
   }
   
   // Additional check: if pathname is a static file, skip locale routing
   // This catches cases where static files might slip through
-  if (pathname.includes('favicon.ico') || 
-      pathname.includes('.ico') || 
-      pathname.includes('.png') || 
-      pathname.includes('.jpg') || 
-      pathname.includes('.svg')) {
+  const normalizedPath = pathname.toLowerCase();
+  if (normalizedPath.includes('favicon.ico') || 
+      normalizedPath.includes('robots.txt') ||
+      normalizedPath.includes('.ico') || 
+      normalizedPath.includes('.png') || 
+      normalizedPath.includes('.jpg') || 
+      normalizedPath.includes('.svg') ||
+      normalizedPath.includes('.txt') ||
+      normalizedPath.includes('.xml') ||
+      normalizedPath.includes('.json')) {
     return NextResponse.next();
   }
   

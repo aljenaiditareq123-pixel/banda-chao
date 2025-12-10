@@ -5,17 +5,20 @@ import Link from 'next/link';
 import { Grid, GridItem } from '@/components/Grid';
 import Button from '@/components/Button';
 import ProductCard from '@/components/cards/ProductCard';
+import ServiceCard from '@/components/cards/ServiceCard';
 import MakerCard from '@/components/cards/MakerCard';
 import VideoCard from '@/components/cards/VideoCard';
 import { useLanguage } from '@/contexts/LanguageContext';
 import EmptyState from '@/components/common/EmptyState';
 import OnboardingModal from '@/components/common/OnboardingModal';
+import { servicesAPI } from '@/lib/api';
 
 interface HomePageClientProps {
   locale: string;
   featuredMakers: any[];
   featuredProducts: any[];
   featuredVideos: any[];
+  featuredServices?: any[];
 }
 
 export default function HomePageClient({
@@ -23,9 +26,13 @@ export default function HomePageClient({
   featuredMakers,
   featuredProducts,
   featuredVideos,
+  featuredServices = [],
 }: HomePageClientProps) {
   const { setLanguage, t } = useLanguage();
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [activeTab, setActiveTab] = useState<'products' | 'services'>('products');
+  const [services, setServices] = useState<any[]>(featuredServices);
+  const [loadingServices, setLoadingServices] = useState(false);
 
   useEffect(() => {
     if (locale === 'zh' || locale === 'ar' || locale === 'en') {
@@ -34,6 +41,32 @@ export default function HomePageClient({
       setLanguage('ar');
     }
   }, [locale, setLanguage]);
+
+  useEffect(() => {
+    // If services tab is active and we don't have services yet, fetch them
+    if (activeTab === 'services' && services.length === 0 && !loadingServices) {
+      setLoadingServices(true);
+      servicesAPI.getPublicServices({ limit: 8 })
+        .then((response) => {
+          if (response.success && response.services) {
+            setServices(response.services);
+          }
+        })
+        .catch((error) => {
+          console.error('Error fetching services:', error);
+        })
+        .finally(() => {
+          setLoadingServices(false);
+        });
+    }
+  }, [activeTab, services.length, loadingServices]);
+
+  // Initialize services from props if available
+  useEffect(() => {
+    if (featuredServices.length > 0 && services.length === 0) {
+      setServices(featuredServices);
+    }
+  }, [featuredServices]);
 
   const heroTexts = {
     ar: {
@@ -217,41 +250,106 @@ export default function HomePageClient({
         </section>
       )}
 
-      {/* Featured Products */}
-      {featuredProducts.length > 0 && (
+      {/* Products & Services Section with Tabs */}
+      {(featuredProducts.length > 0 || featuredServices.length > 0 || activeTab === 'services') && (
         <section className="py-16 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            {/* Tab Navigation */}
             <div className="flex items-center justify-between mb-10">
-              <div>
-                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-                  {locale === 'ar' ? 'المنتجات المميزة' : locale === 'zh' ? '精选产品' : 'Featured Products'}
-                </h2>
-                <p className="text-gray-600">
-                  {locale === 'ar' ? 'اكتشف منتجات يدوية فريدة من حرفيين موهوبين' : locale === 'zh' ? '发现来自才华横溢的手工艺人的独特手工产品' : 'Discover unique handmade products from talented makers'}
-                </p>
+              <div className="flex-1">
+                <div className="flex items-center gap-4 mb-4">
+                  <button
+                    onClick={() => setActiveTab('products')}
+                    className={`px-6 py-3 rounded-lg font-semibold transition-all ${
+                      activeTab === 'products'
+                        ? 'bg-primary text-white shadow-md'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {locale === 'ar' ? 'المنتجات' : locale === 'zh' ? '产品' : 'Products'}
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('services')}
+                    className={`px-6 py-3 rounded-lg font-semibold transition-all ${
+                      activeTab === 'services'
+                        ? 'bg-amber-500 text-white shadow-md'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {locale === 'ar' ? 'الخدمات' : locale === 'zh' ? '服务' : 'Services'}
+                  </button>
+                </div>
+                <div>
+                  <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+                    {activeTab === 'products'
+                      ? locale === 'ar' ? 'المنتجات المميزة' : locale === 'zh' ? '精选产品' : 'Featured Products'
+                      : locale === 'ar' ? 'الخدمات المتاحة' : locale === 'zh' ? '可用服务' : 'Available Services'}
+                  </h2>
+                  <p className="text-gray-600">
+                    {activeTab === 'products'
+                      ? locale === 'ar' ? 'اكتشف منتجات يدوية فريدة من حرفيين موهوبين' : locale === 'zh' ? '发现来自才华横溢的手工艺人的独特手工产品' : 'Discover unique handmade products from talented makers'
+                      : locale === 'ar' ? 'اكتشف خدمات متنوعة من حرفيين موهوبين' : locale === 'zh' ? '发现来自才华横溢的手工艺人的多样化服务' : 'Discover diverse services from talented makers'}
+                  </p>
+                </div>
               </div>
-              <Link href={`/${locale}/products`}>
-                <Button variant="text">
-                  {locale === 'ar' ? 'عرض الكل' : 'View All'}
-                </Button>
-              </Link>
+              {activeTab === 'products' && (
+                <Link href={`/${locale}/products`}>
+                  <Button variant="text">
+                    {locale === 'ar' ? 'عرض الكل' : 'View All'}
+                  </Button>
+                </Link>
+              )}
             </div>
-            <Grid columns={{ base: 1, sm: 2, md: 3, lg: 4 }} gap="gap-6">
-              {featuredProducts.slice(0, 8).map((product) => {
-                const imageUrl = product.images?.[0]?.url || product.imageUrl || '';
-                return (
-                  <GridItem key={product.id}>
-                    <ProductCard
-                      product={{
-                        ...product,
-                        imageUrl,
-                      }}
-                      href={`/${locale}/products/${product.id}`}
-                    />
-                  </GridItem>
-                );
-              })}
-            </Grid>
+
+            {/* Products Tab Content */}
+            {activeTab === 'products' && featuredProducts.length > 0 && (
+              <Grid columns={{ base: 1, sm: 2, md: 3, lg: 4 }} gap="gap-6">
+                {featuredProducts.slice(0, 8).map((product) => {
+                  const imageUrl = product.images?.[0]?.url || product.imageUrl || '';
+                  return (
+                    <GridItem key={product.id}>
+                      <ProductCard
+                        product={{
+                          ...product,
+                          imageUrl,
+                        }}
+                        href={`/${locale}/products/${product.id}`}
+                      />
+                    </GridItem>
+                  );
+                })}
+              </Grid>
+            )}
+
+            {/* Services Tab Content */}
+            {activeTab === 'services' && (
+              <>
+                {loadingServices ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="text-gray-500">
+                      {locale === 'ar' ? 'جاري التحميل...' : locale === 'zh' ? '加载中...' : 'Loading...'}
+                    </div>
+                  </div>
+                ) : services.length > 0 ? (
+                  <Grid columns={{ base: 1, sm: 2, md: 3, lg: 4 }} gap="gap-6">
+                    {services.slice(0, 8).map((service) => (
+                      <GridItem key={service.id}>
+                        <ServiceCard
+                          service={service}
+                          href={`/${locale}/services/${service.id}`}
+                          locale={locale}
+                        />
+                      </GridItem>
+                    ))}
+                  </Grid>
+                ) : (
+                  <EmptyState
+                    title={locale === 'ar' ? 'لا توجد خدمات متاحة' : locale === 'zh' ? '暂无可用服务' : 'No services available'}
+                    description={locale === 'ar' ? 'لم يتم إضافة خدمات بعد' : locale === 'zh' ? '尚未添加服务' : 'No services have been added yet'}
+                  />
+                )}
+              </>
+            )}
           </div>
         </section>
       )}

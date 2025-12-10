@@ -5,6 +5,46 @@ import { randomUUID } from 'crypto';
 
 const router = Router();
 
+// Get all public services (for buyers/homepage) - NO AUTH REQUIRED
+router.get('/public', async (req: Request, res: Response) => {
+  try {
+    const { limit, offset } = req.query;
+    const take = limit ? parseInt(limit as string, 10) : 20;
+    const skip = offset ? parseInt(offset as string, 10) : 0;
+
+    // Get all services with maker information
+    const services = await prisma.services.findMany({
+      take,
+      skip,
+      orderBy: {
+        created_at: 'desc',
+      },
+      include: {
+        makers: {
+          select: {
+            id: true,
+            displayName: true,
+            country: true,
+            avatarUrl: true,
+          },
+        },
+      },
+    });
+
+    res.json({
+      success: true,
+      services,
+    });
+  } catch (error: any) {
+    console.error('[Services] Error fetching public services:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch services',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+});
+
 // Get all services for the logged-in maker
 router.get('/', authenticateToken, requireRole(['MAKER']), async (req: AuthRequest, res: Response) => {
   try {

@@ -21,17 +21,28 @@ export async function generateMetadata({ params }: LocaleLayoutProps): Promise<M
   let locale: string;
   try {
     const resolvedParams = await params;
-    locale = resolvedParams.locale;
+    locale = resolvedParams?.locale;
     
     // Additional check: if locale is invalid or looks like a file path, use default
-    if (!locale || typeof locale !== 'string' || locale.includes('.')) {
+    if (!locale || typeof locale !== 'string' || locale.includes('.') || locale === 'robots.txt' || locale === 'favicon.ico') {
       locale = 'ar';
     }
   } catch (error) {
     console.error("Error resolving locale params in layout metadata, falling back to 'ar':", error);
     locale = 'ar'; // Fallback to default locale
   }
+  
+  // Final validation - ensure locale is valid
   const validLocale = (locale === 'zh' || locale === 'ar' || locale === 'en') ? locale : 'ar';
+  
+  // Additional safety check - if locale still looks like a file, force to default
+  if (validLocale.includes('.') || validLocale === 'robots.txt' || validLocale === 'favicon.ico') {
+    return {
+      metadataBase: new URL(process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://banda-chao-frontend.onrender.com'),
+      title: 'Banda Chao - Social Commerce Platform',
+      description: 'Banda Chao - A platform that combines social media with e-commerce',
+    };
+  }
 
   const titles = {
     zh: 'Banda Chao 手作平台 — 全球手作人的温暖之家',
@@ -125,7 +136,12 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
   
   try {
     const resolvedParams = await params;
-    locale = resolvedParams.locale;
+    locale = resolvedParams?.locale;
+    
+    // Check if locale looks like a static file
+    if (!locale || typeof locale !== 'string' || locale.includes('.') || locale === 'robots.txt' || locale === 'favicon.ico') {
+      locale = 'ar';
+    }
   } catch (error) {
     console.error('Error resolving params in layout:', error);
     // Fallback to default locale if params resolution fails
@@ -133,8 +149,10 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
   }
   
   // Validate locale and fallback to default if invalid (don't call notFound())
-  if (!validLocales.includes(locale)) {
-    console.warn(`Invalid locale in layout: ${locale}, falling back to 'ar'`);
+  if (!locale || !validLocales.includes(locale) || locale.includes('.') || locale === 'robots.txt' || locale === 'favicon.ico') {
+    if (locale && locale !== 'ar') {
+      console.warn(`Invalid locale in layout: ${locale}, falling back to 'ar'`);
+    }
     locale = 'ar';
   }
 
@@ -152,42 +170,48 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
             strategy="beforeInteractive"
             dangerouslySetInnerHTML={{
               __html: `
-                if (document.querySelector('meta[name="renderer"]') === null) {
-                  const meta1 = document.createElement('meta');
-                  meta1.name = 'renderer';
-                  meta1.content = 'webkit';
-                  document.getElementsByTagName('head')[0].appendChild(meta1);
-                }
-                if (document.querySelector('meta[http-equiv="X-UA-Compatible"]') === null) {
-                  const meta2 = document.createElement('meta');
-                  meta2.httpEquiv = 'X-UA-Compatible';
-                  meta2.content = 'IE=Edge,chrome=1';
-                  document.getElementsByTagName('head')[0].appendChild(meta2);
-                }
-                if (document.querySelector('meta[name="force-rendering"]') === null) {
-                  const meta3 = document.createElement('meta');
-                  meta3.name = 'force-rendering';
-                  meta3.content = 'webkit';
-                  document.getElementsByTagName('head')[0].appendChild(meta3);
-                }
-                if (document.querySelector('meta[name="keywords"]') === null) {
-                  const meta4 = document.createElement('meta');
-                  meta4.name = 'keywords';
-                  meta4.content = '手作, 匠人, 原创, 手工作品, 手工艺品, 手作平台, 手作人社区, Banda Chao';
-                  document.getElementsByTagName('head')[0].appendChild(meta4);
-                }
-                if (document.querySelector('meta[itemprop="name"]') === null) {
-                  const meta5 = document.createElement('meta');
-                  meta5.setAttribute('itemprop', 'name');
-                  meta5.content = 'Banda Chao 手作平台';
-                  document.getElementsByTagName('head')[0].appendChild(meta5);
-                }
-                if (document.querySelector('meta[itemprop="description"]') === null) {
-                  const meta6 = document.createElement('meta');
-                  meta6.setAttribute('itemprop', 'description');
-                  meta6.content = '全球手作人的温暖之家';
-                  document.getElementsByTagName('head')[0].appendChild(meta6);
-                }
+                (function() {
+                  if (typeof document === 'undefined') return;
+                  const head = document.getElementsByTagName('head')[0];
+                  if (!head) return;
+                  
+                  if (document.querySelector('meta[name="renderer"]') === null) {
+                    const meta1 = document.createElement('meta');
+                    meta1.name = 'renderer';
+                    meta1.content = 'webkit';
+                    head.appendChild(meta1);
+                  }
+                  if (document.querySelector('meta[http-equiv="X-UA-Compatible"]') === null) {
+                    const meta2 = document.createElement('meta');
+                    meta2.httpEquiv = 'X-UA-Compatible';
+                    meta2.content = 'IE=Edge,chrome=1';
+                    head.appendChild(meta2);
+                  }
+                  if (document.querySelector('meta[name="force-rendering"]') === null) {
+                    const meta3 = document.createElement('meta');
+                    meta3.name = 'force-rendering';
+                    meta3.content = 'webkit';
+                    head.appendChild(meta3);
+                  }
+                  if (document.querySelector('meta[name="keywords"]') === null) {
+                    const meta4 = document.createElement('meta');
+                    meta4.name = 'keywords';
+                    meta4.content = '手作, 匠人, 原创, 手工作品, 手工艺品, 手作平台, 手作人社区, Banda Chao';
+                    head.appendChild(meta4);
+                  }
+                  if (document.querySelector('meta[itemprop="name"]') === null) {
+                    const meta5 = document.createElement('meta');
+                    meta5.setAttribute('itemprop', 'name');
+                    meta5.content = 'Banda Chao 手作平台';
+                    head.appendChild(meta5);
+                  }
+                  if (document.querySelector('meta[itemprop="description"]') === null) {
+                    const meta6 = document.createElement('meta');
+                    meta6.setAttribute('itemprop', 'description');
+                    meta6.content = '全球手作人的温暖之家';
+                    head.appendChild(meta6);
+                  }
+                })();
               `,
             }}
           />
