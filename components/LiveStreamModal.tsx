@@ -80,15 +80,18 @@ export default function LiveStreamModal({
           loop={true}
           controls={false}
           muted={false}
+          playing={true}
           style={{ position: 'absolute', top: '-20%', left: 0 }}
           config={{
             youtube: {
-              autoplay: 1,
-              controls: 0,
-              modestbranding: 1,
-              rel: 0,
+              playerVars: {
+                autoplay: 1,
+                controls: 0,
+                modestbranding: 1,
+                rel: 0,
+              },
             },
-          }}
+          } as any}
         />
       </div>
 
