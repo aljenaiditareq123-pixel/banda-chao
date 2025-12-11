@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { Grid, GridItem } from '@/components/Grid';
 import Button from '@/components/Button';
@@ -40,6 +40,8 @@ export default function HomePageClient({
   const [services, setServices] = useState<any[]>(featuredServices);
   const [loadingServices, setLoadingServices] = useState(false);
   const [showLiveStream, setShowLiveStream] = useState(false);
+  // Use ref to track if we've attempted to fetch services (prevents infinite loop)
+  const hasFetchedServicesRef = useRef(false);
 
   useEffect(() => {
     if (locale === 'zh' || locale === 'ar' || locale === 'en') {
@@ -51,29 +53,61 @@ export default function HomePageClient({
 
   useEffect(() => {
     // If services tab is active and we don't have services yet, fetch them
-    if (activeTab === 'services' && services.length === 0 && !loadingServices) {
+    // Use ref to prevent infinite loop - only fetch once per tab activation
+    if (activeTab === 'services' && services.length === 0 && !loadingServices && !hasFetchedServicesRef.current) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/2c67604d-7559-48d9-bc71-1425d33c34f8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'HomePageClient.tsx:54',message:'Starting services fetch',data:{activeTab,servicesLength:services.length,loadingServices,hasFetched:hasFetchedServicesRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
+      
+      hasFetchedServicesRef.current = true;
       setLoadingServices(true);
       servicesAPI.getPublicServices({ limit: 8 })
         .then((response) => {
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/2c67604d-7559-48d9-bc71-1425d33c34f8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'HomePageClient.tsx:62',message:'Services API response received',data:{success:response.success,servicesCount:response.services?.length || 0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+          // #endregion
+          
           if (response.success && response.services) {
             setServices(response.services);
+          } else {
+            // Set empty array to prevent re-fetching, but mark as fetched
+            setServices([]);
           }
         })
         .catch((error) => {
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/2c67604d-7559-48d9-bc71-1425d33c34f8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'HomePageClient.tsx:73',message:'Services API error',data:{error:error?.message || 'Unknown error'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+          // #endregion
+          
           console.error('Error fetching services:', error);
+          // Set empty array to prevent re-fetching
+          setServices([]);
         })
         .finally(() => {
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/2c67604d-7559-48d9-bc71-1425d33c34f8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'HomePageClient.tsx:81',message:'Services fetch completed',data:{servicesLength:services.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+          // #endregion
+          
           setLoadingServices(false);
         });
     }
   }, [activeTab, services.length, loadingServices]);
+  
+  // Reset fetch flag when switching away from services tab
+  useEffect(() => {
+    if (activeTab !== 'services') {
+      hasFetchedServicesRef.current = false;
+    }
+  }, [activeTab]);
 
   // Initialize services from props if available
   useEffect(() => {
     if (featuredServices.length > 0 && services.length === 0) {
       setServices(featuredServices);
+      // If we have featured services, mark as fetched to prevent API call
+      hasFetchedServicesRef.current = true;
     }
-  }, [featuredServices]);
+  }, [featuredServices, services.length]);
 
   const heroTexts = {
     ar: {
