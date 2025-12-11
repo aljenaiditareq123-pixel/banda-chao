@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import Script from 'next/script';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { CartProvider } from '@/contexts/CartContext';
+import SessionProviderWrapper from '@/components/providers/SessionProviderWrapper';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import CartDrawer from '@/components/CartDrawer';
@@ -223,22 +224,24 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
           />
         )}
         <LanguageProvider defaultLanguage={validLocale as 'zh' | 'en' | 'ar'}>
-          <CartProvider>
-            <div className="flex flex-col min-h-screen pb-20 lg:pb-0">
-              {/* Flash Sale Countdown Banner - Top of Page */}
-              <FlashSale />
-              <Navbar locale={validLocale} />
-              {/* Social Proof Toasts - Live Activity Notifications */}
-              <SocialProofToast />
-              <main className="flex-grow">
-                {children}
-              </main>
-              <Footer locale={validLocale} />
-            </div>
-            <CartDrawer locale={validLocale} />
-            {/* Bottom Navigation Bar - Mobile Only */}
-            <BottomNav />
-          </CartProvider>
+          <SessionProviderWrapper>
+            <CartProvider>
+              <div className="flex flex-col min-h-screen pb-20 lg:pb-0">
+                {/* Flash Sale Countdown Banner - Top of Page */}
+                <FlashSale />
+                <Navbar locale={validLocale} />
+                {/* Social Proof Toasts - Live Activity Notifications */}
+                <SocialProofToast />
+                <main className="flex-grow">
+                  {children}
+                </main>
+                <Footer locale={validLocale} />
+              </div>
+              <CartDrawer locale={validLocale} />
+              {/* Bottom Navigation Bar - Mobile Only */}
+              <BottomNav />
+            </CartProvider>
+          </SessionProviderWrapper>
         </LanguageProvider>
       </body>
     </html>

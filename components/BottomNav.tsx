@@ -6,10 +6,12 @@ import { usePathname } from 'next/navigation';
 import { Home, LayoutGrid, ShoppingCart, User, Plus, Camera } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useSession } from 'next-auth/react';
 
 export default function BottomNav() {
   const pathname = usePathname();
   const { language } = useLanguage();
+  const { data: session } = useSession();
 
   // دالة لتحديد هل الرابط نشط أم لا
   const isActive = (path: string) => {
@@ -48,13 +50,18 @@ export default function BottomNav() {
   const locale = pathname?.split('/')[1] || 'ar';
   const validLocale = ['ar', 'en', 'zh'].includes(locale) ? locale : 'ar';
 
+  // Determine profile path - redirect to sign-in if not authenticated
+  const profilePath = session 
+    ? `/${validLocale}/profile` 
+    : `/${validLocale}/auth/signin?callbackUrl=/${validLocale}/profile`;
+
   const navItems = [
     { icon: Home, label: t.home, path: `/${validLocale}` },
     { icon: LayoutGrid, label: t.categories, path: `/${validLocale}/products` },
     // الزر الأوسط (فراغ لأنه سيعالج بشكل خاص)
     { icon: null, label: '', path: '' }, 
-    { icon: ShoppingCart, label: t.cart, path: `/${validLocale}/cart` },
-    { icon: User, label: t.profile, path: `/${validLocale}/profile` },
+    { icon: ShoppingCart, label: t.cart, path: session ? `/${validLocale}/cart` : `/${validLocale}/auth/signin?callbackUrl=/${validLocale}/cart` },
+    { icon: User, label: t.profile, path: profilePath },
   ];
 
   return (
@@ -92,6 +99,10 @@ export default function BottomNav() {
           
           if (!Icon) return null;
 
+          // Show user avatar on Profile icon if logged in
+          const isProfileIcon = index === 4; // Profile is the last item
+          const showAvatar = isProfileIcon && session?.user?.image;
+
           return (
             <Link 
               key={index} 
@@ -99,12 +110,25 @@ export default function BottomNav() {
               className="flex flex-col items-center justify-center w-12 h-full gap-1"
             >
               <div className={`relative transition-colors duration-300 ${active ? 'text-black' : 'text-gray-400'}`}>
-                <Icon size={24} strokeWidth={active ? 2.5 : 2} />
-                {active && (
-                  <motion.div 
-                    layoutId="nav-dot"
-                    className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1 h-1 bg-black rounded-full"
-                  />
+                {showAvatar ? (
+                  <div className="w-6 h-6 rounded-full overflow-hidden border-2 border-black">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={session.user.image!}
+                      alt={session.user.name || 'User'}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <Icon size={24} strokeWidth={active ? 2.5 : 2} />
+                    {active && (
+                      <motion.div 
+                        layoutId="nav-dot"
+                        className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1 h-1 bg-black rounded-full"
+                      />
+                    )}
+                  </>
                 )}
               </div>
               <span className={`text-[10px] font-medium transition-colors ${active ? 'text-black font-bold' : 'text-gray-400'}`}>

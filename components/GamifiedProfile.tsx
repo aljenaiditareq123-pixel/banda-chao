@@ -1,17 +1,26 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Settings, MapPin, Package, CreditCard, ChevronRight, Award, Zap, Crown, Users } from 'lucide-react';
+import { Settings, MapPin, Package, CreditCard, ChevronRight, Award, Zap, Crown, Users, LogIn } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useSession } from 'next-auth/react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function GamifiedProfile() {
   const { language } = useLanguage();
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [mounted, setMounted] = useState(false);
 
-  // بيانات وهمية للمحاكاة
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // بيانات وهمية للمحاكاة (يستخدمها المستخدم المسجل فقط)
   const user = {
-    name: language === 'ar' ? "أحمد الباندا" : language === 'zh' ? "熊猫阿明" : "Ahmed Panda",
+    name: session?.user?.name || (language === 'ar' ? "أحمد الباندا" : language === 'zh' ? "熊猫阿明" : "Ahmed Panda"),
     level: language === 'ar' ? "باندا فضي" : language === 'zh' ? "银熊猫" : "Silver Panda",
     xp: 75, // 75%
     nextLevel: language === 'ar' ? "باندا ذهبي" : language === 'zh' ? "金熊猫" : "Golden Panda",
@@ -97,6 +106,62 @@ export default function GamifiedProfile() {
 
   const t = texts[language as keyof typeof texts] || texts.en;
 
+  // If not authenticated, show sign-in prompt
+  if (mounted && status === 'unauthenticated') {
+    const signInTexts = {
+      ar: {
+        title: 'قم بتسجيل الدخول',
+        subtitle: 'سجل دخولك للوصول إلى بروفايلك وإحصائياتك',
+        button: 'تسجيل الدخول',
+      },
+      en: {
+        title: 'Sign in required',
+        subtitle: 'Sign in to access your profile and statistics',
+        button: 'Sign in',
+      },
+      zh: {
+        title: '需要登录',
+        subtitle: '登录以访问您的个人资料和统计信息',
+        button: '登录',
+      },
+    };
+    const signInT = signInTexts[language as keyof typeof signInTexts] || signInTexts.en;
+
+    return (
+      <div className="min-h-screen bg-gray-50 pb-24 flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-3xl shadow-xl p-8 md:p-12 max-w-md w-full text-center"
+          dir={language === 'ar' ? 'rtl' : 'ltr'}
+        >
+          <div className="text-7xl mb-6">🐼</div>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">{signInT.title}</h1>
+          <p className="text-gray-600 mb-8">{signInT.subtitle}</p>
+          <Link href={`/${language}/auth/signin?callbackUrl=/${language}/profile`}>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="w-full bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl px-6 py-4 flex items-center justify-center gap-3 font-semibold hover:from-primary-700 hover:to-primary-800 transition-all shadow-lg text-lg"
+            >
+              <LogIn size={24} />
+              <span>{language === 'ar' ? 'تسجيل الدخول لعرض مستواك' : language === 'zh' ? '登录查看您的等级' : 'Login to see your Level'}</span>
+            </motion.button>
+          </Link>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // Loading state
+  if (!mounted || status === 'loading') {
+    return (
+      <div className="min-h-screen bg-gray-50 pb-24 flex items-center justify-center">
+        <div className="text-gray-500">Loading...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
       
@@ -109,9 +174,18 @@ export default function GamifiedProfile() {
         
         <div className="flex items-center gap-4 mb-6 relative z-10">
           <div className="w-20 h-20 rounded-full border-4 border-yellow-500 p-1 relative">
-            <div className="w-full h-full rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-3xl">
-              🐼
-            </div>
+            {session?.user?.image ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={session.user.image}
+                alt={user.name}
+                className="w-full h-full rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-3xl">
+                🐼
+              </div>
+            )}
             <div className="absolute -bottom-2 -right-2 bg-yellow-500 text-black text-xs font-bold px-2 py-1 rounded-full border-2 border-gray-900 shadow-lg">
               Lv.3
             </div>
@@ -122,6 +196,9 @@ export default function GamifiedProfile() {
               <Crown size={14} />
               {user.level}
             </div>
+            {session?.user?.email && (
+              <div className="text-gray-400 text-xs mt-1 truncate">{session.user.email}</div>
+            )}
           </div>
           <button className="bg-white/10 p-2 rounded-full hover:bg-white/20 transition">
             <Settings size={20} />

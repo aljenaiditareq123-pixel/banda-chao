@@ -16,6 +16,7 @@ import OnboardingModal from '@/components/common/OnboardingModal';
 import RedEnvelope from '@/components/RedEnvelope';
 import MysteryBox from '@/components/MysteryBox';
 import LuckyWheel from '@/components/LuckyWheel';
+import LiveStreamModal from '@/components/LiveStreamModal';
 import { servicesAPI } from '@/lib/api';
 
 interface HomePageClientProps {
@@ -38,6 +39,7 @@ export default function HomePageClient({
   const [activeTab, setActiveTab] = useState<'products' | 'services'>('products');
   const [services, setServices] = useState<any[]>(featuredServices);
   const [loadingServices, setLoadingServices] = useState(false);
+  const [showLiveStream, setShowLiveStream] = useState(false);
 
   useEffect(() => {
     if (locale === 'zh' || locale === 'ar' || locale === 'en') {
@@ -146,6 +148,69 @@ export default function HomePageClient({
           </div>
         </div>
       </section>
+
+      {/* Panda Stories Ring - Live Streaming Section */}
+      <section className="py-6 bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-lg font-bold text-gray-900 mb-4">
+            {locale === 'ar' 
+              ? 'قصص الباندا 🐼' 
+              : locale === 'zh' 
+              ? '熊猫故事 🐼'
+              : 'Panda Stories 🐼'}
+          </h2>
+          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+            {/* Live Stream Circle - First and Special */}
+            <button
+              onClick={() => setShowLiveStream(true)}
+              className="flex-shrink-0 flex flex-col items-center gap-2 group cursor-pointer"
+            >
+              <div className="relative">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 border-4 border-red-500 animate-pulse shadow-lg group-hover:scale-110 transition-transform duration-200 flex items-center justify-center">
+                  <span className="text-2xl">🐼</span>
+                </div>
+                {/* Red pulsing ring */}
+                <div className="absolute inset-0 rounded-full border-4 border-red-500 animate-ping opacity-75"></div>
+                {/* LIVE badge */}
+                <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">
+                  LIVE
+                </div>
+              </div>
+              <span className="text-xs text-gray-600 font-medium max-w-[64px] text-center truncate">
+                {locale === 'ar' ? 'باندا لايف' : locale === 'zh' ? '熊猫直播' : 'Panda Live'}
+              </span>
+            </button>
+
+            {/* Other Story Circles */}
+            {[
+              { name: locale === 'ar' ? 'عروض اليوم' : locale === 'zh' ? '今日优惠' : 'Today Deals', emoji: '🔥' },
+              { name: locale === 'ar' ? 'منتجات جديدة' : locale === 'zh' ? '新产品' : 'New Products', emoji: '✨' },
+              { name: locale === 'ar' ? 'شحن مجاني' : locale === 'zh' ? '免费送货' : 'Free Shipping', emoji: '🚚' },
+              { name: locale === 'ar' ? 'خصومات' : locale === 'zh' ? '折扣' : 'Discounts', emoji: '💸' },
+              { name: locale === 'ar' ? 'أكثر مبيعاً' : locale === 'zh' ? '最畅销' : 'Best Sellers', emoji: '⭐' },
+            ].map((story, index) => (
+              <button
+                key={index}
+                className="flex-shrink-0 flex flex-col items-center gap-2 group cursor-pointer"
+              >
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 border-2 border-gray-400 group-hover:scale-110 transition-transform duration-200 flex items-center justify-center shadow-md">
+                  <span className="text-2xl">{story.emoji}</span>
+                </div>
+                <span className="text-xs text-gray-600 font-medium max-w-[64px] text-center truncate">
+                  {story.name}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Live Stream Modal */}
+      <LiveStreamModal
+        isOpen={showLiveStream}
+        onClose={() => setShowLiveStream(false)}
+        videoUrl="https://www.youtube.com/shorts/5e5L9-3fWlI"
+      />
 
       {/* Best Sellers Section - Chinese Style */}
       <section className="py-12 bg-white border-b border-gray-200">

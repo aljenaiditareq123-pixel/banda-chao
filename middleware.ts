@@ -132,14 +132,38 @@ function isPublicRoute(pathname: string): boolean {
     '/login',
     '/signup',
     '/register',
+    '/auth', // NextAuth routes and signin page
     '/privacy-policy',
     '/terms-of-service',
-    '/cart',
-    '/checkout',
   ];
   
   // Check if pathname starts with any public route (with or without locale)
   return publicRoutes.some(route => {
+    // Match exact route or route with locale prefix
+    return pathname === route || 
+           pathname.startsWith(`/ar${route}`) ||
+           pathname.startsWith(`/en${route}`) ||
+           pathname.startsWith(`/zh${route}`) ||
+           // Match with locale as first segment
+           new RegExp(`^/[a-z]{2}${route.replace(/^\//, '')}`).test(pathname);
+  });
+}
+
+// Check if pathname is a protected route (requires authentication)
+function isProtectedRoute(pathname: string): boolean {
+  // Protected routes that require authentication
+  const protectedRoutes = [
+    '/maker', // All maker routes (studio, dashboard, etc.)
+    '/profile',
+    '/orders',
+    '/addresses',
+    '/payment',
+    '/cart', // Cart requires authentication
+    '/checkout', // Checkout requires authentication
+  ];
+  
+  // Check if pathname starts with any protected route (with or without locale)
+  return protectedRoutes.some(route => {
     // Match exact route or route with locale prefix
     return pathname === route || 
            pathname.startsWith(`/ar${route}`) ||
@@ -157,6 +181,27 @@ export function middleware(request: NextRequest) {
   // This is the most important check - do it before anything else
   if (shouldExcludePath(pathname)) {
     return NextResponse.next();
+  }
+
+  // Check authentication for protected routes
+  if (isProtectedRoute(pathname)) {
+    // Get locale for redirect
+    const locale = getLocale(pathname, request);
+    
+    // Check for NextAuth session tokens
+    const sessionToken = request.cookies.get('next-auth.session-token') || 
+                         request.cookies.get('__Secure-next-auth.session-token') ||
+                         request.cookies.get('__Host-next-auth.session-token');
+    
+    // Also check for JWT token (legacy auth system)
+    const jwtToken = request.cookies.get('auth_token');
+    
+    // If no session token, redirect to sign-in
+    if (!sessionToken && !jwtToken) {
+      const signInUrl = new URL(`/${locale}/auth/signin`, request.url);
+      signInUrl.searchParams.set('callbackUrl', pathname);
+      return NextResponse.redirect(signInUrl);
+    }
   }
   
   // Additional check: if pathname is a static file, skip locale routing
