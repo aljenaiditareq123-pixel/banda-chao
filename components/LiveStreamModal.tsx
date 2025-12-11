@@ -75,12 +75,11 @@ export default function LiveStreamModal({
         <ReactPlayer
           url={videoUrl}
           width="100%"
-          height="140%" // تكبير لتغطية الشاشة
+          height="140%"
           playing={true}
           loop={true}
           controls={false}
           muted={false}
-          playing={true}
           style={{ position: 'absolute', top: '-20%', left: 0 }}
           config={{
             youtube: {
