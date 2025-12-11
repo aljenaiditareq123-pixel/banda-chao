@@ -54,7 +54,7 @@ export default function BottomNav() {
     // الزر الأوسط (فراغ لأنه سيعالج بشكل خاص)
     { icon: null, label: '', path: '' }, 
     { icon: ShoppingCart, label: t.cart, path: `/${validLocale}/cart` },
-    { icon: User, label: t.profile, path: `/${validLocale}/maker/dashboard` },
+    { icon: User, label: t.profile, path: `/${validLocale}/profile` },
   ];
 
   return (
