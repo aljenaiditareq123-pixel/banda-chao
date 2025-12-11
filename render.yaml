@@ -5,9 +5,10 @@ services:
     env: node
     # Optimized build command for Render (uses standalone output)
     # Using npm ci for faster, reliable builds (uses package-lock.json)
-    buildCommand: npm ci && npm run build && cp -r public .next/standalone/public 2>/dev/null || true && cp -r .next/static .next/standalone/.next/static 2>/dev/null || true
+    buildCommand: npm ci && npm run build
     # Start command uses standalone server for better performance and lower memory usage
-    startCommand: node .next/standalone/server.js
+    # Next.js standalone mode automatically copies public and static files during build
+    startCommand: cd .next/standalone && node server.js
     # Node version
     nodeVersion: 20.x
     # Plan settings (adjust based on your Render plan)
