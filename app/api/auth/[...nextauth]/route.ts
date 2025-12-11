@@ -156,6 +156,24 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.role = (user as any).role || 'BUYER';
+        
+        // Try to find or create user in database for demo user
+        if (account?.provider === 'credentials' && user.email === 'panda@bandachao.com') {
+          try {
+            const { prisma } = await import('@/lib/prisma');
+            const dbUser = await prisma.users.findUnique({
+              where: { email: user.email },
+            });
+            
+            if (dbUser) {
+              // Use database user ID
+              token.id = dbUser.id;
+            }
+          } catch (e) {
+            // Ignore errors - use token ID
+            console.log('Could not sync user to DB:', e);
+          }
+        }
       }
       return token;
     },

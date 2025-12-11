@@ -4,20 +4,62 @@ import React, { useState } from 'react';
 import { Camera, Mic, Check, Sparkles, ArrowRight, UploadCloud } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import DigitalBusinessCard from '@/components/DigitalBusinessCard';
+import { createProduct } from '@/app/actions/productActions';
 
 export default function MakerStudio() {
   const { language } = useLanguage();
+  const { data: session } = useSession();
+  const router = useRouter();
   const [step, setStep] = useState(1); // 1: تصوير، 2: تسجيل صوت، 3: معالجة، 4: نجاح
   const [isRecording, setIsRecording] = useState(false);
+  const [videoUrl, setVideoUrl] = useState('');
+  const [productTitle, setProductTitle] = useState('');
+  const [productPrice, setProductPrice] = useState(0);
+  const [createdProduct, setCreatedProduct] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
 
-  // محاكاة عملية النشر الذكية
-  const startMagicUpload = () => {
+  // Real product creation using Server Action
+  const startMagicUpload = async () => {
+    if (!session?.user?.id) {
+      alert('Please sign in first');
+      return;
+    }
+
+    if (!videoUrl || !productTitle) {
+      alert('Please enter video URL and product title');
+      return;
+    }
+
     setStep(3);
-    // محاكاة الذكاء الاصطناعي وهو يعمل
-    setTimeout(() => {
-      setStep(4);
-    }, 3000);
+    setLoading(true);
+
+    try {
+      const result = await createProduct({
+        title: productTitle,
+        price: productPrice || 99,
+        videoUrl: videoUrl,
+        userId: session.user.id as string,
+        description: `Product: ${productTitle}`,
+      });
+
+      if (result.success && result.product) {
+        setCreatedProduct(result.product);
+        setLoading(false);
+        setStep(4);
+      } else {
+        alert(result.error || 'Failed to create product');
+        setLoading(false);
+        setStep(2);
+      }
+    } catch (error) {
+      console.error('Error creating product:', error);
+      alert('Failed to create product');
+      setLoading(false);
+      setStep(2);
+    }
   };
 
   const texts = {
@@ -123,57 +165,71 @@ export default function MakerStudio() {
               </motion.div>
             )}
 
-            {/* الخطوة 2: تكلّم (لا تكتب) */}
+            {/* الخطوة 2: إدخال معلومات المنتج */}
             {step === 2 && (
               <motion.div 
                 key="step2"
                 initial={{ opacity: 0, x: 50 }} 
                 animate={{ opacity: 1, x: 0 }} 
                 exit={{ opacity: 0, x: -50 }}
-                className="flex flex-col items-center text-center space-y-8"
+                className="flex flex-col items-center text-center space-y-6"
               >
                 <div className="space-y-2">
                   <h2 className="text-3xl font-black text-gray-800">{t.step2Title}</h2>
                   <p className="text-gray-500 text-lg">{t.step2Subtitle}</p>
                 </div>
 
-                <div className="relative">
-                  {isRecording && (
-                    <motion.div 
-                      className="absolute inset-0 bg-red-200 rounded-full opacity-50"
-                      animate={{ scale: [1, 1.5, 1] }}
-                      transition={{ repeat: Infinity, duration: 1.5 }}
+                <div className="w-full space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2 text-right">
+                      {language === 'ar' ? 'رابط الفيديو (YouTube/TikTok)' : language === 'zh' ? '视频链接 (YouTube/TikTok)' : 'Video URL (YouTube/TikTok)'}
+                    </label>
+                    <input
+                      type="text"
+                      value={videoUrl}
+                      onChange={(e) => setVideoUrl(e.target.value)}
+                      placeholder={language === 'ar' ? 'https://...' : 'https://...'}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     />
-                  )}
-                  <motion.button
-                    onClick={() => setIsRecording(!isRecording)}
-                    className={`relative z-10 w-40 h-40 rounded-full flex items-center justify-center shadow-xl transition-all ${
-                      isRecording ? 'bg-red-500 text-white' : 'bg-blue-600 text-white'
-                    }`}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                  >
-                    <Mic size={64} />
-                  </motion.button>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2 text-right">
+                      {language === 'ar' ? 'عنوان المنتج' : language === 'zh' ? '产品标题' : 'Product Title'}
+                    </label>
+                    <input
+                      type="text"
+                      value={productTitle}
+                      onChange={(e) => setProductTitle(e.target.value)}
+                      placeholder={language === 'ar' ? 'مثال: سماعة محيطية' : language === 'zh' ? '例如：环绕声耳机' : 'e.g., Surround Headphones'}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2 text-right">
+                      {language === 'ar' ? 'السعر (AED)' : language === 'zh' ? '价格 (AED)' : 'Price (AED)'}
+                    </label>
+                    <input
+                      type="number"
+                      value={productPrice || ''}
+                      onChange={(e) => setProductPrice(parseFloat(e.target.value) || 0)}
+                      placeholder="99"
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    />
+                  </div>
                 </div>
 
-                {isRecording ? (
-                  <p className="text-red-500 font-bold animate-pulse text-xl">{t.step2Recording}</p>
-                ) : (
-                  <p className="text-gray-400 font-medium">{t.step2Instruction}</p>
-                )}
-
-                {!isRecording && (
-                  <motion.button
-                    initial={{ opacity: 0, y: 20 }} 
-                    animate={{ opacity: 1, y: 0 }}
-                    onClick={startMagicUpload}
-                    className="w-full bg-black text-white py-4 rounded-2xl font-bold text-xl flex items-center justify-center gap-2 shadow-lg mt-4"
-                  >
-                    <span>{t.step2Publish}</span>
-                    <Sparkles size={20} className="text-yellow-400" />
-                  </motion.button>
-                )}
+                <motion.button
+                  initial={{ opacity: 0, y: 20 }} 
+                  animate={{ opacity: 1, y: 0 }}
+                  onClick={startMagicUpload}
+                  disabled={!videoUrl || !productTitle || loading}
+                  className="w-full bg-black text-white py-4 rounded-2xl font-bold text-xl flex items-center justify-center gap-2 shadow-lg mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span>{t.step2Publish}</span>
+                  <Sparkles size={20} className="text-yellow-400" />
+                </motion.button>
               </motion.div>
             )}
 
@@ -262,11 +318,11 @@ export default function MakerStudio() {
                   <p className="text-yellow-700 text-sm">{t.step4TipText}</p>
                 </div>
 
-                {/* Digital Business Card */}
+                {/* Digital Business Card with REAL product data */}
                 <div className="w-full relative z-10 mt-4">
                   <DigitalBusinessCard 
-                    shopName={language === 'ar' ? 'متجر المبدع' : language === 'zh' ? '创意商店' : 'Creative Shop'}
-                    productName={language === 'ar' ? 'منتج مميز' : language === 'zh' ? '特色产品' : 'Featured Product'}
+                    shopName={session?.user?.name || (language === 'ar' ? 'متجر المبدع' : language === 'zh' ? '创意商店' : 'Creative Shop')}
+                    productName={createdProduct?.title || productTitle || (language === 'ar' ? 'منتج مميز' : language === 'zh' ? '特色产品' : 'Featured Product')}
                     locale={language}
                   />
                 </div>

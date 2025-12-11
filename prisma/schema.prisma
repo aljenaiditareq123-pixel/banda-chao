@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./prisma/dev.db"
 }
 
 model comment_likes {
@@ -101,7 +101,7 @@ model notifications {
   type       String
   title      String
   body       String?
-  data       Json?
+  data       String?  // JSON stored as string for SQLite
   is_read    Boolean  @default(false)
   created_at DateTime @default(now())
   users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
@@ -128,7 +128,7 @@ model order_items {
 model orders {
   id               String        @id
   user_id          String
-  status           OrderStatus   @default(PENDING)
+  status           String        @default("PENDING") // OrderStatus as String for SQLite
   totalAmount      Float
   shipping_address String?
   shipping_city    String?
@@ -164,7 +164,7 @@ model posts {
   id         String       @id
   content    String
   user_id    String
-  images     String[]
+  images     String?      // JSON array stored as string for SQLite
   created_at DateTime     @default(now())
   updated_at DateTime
   post_likes post_likes[]
@@ -187,16 +187,19 @@ model product_likes {
 }
 
 model products {
-  id            String          @id
+  id            String          @id @default(uuid())
   name          String
+  title         String?         // Alias for name, can be used as title
   description   String
   image_url     String?
-  external_link String
+  external_link String?
+  video_url     String?         // Video URL for Maker Studio
   user_id       String
   price         Float?
   category      String?
+  sold_count    Int             @default(0)
   created_at    DateTime        @default(now())
-  updated_at    DateTime
+  updated_at    DateTime        @updatedAt
   comments      comments[]
   group_buys    group_buys[]
   order_items   order_items[]
@@ -223,15 +226,17 @@ model reports {
 }
 
 model users {
-  id                                   String          @id
+  id                                   String          @id @default(uuid())
   email                                String          @unique
-  password                             String
+  password                             String?         // Optional for demo user
   name                                 String?
   profile_picture                      String?
   bio                                  String?
+  level                                Int             @default(1)
+  points                               Int             @default(0)
   created_at                           DateTime        @default(now())
-  updated_at                           DateTime
-  role                                 UserRole        @default(USER)
+  updated_at                           DateTime        @updatedAt
+  role                                 String          @default("USER") // UserRole as String for SQLite
   comment_likes                        comment_likes[]
   comments                             comments[]
   follows_follows_follower_idTousers   follows[]       @relation("follows_follower_idTousers")
@@ -300,22 +305,6 @@ model beta_applications {
   @@index([created_at])
 }
 
-enum OrderStatus {
-  PENDING
-  PROCESSING
-  SHIPPED
-  DELIVERED
-  CANCELLED
-  PAID
-  FAILED
-}
-
-enum UserRole {
-  USER
-  FOUNDER
-  JUNDI
-  MECHANIC
-  MAKER
-  ADMIN
-  BUYER
-}
+// Enums converted to String type for SQLite compatibility
+// OrderStatus: PENDING, PROCESSING, SHIPPED, DELIVERED, CANCELLED, PAID, FAILED
+// UserRole: USER, FOUNDER, JUNDI, MECHANIC, MAKER, ADMIN, BUYER
