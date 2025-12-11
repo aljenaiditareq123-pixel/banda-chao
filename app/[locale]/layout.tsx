@@ -6,6 +6,7 @@ import { CartProvider } from '@/contexts/CartContext';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import CartDrawer from '@/components/CartDrawer';
+import FlashSale from '@/components/FlashSale';
 import '../globals.css';
 
 const validLocales = ['zh', 'en', 'ar'];
@@ -222,6 +223,8 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
         <LanguageProvider defaultLanguage={validLocale as 'zh' | 'en' | 'ar'}>
           <CartProvider>
             <div className="flex flex-col min-h-screen">
+              {/* Flash Sale Countdown Banner - Top of Page */}
+              <FlashSale />
               <Navbar locale={validLocale} />
               <main className="flex-grow">
                 {children}
