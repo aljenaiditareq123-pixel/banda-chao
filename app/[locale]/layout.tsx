@@ -8,6 +8,7 @@ import Footer from '@/components/layout/Footer';
 import CartDrawer from '@/components/CartDrawer';
 import FlashSale from '@/components/FlashSale';
 import BottomNav from '@/components/BottomNav';
+import SocialProofToast from '@/components/SocialProofToast';
 import '../globals.css';
 
 const validLocales = ['zh', 'en', 'ar'];
@@ -227,6 +228,8 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
               {/* Flash Sale Countdown Banner - Top of Page */}
               <FlashSale />
               <Navbar locale={validLocale} />
+              {/* Social Proof Toasts - Live Activity Notifications */}
+              <SocialProofToast />
               <main className="flex-grow">
                 {children}
               </main>
