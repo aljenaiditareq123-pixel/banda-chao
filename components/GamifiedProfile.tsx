@@ -225,7 +225,7 @@ export default function GamifiedProfile() {
             {session?.user?.image ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={session.user.image}
+                src={session.user?.image || '/default-avatar.png'}
                 alt={user.name}
                 className="w-full h-full rounded-full object-cover"
               />

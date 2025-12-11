@@ -83,12 +83,10 @@ export default function LiveStreamModal({
           style={{ position: 'absolute', top: '-20%', left: 0 }}
           config={{
             youtube: {
-              playerVars: {
-                autoplay: 1,
-                controls: 0,
-                modestbranding: 1,
-                rel: 0,
-              },
+              autoplay: 1,
+              controls: 0,
+              modestbranding: 1,
+              rel: 0,
             },
           }}
         />
