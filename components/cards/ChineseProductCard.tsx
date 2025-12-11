@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useLanguage } from '@/contexts/LanguageContext';
+import NegotiationButton from '@/components/NegotiationButton';
 
 interface ChineseProductCardProps {
   id: string;
@@ -99,6 +100,15 @@ export default function ChineseProductCard({
               📦
             </div>
           )}
+          
+          {/* Negotiation Button - Floating on Image */}
+          <div className="absolute bottom-2 right-2 z-10" onClick={(e) => e.stopPropagation()}>
+            <NegotiationButton
+              productName={title}
+              price={formatPrice(price)}
+              locale={currentLocale}
+            />
+          </div>
         </div>
 
         {/* Product Info */}
@@ -129,18 +139,31 @@ export default function ChineseProductCard({
             </p>
           </div>
 
-          {/* Add to Cart Button */}
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              // Handle add to cart logic here
-              // You can dispatch to cart context or call API
-            }}
-            className="w-full bg-red-500 hover:bg-red-600 text-white text-xs font-bold py-2 rounded-full transition-colors duration-200 flex items-center justify-center gap-1"
-          >
-            <span>🛒</span>
-            <span>{t.addToCart}</span>
-          </button>
+          {/* Action Buttons Row */}
+          <div className="flex gap-2">
+            {/* Negotiation Button - Mobile/Desktop */}
+            <div className="flex-1" onClick={(e) => e.stopPropagation()}>
+              <NegotiationButton
+                productName={title}
+                price={formatPrice(price)}
+                locale={currentLocale}
+              />
+            </div>
+            
+            {/* Add to Cart Button */}
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                // Handle add to cart logic here
+                // You can dispatch to cart context or call API
+              }}
+              className="flex-1 bg-red-500 hover:bg-red-600 text-white text-xs font-bold py-2 rounded-full transition-colors duration-200 flex items-center justify-center gap-1"
+            >
+              <span>🛒</span>
+              <span className="hidden sm:inline">{t.addToCart}</span>
+            </button>
+          </div>
         </div>
       </div>
     </Link>
