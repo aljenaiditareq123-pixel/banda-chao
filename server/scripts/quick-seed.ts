@@ -18,7 +18,9 @@ async function quickSeed() {
     console.log('👑 Creating/Updating FOUNDER user...');
     // Normalize email to lowercase for consistency
     const founderEmail = 'aljenaiditareq123@gmail.com'.toLowerCase().trim();
-    const founderPassword = 'Founder123!';
+    // Use environment variable for password, fallback to secure random password
+    const founderPassword = process.env.FOUNDER_DEFAULT_PASSWORD || 
+      `Temp${Math.random().toString(36).slice(-12)}!`;
     const founderName = 'Tareq';
     
     try {
@@ -244,7 +246,10 @@ async function quickSeed() {
     for (let i = 1; i <= 5; i++) {
       const userId = randomUUID();
       const email = `maker${i}@bandachao.com`;
-      const password = await bcrypt.hash('maker123', 10);
+      // Use environment variable for password, fallback to secure random password
+      const makerPasswordPlain = process.env.MAKER_DEFAULT_PASSWORD || 
+        `Temp${Math.random().toString(36).slice(-12)}!`;
+      const password = await bcrypt.hash(makerPasswordPlain, 10);
       const name = `حرفي ${i}`;
       const slug = `maker-${i}`;
 
@@ -375,7 +380,7 @@ async function quickSeed() {
     console.log(`   - 5 videos created`);
     console.log('');
     console.log('🔐 Default Login Credentials:');
-    console.log(`   FOUNDER: aljenaiditareq123@gmail.com / Founder123!`);
+    console.log(`   FOUNDER: aljenaiditareq123@gmail.com / [Password set via FOUNDER_DEFAULT_PASSWORD env var]`);
     console.log(`   JUNDI 1: jundi1@bandachao.com / Jundi123!`);
     console.log(`   JUNDI 2: jundi2@bandachao.com / Jundi123!`);
     console.log(`   JUNDI 3: jundi3@bandachao.com / Jundi123!`);

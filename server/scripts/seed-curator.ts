@@ -261,7 +261,10 @@ async function seedCurator() {
       } else {
         // Create new user
         userId = randomUUID();
-        const hashedPassword = await bcrypt.hash('Maker123!', 10);
+        // Use environment variable for password, fallback to secure random password
+        const makerPasswordPlain = process.env.MAKER_DEFAULT_PASSWORD || 
+          `Temp${Math.random().toString(36).slice(-12)}!`;
+        const hashedPassword = await bcrypt.hash(makerPasswordPlain, 10);
         const normalizedEmail = makerData.email.toLowerCase().trim();
 
         await prisma.$executeRaw`
@@ -397,7 +400,7 @@ async function seedCurator() {
     console.log('');
     console.log('🔐 Default Login Credentials (for all makers):');
     console.log(`   Email: [maker-email]`);
-    console.log(`   Password: Maker123!`);
+    console.log(`   Password: [Set via MAKER_DEFAULT_PASSWORD env var]`);
     console.log('');
     console.log('📝 Maker Emails:');
     makersData.forEach((maker) => {

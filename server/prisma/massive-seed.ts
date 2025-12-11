@@ -216,7 +216,10 @@ async function main() {
   for (let i = 0; i < makersData.length; i++) {
     const makerData = makersData[i];
     const email = `maker${i + 1}@bandachao.com`;
-    const password = await bcrypt.hash('maker123', 10);
+    // Use environment variable for password, fallback to secure random password
+    const makerPasswordPlain = process.env.MAKER_DEFAULT_PASSWORD || 
+      `Temp${Math.random().toString(36).slice(-12)}!`;
+    const password = await bcrypt.hash(makerPasswordPlain, 10);
     
     // Create user
     const userId = randomUUID();
@@ -309,7 +312,10 @@ async function main() {
   for (let i = 0; i < 15; i++) {
     const buyerId = randomUUID();
     const email = `buyer${i + 1}@bandachao.com`;
-    const password = await bcrypt.hash('buyer123', 10);
+    // Use environment variable for password, fallback to secure random password
+    const buyerPasswordPlain = process.env.BUYER_DEFAULT_PASSWORD || 
+      `Temp${Math.random().toString(36).slice(-12)}!`;
+    const password = await bcrypt.hash(buyerPasswordPlain, 10);
     const names = ['أحمد', 'محمد', 'فاطمة', 'خديجة', 'علي', 'مريم', 'يوسف', 'سارة', 'جيمس', 'إيما', 'لوكاس', 'صوفيا', 'مايكل', 'إيزابيلا', 'ديفيد'];
     const name = names[i] || `Buyer ${i + 1}`;
 

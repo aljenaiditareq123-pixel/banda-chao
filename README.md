@@ -261,7 +261,7 @@ npm run dev
 ### بيانات تجريبية:
 
 بعد تشغيل `npm run db:seed`:
-- **مؤسس**: `founder@bandachao.com` / `founder123`
+- **مؤسس**: `founder@bandachao.com` / [Password set via environment variable]
 - **حرفيون**: 5 حرفيين تجريبيين
 - **منتجات**: 5-10 منتجات لكل حرفي
 - **فيديوهات**: 3-5 فيديوهات لكل حرفي

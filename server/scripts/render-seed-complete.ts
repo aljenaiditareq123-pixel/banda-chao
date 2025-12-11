@@ -22,7 +22,10 @@ async function seed() {
     for (let i = 1; i <= 5; i++) {
       const userId = randomUUID();
       const email = `maker${i}@bandachao.com`;
-      const password = await bcrypt.hash('maker123', 10);
+      // Use environment variable for password, fallback to secure random password
+      const makerPasswordPlain = process.env.MAKER_DEFAULT_PASSWORD || 
+        `Temp${Math.random().toString(36).slice(-12)}!`;
+      const password = await bcrypt.hash(makerPasswordPlain, 10);
       const name = `حرفي ${i}`;
       const slug = `maker-${i}`;
 

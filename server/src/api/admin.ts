@@ -28,7 +28,10 @@ router.get('/seed-products', async (req: Request, res: Response) => {
     // If no maker exists, create one
     if (!makerUser) {
       console.log('📦 [Admin API] No maker found, creating a default maker...');
-      const hashedPassword = await bcrypt.hash('maker123', 10);
+      // Use environment variable for password, fallback to secure random password
+      const makerPasswordPlain = process.env.MAKER_DEFAULT_PASSWORD || 
+        `Temp${Math.random().toString(36).slice(-12)}!`;
+      const hashedPassword = await bcrypt.hash(makerPasswordPlain, 10);
       
       makerUser = await prisma.users.create({
         data: {

@@ -5,7 +5,9 @@ const prisma = new PrismaClient();
 
 async function createUser() {
   const email = 'aljnaiditareq123@gmail.com';
-  const password = '123123';
+  // Use environment variable for password, fallback to secure random password
+  const password = process.env.USER_DEFAULT_PASSWORD || 
+    `Temp${Math.random().toString(36).slice(-12)}!`;
   const name = 'Tareq';
 
   try {

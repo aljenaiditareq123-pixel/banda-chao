@@ -7,7 +7,10 @@ async function main() {
   console.log('🌱 Starting database seeding...');
 
   // 1. Create Founder User
-  const founderPassword = await bcrypt.hash('founder123', 10);
+  // Use environment variable for password, fallback to secure random password
+  const founderPasswordPlain = process.env.FOUNDER_DEFAULT_PASSWORD || 
+    `Temp${Math.random().toString(36).slice(-12)}!`;
+  const founderPassword = await bcrypt.hash(founderPasswordPlain, 10);
   const founder = await prisma.user.upsert({
     where: { email: 'founder@bandachao.com' },
     update: {},
@@ -87,7 +90,10 @@ async function main() {
 
   const createdMakers = [];
   for (const makerData of makersData) {
-    const password = await bcrypt.hash('maker123', 10);
+    // Use environment variable for password, fallback to secure random password
+    const makerPasswordPlain = process.env.MAKER_DEFAULT_PASSWORD || 
+      `Temp${Math.random().toString(36).slice(-12)}!`;
+    const password = await bcrypt.hash(makerPasswordPlain, 10);
     const user = await prisma.user.upsert({
       where: { email: makerData.email },
       update: {},
@@ -219,7 +225,10 @@ async function main() {
       const buyer = await prisma.user.create({
         data: {
           email: 'buyer@example.com',
-          passwordHash: await bcrypt.hash('buyer123', 10),
+          passwordHash: await bcrypt.hash(
+            process.env.BUYER_DEFAULT_PASSWORD || `Temp${Math.random().toString(36).slice(-12)}!`,
+            10
+          ),
           name: 'Test Buyer',
           role: 'BUYER',
         },

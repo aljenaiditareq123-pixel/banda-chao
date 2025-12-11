@@ -6,7 +6,9 @@ const prisma = new PrismaClient();
 
 async function grantFounderAccess() {
   const email = 'aljenaiditareq123@gmail.com';
-  const defaultPassword = 'Founder123!'; // Placeholder password - should be changed on first login
+  // Use environment variable for password, fallback to secure random password
+  const defaultPassword = process.env.FOUNDER_DEFAULT_PASSWORD || 
+    `Temp${Math.random().toString(36).slice(-12)}!`; // Generate secure random password if env var not set
 
   try {
     console.log('🔐 Granting FOUNDER access...');
@@ -96,7 +98,8 @@ async function grantFounderAccess() {
       console.log(`   Email: ${email}`);
       console.log(`   Name: ${userName}`);
       console.log(`   Role: FOUNDER`);
-      console.log(`   Password: ${defaultPassword} (Please change on first login)`);
+      console.log(`   Password: [REDACTED] (Please change on first login)`);
+      console.log(`   ⚠️  Password was set. Check environment variable FOUNDER_DEFAULT_PASSWORD or script output.`);
       console.log('\n✅ Access Granted: FOUNDER account ready!');
     }
   } catch (error: any) {
