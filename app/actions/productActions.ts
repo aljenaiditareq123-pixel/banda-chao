@@ -67,10 +67,31 @@ export async function createProduct(data: CreateProductData) {
 }
 
 /**
- * Get all products for a specific user
+ * Get all products for a specific user (by userId or email)
  */
-export async function getUserProducts(userId: string) {
+export async function getUserProducts(userIdOrEmail: string) {
   try {
+    // Try to find user by email first (if it looks like an email)
+    let userId = userIdOrEmail;
+    
+    if (userIdOrEmail.includes('@')) {
+      // It's an email, find user first
+      const user = await prisma.users.findUnique({
+        where: { email: userIdOrEmail },
+        select: { id: true },
+      });
+      
+      if (!user) {
+        return {
+          success: false,
+          error: 'User not found',
+          products: [],
+        };
+      }
+      
+      userId = user.id;
+    }
+
     const products = await prisma.products.findMany({
       where: {
         user_id: userId,

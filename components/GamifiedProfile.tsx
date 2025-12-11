@@ -28,9 +28,12 @@ export default function GamifiedProfile() {
       if (status === 'authenticated' && session?.user?.id) {
         setLoading(true);
         try {
+          // Use email if available, otherwise use id
+          const userIdentifier = session.user.email || session.user.id as string;
+          
           const [statsResult, productsResult] = await Promise.all([
             getUserStats(session.user.id as string),
-            getUserProducts(session.user.id as string),
+            getUserProducts(userIdentifier),
           ]);
 
           if (statsResult.success) {

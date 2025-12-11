@@ -157,8 +157,8 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.role = (user as any).role || 'BUYER';
         
-        // Try to find or create user in database for demo user
-        if (account?.provider === 'credentials' && user.email === 'panda@bandachao.com') {
+        // Sync user with database (find existing user by email)
+        if (user.email) {
           try {
             const { prisma } = await import('@/lib/prisma');
             const dbUser = await prisma.users.findUnique({
@@ -166,8 +166,9 @@ export const authOptions: NextAuthOptions = {
             });
             
             if (dbUser) {
-              // Use database user ID
+              // Use database user ID for consistency
               token.id = dbUser.id;
+              token.email = dbUser.email;
             }
           } catch (e) {
             // Ignore errors - use token ID
