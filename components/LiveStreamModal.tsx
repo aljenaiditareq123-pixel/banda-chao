@@ -5,7 +5,8 @@ import { X, Heart, Gift, Share2, Send, ShoppingBag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import dynamic from 'next/dynamic';
 
-const ReactPlayer = dynamic(() => import('react-player/lazy'), { ssr: false });
+// react-player v3.4.0 doesn't have /lazy export, use default import with dynamic
+const ReactPlayer = dynamic(() => import('react-player'), { ssr: false });
 
 interface LiveStreamProps {
   isOpen: boolean;

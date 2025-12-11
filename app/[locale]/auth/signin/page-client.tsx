@@ -61,15 +61,11 @@ export default function SignInPageClient({ locale }: SignInPageClientProps) {
       setError('');
       
       // Use 'credentials' as provider id (matches CredentialsProvider id)
-      const result = await signIn('credentials', {
+      // When redirect: true, signIn returns void or never, so no result to check
+      await signIn('credentials', {
         callbackUrl,
         redirect: true,
       });
-
-      if (result?.error) {
-        setError(t.errorMessage);
-        setLoading(null);
-      }
     } catch (err) {
       setError(t.errorMessage);
       setLoading(null);

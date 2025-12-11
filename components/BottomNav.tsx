@@ -114,8 +114,8 @@ export default function BottomNav() {
                   <div className="w-6 h-6 rounded-full overflow-hidden border-2 border-black">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={session.user.image!}
-                      alt={session.user.name || 'User'}
+                      src={session.user?.image || '/default-avatar.png'}
+                      alt={session.user?.name || 'User'}
                       className="w-full h-full object-cover"
                     />
                   </div>

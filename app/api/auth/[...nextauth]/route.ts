@@ -1,4 +1,6 @@
-import NextAuth, { NextAuthOptions } from 'next-auth';
+import NextAuth from 'next-auth';
+import type { NextRequest } from 'next/server';
+import type { NextAuthConfig } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import FacebookProvider from 'next-auth/providers/facebook';
 import TwitterProvider from 'next-auth/providers/twitter';
@@ -82,7 +84,7 @@ const WeChatProvider = CredentialsProvider({
 // Note: We can add PrismaAdapter later if needed
 // For now, we'll use JWT strategy which works without a database
 
-export const authOptions: NextAuthOptions = {
+export const authOptions: NextAuthConfig = {
   providers: [
     // Guest Login - Demo/Testing Mode (Instant login without password)
     GuestLoginProvider,
@@ -117,7 +119,6 @@ export const authOptions: NextAuthOptions = {
           TwitterProvider({
             clientId: process.env.TWITTER_CLIENT_ID,
             clientSecret: process.env.TWITTER_CLIENT_SECRET,
-            version: '2.0',
             allowDangerousEmailAccountLinking: true,
           }),
         ]
@@ -180,7 +181,7 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       // Send properties to the client
-      if (session.user) {
+      if (session?.user) {
         (session.user as any).id = token.id as string;
         (session.user as any).role = token.role || 'BUYER';
         (session as any).accessToken = token.accessToken;
@@ -198,4 +199,7 @@ export const authOptions: NextAuthOptions = {
 
 const handler = NextAuth(authOptions);
 
-export { handler as GET, handler as POST };
+// NextAuth v5 beta handler is already compatible with Next.js App Router
+// Type assertion needed for TypeScript compatibility
+export const GET = handler as any;
+export const POST = handler as any;
