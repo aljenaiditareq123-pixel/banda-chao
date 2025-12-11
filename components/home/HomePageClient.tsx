@@ -11,6 +11,7 @@ import VideoCard from '@/components/cards/VideoCard';
 import { useLanguage } from '@/contexts/LanguageContext';
 import EmptyState from '@/components/common/EmptyState';
 import OnboardingModal from '@/components/common/OnboardingModal';
+import RedEnvelope from '@/components/RedEnvelope';
 import { servicesAPI } from '@/lib/api';
 
 interface HomePageClientProps {
@@ -405,6 +406,9 @@ export default function HomePageClient({
           </div>
         </div>
       </section>
+
+      {/* Lucky Red Envelope - Chinese Gamification Feature */}
+      <RedEnvelope />
     </div>
   );
 }
