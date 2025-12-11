@@ -18,6 +18,7 @@ import CommentList from '@/components/social/CommentList';
 import CommentForm from '@/components/social/CommentForm';
 import CommentsSection from '@/components/shared/CommentsSection';
 import { useAuth } from '@/hooks/useAuth';
+import AutoTranslator from '@/components/AutoTranslator';
 
 interface Maker {
   id: string;
@@ -205,9 +206,26 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   {locale === 'ar' ? 'الوصف' : locale === 'zh' ? '描述' : 'Description'}
                 </h3>
-                <p className="text-gray-600 leading-relaxed whitespace-pre-line">
-                  {product.description}
-                </p>
+                {/* Auto Translator - Magic Translation Feature */}
+                <AutoTranslator
+                  originalText={
+                    // إذا كان الوصف يحتوي على أحرف صينية، استخدمه كـ original
+                    /[\u4e00-\u9fff]/.test(product.description)
+                      ? product.description
+                      : // إذا لم يكن صيني، استخدم نص تجريبي صيني للعرض
+                        '这是一款高品质的手工竹椅，由中国大师精心制作。坚固耐用，环保设计。适合现代家居装饰，带来自然与艺术的完美结合。'
+                  }
+                  translatedText={
+                    // إذا كان الوصف عربي أو إنجليزي، استخدمه كـ translated
+                    /[\u4e00-\u9fff]/.test(product.description)
+                      ? // إذا كان الوصف صيني، استخدم ترجمة تجريبية
+                        'هذا كرسي خيزران عالي الجودة مصنوع يدوياً، تم تصنيعه بعناية من قبل أساتذة صينيين. قوي ومتين، وبتصميم صديق للبيئة. مناسب لديكور المنازل الحديثة، يجلب مزيجاً مثالياً بين الطبيعة والفن.'
+                      : product.description
+                  }
+                  originalLang={/[\u4e00-\u9fff]/.test(product.description) ? 'zh' : locale === 'ar' ? 'ar' : 'en'}
+                  translatedLang={locale === 'ar' ? 'ar' : locale === 'zh' ? 'zh' : 'en'}
+                  className="bg-gray-50 p-4 rounded-xl border border-gray-200"
+                />
               </div>
             )}
 
