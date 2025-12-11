@@ -8,6 +8,7 @@ import ProductCard from '@/components/cards/ProductCard';
 import ServiceCard from '@/components/cards/ServiceCard';
 import MakerCard from '@/components/cards/MakerCard';
 import VideoCard from '@/components/cards/VideoCard';
+import GroupBuyCard from '@/components/GroupBuyCard';
 import ChineseProductCard from '@/components/cards/ChineseProductCard';
 import { useLanguage } from '@/contexts/LanguageContext';
 import EmptyState from '@/components/common/EmptyState';
@@ -475,6 +476,57 @@ export default function HomePageClient({
           </div>
         </section>
       )}
+
+      {/* Group Buy Section - Viral Marketing */}
+      <section className="py-16 bg-gradient-to-b from-white to-orange-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between mb-10">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+                {locale === 'ar' 
+                  ? 'شراء جماعي (وفّر مع أصدقائك) 👯‍♀️' 
+                  : locale === 'zh' 
+                  ? '团购（与朋友一起省钱）👯‍♀️'
+                  : 'Group Buy (Save with Friends) 👯‍♀️'}
+              </h2>
+              <p className="text-gray-600">
+                {locale === 'ar' 
+                  ? 'اشترِ مع صديق واحصل على خصم 50%!' 
+                  : locale === 'zh' 
+                  ? '与朋友一起购买，享受50%折扣！'
+                  : 'Buy with a friend and get 50% off!'}
+              </p>
+            </div>
+          </div>
+          
+          <Grid columns={{ base: 1, sm: 2, md: 2 }} gap="gap-6">
+            {/* Sample Group Buy Products */}
+            <GridItem>
+              <GroupBuyCard
+                id="group-1"
+                image="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400"
+                title={locale === 'ar' ? 'سماعات باندا المحيطية' : locale === 'zh' ? '熊猫环绕声耳机' : 'Panda Surround Headphones'}
+                singlePrice={199}
+                groupPrice={99}
+                href={`/${locale}/products/group-1`}
+                locale={locale}
+              />
+            </GridItem>
+            
+            <GridItem>
+              <GroupBuyCard
+                id="group-2"
+                image="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400"
+                title={locale === 'ar' ? 'ساعة ذكية رياضية' : locale === 'zh' ? '智能运动手表' : 'Smart Sports Watch'}
+                singlePrice={299}
+                groupPrice={149}
+                href={`/${locale}/products/group-2`}
+                locale={locale}
+              />
+            </GridItem>
+          </Grid>
+        </div>
+      </section>
 
       {/* CTA Section */}
       <section className="py-16 bg-primary-600 text-white">
