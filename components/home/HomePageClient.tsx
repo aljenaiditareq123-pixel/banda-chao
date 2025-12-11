@@ -15,6 +15,7 @@ import EmptyState from '@/components/common/EmptyState';
 import OnboardingModal from '@/components/common/OnboardingModal';
 import RedEnvelope from '@/components/RedEnvelope';
 import MysteryBox from '@/components/MysteryBox';
+import LuckyWheel from '@/components/LuckyWheel';
 import { servicesAPI } from '@/lib/api';
 
 interface HomePageClientProps {
@@ -525,6 +526,29 @@ export default function HomePageClient({
               />
             </GridItem>
           </Grid>
+        </div>
+      </section>
+
+      {/* Daily Rewards - Lucky Wheel Section */}
+      <section className="py-16 bg-gradient-to-b from-gray-50 to-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+              {locale === 'ar' 
+                ? 'مكافآت يومية 🎁' 
+                : locale === 'zh' 
+                ? '每日奖励 🎁'
+                : 'Daily Rewards 🎁'}
+            </h2>
+            <p className="text-gray-600 text-lg">
+              {locale === 'ar' 
+                ? 'دوّر العجلة كل يوم واربح خصومات وجوائز حصرية!' 
+                : locale === 'zh' 
+                ? '每天旋转轮盘，赢取折扣和独家奖品！'
+                : 'Spin the wheel every day and win discounts and exclusive prizes!'}
+            </p>
+          </div>
+          <LuckyWheel />
         </div>
       </section>
 
