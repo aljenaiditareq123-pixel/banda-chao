@@ -1,9 +1,21 @@
 services:
+  # Frontend Service (Next.js Standalone)
   - type: web
     name: banda-chao-frontend
     env: node
-    buildCommand: npm install && npm run build
-    startCommand: npm start
+    # Optimized build command for Render (uses standalone output)
+    # Using npm ci for faster, reliable builds (uses package-lock.json)
+    buildCommand: npm ci && npm run build && cp -r public .next/standalone/public 2>/dev/null || true && cp -r .next/static .next/standalone/.next/static 2>/dev/null || true
+    # Start command uses standalone server for better performance and lower memory usage
+    startCommand: node .next/standalone/server.js
+    # Node version
+    nodeVersion: 20.x
+    # Plan settings (adjust based on your Render plan)
+    plan: starter
+    # Health check
+    healthCheckPath: /
+    # Auto-deploy
+    autoDeploy: true
     envVars:
       - key: NODE_ENV
         value: production
@@ -14,4 +26,17 @@ services:
           type: web
           name: banda-chao-backend
           property: host
+        # Required for standalone mode
+      - key: PORT
+        value: 3000
+      # NextAuth
+      - key: NEXTAUTH_URL
+        value: https://banda-chao-frontend.onrender.com
+      - key: NEXTAUTH_SECRET
+        generateValue: true
+      # Database (SQLite for local, PostgreSQL for production)
+      - key: DATABASE_URL
+        fromDatabase:
+          name: banda-chao-db
+          property: connectionString
 

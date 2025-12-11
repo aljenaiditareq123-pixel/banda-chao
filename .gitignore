@@ -17,6 +17,10 @@ package-lock.json
 /dist/
 *.tsbuildinfo
 next-env.d.ts
+.vercel/
+vercel.json
+# Standalone output (can be large)
+.next/standalone/
 
 # ============================================
 # Database

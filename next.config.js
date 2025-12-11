@@ -1,17 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // swcMinify is enabled by default in Next.js 16, no need to specify
+  
+  // Optimize for Render: Use standalone output to reduce build size and memory usage
+  // This creates a minimal server build that only includes necessary files
+  output: 'standalone',
   
   // Ensure trailing slash is handled correctly for Render
   trailingSlash: false,
   
-  // IMPORTANT: Do NOT use output: 'export' - it disables Server-Side Rendering
-  // and breaks dynamic routes like /[locale] on Render
-  // output: 'export', // ❌ REMOVED - breaks i18n routing
-  
+  // Optimize images for production
   images: {
-    // domains is deprecated, using remotePatterns only
     remotePatterns: [
       {
         protocol: 'https',
@@ -28,13 +27,21 @@ const nextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'banda-chao.onrender.com',
+        hostname: 'banda-chao-frontend.onrender.com',
       },
     ],
+    // Optimize image formats
+    formats: ['image/avif', 'image/webp'],
   },
   
-  // Note: Rewrites removed - middleware handles locale routing
-  // Rewrites can conflict with middleware in App Router
+  // Optimize compilation
+  swcMinify: true,
+  
+  // Disable source maps in production to reduce build size
+  productionBrowserSourceMaps: false,
+  
+  // Note: Middleware handles locale routing
+  // Rewrites removed - can conflict with middleware in App Router
 }
 
 module.exports = nextConfig
