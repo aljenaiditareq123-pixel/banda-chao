@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import dynamic from 'next/dynamic';
 
 // react-player v3.4.0 doesn't have /lazy export, use default import with dynamic
-const ReactPlayer = dynamic(() => import('react-player'), { ssr: false });
+const ReactPlayer = dynamic(() => import('react-player'), { ssr: false }) as any;
 
 interface LiveStreamProps {
   isOpen: boolean;
