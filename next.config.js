@@ -34,10 +34,8 @@ const nextConfig = {
     formats: ['image/avif', 'image/webp'],
   },
   
-  // Optimize compilation
-  swcMinify: true,
-  
   // Disable source maps in production to reduce build size
+  // Note: swcMinify is enabled by default in Next.js 16, no need to specify
   productionBrowserSourceMaps: false,
   
   // Note: Middleware handles locale routing
