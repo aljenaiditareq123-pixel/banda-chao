@@ -8,6 +8,7 @@ import ProductCard from '@/components/cards/ProductCard';
 import ServiceCard from '@/components/cards/ServiceCard';
 import MakerCard from '@/components/cards/MakerCard';
 import VideoCard from '@/components/cards/VideoCard';
+import ChineseProductCard from '@/components/cards/ChineseProductCard';
 import { useLanguage } from '@/contexts/LanguageContext';
 import EmptyState from '@/components/common/EmptyState';
 import OnboardingModal from '@/components/common/OnboardingModal';
@@ -140,6 +141,85 @@ export default function HomePageClient({
               </Button>
             </Link>
           </div>
+        </div>
+      </section>
+
+      {/* Best Sellers Section - Chinese Style */}
+      <section className="py-12 bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+                {locale === 'ar' 
+                  ? 'الأكثر رواجاً في الصين 🔥' 
+                  : locale === 'zh' 
+                  ? '中国最热销 🔥'
+                  : 'Best Sellers in China 🔥'}
+              </h2>
+              <p className="text-gray-600 text-sm">
+                {locale === 'ar' 
+                  ? 'المنتجات الأكثر مبيعاً هذا الأسبوع' 
+                  : locale === 'zh' 
+                  ? '本周最畅销产品'
+                  : 'This week\'s best sellers'}
+              </p>
+            </div>
+          </div>
+          
+          <Grid columns={{ base: 2, sm: 2, md: 4 }} gap="gap-4">
+            {/* Sample Products - Chinese Style */}
+            <GridItem>
+              <ChineseProductCard
+                id="1"
+                image="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400"
+                title={locale === 'ar' ? 'سماعة بلوتوث' : locale === 'zh' ? '蓝牙耳机' : 'Bluetooth Headphones'}
+                price={50}
+                originalPrice={80}
+                soldCount={1200}
+                href={`/${locale}/products/1`}
+                locale={locale}
+              />
+            </GridItem>
+            
+            <GridItem>
+              <ChineseProductCard
+                id="2"
+                image="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400"
+                title={locale === 'ar' ? 'ساعة ذكية' : locale === 'zh' ? '智能手表' : 'Smart Watch'}
+                price={80}
+                originalPrice={120}
+                soldCount={5000}
+                href={`/${locale}/products/2`}
+                locale={locale}
+              />
+            </GridItem>
+            
+            <GridItem>
+              <ChineseProductCard
+                id="3"
+                image="https://images.unsplash.com/photo-1583394838336-acd977736f90?w=400"
+                title={locale === 'ar' ? 'شاحن سريع' : locale === 'zh' ? '快速充电器' : 'Fast Charger'}
+                price={30}
+                originalPrice={50}
+                soldCount={850}
+                href={`/${locale}/products/3`}
+                locale={locale}
+              />
+            </GridItem>
+            
+            <GridItem>
+              <ChineseProductCard
+                id="4"
+                image="https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400"
+                title={locale === 'ar' ? 'حقيبة ظهر' : locale === 'zh' ? '背包' : 'Backpack'}
+                price={45}
+                originalPrice={70}
+                soldCount={300}
+                href={`/${locale}/products/4`}
+                locale={locale}
+              />
+            </GridItem>
+          </Grid>
         </div>
       </section>
 
