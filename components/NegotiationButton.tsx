@@ -1,8 +1,9 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { MessageCircle, MessageSquare } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import ChinaSocialModal from '@/components/ChinaSocialModal';
 
 interface NegotiationButtonProps {
   productName: string;
@@ -19,6 +20,7 @@ export default function NegotiationButton({
 }: NegotiationButtonProps) {
   const { language } = useLanguage();
   const currentLocale = locale || language;
+  const [showModal, setShowModal] = useState(false);
 
   const formatPrice = (price: string | number) => {
     if (typeof price === 'number') {
@@ -35,10 +37,15 @@ export default function NegotiationButton({
     e.stopPropagation(); // منع فتح صفحة المنتج عند الضغط على الزر
     e.preventDefault();
 
-    // صياغة الرسالة الذكية حسب اللغة
+    // إذا كانت اللغة صينية، افتح مودال WeChat
+    if (currentLocale === 'zh') {
+      setShowModal(true);
+      return;
+    }
+
+    // للعربية والإنجليزية، استخدم WhatsApp
     const messages = {
       ar: `مرحباً 👋\nأنا مهتم بمنتج: *${productName}*\nالمعروض بسعر: *${formatPrice(price)}*\n\nهل يمكنني الحصول على خصم خاص؟ 🤔`,
-      zh: `你好 👋\n我对这个产品感兴趣：*${productName}*\n价格：*${formatPrice(price)}*\n\n可以给我折扣吗？🤔`,
       en: `Hello 👋\nI'm interested in: *${productName}*\nPrice: *${formatPrice(price)}*\n\nCan I get a special discount? 🤔`,
     };
 
@@ -72,21 +79,35 @@ export default function NegotiationButton({
   const t = texts[currentLocale as keyof typeof texts] || texts.ar;
 
   return (
-    <div className="relative group z-20">
-      {/* التلميح المشجع */}
-      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max px-2 py-1 bg-black text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
-        {t.tooltip}
-        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-black"></div>
+    <>
+      <div className="relative group z-20">
+        {/* التلميح المشجع */}
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max px-2 py-1 bg-black text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+          {t.tooltip}
+          <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-black"></div>
+        </div>
+
+        <button
+          onClick={handleNegotiate}
+          className={`${
+            currentLocale === 'zh' 
+              ? 'bg-[#07C160] hover:bg-[#06B050]' 
+              : 'bg-green-500 hover:bg-green-600'
+          } text-white p-2 rounded-full shadow-lg transition-transform transform hover:scale-110 active:scale-95 flex items-center justify-center gap-1`}
+          aria-label={t.ariaLabel}
+        >
+          <MessageCircle size={20} />
+          <span className="text-xs font-bold hidden sm:inline-block">{t.label}</span>
+        </button>
       </div>
 
-      <button
-        onClick={handleNegotiate}
-        className="bg-green-500 hover:bg-green-600 text-white p-2 rounded-full shadow-lg transition-transform transform hover:scale-110 active:scale-95 flex items-center justify-center gap-1"
-        aria-label={t.ariaLabel}
-      >
-        <MessageCircle size={20} />
-        <span className="text-xs font-bold hidden sm:inline-block">{t.label}</span>
-      </button>
-    </div>
+      {/* WeChat Modal for Chinese users */}
+      <ChinaSocialModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        wechatId={`BandaChao_${productName.slice(0, 10).replace(/\s/g, '_')}`}
+        locale={currentLocale}
+      />
+    </>
   );
 }
