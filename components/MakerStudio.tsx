@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Camera, Mic, Check, Sparkles, ArrowRight, UploadCloud } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '@/contexts/LanguageContext';
+import DigitalBusinessCard from '@/components/DigitalBusinessCard';
 
 export default function MakerStudio() {
   const { language } = useLanguage();
@@ -259,6 +260,15 @@ export default function MakerStudio() {
                 <div className="bg-yellow-50 border-2 border-yellow-200 p-4 rounded-xl w-full relative z-10">
                   <p className="font-bold text-yellow-800 text-sm">{t.step4TipTitle}</p>
                   <p className="text-yellow-700 text-sm">{t.step4TipText}</p>
+                </div>
+
+                {/* Digital Business Card */}
+                <div className="w-full relative z-10 mt-4">
+                  <DigitalBusinessCard 
+                    shopName={language === 'ar' ? 'متجر المبدع' : language === 'zh' ? '创意商店' : 'Creative Shop'}
+                    productName={language === 'ar' ? 'منتج مميز' : language === 'zh' ? '特色产品' : 'Featured Product'}
+                    locale={language}
+                  />
                 </div>
 
                 <button 
