@@ -13,6 +13,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import EmptyState from '@/components/common/EmptyState';
 import OnboardingModal from '@/components/common/OnboardingModal';
 import RedEnvelope from '@/components/RedEnvelope';
+import MysteryBox from '@/components/MysteryBox';
 import { servicesAPI } from '@/lib/api';
 
 interface HomePageClientProps {
@@ -220,6 +221,13 @@ export default function HomePageClient({
               />
             </GridItem>
           </Grid>
+        </div>
+      </section>
+
+      {/* Mystery Panda Box Section - Gamification */}
+      <section className="py-16 bg-gradient-to-b from-gray-50 to-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <MysteryBox />
         </div>
       </section>
 
