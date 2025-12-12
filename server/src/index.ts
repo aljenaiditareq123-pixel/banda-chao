@@ -122,9 +122,7 @@ app.use(cors({
     
     // In development, allow all origins for easier testing
     if (NODE_ENV === 'development') {
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`[CORS] ✅ Development mode - Allowing origin: ${origin}`);
-      }
+      console.log(`[CORS] ✅ Development mode - Allowing origin: ${origin}`);
       callback(null, true);
       return;
     }
@@ -346,4 +344,3 @@ server.listen(PORT, async () => {
 
 // Export app for testing
 export default app;
-
