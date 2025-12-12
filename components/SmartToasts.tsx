@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingBag, TrendingUp, Gift, Star, Award } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Toast {
   id: string;
@@ -11,66 +12,117 @@ interface Toast {
   timestamp: number;
 }
 
-// Dummy data for social proof
-const ARABIC_NAMES = [
-  'أحمد', 'فاطمة', 'محمد', 'سارة', 'علي', 'مريم', 'خالد', 'نورا',
-  'عبدالله', 'ليلى', 'حسن', 'ريم', 'يوسف', 'هند', 'عمر', 'زينب',
-  'طارق', 'دينا', 'ماجد', 'لينا', 'سامر', 'يارا', 'باسل', 'جنى'
+// Chinese Names - Primary Market (1.5 Billion People)
+const CHINESE_NAMES = [
+  'Wang', 'Li', 'Zhang', 'Liu', 'Chen', 'Yang', 'Huang', 'Zhao',
+  'Wu', 'Zhou', 'Xu', 'Sun', 'Ma', 'Zhu', 'Hu', 'Guo',
+  'He', 'Gao', 'Lin', 'Luo', 'Song', 'Zheng', 'Liang', 'Xie',
+  'Tang', 'Han', 'Cao', 'Feng', 'Cui', 'Cheng', 'Pan', 'Peng'
 ];
 
-const CITIES = [
-  // UAE
-  'دبي', 'أبوظبي', 'الشارقة', 'عجمان', 'رأس الخيمة',
-  // China
-  'بكين', 'شنغهاي', 'قوانغتشو', 'شينزن', 'هونغ كونغ',
-  // Saudi Arabia
-  'الرياض', 'جدة', 'الدمام', 'المدينة', 'مكة'
+// Major Chinese Cities - Showing Scale
+const CHINESE_CITIES = [
+  'Shanghai', 'Beijing', 'Shenzhen', 'Guangzhou', 'Yiwu', 'Hangzhou',
+  'Chengdu', 'Wuhan', 'Xi\'an', 'Nanjing', 'Chongqing', 'Dongguan',
+  'Tianjin', 'Qingdao', 'Suzhou', 'Xiamen', 'Foshan', 'Hefei'
 ];
 
-const PRODUCTS = [
-  'ساعة ذكية', 'سماعات لاسلكية', 'حقيبة يد', 'نظارات شمسية',
-  'سوار ذهبي', 'عطر فاخر', 'محفظة جلدية', 'ساعة فاخرة',
-  'طقم مجوهرات', 'قميص حريري', 'حذاء رياضي', 'نظارة ذكية'
-];
+// Products in different languages (but actors are always Chinese)
+const PRODUCTS = {
+  ar: [
+    'ساعة ذكية', 'سماعات لاسلكية', 'حقيبة يد', 'نظارات شمسية',
+    'سوار ذهبي', 'عطر فاخر', 'محفظة جلدية', 'ساعة فاخرة',
+    'طقم مجوهرات', 'قميص حريري', 'حذاء رياضي', 'نظارة ذكية'
+  ],
+  zh: [
+    '智能手表', '无线耳机', '手提包', '太阳镜',
+    '金手镯', '香水', '皮夹', '豪华手表',
+    '珠宝套装', '丝质衬衫', '运动鞋', '智能眼镜'
+  ],
+  en: [
+    'Smart Watch', 'Wireless Earbuds', 'Handbag', 'Sunglasses',
+    'Gold Bracelet', 'Luxury Perfume', 'Leather Wallet', 'Premium Watch',
+    'Jewelry Set', 'Silk Shirt', 'Sports Shoes', 'Smart Glasses'
+  ]
+};
 
-const COUPON_TYPES = [
-  'خصم 20%', 'خصم 30%', 'كوبون مجاني', 'شحن مجاني',
-  'هدية مجانية', 'خصم 50%', 'كوبون ذهبي'
-];
+const COUPON_TYPES = {
+  ar: [
+    'خصم 20%', 'خصم 30%', 'كوبون مجاني', 'شحن مجاني',
+    'هدية مجانية', 'خصم 50%', 'كوبون ذهبي'
+  ],
+  zh: [
+    '20% 折扣', '30% 折扣', '免费优惠券', '免费送货',
+    '免费礼品', '50% 折扣', '黄金优惠券'
+  ],
+  en: [
+    '20% Off', '30% Off', 'Free Coupon', 'Free Shipping',
+    'Free Gift', '50% Off', 'Gold Coupon'
+  ]
+};
 
-// Generate random toast messages
-const generateToastMessage = (): { message: string; icon: React.ReactNode } => {
-  const randomName = ARABIC_NAMES[Math.floor(Math.random() * ARABIC_NAMES.length)];
-  const randomCity = CITIES[Math.floor(Math.random() * CITIES.length)];
-  const randomProduct = PRODUCTS[Math.floor(Math.random() * PRODUCTS.length)];
-  const randomCoupon = COUPON_TYPES[Math.floor(Math.random() * COUPON_TYPES.length)];
+// Generate random toast messages - Chinese market focused
+const generateToastMessage = (language: 'ar' | 'zh' | 'en' = 'en'): { message: string; icon: React.ReactNode } => {
+  const randomName = CHINESE_NAMES[Math.floor(Math.random() * CHINESE_NAMES.length)];
+  const randomCity = CHINESE_CITIES[Math.floor(Math.random() * CHINESE_CITIES.length)];
+  const langProducts = PRODUCTS[language] || PRODUCTS.en;
+  const langCoupons = COUPON_TYPES[language] || COUPON_TYPES.en;
+  const randomProduct = langProducts[Math.floor(Math.random() * langProducts.length)];
+  const randomCoupon = langCoupons[Math.floor(Math.random() * langCoupons.length)];
   const randomLevel = Math.floor(Math.random() * 50) + 1; // Level 1-50
+
+  // Message templates based on language (actors are always Chinese)
+  const templates = {
+    ar: {
+      bought: (name: string, city: string, product: string) => `${name} من ${city} اشترى ${product} للتو`,
+      leveledUp: (name: string, level: number) => `${name} ارتقى إلى المستوى ${level}`,
+      wonCoupon: (name: string, coupon: string) => `${name} ربح ${coupon}`,
+      addedToCart: (name: string, product: string) => `${name} أضاف ${product} إلى السلة`,
+      achievement: (name: string) => `${name} حقق إنجاز جديد! 🎉`,
+    },
+    zh: {
+      bought: (name: string, city: string, product: string) => `${city} 的 ${name} 刚刚购买了 ${product}`,
+      leveledUp: (name: string, level: number) => `${name} 升级到了 ${level} 级`,
+      wonCoupon: (name: string, coupon: string) => `${name} 获得了 ${coupon}`,
+      addedToCart: (name: string, product: string) => `${name} 将 ${product} 添加到购物车`,
+      achievement: (name: string) => `${name} 达成了新成就！🎉`,
+    },
+    en: {
+      bought: (name: string, city: string, product: string) => `${name} from ${city} just bought ${product}`,
+      leveledUp: (name: string, level: number) => `${name} leveled up to Level ${level}`,
+      wonCoupon: (name: string, coupon: string) => `${name} won ${coupon}`,
+      addedToCart: (name: string, product: string) => `${name} added ${product} to cart`,
+      achievement: (name: string) => `${name} unlocked a new achievement! 🎉`,
+    },
+  };
+
+  const t = templates[language];
 
   const messageTypes = [
     {
-      message: `${randomName} من ${randomCity} اشترى ${randomProduct}`,
+      message: t.bought(randomName, randomCity, randomProduct),
       icon: <ShoppingBag className="w-4 h-4" />,
-      probability: 0.4, // 40% chance
+      probability: 0.45, // 45% chance - most common
     },
     {
-      message: `${randomName} ارتقى إلى المستوى ${randomLevel}`,
+      message: t.leveledUp(randomName, randomLevel),
       icon: <TrendingUp className="w-4 h-4" />,
       probability: 0.25, // 25% chance
     },
     {
-      message: `${randomName} ربح ${randomCoupon}`,
+      message: t.wonCoupon(randomName, randomCoupon),
       icon: <Gift className="w-4 h-4" />,
       probability: 0.2, // 20% chance
     },
     {
-      message: `${randomName} أضاف ${randomProduct} إلى السلة`,
+      message: t.addedToCart(randomName, randomProduct),
       icon: <Star className="w-4 h-4" />,
-      probability: 0.1, // 10% chance
+      probability: 0.08, // 8% chance
     },
     {
-      message: `${randomName} حقق إنجاز جديد! 🎉`,
+      message: t.achievement(randomName),
       icon: <Award className="w-4 h-4" />,
-      probability: 0.05, // 5% chance
+      probability: 0.02, // 2% chance - rare
     },
   ];
 
@@ -91,6 +143,7 @@ const generateToastMessage = (): { message: string; icon: React.ReactNode } => {
 export default function SmartToasts() {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [isRTL, setIsRTL] = useState(false);
+  const { language } = useLanguage();
 
   // Detect RTL from document direction
   useEffect(() => {
@@ -110,10 +163,10 @@ export default function SmartToasts() {
     return () => observer.disconnect();
   }, []);
 
-  // Generate new toasts at intervals
+  // Generate new toasts at frequent intervals (showing high Chinese market traffic)
   useEffect(() => {
     const interval = setInterval(() => {
-      const { message, icon } = generateToastMessage();
+      const { message, icon } = generateToastMessage(language as 'ar' | 'zh' | 'en');
       const newToast: Toast = {
         id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
         message,
@@ -122,20 +175,20 @@ export default function SmartToasts() {
       };
 
       setToasts((prev) => {
-        // Keep maximum 3 toasts visible
-        const updated = [...prev, newToast].slice(-3);
+        // Keep maximum 4 toasts visible (increased to show more activity)
+        const updated = [...prev, newToast].slice(-4);
         return updated;
       });
-    }, 4000 + Math.random() * 2000); // Random interval between 4-6 seconds
+    }, 2500 + Math.random() * 1500); // Random interval between 2.5-4 seconds (more frequent = high traffic)
 
     return () => clearInterval(interval);
-  }, []);
+  }, [language]);
 
-  // Auto-remove toasts after 6 seconds
+  // Auto-remove toasts after 5 seconds (shorter duration = higher turnover = more activity)
   useEffect(() => {
     const cleanupInterval = setInterval(() => {
       const now = Date.now();
-      setToasts((prev) => prev.filter((toast) => now - toast.timestamp < 6000));
+      setToasts((prev) => prev.filter((toast) => now - toast.timestamp < 5000));
     }, 1000);
 
     return () => clearInterval(cleanupInterval);
