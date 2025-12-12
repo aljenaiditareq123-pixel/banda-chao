@@ -16,8 +16,13 @@ export default async function MakerJoinPage({ params }: PageProps) {
     const resolvedParams = await params;
     locale = resolvedParams.locale;
   } catch (error) {
+<<<<<<< HEAD
     console.error('Error resolving params in maker join page:', error);
     notFound();
+=======
+    console.error('Error resolving params:', error);
+    locale = 'en';
+>>>>>>> 7ed631c (Fix Upload Button routing: Redirect non-makers to join page correctly)
   }
 
   if (!validLocales.includes(locale)) {
@@ -26,6 +31,9 @@ export default async function MakerJoinPage({ params }: PageProps) {
 
   return <MakerJoinClient locale={locale} />;
 }
+<<<<<<< HEAD
 
 
 
+=======
+>>>>>>> 7ed631c (Fix Upload Button routing: Redirect non-makers to join page correctly)

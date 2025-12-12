@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
 
 interface UploadButtonProps {
   locale: string;
@@ -11,6 +12,7 @@ interface UploadButtonProps {
 
 export default function UploadButton({ locale, isLoggedIn, userRole }: UploadButtonProps) {
   const router = useRouter();
+  const { user } = useAuth();
 
   // Defensive logging (development only)
   useEffect(() => {
@@ -25,20 +27,24 @@ export default function UploadButton({ locale, isLoggedIn, userRole }: UploadBut
       console.log('[UploadButton] Upload button clicked');
     }
 
-    // If not logged in, redirect to signin
-    if (!isLoggedIn) {
+    // 1. Check if the user is authenticated (session/user exists)
+    const isAuthenticated = user !== null && user !== undefined;
+    const isMaker = user?.role === 'MAKER' || userRole === 'MAKER';
+
+    // 2. IF NOT authenticated -> Redirect to '/auth/signin'
+    if (!isAuthenticated) {
       router.push(`/${locale}/auth/signin`);
       return;
     }
 
-    // If logged in but not a maker, redirect to maker join
-    if (userRole !== 'MAKER') {
+    // 3. IF authenticated -> Check if the user is a "Maker"
+    if (isMaker) {
+      // If YES (is Maker) -> Redirect to '/maker/dashboard'
+      router.push(`/${locale}/maker/dashboard`);
+    } else {
+      // If NO (not Maker yet) -> Redirect to '/maker/join'
       router.push(`/${locale}/maker/join`);
-      return;
     }
-
-    // If logged in as maker, go to dashboard (where they can upload)
-    router.push(`/${locale}/maker/dashboard`);
   };
 
   const texts = {
@@ -65,4 +71,3 @@ export default function UploadButton({ locale, isLoggedIn, userRole }: UploadBut
     </button>
   );
 }
-
