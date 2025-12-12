@@ -84,18 +84,6 @@ const WeChatProvider = CredentialsProvider({
 // Note: We can add PrismaAdapter later if needed
 // For now, we'll use JWT strategy which works without a database
 
-// Validate NEXTAUTH_SECRET in production
-const getNextAuthSecret = (): string => {
-  if (process.env.NODE_ENV === 'production') {
-    if (!process.env.NEXTAUTH_SECRET) {
-      throw new Error('NEXTAUTH_SECRET must be set in production environment');
-    }
-    return process.env.NEXTAUTH_SECRET;
-  }
-  // Development fallback
-  return process.env.NEXTAUTH_SECRET || 'dev-secret-only';
-};
-
 export const authOptions: NextAuthConfig = {
   providers: [
     // Guest Login - Demo/Testing Mode (Instant login without password)

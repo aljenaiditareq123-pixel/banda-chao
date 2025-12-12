@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import MakerDashboard from '@/components/MakerDashboard';
+import MakerDashboardClient from './page-client';
 
 interface PageProps {
   params: Promise<{
@@ -24,9 +24,5 @@ export default async function MakerDashboardPage({ params }: PageProps) {
     notFound();
   }
 
-  // Render the new Maker Dashboard
-  return <MakerDashboard />;
+  return <MakerDashboardClient locale={locale} />;
 }
-
-
-

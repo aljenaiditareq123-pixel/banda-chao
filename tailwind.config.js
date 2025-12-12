@@ -59,6 +59,15 @@ module.exports = {
         'xl': '1rem',
         '2xl': '1.5rem',
       },
+      keyframes: {
+        shimmer: {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(100%)' },
+        },
+      },
+      animation: {
+        shimmer: 'shimmer 3s infinite',
+      },
     },
   },
   plugins: [],
