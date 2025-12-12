@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Users, Clock, UserPlus } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import Button from '@/components/Button';
 
 interface TeamMember {
@@ -26,6 +27,7 @@ interface GroupBuyWidgetProps {
   teamPrice: number;
   currency?: string;
   locale?: string;
+  productId?: string;
   onJoinTeam?: (teamId: string) => void;
   onCreateTeam?: () => void;
 }
@@ -76,9 +78,11 @@ export default function GroupBuyWidget({
   teamPrice,
   currency = 'AED',
   locale = 'en',
+  productId = '',
   onJoinTeam,
   onCreateTeam,
 }: GroupBuyWidgetProps) {
+  const router = useRouter();
   const [teams, setTeams] = useState<ActiveTeam[]>(() => generateMockTeams(teamPrice));
   const [now, setNow] = useState(Date.now());
 
@@ -112,17 +116,18 @@ export default function GroupBuyWidget({
     if (onJoinTeam) {
       onJoinTeam(teamId);
     } else {
-      // Default behavior: alert (can be replaced with actual logic)
-      const team = teams.find(t => t.id === teamId);
-      if (team) {
-        alert(
-          locale === 'ar'
-            ? `انضممت إلى فريق ${team.leaderName}!`
-            : locale === 'zh'
-            ? `已加入 ${team.leaderName} 的团队！`
-            : `Joined ${team.leaderName}'s team!`
-        );
-      }
+      // Navigate to Group Buy Lobby page
+      router.push(`/${locale}/group-buy/${teamId}`);
+    }
+  };
+  
+  const handleCreateTeam = () => {
+    if (onCreateTeam) {
+      onCreateTeam();
+    } else {
+      // Create new team and navigate to lobby
+      const newTeamId = `team-${Date.now()}`;
+      router.push(`/${locale}/group-buy/${newTeamId}`);
     }
   };
 
@@ -306,7 +311,7 @@ export default function GroupBuyWidget({
       <Button
         variant="secondary"
         className="w-full bg-white dark:bg-gray-800 border-2 border-amber-500 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 font-semibold py-3"
-        onClick={onCreateTeam}
+        onClick={handleCreateTeam}
       >
         {t.createTeam}
       </Button>

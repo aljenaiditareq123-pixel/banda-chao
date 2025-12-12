@@ -246,14 +246,9 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
               teamPrice={Math.round(product.price * 0.6)} // 40% discount for team price
               currency={product.currency || 'AED'}
               locale={locale}
-              onJoinTeam={(teamId) => {
-                // Handle join team logic
-                // TODO: Redirect to checkout with team price, or show modal
-                // In production: redirect to checkout with teamPrice
-              }}
+              productId={product.id}
               onCreateTeam={() => {
-                // Handle create team logic
-                // Open share modal to invite friends
+                // Open share modal to invite friends when creating new team
                 setIsShareModalOpen(true);
               }}
             />
