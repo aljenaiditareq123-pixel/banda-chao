@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Script from 'next/script';
+import { Almarai, Inter } from 'next/font/google';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { CartProvider } from '@/contexts/CartContext';
 import SessionProviderWrapper from '@/components/providers/SessionProviderWrapper';
@@ -11,6 +12,21 @@ import FlashSale from '@/components/FlashSale';
 import BottomNav from '@/components/BottomNav';
 import SmartToasts from '@/components/SmartToasts';
 import '../globals.css';
+
+// Premium Arabic font
+const almarai = Almarai({
+  subsets: ['arabic'],
+  weight: ['300', '400', '700', '800'],
+  variable: '--font-almarai',
+  display: 'swap',
+});
+
+// Default font for English/Chinese
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+});
 
 const validLocales = ['zh', 'en', 'ar'];
 
@@ -160,10 +176,13 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
   const validLocale = (locale === 'zh' || locale === 'ar' || locale === 'en') ? locale : 'ar';
   const dir = validLocale === 'ar' ? 'rtl' : 'ltr';
   const lang = validLocale;
+  
+  // Apply premium Arabic font for Arabic locale, Inter for others
+  const fontClassName = validLocale === 'ar' ? almarai.className : inter.className;
 
   return (
-    <html lang={lang} dir={dir}>
-      <body>
+    <html lang={lang} dir={dir} className={fontClassName}>
+      <body className={fontClassName}>
         {/* Baidu-specific meta tags for Chinese pages */}
         {validLocale === 'zh' && (
           <Script

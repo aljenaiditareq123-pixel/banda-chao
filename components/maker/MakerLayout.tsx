@@ -176,7 +176,7 @@ export default function MakerLayout({ children, locale, makerName = 'Master Arti
       </aside>
 
       {/* Main Content */}
-      <div className={`lg:${locale === 'ar' ? 'mr-64' : 'ml-64'} pt-16 lg:pt-0`}>
+      <div className={`lg:ms-64 pt-16 lg:pt-0`}>
         {/* Overlay for mobile */}
         {sidebarOpen && (
           <div
