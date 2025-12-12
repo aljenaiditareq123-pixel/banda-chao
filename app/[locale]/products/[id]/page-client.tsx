@@ -248,13 +248,12 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
               locale={locale}
               onJoinTeam={(teamId) => {
                 // Handle join team logic
-                console.log('Joining team:', teamId);
-                // Could redirect to checkout with team price, or show modal
+                // TODO: Redirect to checkout with team price, or show modal
+                // In production: redirect to checkout with teamPrice
               }}
               onCreateTeam={() => {
                 // Handle create team logic
-                console.log('Creating new team');
-                // Could open share modal or create team API call
+                // Open share modal to invite friends
                 setIsShareModalOpen(true);
               }}
             />
