@@ -35,8 +35,10 @@ const nextConfig = {
   },
   
   // Disable source maps in production to reduce build size
-  // Note: swcMinify is enabled by default in Next.js 16, no need to specify
   productionBrowserSourceMaps: false,
+  
+  // Disable SWC minification to fix ReflectApply TypeError in production
+  swcMinify: false,
   
   // Note: Middleware handles locale routing
   // Rewrites removed - can conflict with middleware in App Router
