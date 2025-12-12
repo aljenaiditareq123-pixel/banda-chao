@@ -423,7 +423,7 @@ export default function GamifiedProfile() {
                   <div className="text-xs text-gray-400">{item.sub}</div>
                 </div>
               </div>
-              <ChevronRight size={16} className="text-gray-300" />
+              <ChevronRight size={16} className="text-gray-300 [dir=rtl]:rotate-180" />
             </motion.button>
           </Link>
         ))}
