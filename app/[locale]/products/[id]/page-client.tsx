@@ -21,6 +21,7 @@ import { useAuth } from '@/hooks/useAuth';
 import AutoTranslator from '@/components/AutoTranslator';
 import { MessageCircle, Factory, Shield, Lock, Plane } from 'lucide-react';
 import GroupBuyWidget from '@/components/product/GroupBuyWidget';
+import ProductPoster from '@/components/product/ProductPoster';
 
 interface Maker {
   id: string;
@@ -90,6 +91,11 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
 
   const images = product.images || [];
   const mainImage = images[0]?.url || product.imageUrl || '';
+  
+  // Generate product URL for QR code
+  const productUrl = typeof window !== 'undefined' 
+    ? window.location.href 
+    : `/${locale}/products/${product.id}`;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
@@ -251,6 +257,17 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
                 // Could open share modal or create team API call
                 setIsShareModalOpen(true);
               }}
+            />
+
+            {/* Product Poster Generator - WeChat-style sharing */}
+            <ProductPoster
+              productName={product.name}
+              productImage={mainImage}
+              soloPrice={product.price}
+              teamPrice={Math.round(product.price * 0.6)}
+              currency={product.currency || 'AED'}
+              locale={locale}
+              productUrl={productUrl}
             />
 
             {product.description && (
