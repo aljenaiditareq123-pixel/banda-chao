@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 
 export default function RedEnvelope() {
   const [isOpen, setIsOpen] = useState(false);
@@ -10,22 +11,24 @@ export default function RedEnvelope() {
   if (isOpened && !isOpen) return null;
 
   return (
-    <div className="fixed bottom-10 right-5 z-50 flex flex-col items-end">
+    <div className="fixed bottom-24 right-5 z-[9999] flex flex-col items-end pointer-events-none">
       
       {/* الظرف المغلق - يظهر في البداية */}
       {!isOpen && !isOpened && (
-        <button
+        <motion.button
           onClick={() => setIsOpen(true)}
-          className="animate-bounce bg-red-600 hover:bg-red-700 text-yellow-300 border-2 border-yellow-400 p-4 rounded-full shadow-lg transition-all transform hover:scale-110"
+          whileTap={{ scale: 0.9 }}
+          whileHover={{ scale: 1.1 }}
+          className="animate-bounce bg-red-600 hover:bg-red-700 text-yellow-300 border-2 border-yellow-400 p-4 rounded-full shadow-lg transition-all cursor-pointer pointer-events-auto"
         >
           <div className="text-2xl">🧧</div>
           <div className="text-xs font-bold mt-1">افتح الحظ</div>
-        </button>
+        </motion.button>
       )}
 
       {/* النافذة المنبثقة عند فتح الظرف */}
       {isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4 pointer-events-auto">
           <div className="bg-red-600 w-full max-w-sm rounded-2xl p-6 text-center border-4 border-yellow-400 shadow-2xl relative overflow-hidden">
             
             {/* زر الإغلاق */}
