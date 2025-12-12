@@ -17,6 +17,7 @@ import RedEnvelope from '@/components/RedEnvelope';
 import MysteryBox from '@/components/MysteryBox';
 import LuckyWheel from '@/components/LuckyWheel';
 import LiveStreamModal from '@/components/LiveStreamModal';
+import FameEngine from '@/components/home/FameEngine';
 import { servicesAPI } from '@/lib/api';
 
 interface HomePageClientProps {
@@ -182,6 +183,9 @@ export default function HomePageClient({
           </div>
         </div>
       </section>
+
+      {/* Hall of Fame Leaderboards */}
+      <FameEngine />
 
       {/* Panda Stories Ring - Live Streaming Section */}
       <section className="py-6 bg-white border-b border-gray-200">
