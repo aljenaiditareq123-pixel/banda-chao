@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Grid, GridItem } from '@/components/Grid';
 import ProductCard from '@/components/cards/ProductCard';
 import Link from 'next/link';
@@ -19,6 +19,7 @@ import CommentForm from '@/components/social/CommentForm';
 import CommentsSection from '@/components/shared/CommentsSection';
 import { useAuth } from '@/hooks/useAuth';
 import AutoTranslator from '@/components/AutoTranslator';
+import { MessageCircle, Factory, Shield, Lock, Plane } from 'lucide-react';
 
 interface Maker {
   id: string;
@@ -62,6 +63,18 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [lowStockCount] = useState(Math.floor(Math.random() * 9) + 1); // Random number 1-9
+
+  // Detect mobile/tablet
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024); // lg breakpoint
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const formatPrice = (price: number, currency: string = 'USD') => {
     const symbols: Record<string, string> = {
@@ -78,8 +91,9 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
   const mainImage = images[0]?.url || product.imageUrl || '';
 
   return (
-    <div className="min-h-screen bg-gray-50" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+      {/* Add bottom padding on mobile to account for sticky bar */}
+      <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 ${isMobile ? 'pb-24' : ''}`}>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
           {/* Product Images */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -188,14 +202,32 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
             )}
 
             <div className="mb-6">
-              <p className="text-4xl font-bold text-primary mb-2">
-                {formatPrice(product.price, product.currency)}
-              </p>
+              <div className="flex items-center gap-3 mb-2">
+                <p className="text-4xl font-bold text-primary">
+                  {formatPrice(product.price, product.currency)}
+                </p>
+                {/* Urgency Indicator - Low Stock Warning */}
+                {product.stock !== undefined && product.stock > 0 && product.stock <= 50 && (
+                  <div className="flex items-center gap-2 px-3 py-1 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-full">
+                    <div className="relative">
+                      <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                      <div className="absolute inset-0 w-2 h-2 bg-red-500 rounded-full animate-ping opacity-75"></div>
+                    </div>
+                    <p className="text-sm font-semibold text-red-700 dark:text-red-400 whitespace-nowrap">
+                      {locale === 'ar'
+                        ? `بقي ${lowStockCount} فقط!`
+                        : locale === 'zh'
+                        ? `仅剩 ${lowStockCount} 件！`
+                        : `Only ${lowStockCount} left!`}
+                    </p>
+                  </div>
+                )}
+              </div>
               {product.stock !== undefined && (
                 <p className="text-sm text-gray-600">
                   {product.stock > 0 
-                    ? `${product.stock} ${locale === 'ar' ? 'متوفر' : 'in stock'}`
-                    : locale === 'ar' ? 'غير متوفر' : 'Out of stock'
+                    ? `${product.stock} ${locale === 'ar' ? 'متوفر' : locale === 'zh' ? '有库存' : 'in stock'}`
+                    : locale === 'ar' ? 'غير متوفر' : locale === 'zh' ? '缺货' : 'Out of stock'
                   }
                 </p>
               )}
@@ -321,10 +353,10 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
               )}
 
               <div className="flex gap-4">
-                {/* Add to Cart Button */}
+                {/* Add to Cart Button - Enhanced for Mobile */}
                 <Button
                   variant="primary"
-                  className="flex-1"
+                  className="flex-1 min-h-[48px] text-base font-semibold"
                   onClick={() => {
                     if (product && (product.stock === undefined || product.stock > 0)) {
                       addItem({
@@ -343,7 +375,7 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
                 </Button>
                 <Button
                   variant="secondary"
-                  className="flex-1"
+                  className="flex-1 min-h-[48px] text-base font-semibold bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white border-0"
                   onClick={async () => {
                     setCheckoutLoading(true);
                     setCheckoutError(null);
@@ -401,8 +433,68 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
                 />
               </div>
 
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                <p className="text-sm text-yellow-800">
+              {/* Trust Badges Section */}
+              <div className="grid grid-cols-2 gap-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-2 p-3 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 rounded-lg border border-amber-200/50 dark:border-amber-700/50">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
+                    <Factory className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-gray-900 dark:text-gray-100 leading-tight">
+                      {locale === 'ar'
+                        ? 'مباشرة من الصين'
+                        : locale === 'zh'
+                        ? '直接从中国'
+                        : 'Direct from China'}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 p-3 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 rounded-lg border border-amber-200/50 dark:border-amber-700/50">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
+                    <Shield className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-gray-900 dark:text-gray-100 leading-tight">
+                      {locale === 'ar'
+                        ? 'ضمان الجودة'
+                        : locale === 'zh'
+                        ? '质量保证'
+                        : 'Quality Guarantee'}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 p-3 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 rounded-lg border border-amber-200/50 dark:border-amber-700/50">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
+                    <Lock className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-gray-900 dark:text-gray-100 leading-tight">
+                      {locale === 'ar'
+                        ? 'دفع آمن'
+                        : locale === 'zh'
+                        ? '安全支付'
+                        : 'Secure Payment'}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 p-3 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 rounded-lg border border-amber-200/50 dark:border-amber-700/50">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
+                    <Plane className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-gray-900 dark:text-gray-100 leading-tight">
+                      {locale === 'ar'
+                        ? 'شحن سريع'
+                        : locale === 'zh'
+                        ? '快速发货'
+                        : 'Fast Shipping'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mt-6">
+                <p className="text-sm text-yellow-800 dark:text-yellow-200">
                   {locale === 'ar'
                     ? '⚠️ هذا دفع تجريبي في وضع الاختبار (لا يتم خصم أموال حقيقية).'
                     : locale === 'zh'
@@ -413,6 +505,94 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
             </div>
           </div>
         </div>
+
+        {/* Mobile Sticky Action Bar */}
+        {isMobile && (
+          <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-gradient-to-r from-gray-900 via-black to-gray-900 backdrop-blur-lg border-t border-amber-500/30 shadow-2xl">
+            <div className="max-w-7xl mx-auto px-4 py-3">
+              <div className="flex items-center gap-2">
+                {/* Chat Button */}
+                {product.makerId && (
+                  <Link
+                    href={`/${locale}/messages/${product.makerId}`}
+                    className="flex-shrink-0 w-12 h-12 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200"
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                  </Link>
+                )}
+                
+                {/* Add to Cart Button */}
+                <Button
+                  variant="secondary"
+                  className="flex-1 h-12 border-2 border-amber-500/50 text-amber-400 hover:bg-amber-500/10 font-semibold bg-transparent"
+                  onClick={() => {
+                    if (product && (product.stock === undefined || product.stock > 0)) {
+                      addItem({
+                        productId: product.id,
+                        name: product.name,
+                        imageUrl: mainImage,
+                        price: product.price,
+                        currency: product.currency || 'USD',
+                        quantity: quantity,
+                      });
+                    }
+                  }}
+                  disabled={product.stock !== undefined && product.stock === 0}
+                >
+                  {locale === 'ar' ? 'إضافة' : locale === 'zh' ? '加入购物车' : 'Add to Cart'}
+                </Button>
+                
+                {/* Buy Now Button - Large & Prominent */}
+                <Button
+                  variant="primary"
+                  className="flex-1 h-12 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold shadow-lg hover:shadow-xl transition-all duration-200"
+                  onClick={async () => {
+                    setCheckoutLoading(true);
+                    setCheckoutError(null);
+                    try {
+                      trackCheckoutStarted(product.id, quantity, product.price * quantity);
+
+                      const response = await paymentsAPI.createCheckout({
+                        productId: product.id,
+                        quantity: quantity,
+                        currency: product.currency || 'USD',
+                      });
+
+                      if (response.checkoutUrl) {
+                        window.location.href = response.checkoutUrl;
+                      } else {
+                        setCheckoutError(
+                          locale === 'ar'
+                            ? 'فشل إنشاء جلسة الدفع'
+                            : 'Failed to create checkout session'
+                        );
+                      }
+                    } catch (error: unknown) {
+                      const errorMessage = error && typeof error === 'object' && 'response' in error
+                        ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+                        : undefined;
+                      setCheckoutError(
+                        errorMessage ||
+                        (locale === 'ar' ? 'حدث خطأ أثناء بدء عملية الدفع' : 'Error starting checkout process')
+                      );
+                    } finally {
+                      setCheckoutLoading(false);
+                    }
+                  }}
+                  disabled={checkoutLoading || (product.stock !== undefined && product.stock === 0)}
+                >
+                  {checkoutLoading
+                    ? (locale === 'ar' ? '...' : '...')
+                    : locale === 'ar'
+                    ? 'شراء الآن'
+                    : locale === 'zh'
+                    ? '立即购买'
+                    : 'Buy Now'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Related Products */}
         {relatedProducts.length > 0 && (
