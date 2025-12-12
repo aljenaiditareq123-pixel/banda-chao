@@ -124,7 +124,7 @@ export default function VideoMirror() {
                   playing={true}
                   controls={true}
                   config={{
-                    youtube: { playerVars: { showinfo: 0 } } as any
+                    youtube: { playerVars: { showinfo: 0 } }
                   }}
                 />
               </div>
