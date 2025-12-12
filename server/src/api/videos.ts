@@ -112,6 +112,7 @@ router.get('/', async (req: Request, res: Response) => {
     const offsetParamIndex = paramIndex + 1;
     const allParams = [...params, limit, skip];
 
+    // NOTE: Safe parameterized query - parameters passed separately
     const videos = await prisma.$queryRawUnsafe<Array<any>>(`
       SELECT 
         v.id,
@@ -135,6 +136,7 @@ router.get('/', async (req: Request, res: Response) => {
       LIMIT $${limitParamIndex} OFFSET $${offsetParamIndex}
     `, ...allParams);
 
+    // NOTE: Safe parameterized query
     const totalResult = await prisma.$queryRawUnsafe<Array<{ count: bigint }>>(`
       SELECT COUNT(*) as count
       FROM videos v
@@ -171,6 +173,7 @@ router.get('/', async (req: Request, res: Response) => {
 // Get video by ID
 router.get('/:id', async (req: Request, res: Response) => {
   try {
+    // NOTE: Safe parameterized query - parameters passed separately
     const videos = await prisma.$queryRawUnsafe<Array<any>>(`
       SELECT 
         v.id,
@@ -235,6 +238,7 @@ router.get('/makers/:makerId', async (req: Request, res: Response) => {
       paramIndex++;
     }
 
+    // NOTE: Safe parameterized query - parameters passed separately
     const videos = await prisma.$queryRawUnsafe<Array<any>>(`
       SELECT 
         v.id,

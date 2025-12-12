@@ -6,7 +6,27 @@ import { motion, AnimatePresence } from 'framer-motion';
 import dynamic from 'next/dynamic';
 
 // react-player v3.4.0 doesn't have /lazy export, use default import with dynamic
-const ReactPlayer = dynamic(() => import('react-player'), { ssr: false }) as any;
+// Type assertion for TypeScript compatibility
+const ReactPlayer = dynamic(() => import('react-player'), { ssr: false }) as React.ComponentType<{
+  url: string;
+  width?: string;
+  height?: string;
+  playing?: boolean;
+  loop?: boolean;
+  controls?: boolean;
+  muted?: boolean;
+  style?: React.CSSProperties;
+  config?: {
+    youtube?: {
+      playerVars?: {
+        autoplay?: number;
+        controls?: number;
+        modestbranding?: number;
+        rel?: number;
+      };
+    };
+  };
+}>;
 
 interface LiveStreamProps {
   isOpen: boolean;
@@ -90,7 +110,7 @@ export default function LiveStreamModal({
                 rel: 0,
               },
             },
-          } as any}
+          }}
         />
       </div>
 

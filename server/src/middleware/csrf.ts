@@ -10,8 +10,13 @@ import { randomBytes, createHmac, timingSafeEqual } from 'crypto';
 // Key: userId, Value: { token, expiresAt }
 const csrfTokens = new Map<string, { token: string; expiresAt: number }>();
 
-// CSRF secret from environment (fallback to a default for development)
-const CSRF_SECRET = process.env.CSRF_SECRET || process.env.JWT_SECRET || 'default-csrf-secret-change-in-production';
+// CSRF secret from environment (required in production)
+const CSRF_SECRET = process.env.CSRF_SECRET || process.env.JWT_SECRET;
+if (!CSRF_SECRET && process.env.NODE_ENV === 'production') {
+  throw new Error('CSRF_SECRET or JWT_SECRET must be set in production environment');
+}
+// Fallback for development only
+const CSRF_SECRET_FINAL = CSRF_SECRET || 'dev-csrf-secret-only';
 
 // Token expiration time: 24 hours
 const TOKEN_EXPIRATION_MS = 24 * 60 * 60 * 1000;
@@ -34,7 +39,7 @@ export function generateCsrfToken(req: Request): string {
   const payload = `${userId}:${timestamp}`;
   
   // Generate HMAC signature
-  const hmac = createHmac('sha256', CSRF_SECRET);
+  const hmac = createHmac('sha256', CSRF_SECRET_FINAL);
   hmac.update(payload);
   const signature = hmac.digest('base64url');
   
@@ -78,7 +83,7 @@ export function verifyCsrfToken(req: Request, token: string): boolean {
     }
     
     // Recompute HMAC signature
-    const hmac = createHmac('sha256', CSRF_SECRET);
+    const hmac = createHmac('sha256', CSRF_SECRET_FINAL);
     hmac.update(payload);
     const expectedSignature = hmac.digest('base64url');
     
@@ -176,22 +181,8 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
     }
   }
 
-  // TEMPORARY: Skip CSRF for orders endpoint (for testing checkout)
-  // TODO: Remove this after fixing checkout flow
-  if (fullPath.includes('/orders') || originalUrl.includes('/orders')) {
-    console.log('[CSRF] ⚠️ TEMPORARY: Skipping CSRF check for orders endpoint:', fullPath, originalUrl);
-    return next();
-  }
-
-  // TEMPORARY: Skip CSRF for makers endpoint (for user registration as makers)
-  // TODO: Add proper CSRF token handling in frontend for makers endpoint
-  if (fullPath.includes('/makers') || originalUrl.includes('/makers')) {
-    // Only skip for POST requests (creating/updating maker profile)
-    if (req.method === 'POST' || req.method === 'PUT') {
-      console.log('[CSRF] ⚠️ TEMPORARY: Skipping CSRF check for makers endpoint:', fullPath, originalUrl);
-      return next();
-    }
-  }
+  // Note: Orders and makers endpoints now require CSRF protection
+  // Frontend must send CSRF token in X-CSRF-Token header
 
   // Get CSRF token from header
   const csrfToken = req.headers['x-csrf-token'] as string | undefined;

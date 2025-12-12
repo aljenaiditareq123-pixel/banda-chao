@@ -112,27 +112,19 @@ const allowedOriginPatterns: (string | RegExp)[] = NODE_ENV === 'production'
     ].filter(Boolean);
 
 // CORS middleware with full support for OPTIONS requests
-// TEMPORARY: Allow all origins for testing (will be restricted after checkout is fixed)
 app.use(cors({
   origin: (origin, callback) => {
-    // TEMPORARY: Allow all origins for testing checkout
-    // TODO: Restore proper CORS restrictions after checkout is fixed
-    // Only log CORS in development mode to reduce production noise
-    if (NODE_ENV === 'development') {
-      console.log(`[CORS] ⚠️ TEMPORARY: Allowing all origins for testing. Origin: ${origin || 'no origin'}`);
-    }
-    callback(null, true);
-    return;
-    
-    /* ORIGINAL CODE (commented out temporarily):
     // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) {
       callback(null, true);
       return;
     }
     
-    // In development, allow all origins temporarily
+    // In development, allow all origins for easier testing
     if (NODE_ENV === 'development') {
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[CORS] ✅ Development mode - Allowing origin: ${origin}`);
+      }
       callback(null, true);
       return;
     }
@@ -151,15 +143,11 @@ app.use(cors({
     });
     
     if (isAllowed) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`[CORS] ✅ Allowed origin: ${origin}`);
-      }
       callback(null, true);
     } else {
       console.error(`[CORS] ❌ Blocked origin: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
-    */
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: [
@@ -184,32 +172,21 @@ app.use(cors({
 }));
 
 // Handle preflight OPTIONS requests explicitly with CORS
-// TEMPORARY: Allow all origins for testing
 app.options('*', cors({
   origin: (origin, callback) => {
-    // TEMPORARY: Allow all origins for testing
-    // Reduced logging - only log occasionally
-    if (process.env.NODE_ENV === 'development' || Math.random() < 0.01) {
-      // Only log CORS in development mode to reduce production noise
-      if (NODE_ENV === 'development') {
-        console.log(`[CORS] ⚠️ TEMPORARY: Allowing OPTIONS from: ${origin || 'no origin'}`);
-      }
-    }
-    callback(null, true);
-    return;
-    
-    /* ORIGINAL CODE (commented out temporarily):
+    // Allow requests with no origin
     if (!origin) {
       callback(null, true);
       return;
     }
     
-    // Use the same origin pattern matching logic
+    // In development, allow all origins
     if (NODE_ENV === 'development') {
       callback(null, true);
       return;
     }
     
+    // In production, use the same origin pattern matching logic
     const normalizedOrigin = origin.toLowerCase().trim();
     const isAllowed = allowedOriginPatterns.some(pattern => {
       if (typeof pattern === 'string') {
@@ -226,7 +203,6 @@ app.options('*', cors({
       console.error(`[CORS] ❌ Blocked OPTIONS request from: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
-    */
   },
   credentials: true,
 }));

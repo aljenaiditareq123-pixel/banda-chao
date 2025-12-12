@@ -9,7 +9,11 @@ import { registerSchema, loginSchema } from '../validation/authSchemas';
 
 const router = Router();
 
-const JWT_SECRET: string = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+// JWT_SECRET is required in production
+if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
+  throw new Error('JWT_SECRET must be set in production environment');
+}
+const JWT_SECRET: string = process.env.JWT_SECRET || (process.env.NODE_ENV === 'production' ? '' : 'dev-secret-only');
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
 // Register

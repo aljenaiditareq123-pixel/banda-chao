@@ -127,6 +127,8 @@ router.get('/', async (req: Request, res: Response) => {
       orderByClause = `${sortField} ${sortOrder}`;
     }
 
+    // NOTE: Using $queryRawUnsafe with parameterized queries is safe from SQL injection
+    // Parameters are passed separately, not interpolated into the query string
     const products = await prisma.$queryRawUnsafe<Array<any>>(`
       SELECT 
         p.id,
@@ -148,6 +150,7 @@ router.get('/', async (req: Request, res: Response) => {
       LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
     `, ...params, limit, skip);
 
+    // NOTE: Safe parameterized query
     const totalResult = await prisma.$queryRawUnsafe<Array<{ count: bigint }>>(`
       SELECT COUNT(*) as count
       FROM products p
@@ -179,6 +182,8 @@ router.get('/', async (req: Request, res: Response) => {
 // Get product by ID
 router.get('/:id', async (req: Request, res: Response) => {
   try {
+    // NOTE: Using $queryRawUnsafe with parameterized queries is safe from SQL injection
+    // Parameters are passed separately, not interpolated into the query string
     const products = await prisma.$queryRawUnsafe<Array<any>>(`
       SELECT 
         p.id,
@@ -217,6 +222,7 @@ router.get('/makers/:makerId', async (req: Request, res: Response) => {
     const skip = (page - 1) * limit;
 
     // Get maker's user_id
+    // NOTE: Safe parameterized query
     const makers = await prisma.$queryRawUnsafe<Array<{ user_id: string }>>(`
       SELECT "user_id" FROM makers WHERE id = $1 LIMIT 1
     `, req.params.makerId);
@@ -227,6 +233,8 @@ router.get('/makers/:makerId', async (req: Request, res: Response) => {
 
     const userId = makers[0].user_id;
 
+    // NOTE: Using $queryRawUnsafe with parameterized queries is safe from SQL injection
+    // Parameters are passed separately, not interpolated into the query string
     const products = await prisma.$queryRawUnsafe<Array<any>>(`
       SELECT 
         p.id,
