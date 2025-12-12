@@ -15,6 +15,7 @@ import {
   Video
 } from 'lucide-react';
 import { useState } from 'react';
+import GamificationBar from './GamificationBar';
 
 interface MakerLayoutProps {
   children: ReactNode;
@@ -131,6 +132,11 @@ export default function MakerLayout({ children, locale, makerName = 'Master Arti
                 <span className="text-[10px] font-bold text-black">⭐ MASTER ARTISAN</span>
               </div>
             </div>
+          </div>
+
+          {/* Gamification Bar */}
+          <div className="px-4 pb-4 border-b border-amber-500/20">
+            <GamificationBar locale={locale} />
           </div>
 
           {/* Navigation */}

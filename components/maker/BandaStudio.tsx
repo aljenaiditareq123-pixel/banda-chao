@@ -64,6 +64,38 @@ export default function BandaStudio({ locale = 'en' }: BandaStudioProps) {
           clearInterval(interval);
           setIsUploading(false);
           setShowSuccess(true);
+          
+          // Save video to localStorage
+          const videoData = {
+            id: Date.now(),
+            type: 'short',
+            thumbnail: 'https://images.unsplash.com/photo-1556906781-9a412961d289?q=80&w=800&auto=format&fit=crop',
+            url: `https://www.youtube.com/watch?v=${Date.now()}`,
+            title: `My Video - ${new Date().toLocaleDateString()}`,
+            views: '0',
+            isNew: true,
+            uploadedAt: new Date().toISOString(),
+          };
+          
+          // Get existing videos from localStorage
+          const existingVideos = JSON.parse(localStorage.getItem('banda_user_videos') || '[]');
+          const updatedVideos = [videoData, ...existingVideos];
+          localStorage.setItem('banda_user_videos', JSON.stringify(updatedVideos));
+          
+          // Update gamification progress (add 5% per video)
+          const rankData = JSON.parse(localStorage.getItem('banda_artisan_rank') || JSON.stringify({
+            currentRank: 'Silver Artisan',
+            nextRank: 'Gold Dragon',
+            progress: 70,
+            nextReward: 'Unlock 0% Commission',
+            level: 2,
+          }));
+          rankData.progress = Math.min(100, rankData.progress + 5);
+          localStorage.setItem('banda_artisan_rank', JSON.stringify(rankData));
+          
+          // Trigger storage event for other components
+          window.dispatchEvent(new Event('storage'));
+          
           setTimeout(() => setShowSuccess(false), 3000);
           return 100;
         }
