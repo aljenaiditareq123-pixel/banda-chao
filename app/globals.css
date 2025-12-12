@@ -37,17 +37,18 @@ body {
   scrollbar-width: none;  /* Firefox */
 }
 
-/* Shimmer animation for SmartToasts */
+/* Shimmer animation for SmartToasts and Group Buy Widget */
 @keyframes shimmer {
   0% {
     transform: translateX(-100%);
   }
-  50% {
-    transform: translateX(100%);
-  }
   100% {
-    transform: translateX(100%);
+    transform: translateX(200%);
   }
+}
+
+.animate-shimmer {
+  animation: shimmer 3s infinite;
 }
 
 

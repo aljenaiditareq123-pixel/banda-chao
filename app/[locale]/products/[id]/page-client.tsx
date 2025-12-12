@@ -20,6 +20,7 @@ import CommentsSection from '@/components/shared/CommentsSection';
 import { useAuth } from '@/hooks/useAuth';
 import AutoTranslator from '@/components/AutoTranslator';
 import { MessageCircle, Factory, Shield, Lock, Plane } from 'lucide-react';
+import GroupBuyWidget from '@/components/product/GroupBuyWidget';
 
 interface Maker {
   id: string;
@@ -232,6 +233,25 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
                 </p>
               )}
             </div>
+
+            {/* Group Buy Widget - Pinduoduo-style */}
+            <GroupBuyWidget
+              soloPrice={product.price}
+              teamPrice={Math.round(product.price * 0.6)} // 40% discount for team price
+              currency={product.currency || 'AED'}
+              locale={locale}
+              onJoinTeam={(teamId) => {
+                // Handle join team logic
+                console.log('Joining team:', teamId);
+                // Could redirect to checkout with team price, or show modal
+              }}
+              onCreateTeam={() => {
+                // Handle create team logic
+                console.log('Creating new team');
+                // Could open share modal or create team API call
+                setIsShareModalOpen(true);
+              }}
+            />
 
             {product.description && (
               <div className="mb-6">
