@@ -50,7 +50,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         openGraph: {
           title: product.name,
           description: product.description || `Buy ${product.name} from Banda Chao`,
-          images: product.images?.[0]?.url || product.imageUrl ? [product.images[0].url || product.imageUrl] : [],
+          images: product.images?.[0]?.url ? [product.images[0].url] : product.imageUrl ? [product.imageUrl] : [],
         },
       };
     }

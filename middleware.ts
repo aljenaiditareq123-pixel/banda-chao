@@ -182,6 +182,16 @@ export function middleware(request: NextRequest) {
   if (shouldExcludePath(pathname)) {
     return NextResponse.next();
   }
+  
+  // Additional early check: if pathname looks like a static file, skip immediately
+  // This prevents favicon.ico and other static files from being processed as locales
+  if (pathname.includes('favicon.ico') || 
+      pathname.includes('robots.txt') || 
+      pathname.includes('manifest.json') ||
+      pathname.includes('og-image.png') ||
+      pathname.match(/\.(ico|png|jpg|jpeg|gif|webp|svg|css|js|woff|woff2|ttf|eot|json|xml|txt)$/i)) {
+    return NextResponse.next();
+  }
 
   // Check authentication for protected routes
   if (isProtectedRoute(pathname)) {
