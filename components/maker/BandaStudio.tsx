@@ -53,6 +53,46 @@ export default function BandaStudio({ locale = 'en' }: BandaStudioProps) {
     setIsRecording(false);
   };
 
+  const triggerConfetti = () => {
+    // Premium confetti effect using DOM elements
+    const colors = ['#F59E0B', '#FBBF24', '#FCD34D', '#FDE047', '#FEF08A', '#FEF3C7'];
+    const confettiCount = 100;
+    
+    for (let i = 0; i < confettiCount; i++) {
+      const confetti = document.createElement('div');
+      confetti.style.position = 'fixed';
+      confetti.style.left = Math.random() * 100 + '%';
+      confetti.style.top = '-10px';
+      confetti.style.width = Math.random() * 10 + 5 + 'px';
+      confetti.style.height = confetti.style.width;
+      confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+      confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0%';
+      confetti.style.pointerEvents = 'none';
+      confetti.style.zIndex = '9999';
+      confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+      confetti.style.boxShadow = '0 0 6px rgba(255, 255, 255, 0.8)';
+      
+      document.body.appendChild(confetti);
+      
+      const endX = (Math.random() - 0.5) * 400;
+      const endY = window.innerHeight + 100;
+      const rotation = Math.random() * 720;
+      
+      const animation = confetti.animate(
+        [
+          { transform: `translate(0, 0) rotate(0deg)`, opacity: 1 },
+          { transform: `translate(${endX}px, ${endY}px) rotate(${rotation}deg)`, opacity: 0 }
+        ],
+        {
+          duration: 2000 + Math.random() * 2000,
+          easing: 'cubic-bezier(0.5, 0, 0.5, 1)',
+        }
+      );
+      
+      animation.onfinish = () => confetti.remove();
+    }
+  };
+
   const handleUpload = async () => {
     setIsUploading(true);
     setUploadProgress(0);
@@ -65,7 +105,7 @@ export default function BandaStudio({ locale = 'en' }: BandaStudioProps) {
           setIsUploading(false);
           setShowSuccess(true);
           
-          // Save video to localStorage
+          // Save video to localStorage with key 'banda_videos'
           const videoData = {
             id: Date.now(),
             type: 'short',
@@ -78,9 +118,9 @@ export default function BandaStudio({ locale = 'en' }: BandaStudioProps) {
           };
           
           // Get existing videos from localStorage
-          const existingVideos = JSON.parse(localStorage.getItem('banda_user_videos') || '[]');
+          const existingVideos = JSON.parse(localStorage.getItem('banda_videos') || '[]');
           const updatedVideos = [videoData, ...existingVideos];
-          localStorage.setItem('banda_user_videos', JSON.stringify(updatedVideos));
+          localStorage.setItem('banda_videos', JSON.stringify(updatedVideos));
           
           // Update gamification progress (add 5% per video)
           const rankData = JSON.parse(localStorage.getItem('banda_artisan_rank') || JSON.stringify({
@@ -93,8 +133,11 @@ export default function BandaStudio({ locale = 'en' }: BandaStudioProps) {
           rankData.progress = Math.min(100, rankData.progress + 5);
           localStorage.setItem('banda_artisan_rank', JSON.stringify(rankData));
           
-          // Trigger storage event for other components
-          window.dispatchEvent(new Event('storage'));
+          // Trigger confetti explosion
+          triggerConfetti();
+          
+          // Trigger custom event for same-tab updates
+          window.dispatchEvent(new CustomEvent('banda_video_uploaded'));
           
           setTimeout(() => setShowSuccess(false), 3000);
           return 100;

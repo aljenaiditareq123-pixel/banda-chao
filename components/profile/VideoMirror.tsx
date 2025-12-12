@@ -89,12 +89,16 @@ export default function VideoMirror() {
               {video.type}
             </div>
             
-            {/* New Upload Badge */}
+            {/* Just Uploaded Badge */}
             {video.isNew && (
-              <div className="absolute top-2 left-2 px-2 py-1 rounded-md bg-gradient-to-r from-green-500 to-emerald-500 backdrop-blur-sm text-[10px] text-white font-bold flex items-center gap-1 shadow-lg animate-pulse">
+              <motion.div
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                className="absolute top-2 left-2 px-2 py-1 rounded-md bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 backdrop-blur-sm text-[10px] text-white font-bold flex items-center gap-1 shadow-lg border border-emerald-300/50"
+              >
                 <Sparkles className="w-3 h-3" />
                 Just Uploaded
-              </div>
+              </motion.div>
             )}
           </motion.div>
         ))}
