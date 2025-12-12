@@ -11,7 +11,8 @@ import {
   Settings,
   Menu,
   X,
-  Sparkles
+  Sparkles,
+  Video
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -46,6 +47,12 @@ const navItems: NavItem[] = [
     label: { ar: 'الطلبات', en: 'Orders', zh: '订单' },
     icon: ShoppingBag,
     href: '/orders',
+  },
+  {
+    id: 'studio',
+    label: { ar: 'استوديو ذكي', en: 'Smart Studio', zh: '智能工作室' },
+    icon: Video,
+    href: '/studio',
   },
   {
     id: 'wallet',
