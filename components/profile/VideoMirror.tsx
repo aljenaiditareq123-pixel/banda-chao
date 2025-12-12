@@ -1,9 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import ReactPlayer from 'react-player/lazy';
+import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, X, Maximize2 } from 'lucide-react';
+
+// Dynamically import ReactPlayer to avoid SSR issues
+const ReactPlayer = dynamic(() => import('react-player'), { 
+  ssr: false,
+  loading: () => <div className="w-full h-full bg-gray-800 flex items-center justify-center text-white">Loading player...</div>
+});
 
 // Mock Data
 const VIDEOS = [
