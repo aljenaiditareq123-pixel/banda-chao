@@ -25,9 +25,9 @@ export default function UploadButton({ locale, isLoggedIn, userRole }: UploadBut
       console.log('[UploadButton] Upload button clicked');
     }
 
-    // If not logged in, redirect to login
+    // If not logged in, redirect to signin
     if (!isLoggedIn) {
-      router.push(`/${locale}/login`);
+      router.push(`/${locale}/auth/signin`);
       return;
     }
 
