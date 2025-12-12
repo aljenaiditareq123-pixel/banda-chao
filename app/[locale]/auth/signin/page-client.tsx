@@ -5,6 +5,7 @@ import { signIn, getSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Sparkles, Loader2, ArrowRight } from 'lucide-react';
+import ChineseSocialLogin from '@/components/auth/ChineseSocialLogin';
 
 interface SignInPageClientProps {
   locale: string;
@@ -316,6 +317,30 @@ export default function SignInPageClient({ locale }: SignInPageClientProps) {
                 </>
               )}
             </motion.button>
+
+            {/* Chinese Social Login - Omni-Channel for Chinese Market */}
+            {(locale === 'zh' || locale === 'ar') && (
+              <>
+                <div className="relative my-8">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-300"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-4 bg-white text-gray-500 font-medium">
+                      {locale === 'ar' ? 'خيارات تسجيل الدخول الإضافية' : '更多登录方式'}
+                    </span>
+                  </div>
+                </div>
+                
+                <ChineseSocialLogin
+                  locale={locale}
+                  onProviderClick={(provider) => {
+                    console.log(`Provider clicked: ${provider}`);
+                    // In production, this would trigger the actual OAuth flow
+                  }}
+                />
+              </>
+            )}
 
             {/* Info text */}
             <p className="text-center text-xs text-gray-500 mt-6">
