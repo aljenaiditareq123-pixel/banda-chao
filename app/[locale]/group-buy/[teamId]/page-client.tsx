@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { Clock, Users, CheckCircle, ArrowLeft, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 import Button from '@/components/Button';
+import PaymentModal from '@/components/payment/PaymentModal';
 
 interface TeamMember {
   id: string;
@@ -42,6 +43,7 @@ export default function GroupBuyLobbyClient({
   const router = useRouter();
   const [now, setNow] = useState(Date.now());
   const [isExpired, setIsExpired] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   // Update time every second for countdown
   useEffect(() => {
@@ -75,8 +77,8 @@ export default function GroupBuyLobbyClient({
   };
 
   const handleConfirmAndPay = () => {
-    // In production, redirect to checkout with team price
-    router.push(`/${locale}/checkout?teamId=${teamId}&teamPrice=${teamData.teamPrice}`);
+    // Open payment modal instead of redirecting
+    setIsPaymentModalOpen(true);
   };
 
   const spotsLeft = teamData.maxMembers - teamData.members.length;
@@ -301,6 +303,19 @@ export default function GroupBuyLobbyClient({
           )}
         </div>
       </div>
+
+      {/* Payment Modal */}
+      <PaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+        amount={teamData.teamPrice}
+        currency={teamData.currency}
+        locale={locale}
+        onSuccess={() => {
+          // Optional: Handle success callback if needed
+          console.log('Payment successful, user joined team');
+        }}
+      />
     </div>
   );
 }
