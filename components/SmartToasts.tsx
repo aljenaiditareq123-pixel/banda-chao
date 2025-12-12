@@ -179,7 +179,7 @@ export default function SmartToasts() {
         const updated = [...prev, newToast].slice(-4);
         return updated;
       });
-    }, 2500 + Math.random() * 1500); // Random interval between 2.5-4 seconds (more frequent = high traffic)
+    }, 3000 + Math.random() * 2000); // Random interval between 3-5 seconds (simulates bustling Chinese marketplace traffic)
 
     return () => clearInterval(interval);
   }, [language]);
