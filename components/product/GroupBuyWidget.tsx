@@ -116,8 +116,14 @@ export default function GroupBuyWidget({
     if (onJoinTeam) {
       onJoinTeam(teamId);
     } else {
-      // Navigate to Group Buy Lobby page
-      router.push(`/${locale}/group-buy/${teamId}`);
+      // Navigate to Group Buy Lobby page - FIX: Use absolute path to break out of /products/ route
+      // Ensure path starts with / to make it absolute and avoid relative path issues
+      const normalizedLocale = locale || 'en';
+      const normalizedTeamId = teamId.replace(/^\/+/, '').replace(/^products\//, ''); // Remove any leading slashes or products/ prefix
+      // Explicitly construct absolute path: /{locale}/group-buy/{teamId}
+      const absolutePath = `/${normalizedLocale}/group-buy/${normalizedTeamId}`;
+      // Use router.push with absolute path - this should navigate to /{locale}/group-buy/{teamId}
+      router.push(absolutePath);
     }
   };
   
@@ -125,9 +131,13 @@ export default function GroupBuyWidget({
     if (onCreateTeam) {
       onCreateTeam();
     } else {
-      // Create new team and navigate to lobby
+      // Create new team and navigate to lobby - FIX: Use absolute path to break out of /products/ route
       const newTeamId = `team-${Date.now()}`;
-      router.push(`/${locale}/group-buy/${newTeamId}`);
+      const normalizedLocale = locale || 'en';
+      // Explicitly construct absolute path: /{locale}/group-buy/{teamId}
+      const absolutePath = `/${normalizedLocale}/group-buy/${newTeamId}`;
+      // Use router.push with absolute path - this should navigate to /{locale}/group-buy/{teamId}
+      router.push(absolutePath);
     }
   };
 
