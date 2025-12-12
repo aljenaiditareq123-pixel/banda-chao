@@ -1,260 +1,128 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Check, Share2, MapPin, Briefcase, Sparkles } from 'lucide-react';
+import { Share2, BadgeCheck, MapPin, Building2 } from 'lucide-react';
 import VideoMirror from '@/components/profile/VideoMirror';
 import SocialHub from '@/components/profile/SocialHub';
-import Button from '@/components/Button';
 
-interface PublicProfileClientProps {
+interface PageClientProps {
   locale: string;
   username: string;
 }
 
-// Mock user data
-const mockUserData = {
-  id: '1',
-  username: 'example',
-  name: 'Ahmed Al-Mansoori',
-  displayName: 'Ahmed Al-Mansoori',
-  role: 'Senior Technician at BYD',
-  verified: true,
-  avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ahmed',
-  coverImage: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=1600&h=400&fit=crop',
-  bio: 'Master artisan specializing in premium handcrafted products. 15+ years of experience in traditional and modern techniques.',
-  location: 'Dubai, UAE',
-  followers: 1240,
-  following: 320,
-  products: 45,
-};
-
-export default function PublicProfileClient({ locale, username }: PublicProfileClientProps) {
-  const [user, setUser] = useState(mockUserData);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // In production, fetch user data by username
-    // For now, use mock data
-    setTimeout(() => {
-      setLoading(false);
-    }, 500);
-  }, [username]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500"></div>
-      </div>
-    );
-  }
-
-  const texts = {
-    ar: {
-      verified: 'موثق',
-      share: 'مشاركة',
-      follow: 'متابعة',
-      following: 'متابع',
-      followers: 'متابع',
-      followingCount: 'متابع',
-      products: 'منتج',
-      location: 'الموقع',
-      role: 'الدور',
-      bio: 'نبذة',
-      videos: 'الفيديوهات',
-      social: 'وسائل التواصل',
-    },
-    zh: {
-      verified: '已验证',
-      share: '分享',
-      follow: '关注',
-      following: '正在关注',
-      followers: '粉丝',
-      followingCount: '关注',
-      products: '产品',
-      location: '位置',
-      role: '角色',
-      bio: '简介',
-      videos: '视频',
-      social: '社交媒体',
-    },
-    en: {
-      verified: 'Verified',
-      share: 'Share',
-      follow: 'Follow',
-      following: 'Following',
-      followers: 'Followers',
-      followingCount: 'Following',
-      products: 'Products',
-      location: 'Location',
-      role: 'Role',
-      bio: 'Bio',
-      videos: 'Videos',
-      social: 'Social',
-    },
-  };
-
-  const t = texts[locale as keyof typeof texts] || texts.en;
-
+export default function PublicProfileClient({ locale, username }: PageClientProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
-      {/* Golden Cover Image */}
-      <div className="relative h-64 md:h-80 lg:h-96 overflow-hidden">
-        <div
-          className="absolute inset-0 bg-gradient-to-br from-amber-600 via-yellow-500 to-amber-700"
-          style={{
-            backgroundImage: `url(${user.coverImage})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-        </div>
-        
-        {/* Share Button */}
-        <div className="absolute top-4 right-4 z-10">
-          <Button
-            variant="secondary"
-            className="bg-black/50 hover:bg-black/70 backdrop-blur-sm text-white border-white/20"
-            onClick={() => {
-              if (navigator.share) {
-                navigator.share({
-                  title: `${user.name} - Banda Chao`,
-                  text: user.bio,
-                  url: window.location.href,
-                });
-              } else {
-                navigator.clipboard.writeText(window.location.href);
-                alert(locale === 'ar' ? 'تم نسخ الرابط!' : locale === 'zh' ? '链接已复制！' : 'Link copied!');
-              }
-            }}
-          >
-            <Share2 className="w-4 h-4 mr-2" />
-            {t.share}
-          </Button>
-        </div>
+    <div className="min-h-screen bg-black text-white pb-20">
+      
+      {/* 1. Golden Cover Header */}
+      <div className="relative h-48 md:h-64 w-full bg-gradient-to-r from-amber-900 via-yellow-700 to-amber-900 overflow-hidden">
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/80"></div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 -mt-20 relative z-10">
-        {/* Identity Card (Floating) */}
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 relative -mt-20">
+        
+        {/* 2. Identity Card */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-br from-gray-800/95 to-gray-900/95 backdrop-blur-xl rounded-2xl border-2 border-amber-500/30 shadow-2xl p-6 md:p-8 mb-6"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="bg-[#1A1A1A]/90 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl relative z-10"
         >
-          <div className="flex flex-col md:flex-row gap-6">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+            
             {/* Avatar */}
-            <div className="flex-shrink-0">
-              <div className="relative">
-                <div className="w-32 h-32 md:w-40 md:h-40 rounded-2xl bg-gradient-to-br from-amber-400 to-yellow-500 p-1">
-                  <div className="w-full h-full rounded-2xl bg-gray-800 overflow-hidden">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={user.avatar}
-                      alt={user.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                </div>
-                {user.verified && (
-                  <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center border-4 border-gray-900">
-                    <Check className="w-5 h-5 text-black" />
-                  </div>
-                )}
+            <div className="relative">
+              <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-black shadow-xl overflow-hidden">
+                <img 
+                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=400&auto=format&fit=crop" 
+                  alt={username}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="absolute bottom-2 right-2 w-6 h-6 bg-green-500 border-4 border-[#1A1A1A] rounded-full" title="Online"></div>
+            </div>
+
+            {/* Info */}
+            <div className="flex-1 text-center sm:text-left space-y-2">
+              <div className="flex items-center justify-center sm:justify-start gap-2">
+                <h1 className="text-2xl sm:text-3xl font-bold text-white capitalize">{username}</h1>
+                <BadgeCheck className="w-6 h-6 text-blue-400 fill-blue-400/20" />
+              </div>
+              
+              <p className="text-amber-500 font-medium flex items-center justify-center sm:justify-start gap-2">
+                <Building2 className="w-4 h-4" />
+                Senior Technician at BYD
+              </p>
+              
+              <div className="flex items-center justify-center sm:justify-start gap-4 text-sm text-white/50">
+                <span className="flex items-center gap-1">
+                  <MapPin className="w-3 h-3" /> Shenzhen, China
+                </span>
+                <span>•</span>
+                <span>Member since 2023</span>
+              </div>
+
+              {/* Tags */}
+              <div className="flex flex-wrap justify-center sm:justify-start gap-2 mt-3">
+                {['#LeatherCraft', '#Tech', '#Handmade', '#BYD'].map(tag => (
+                  <span key={tag} className="text-xs bg-white/5 border border-white/10 px-3 py-1 rounded-full text-white/70">
+                    {tag}
+                  </span>
+                ))}
               </div>
             </div>
 
-            {/* User Info */}
-            <div className="flex-1">
-              <div className="flex items-start justify-between gap-4 mb-4">
-                <div>
-                  <h1 className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 mb-2">
-                    {user.name}
-                  </h1>
-                  {user.role && (
-                    <div className="flex items-center gap-2 mb-2">
-                      <Briefcase className="w-4 h-4 text-amber-400" />
-                      <p className="text-lg font-semibold text-white">{user.role}</p>
-                    </div>
-                  )}
-                  {user.location && (
-                    <div className="flex items-center gap-2 text-gray-400">
-                      <MapPin className="w-4 h-4" />
-                      <span>{user.location}</span>
-                    </div>
-                  )}
-                </div>
-                <Button
-                  variant="primary"
-                  className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-bold px-6 py-2 rounded-xl"
-                >
-                  {t.follow}
-                </Button>
-              </div>
-
-              {/* Stats */}
-              <div className="flex gap-6 mb-4">
-                <div>
-                  <p className="text-2xl font-bold text-white">{user.followers.toLocaleString()}</p>
-                  <p className="text-sm text-gray-400">{t.followers}</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-white">{user.following.toLocaleString()}</p>
-                  <p className="text-sm text-gray-400">{t.followingCount}</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-white">{user.products}</p>
-                  <p className="text-sm text-gray-400">{t.products}</p>
-                </div>
-              </div>
-
-              {/* Bio */}
-              {user.bio && (
-                <p className="text-gray-300 leading-relaxed">{user.bio}</p>
-              )}
+            {/* Actions */}
+            <div className="flex gap-2">
+              <button className="p-3 bg-white/5 hover:bg-white/10 rounded-full border border-white/10 text-white transition-colors">
+                <Share2 className="w-5 h-5" />
+              </button>
             </div>
           </div>
         </motion.div>
 
-        {/* Video Mirror Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm rounded-2xl border-2 border-amber-500/20 p-6 md:p-8 mb-6"
-        >
-          <div className="flex items-center gap-3 mb-6">
-            <Sparkles className="w-6 h-6 text-amber-400" />
-            <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-yellow-400">
-              {t.videos}
-            </h2>
+        {/* 3. Content Grid */}
+        <div className="mt-8 grid lg:grid-cols-3 gap-8">
+          
+          {/* Main Column: Video Mirror (The Theater) */}
+          <div className="lg:col-span-2 space-y-8">
+            <VideoMirror />
+            
+            {/* Products Preview (Static for now) */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-bold text-white">My Masterpieces</h3>
+              <div className="grid grid-cols-2 gap-4">
+                 {[1, 2].map(i => (
+                   <div key={i} className="aspect-square bg-white/5 rounded-xl border border-white/10 p-4 flex flex-col items-center justify-center text-center">
+                     <span className="text-4xl mb-2">👜</span>
+                     <p className="font-bold">Handmade Bag #{i}</p>
+                     <p className="text-amber-500 text-sm">AED 299</p>
+                   </div>
+                 ))}
+              </div>
+            </div>
           </div>
-          <VideoMirror locale={locale} />
-        </motion.div>
 
-        {/* Social Hub Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm rounded-2xl border-2 border-amber-500/20 p-6 md:p-8"
-        >
-          <div className="flex items-center gap-3 mb-6">
-            <Share2 className="w-6 h-6 text-amber-400" />
-            <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-yellow-400">
-              {t.social}
-            </h2>
+          {/* Sidebar: Social Hub (No-Exit) */}
+          <div className="space-y-6">
+            <SocialHub />
+            
+            {/* Support Card */}
+            <div className="bg-gradient-to-br from-amber-900/50 to-black border border-amber-500/30 rounded-2xl p-6 text-center space-y-4">
+              <div className="w-12 h-12 mx-auto bg-amber-500/20 rounded-full flex items-center justify-center text-2xl">
+                🎁
+              </div>
+              <div>
+                <h3 className="font-bold text-amber-500">Support the Artisan</h3>
+                <p className="text-xs text-white/60 mt-1">Love the craft? Buy me a tea!</p>
+              </div>
+              <button className="w-full py-2 bg-amber-500 hover:bg-amber-600 text-black font-bold rounded-xl transition-colors text-sm">
+                Send Gift ($5)
+              </button>
+            </div>
           </div>
-          <SocialHub 
-            locale={locale}
-            socialLinks={{
-              wechat: 'wechat://add?username=example',
-              twitter: 'https://twitter.com/example',
-              phone: '+971 50 123 4567',
-              whatsapp: 'https://wa.me/971501234567',
-            }}
-          />
-        </motion.div>
+
+        </div>
       </div>
     </div>
   );

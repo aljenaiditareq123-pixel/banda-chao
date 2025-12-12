@@ -1,272 +1,158 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Wechat, Twitter, MessageCircle, Phone, QrCode, X } from 'lucide-react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import QRCode from 'qrcode.react';
+import { MessageCircle, Phone, Globe, X, Copy, Check } from 'lucide-react';
+import { FaWeixin, FaTwitter, FaWhatsapp } from 'react-icons/fa';
 
-interface SocialHubProps {
-  locale: string;
-  socialLinks?: {
-    wechat?: string;
-    twitter?: string;
-    phone?: string;
-    whatsapp?: string;
-  };
-}
+export default function SocialHub() {
+  const [activeModal, setActiveModal] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
-export default function SocialHub({ locale, socialLinks = {} }: SocialHubProps) {
-  // Mock social data
-  const mockWeChatMoment = {
-    text: locale === 'ar' 
-      ? 'جديد! منتج فاخر من ورشتي الخاصة 🎨'
-      : locale === 'zh'
-      ? '新品！来自我工作室的豪华产品 🎨'
-      : 'New! Premium product from my workshop 🎨',
-    image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400',
-    time: '2 hours ago',
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
-  const mockTweet = {
-    text: locale === 'ar'
-      ? 'سعيد بمشاركة تجربتي في صناعة المنتجات اليدوية مع مجتمع بندا تشاو! 🌟'
-      : locale === 'zh'
-      ? '很高兴与 Banda Chao 社区分享我的手工艺经验！🌟'
-      : 'Excited to share my handcrafting journey with the Banda Chao community! 🌟',
-    likes: 42,
-    retweets: 8,
-    time: '5 hours ago',
-  };
-  const [showWeChatQR, setShowWeChatQR] = useState(false);
-  const [showContactModal, setShowContactModal] = useState(false);
-  const [contactMethod, setContactMethod] = useState<'phone' | 'whatsapp' | 'wechat'>('phone');
-
-  const openContactModal = (method: 'phone' | 'whatsapp' | 'wechat') => {
-    setContactMethod(method);
-    setShowContactModal(true);
-  };
+  const CONTACTS = [
+    {
+      id: 'wechat',
+      icon: FaWeixin,
+      label: 'WeChat',
+      color: 'bg-[#07C160]',
+      value: 'wx_banda_maker_01',
+      action: 'Add Contact',
+      preview: 'Latest Moment: "Just finished a batch of Silk Scarves! 🎨"'
+    },
+    {
+      id: 'whatsapp',
+      icon: FaWhatsapp,
+      label: 'WhatsApp',
+      color: 'bg-[#25D366]',
+      value: '+971 50 123 4567',
+      action: 'Start Chat',
+      preview: 'Available for custom orders'
+    },
+    {
+      id: 'twitter',
+      icon: FaTwitter,
+      label: 'X / Twitter',
+      color: 'bg-black border border-white/20',
+      value: '@BandaArtisan',
+      action: 'Follow',
+      preview: 'Pinned: "My journey at BYD started 5 years ago..."'
+    }
+  ];
 
   return (
     <div className="space-y-4">
-      {/* WeChat Card */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-br from-green-600/20 to-emerald-700/20 backdrop-blur-sm rounded-2xl border-2 border-green-500/30 p-6"
-      >
-        <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-xl bg-green-500 flex items-center justify-center flex-shrink-0">
-            <Wechat className="w-6 h-6 text-white" />
-          </div>
-          <div className="flex-1">
-            <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
-              WeChat
-              <span className="text-xs bg-green-500/30 text-green-300 px-2 py-0.5 rounded-full">
-                {locale === 'ar' ? 'متصل' : locale === 'zh' ? '已连接' : 'Connected'}
-              </span>
-            </h3>
-            <p className="text-sm text-gray-300 mb-3">{mockWeChatMoment.text}</p>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setShowWeChatQR(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-green-500/20 hover:bg-green-500/30 rounded-lg text-green-300 transition-colors text-sm font-medium"
-              >
-                <QrCode className="w-4 h-4" />
-                {locale === 'ar' ? 'عرض QR' : locale === 'zh' ? '显示二维码' : 'Show QR'}
-              </button>
-              <span className="text-xs text-gray-400">{mockWeChatMoment.time}</span>
-            </div>
-          </div>
-        </div>
-      </motion.div>
+      <h3 className="text-sm font-bold text-white/50 uppercase tracking-wider px-2">
+        Connect Directly
+      </h3>
 
-      {/* Twitter/X Card */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="bg-gradient-to-br from-blue-600/20 to-cyan-700/20 backdrop-blur-sm rounded-2xl border-2 border-blue-500/30 p-6"
-      >
-        <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-xl bg-black dark:bg-white flex items-center justify-center flex-shrink-0">
-            <Twitter className="w-6 h-6 text-white dark:text-black" />
-          </div>
-          <div className="flex-1">
-            <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
-              Twitter / X
-              <span className="text-xs bg-blue-500/30 text-blue-300 px-2 py-0.5 rounded-full">
-                {locale === 'ar' ? 'آخر تغريدة' : locale === 'zh' ? '最新推文' : 'Latest Tweet'}
-              </span>
-            </h3>
-            <p className="text-sm text-gray-300 mb-3">{mockTweet.text}</p>
-            <div className="flex items-center gap-4 text-xs text-gray-400">
-              <span>❤️ {mockTweet.likes}</span>
-              <span>🔄 {mockTweet.retweets}</span>
-              <span>{mockTweet.time}</span>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Direct Contact Floating Buttons */}
-      <div className="flex flex-wrap gap-3">
-        <button
-          onClick={() => openContactModal('phone')}
-          className="flex-1 min-w-[120px] flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-xl text-white font-semibold transition-all shadow-lg hover:shadow-xl"
-        >
-          <Phone className="w-5 h-5" />
-          {locale === 'ar' ? 'اتصل' : locale === 'zh' ? '电话' : 'Call'}
-        </button>
-        <button
-          onClick={() => openContactModal('whatsapp')}
-          className="flex-1 min-w-[120px] flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 rounded-xl text-white font-semibold transition-all shadow-lg hover:shadow-xl"
-        >
-          <MessageCircle className="w-5 h-5" />
-          WhatsApp
-        </button>
-        <button
-          onClick={() => openContactModal('wechat')}
-          className="flex-1 min-w-[120px] flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 rounded-xl text-white font-semibold transition-all shadow-lg hover:shadow-xl"
-        >
-          <Wechat className="w-5 h-5" />
-          WeChat
-        </button>
-      </div>
-
-      {/* WeChat QR Modal */}
-      <AnimatePresence>
-        {showWeChatQR && (
+      {/* Social Cards */}
+      <div className="grid gap-3">
+        {CONTACTS.map((contact) => (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
-            onClick={() => setShowWeChatQR(false)}
+            key={contact.id}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setActiveModal(contact.id)}
+            className="relative overflow-hidden bg-white/5 border border-white/10 rounded-xl p-4 cursor-pointer hover:bg-white/10 transition-colors"
           >
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl border-2 border-green-500/30 p-8 max-w-sm w-full"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold text-white">WeChat QR Code</h3>
-                <button
-                  onClick={() => setShowWeChatQR(false)}
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  <X className="w-6 h-6" />
-                </button>
+            <div className="flex items-start gap-4">
+              <div className={`p-3 rounded-full ${contact.color} text-white shrink-0`}>
+                <contact.icon className="w-5 h-5" />
               </div>
-              <div className="flex flex-col items-center gap-4">
-                <div className="bg-white p-4 rounded-xl">
-                  <QRCode value={socialLinks.wechat || 'wechat://add?username=example'} size={200} />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-1">
+                  <h4 className="font-bold text-white">{contact.label}</h4>
+                  <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded-full text-white/70">
+                    Online
+                  </span>
                 </div>
-                <p className="text-gray-300 text-center text-sm">
-                  {locale === 'ar' 
-                    ? 'امسح رمز QR للاتصال على WeChat'
-                    : locale === 'zh'
-                    ? '扫描二维码在微信上联系'
-                    : 'Scan QR code to connect on WeChat'}
+                <p className="text-sm text-white/60 italic truncate">
+                  {contact.preview}
                 </p>
               </div>
-            </motion.div>
+            </div>
           </motion.div>
-        )}
-      </AnimatePresence>
+        ))}
+      </div>
+
+      {/* Floating Action Bar (Sticky Bottom for Mobile) */}
+      <div className="fixed bottom-6 right-6 z-40 flex flex-col gap-3">
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          className="w-14 h-14 bg-amber-500 rounded-full shadow-lg shadow-amber-500/30 flex items-center justify-center text-black"
+          onClick={() => setActiveModal('wechat')}
+        >
+          <MessageCircle className="w-7 h-7" />
+        </motion.button>
+      </div>
 
       {/* Contact Modal */}
       <AnimatePresence>
-        {showContactModal && (
+        {activeModal && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
-            onClick={() => setShowContactModal(false)}
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+            onClick={() => setActiveModal(null)}
           >
             <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl border-2 border-amber-500/30 p-8 max-w-md w-full"
+              initial={{ y: 100 }}
+              animate={{ y: 0 }}
+              exit={{ y: 100 }}
               onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-sm bg-[#1A1A1A] border border-white/10 rounded-3xl p-6 shadow-2xl relative"
             >
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-white">
-                  {contactMethod === 'phone' 
-                    ? (locale === 'ar' ? 'اتصال هاتفي' : locale === 'zh' ? '电话' : 'Phone Call')
-                    : contactMethod === 'whatsapp'
-                    ? 'WhatsApp'
-                    : 'WeChat'}
-                </h3>
-                <button
-                  onClick={() => setShowContactModal(false)}
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-              
-              <div className="space-y-4">
-                {contactMethod === 'phone' && (
-                  <div className="text-center">
-                    <p className="text-gray-300 mb-4">
-                      {locale === 'ar' ? 'رقم الهاتف:' : locale === 'zh' ? '电话号码：' : 'Phone Number:'}
-                    </p>
-                    <p className="text-2xl font-bold text-amber-400 mb-6">
-                      {socialLinks.phone || '+971 50 123 4567'}
-                    </p>
-                    <a
-                      href={`tel:${socialLinks.phone || '+971501234567'}`}
-                      className="block w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-xl text-white font-bold text-center transition-all"
-                    >
-                      {locale === 'ar' ? 'اتصل الآن' : locale === 'zh' ? '立即拨打' : 'Call Now'}
-                    </a>
-                  </div>
-                )}
+              <button
+                onClick={() => setActiveModal(null)}
+                className="absolute top-4 right-4 p-2 bg-white/5 rounded-full text-white/50 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
 
-                {contactMethod === 'whatsapp' && (
-                  <div className="text-center">
-                    <p className="text-gray-300 mb-4">
-                      {locale === 'ar' ? 'رابط WhatsApp:' : locale === 'zh' ? 'WhatsApp 链接：' : 'WhatsApp Link:'}
-                    </p>
-                    <p className="text-sm text-gray-400 mb-6 break-all">
-                      {socialLinks.whatsapp || 'https://wa.me/971501234567'}
-                    </p>
-                    <a
-                      href={socialLinks.whatsapp || 'https://wa.me/971501234567'}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block w-full px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 rounded-xl text-white font-bold text-center transition-all"
-                    >
-                      {locale === 'ar' ? 'فتح WhatsApp' : locale === 'zh' ? '打开 WhatsApp' : 'Open WhatsApp'}
-                    </a>
-                  </div>
-                )}
-
-                {contactMethod === 'wechat' && (
-                  <div className="text-center">
-                    <p className="text-gray-300 mb-4">
-                      {locale === 'ar' ? 'WeChat ID:' : locale === 'zh' ? '微信ID：' : 'WeChat ID:'}
-                    </p>
-                    <div className="bg-white p-4 rounded-xl mb-6 inline-block">
-                      <QRCode value={socialLinks.wechat || 'wechat://add?username=example'} size={200} />
+              {CONTACTS.map((contact) => {
+                if (contact.id !== activeModal) return null;
+                return (
+                  <div key={contact.id} className="text-center space-y-6">
+                    <div className={`w-20 h-20 mx-auto rounded-full ${contact.color} flex items-center justify-center shadow-lg`}>
+                      <contact.icon className="w-10 h-10 text-white" />
                     </div>
-                    <p className="text-sm text-gray-400 mb-4">
-                      {locale === 'ar' 
-                        ? 'امسح رمز QR أو ابحث عن ID'
-                        : locale === 'zh'
-                        ? '扫描二维码或搜索ID'
-                        : 'Scan QR code or search for ID'}
-                    </p>
-                    <p className="text-lg font-bold text-amber-400">
-                      {socialLinks.wechat || 'wechat_example'}
-                    </p>
+                    
+                    <div>
+                      <h3 className="text-2xl font-bold text-white mb-2">{contact.label}</h3>
+                      <p className="text-white/50">Scan or copy to connect instantly</p>
+                    </div>
+
+                    {/* QR Code Placeholder */}
+                    <div className="w-48 h-48 mx-auto bg-white p-2 rounded-xl">
+                      <div className="w-full h-full bg-gray-200 rounded-lg flex items-center justify-center text-black/20 text-xs">
+                        [QR Code Placeholder]
+                      </div>
+                    </div>
+
+                    {/* Copy ID Section */}
+                    <div className="bg-white/5 rounded-xl p-4 flex items-center justify-between border border-white/10">
+                      <code className="text-amber-500 font-mono text-lg">{contact.value}</code>
+                      <button
+                        onClick={() => handleCopy(contact.value)}
+                        className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/70"
+                      >
+                        {copied ? <Check className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5" />}
+                      </button>
+                    </div>
+
+                    <button className="w-full py-4 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-colors">
+                      Open {contact.label} App
+                    </button>
                   </div>
-                )}
-              </div>
+                );
+              })}
             </motion.div>
           </motion.div>
         )}
