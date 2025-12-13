@@ -16,7 +16,7 @@ export default function SignInPageClient({ locale }: SignInPageClientProps) {
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState('');
-  const callbackUrl = searchParams?.get('callbackUrl') || `/${locale}`;
+  const callbackUrl = searchParams?.get('callbackUrl') || `/${locale}/profile`;
 
   const texts = {
     ar: {

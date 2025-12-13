@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import ProfilePageClient from './page-client';
+import AddressesPageClient from './page-client';
 
 interface PageProps {
   params: Promise<{
@@ -9,7 +9,7 @@ interface PageProps {
 
 const validLocales = ['zh', 'en', 'ar'];
 
-export default async function ProfilePage({ params }: PageProps) {
+export default async function AddressesPage({ params }: PageProps) {
   let locale: string;
   
   try {
@@ -17,14 +17,12 @@ export default async function ProfilePage({ params }: PageProps) {
     locale = resolvedParams.locale;
   } catch (error) {
     console.error('Error resolving params:', error);
-    locale = 'ar';
+    notFound();
   }
 
-  // Validate locale and fallback to default if invalid
   if (!validLocales.includes(locale)) {
-    console.warn(`Invalid locale: ${locale}, falling back to 'ar'`);
-    locale = 'ar';
+    notFound();
   }
 
-  return <ProfilePageClient locale={locale} />;
+  return <AddressesPageClient locale={locale} />;
 }
