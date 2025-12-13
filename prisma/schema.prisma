@@ -253,6 +253,77 @@ model users {
   reports                              reports[]
   video_likes                          video_likes[]
   videos                               videos[]
+  advisor_sessions                     advisor_sessions[]
+  customer_insights                    customer_insights[]
+}
+
+// Advisor System Tables - الباندا المستشار
+
+model advisor_sessions {
+  id            String   @id @default(uuid())
+  user_id       String?  // Nullable for system-wide sessions
+  session_type  String   @default("ANALYSIS") // ANALYSIS, RECOMMENDATION, MARKET_RESEARCH
+  context       String?  // JSON stored as string for SQLite
+  status        String   @default("ACTIVE") // ACTIVE, COMPLETED, FAILED
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  completed_at DateTime?
+  users         users?   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([session_type])
+  @@index([status])
+  @@index([created_at])
+}
+
+model market_analysis {
+  id                String   @id @default(uuid())
+  analysis_type     String   // TREND, COMPETITOR, DEMAND, PRICING
+  category          String?
+  region            String?
+  data              String   // JSON stored as string for SQLite
+  insights          String?  // AI-generated insights
+  confidence_score  Float?   // 0.0 to 1.0
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  @@index([analysis_type])
+  @@index([category])
+  @@index([created_at])
+}
+
+model customer_insights {
+  id                String   @id @default(uuid())
+  user_id           String
+  event_type        String   // VIEW_PRODUCT, ADD_TO_CART, PURCHASE, SEARCH, CLICK
+  target_id         String?  // product_id, category, etc.
+  target_type       String?  // PRODUCT, CATEGORY, MAKER, etc.
+  metadata          String?  // JSON stored as string for SQLite
+  session_id        String?
+  created_at        DateTime @default(now())
+  users             users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([event_type])
+  @@index([target_id, target_type])
+  @@index([created_at])
+  @@index([user_id, created_at])
+}
+
+model recommendation_rules {
+  id                String   @id @default(uuid())
+  rule_name         String   @unique
+  rule_type         String   // PRODUCT, CATEGORY, PRICING, MARKETING
+  conditions        String   // JSON stored as string for SQLite
+  actions           String   // JSON stored as string for SQLite
+  priority          Int      @default(0)
+  is_active         Boolean  @default(true)
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  @@index([rule_type])
+  @@index([is_active])
+  @@index([priority])
 }
 
 model video_likes {

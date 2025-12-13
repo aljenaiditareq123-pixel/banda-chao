@@ -11,6 +11,7 @@ import Card from '@/components/common/Card';
 import Button from '@/components/Button';
 import Link from 'next/link';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import AdvisorDashboard from './AdvisorDashboard';
 
 interface ChatMessage {
   id: string;
@@ -33,6 +34,7 @@ export default function FounderConsole() {
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
   const [conversationId] = useState(`founder-${user?.id || 'default'}`);
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'advisor'>('advisor');
 
   const fetchRecentData = useCallback(async () => {
     try {
@@ -413,8 +415,40 @@ export default function FounderConsole() {
           </div>
         </Card>
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+        {/* Tabs Navigation */}
+      <div className="mb-6 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex gap-4">
+          <button
+            onClick={() => setActiveTab('advisor')}
+            className={`px-4 py-2 font-semibold border-b-2 transition-colors ${
+              activeTab === 'advisor'
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
+            }`}
+          >
+            🐼 لوحة تحكم المستشار
+          </button>
+          <button
+            onClick={() => setActiveTab('dashboard')}
+            className={`px-4 py-2 font-semibold border-b-2 transition-colors ${
+              activeTab === 'dashboard'
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
+            }`}
+          >
+            📊 لوحة التحكم الرئيسية
+          </button>
+        </div>
+      </div>
+
+      {/* Advisor Dashboard Tab */}
+      {activeTab === 'advisor' && <AdvisorDashboard />}
+
+      {/* Main Dashboard Tab */}
+      {activeTab === 'dashboard' && (
+        <>
+          {/* Main Content Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
           {/* Recent Makers */}
           <Card>
             <div className="p-6">
@@ -745,6 +779,8 @@ export default function FounderConsole() {
             </div>
           </div>
         </Card>
+        </>
+      )}
       </div>
     </div>
   );
