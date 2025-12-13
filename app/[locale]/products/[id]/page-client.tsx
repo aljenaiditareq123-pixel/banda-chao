@@ -634,7 +634,7 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
                         price: product.price,
                         currency: product.currency || 'USD',
                         quantity: quantity,
-                      });
+                      }, locale);
                     }
                   }}
                   disabled={product.stock !== undefined && product.stock === 0}
@@ -754,7 +754,7 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
                         price: product.price,
                         currency: product.currency || 'USD',
                         quantity: quantity,
-                      });
+                      }, locale);
                     }
                   }}
                   disabled={product.stock !== undefined && product.stock === 0}

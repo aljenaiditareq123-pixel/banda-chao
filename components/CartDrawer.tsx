@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/contexts/CartContext';
 import { formatCurrency } from '@/lib/formatCurrency';
 
@@ -61,21 +62,26 @@ export default function CartDrawer({ locale }: CartDrawerProps) {
   };
 
   return (
-    <>
-      {/* Overlay */}
-      <div
-        className={`fixed inset-0 bg-black bg-opacity-50 z-[99] transition-opacity duration-300 ${
-          isDrawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-        }`}
-        onClick={handleOverlayClick}
-        aria-hidden={!isDrawerOpen}
-      />
+    <AnimatePresence>
+      {isDrawerOpen && (
+        <>
+          {/* Overlay */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 bg-black bg-opacity-50 z-[99]"
+            onClick={handleOverlayClick}
+            aria-hidden={!isDrawerOpen}
+          />
 
-      {/* Drawer */}
-      <div
-        className={`fixed ${locale === 'ar' ? 'right-0' : 'left-0'} top-0 w-full md:w-96 h-full bg-white dark:bg-gray-800 shadow-xl z-[100] transform transition-transform duration-500 ease-in-out ${
-          isDrawerOpen ? 'translate-x-0' : locale === 'ar' ? 'translate-x-full' : '-translate-x-full'
-        }`}
+      {/* Drawer - Enhanced with framer-motion */}
+      <motion.div
+        initial={{ x: locale === 'ar' ? '100%' : '-100%' }}
+        animate={{ x: isDrawerOpen ? 0 : (locale === 'ar' ? '100%' : '-100%') }}
+        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+        className={`fixed ${locale === 'ar' ? 'right-0' : 'left-0'} top-0 w-full md:w-96 h-full bg-white dark:bg-gray-800 shadow-xl z-[100]`}
         role="dialog"
         aria-modal="true"
         aria-label={t.cartTitle}
@@ -216,8 +222,10 @@ export default function CartDrawer({ locale }: CartDrawerProps) {
             </div>
           )}
         </div>
-      </div>
-    </>
+      </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   );
 }
 

@@ -11,6 +11,7 @@ import CartDrawer from '@/components/CartDrawer';
 import FlashSale from '@/components/FlashSale';
 import BottomNav from '@/components/BottomNav';
 import SmartToasts from '@/components/SmartToasts';
+import CartToast from '@/components/cart/CartToast';
 import '../globals.css';
 
 // Premium Arabic font
@@ -254,6 +255,8 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
                 <Navbar locale={validLocale} />
                 {/* Smart Social Proof Toasts - Premium Live Activity Notifications */}
                 <SmartToasts />
+                {/* Cart Toast Notifications */}
+                <CartToast />
                 <main className="flex-grow">
                   {children}
                 </main>

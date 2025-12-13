@@ -15,7 +15,7 @@ export interface CartItem {
 
 interface CartContextType {
   items: CartItem[];
-  addItem: (item: Omit<CartItem, 'id' | 'subtotal'>) => void;
+  addItem: (item: Omit<CartItem, 'id' | 'subtotal'>, locale?: string) => void;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
@@ -54,13 +54,31 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [items]);
 
-  const addItem = (item: Omit<CartItem, 'id' | 'subtotal'>) => {
+  const addItem = (item: Omit<CartItem, 'id' | 'subtotal'>, locale: string = 'en') => {
     setItems((prevItems) => {
       const existingItem = prevItems.find((i) => i.productId === item.productId);
       
+      // Get locale-specific messages
+      const messages = {
+        ar: {
+          added: `تمت إضافة "${item.name}" إلى السلة بنجاح! ✅`,
+          updated: `تم تحديث الكمية لـ "${item.name}"`,
+        },
+        zh: {
+          added: `"${item.name}" 已成功添加到购物车！✅`,
+          updated: `"${item.name}" 的数量已更新`,
+        },
+        en: {
+          added: `"${item.name}" added to cart successfully! ✅`,
+          updated: `Quantity updated for "${item.name}"`,
+        },
+      };
+      
+      const t = messages[locale as keyof typeof messages] || messages.en;
+      
       if (existingItem) {
         // Update quantity if item already exists
-        return prevItems.map((i) =>
+        const updatedItems = prevItems.map((i) =>
           i.productId === item.productId
             ? {
                 ...i,
@@ -69,6 +87,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
               }
             : i
         );
+        
+        // Dispatch toast event for quantity update
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('cartToast', {
+            detail: {
+              type: 'success',
+              message: t.updated,
+            },
+          }));
+        }
+        
+        return updatedItems;
       } else {
         // Add new item
         const newItem: CartItem = {
@@ -76,11 +106,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
           id: `${item.productId}-${Date.now()}`,
           subtotal: item.price * item.quantity,
         };
+        
+        // Dispatch toast event for new item
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('cartToast', {
+            detail: {
+              type: 'success',
+              message: t.added,
+            },
+          }));
+        }
+        
         return [...prevItems, newItem];
       }
     });
-    // Open drawer when item is added
-    setIsDrawerOpen(true);
   };
 
   const toggleDrawer = () => {
