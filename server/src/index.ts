@@ -372,6 +372,16 @@ server.listen(PORT, async () => {
   });
 
   console.log(`✅ Queue processors initialized`);
+
+  // Initialize Atomic Inventory in Redis
+  console.log(`📦 Initializing atomic inventory...`);
+  try {
+    const { syncInventoryToRedis } = await import('./services/inventoryService');
+    await syncInventoryToRedis();
+    console.log(`✅ Atomic inventory initialized`);
+  } catch (err) {
+    console.warn(`⚠️ Inventory sync failed (will use database fallback):`, err);
+  }
 });
 
 // Export app for testing

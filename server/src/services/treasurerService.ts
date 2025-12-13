@@ -10,6 +10,7 @@
  */
 
 import { prisma } from '../utils/prisma';
+import { checkTransactionRisk, logSuspiciousTransaction } from './fraudService';
 
 export interface PricingContext {
   userId?: string;

@@ -2,6 +2,8 @@ import { Router, Request, Response } from 'express';
 import { prisma } from '../utils/prisma';
 import { authenticateToken, requireRole, AuthRequest } from '../middleware/auth';
 import { calculateHubShippingForItems } from '../config/shippingRates';
+import { checkTransactionRisk, blockUser, logSuspiciousTransaction } from '../services/fraudService';
+import { reserveInventory, releaseInventory } from '../services/inventoryService';
 
 const router = Router();
 
@@ -341,6 +343,68 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
       finalTotal: calculatedTotal,
     });
 
+    // ============================================
+    // التحصينات الأمنية - Security Guards
+    // ============================================
+
+    // 1. Fraud Check - فحص الاحتيال المالي
+    const ip = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    const fraudCheck = await checkTransactionRisk(userId, calculatedTotal, ip as string);
+    
+    await logSuspiciousTransaction(userId, calculatedTotal, fraudCheck.risk, ip as string);
+
+    if (!fraudCheck.allowed) {
+      console.error('[Orders] ❌ Fraud check failed:', fraudCheck.risk);
+      
+      if (fraudCheck.risk.shouldBlock) {
+        await blockUser(userId, fraudCheck.risk.reason);
+      }
+
+      return res.status(403).json({
+        success: false,
+        message: 'Transaction blocked due to security risk',
+        code: 'FRAUD_DETECTED',
+        risk: fraudCheck.risk.riskLevel,
+        requiresReview: fraudCheck.requiresReview,
+      });
+    }
+
+    if (fraudCheck.requiresReview) {
+      console.warn('[Orders] ⚠️ Transaction requires manual review:', fraudCheck.risk);
+    }
+
+    // 2. Atomic Inventory Reservation - حجز المخزون ذرياً
+    const inventoryReservations: Array<{ productId: string; variantId?: string; quantity: number }> = [];
+    
+    for (const item of items) {
+      const reservation = await reserveInventory(
+        item.productId,
+        item.quantity,
+        item.variantId
+      );
+
+      if (!reservation.success) {
+        // إعادة المخزون المحجوز مسبقاً
+        for (const reserved of inventoryReservations) {
+          await releaseInventory(reserved.productId, reserved.quantity, reserved.variantId);
+        }
+
+        return res.status(400).json({
+          success: false,
+          message: reservation.error || 'Insufficient stock',
+          code: 'OUT_OF_STOCK',
+          productId: item.productId,
+        });
+      }
+
+      inventoryReservations.push({
+        productId: item.productId,
+        variantId: item.variantId,
+        quantity: item.quantity,
+      });
+    }
+
+    // 3. Create Order - إنشاء الطلب
     const order = await prisma.orders.create({
       data: {
         id: orderId,
@@ -407,6 +471,14 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
       error: error.message,
       stack: error.stack,
     });
+
+    // إعادة المخزون المحجوز في حالة الخطأ
+    if (inventoryReservations && inventoryReservations.length > 0) {
+      for (const reserved of inventoryReservations) {
+        await releaseInventory(reserved.productId, reserved.quantity, reserved.variantId).catch(console.error);
+      }
+    }
+
     res.status(500).json({
       success: false,
       message: 'Failed to create order',

@@ -174,26 +174,188 @@ class InMemoryQueueAdapter implements QueueAdapter {
 }
 
 /**
- * Redis Queue Adapter (TODO: Implementation)
- * للاستخدام في الإنتاج مع Redis
+ * Redis Queue Adapter - تنفيذ كامل للذاكرة الدائمة
+ * للاستخدام في الإنتاج مع Redis - يحفظ المهام حتى بعد إعادة تشغيل السيرفر
  */
 class RedisQueueAdapter implements QueueAdapter {
-  // TODO: Implement Redis-based queue
-  // This would use BullMQ or similar library
+  private redis: any;
+  private handlers: Map<string, (job: QueueJob) => Promise<void>> = new Map();
+  private processing: Set<string> = new Set();
+  private isProcessing: boolean = false;
+  private options: Required<QueueOptions>;
+  private eventEmitter: EventEmitter = new EventEmitter();
+
+  constructor(redisClient: any, options: QueueOptions = {}) {
+    this.redis = redisClient;
+    this.options = {
+      concurrency: options.concurrency || 5,
+      maxRetries: options.maxRetries || 3,
+      retryDelay: options.retryDelay || 1000,
+      batchSize: options.batchSize || 10,
+      batchInterval: options.batchInterval || 5000,
+    };
+
+    // بدء معالج المهام
+    this.startProcessor();
+  }
+
   async add(job: QueueJob): Promise<void> {
-    throw new Error('Redis adapter not yet implemented');
+    // حفظ المهمة في Redis
+    const jobKey = `queue:job:${job.id}`;
+    const pendingKey = 'queue:pending';
+    const processingKey = 'queue:processing';
+
+    // حفظ بيانات المهمة
+    await this.redis.setex(
+      jobKey,
+      86400 * 7, // 7 days TTL
+      JSON.stringify(job)
+    );
+
+    // إضافة للقائمة المعلقة
+    await this.redis.lpush(pendingKey, job.id);
+
+    // إضافة للقائمة المرتبة حسب الأولوية
+    await this.redis.zadd('queue:priority', job.priority || 0, job.id);
+
+    this.eventEmitter.emit('job:added', job);
   }
 
   process(handler: (job: QueueJob) => Promise<void>): void {
-    throw new Error('Redis adapter not yet implemented');
+    this.handlers.set('*', handler);
+    this.startProcessor();
+  }
+
+  private async startProcessor(): Promise<void> {
+    if (this.isProcessing) return;
+    this.isProcessing = true;
+
+    // معالجة مستمرة
+    const processLoop = async () => {
+      try {
+        // استرجاع المهام المعلقة من Redis
+        const pendingIds = await this.redis.lrange('queue:pending', 0, this.options.concurrency - 1);
+        
+        for (const jobId of pendingIds) {
+          if (this.processing.size >= this.options.concurrency) break;
+          if (this.processing.has(jobId)) continue;
+
+          // استرجاع بيانات المهمة
+          const jobData = await this.redis.get(`queue:job:${jobId}`);
+          if (!jobData) {
+            await this.redis.lrem('queue:pending', 1, jobId);
+            continue;
+          }
+
+          const job: QueueJob = JSON.parse(jobData);
+          await this.processJob(job);
+        }
+      } catch (error) {
+        console.error('Error in queue processor:', error);
+      }
+
+      // الاستمرار في المعالجة
+      setTimeout(processLoop, 100);
+    };
+
+    processLoop();
+  }
+
+  private async processJob(job: QueueJob): Promise<void> {
+    this.processing.add(job.id);
+    await this.redis.lrem('queue:pending', 1, job.id);
+    await this.redis.lpush('queue:processing', job.id);
+
+    this.eventEmitter.emit('job:processing', job);
+
+    try {
+      const handler = this.handlers.get(job.type) || this.handlers.get('*');
+      if (!handler) {
+        throw new Error(`No handler found for job type: ${job.type}`);
+      }
+
+      await handler(job);
+
+      // نجحت المهمة
+      this.processing.delete(job.id);
+      await this.redis.lrem('queue:processing', 1, job.id);
+      await this.redis.lpush('queue:completed', job.id);
+      await this.redis.setex(`queue:job:${job.id}`, 86400, JSON.stringify({
+        ...job,
+        processedAt: new Date(),
+      }));
+
+      this.eventEmitter.emit('job:completed', job);
+    } catch (error: any) {
+      this.processing.delete(job.id);
+      await this.redis.lrem('queue:processing', 1, job.id);
+
+      const attempts = (job.attempts || 0) + 1;
+      if (attempts < (job.maxAttempts || this.options.maxRetries)) {
+        // إعادة المحاولة
+        job.attempts = attempts;
+        await this.redis.setex(
+          `queue:job:${job.id}`,
+          86400 * 7,
+          JSON.stringify(job)
+        );
+        await this.redis.lpush('queue:pending', job.id);
+        this.eventEmitter.emit('job:retry', job);
+      } else {
+        // فشل نهائي
+        await this.redis.lpush('queue:failed', job.id);
+        await this.redis.setex(`queue:job:${job.id}`, 86400 * 7, JSON.stringify({
+          ...job,
+          failedAt: new Date(),
+          error: error.message,
+        }));
+        this.eventEmitter.emit('job:failed', job);
+      }
+    }
   }
 
   async getStats(): Promise<{ pending: number; processing: number; completed: number; failed: number }> {
-    throw new Error('Redis adapter not yet implemented');
+    const pending = await this.redis.llen('queue:pending');
+    const processing = await this.redis.llen('queue:processing');
+    const completed = await this.redis.llen('queue:completed');
+    const failed = await this.redis.llen('queue:failed');
+
+    return {
+      pending,
+      processing,
+      completed,
+      failed,
+    };
   }
 
   async clear(): Promise<void> {
-    throw new Error('Redis adapter not yet implemented');
+    await this.redis.del('queue:pending', 'queue:processing', 'queue:completed', 'queue:failed', 'queue:priority');
+    // حذف جميع المهام
+    const keys = await this.redis.keys('queue:job:*');
+    if (keys.length > 0) {
+      await this.redis.del(...keys);
+    }
+    this.processing.clear();
+  }
+
+  on(event: string, listener: (...args: any[]) => void): void {
+    this.eventEmitter.on(event, listener);
+  }
+
+  off(event: string, listener: (...args: any[]) => void): void {
+    this.eventEmitter.off(event, listener);
+  }
+
+  /**
+   * استرجاع المهام المعلقة بعد إعادة التشغيل
+   */
+  async recoverPendingJobs(): Promise<void> {
+    const processingIds = await this.redis.lrange('queue:processing', 0, -1);
+    for (const jobId of processingIds) {
+      // إعادة المهام المعالجة للقائمة المعلقة
+      await this.redis.lrem('queue:processing', 1, jobId);
+      await this.redis.lpush('queue:pending', jobId);
+    }
   }
 }
 
@@ -203,6 +365,7 @@ class RedisQueueAdapter implements QueueAdapter {
 class QueueManager {
   private adapter: QueueAdapter;
   private options: QueueOptions;
+  private redisClient: any = null;
 
   constructor(options: QueueOptions = {}) {
     this.options = options;
@@ -211,7 +374,33 @@ class QueueManager {
     const useRedis = process.env.REDIS_URL && process.env.USE_REDIS_QUEUE === 'true';
     
     if (useRedis) {
-      this.adapter = new RedisQueueAdapter();
+      // تهيئة Redis Client
+      try {
+        const Redis = require('ioredis');
+        this.redisClient = new Redis(process.env.REDIS_URL, {
+          maxRetriesPerRequest: 3,
+          retryStrategy: (times: number) => {
+            const delay = Math.min(times * 50, 2000);
+            return delay;
+          },
+        });
+
+        this.redisClient.on('error', (err: Error) => {
+          console.error('Redis connection error:', err);
+        });
+
+        this.redisClient.on('connect', () => {
+          console.log('✅ Redis connected for queue persistence');
+        });
+
+        this.adapter = new RedisQueueAdapter(this.redisClient, options);
+        
+        // استرجاع المهام المعلقة بعد إعادة التشغيل
+        (this.adapter as RedisQueueAdapter).recoverPendingJobs().catch(console.error);
+      } catch (error) {
+        console.warn('⚠️ Redis not available, falling back to In-Memory queue:', error);
+        this.adapter = new InMemoryQueueAdapter(options);
+      }
     } else {
       this.adapter = new InMemoryQueueAdapter(options);
     }

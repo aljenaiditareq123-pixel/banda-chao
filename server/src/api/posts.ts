@@ -5,6 +5,7 @@ import fs from 'fs';
 import { prisma } from '../utils/prisma';
 import { authenticateToken, requireRole, AuthRequest } from '../middleware/auth';
 import { uploadToGCS, isGCSConfigured } from '../lib/gcs';
+import { postContentGuard } from '../middleware/contentGuard';
 
 const router = Router();
 
@@ -309,7 +310,7 @@ router.get('/me', authenticateToken, requireRole(['MAKER']), async (req: AuthReq
 });
 
 // Create post (authenticated)
-router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
+router.post('/', authenticateToken, postContentGuard, async (req: AuthRequest, res: Response) => {
   try {
     const { content, images } = req.body;
     const userId = req.userId!;
