@@ -197,67 +197,9 @@ export const authOptions: NextAuthConfig = {
   debug: process.env.NODE_ENV === 'development',
 };
 
-// Create handler - NextAuth v5 beta returns a handler object with GET and POST methods
-const handler = NextAuth(authOptions);
+// NextAuth v5 beta - Export handlers directly
+// NextAuth v5 returns { handlers: { GET, POST } } structure
+const { handlers } = NextAuth(authOptions);
 
-// NextAuth v5 beta handler structure: { GET, POST } or function
-// Ensure proper binding to prevent Function.prototype.apply errors
-export const GET = async (req: NextRequest) => {
-  try {
-    // Check if handler is an object with GET method
-    if (handler && typeof handler === 'object' && 'GET' in handler) {
-      const getMethod = (handler as any).GET;
-      if (typeof getMethod === 'function') {
-        return await getMethod(req);
-      }
-    }
-    // If handler is a function itself
-    if (typeof handler === 'function') {
-      return await handler(req);
-    }
-    // Fallback: try to call as is
-    return await (handler as any)(req);
-  } catch (error: any) {
-    // Suppress Function.prototype.apply errors
-    if (error?.message?.includes('apply') || 
-        error?.message?.includes('Function.prototype') || 
-        error?.name === 'TypeError') {
-      // Don't log these errors to reduce noise
-      return new Response(JSON.stringify({ error: 'Authentication service temporarily unavailable' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-    throw error;
-  }
-};
-
-export const POST = async (req: NextRequest) => {
-  try {
-    // Check if handler is an object with POST method
-    if (handler && typeof handler === 'object' && 'POST' in handler) {
-      const postMethod = (handler as any).POST;
-      if (typeof postMethod === 'function') {
-        return await postMethod(req);
-      }
-    }
-    // If handler is a function itself
-    if (typeof handler === 'function') {
-      return await handler(req);
-    }
-    // Fallback: try to call as is
-    return await (handler as any)(req);
-  } catch (error: any) {
-    // Suppress Function.prototype.apply errors
-    if (error?.message?.includes('apply') || 
-        error?.message?.includes('Function.prototype') || 
-        error?.name === 'TypeError') {
-      // Don't log these errors to reduce noise
-      return new Response(JSON.stringify({ error: 'Authentication service temporarily unavailable' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-    throw error;
-  }
-};
+// Export GET and POST handlers
+export const { GET, POST } = handlers;
