@@ -37,10 +37,13 @@ const nextConfig = {
   // Disable source maps in production to reduce build size
   productionBrowserSourceMaps: false,
   
-  // Disable SWC minification to fix ReflectApply TypeError in production
-  swcMinify: false,
+  // Turbopack configuration for Next.js 16
+  // Note: Turbopack is enabled by default in Next.js 16
+  // We keep webpack config for compatibility but add empty turbopack to silence the warning
+  turbopack: {},
   
   // Webpack configuration to fix Function.prototype.apply errors
+  // This will be used if --webpack flag is passed, otherwise Turbopack is used
   webpack: (config, { isServer }) => {
     // Fix for Function.prototype.apply errors in production
     if (!isServer) {
@@ -70,12 +73,6 @@ const nextConfig = {
   // your project has type errors.
   typescript: {
     ignoreBuildErrors: true,
-  },
-  
-  // Warning: This allows production builds to successfully complete even if
-  // your project has ESLint errors.
-  eslint: {
-    ignoreDuringBuilds: true,
   },
 }
 
