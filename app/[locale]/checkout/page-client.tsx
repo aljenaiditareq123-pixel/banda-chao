@@ -3,408 +3,173 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Button from '@/components/Button';
-import { Grid, GridItem } from '@/components/Grid';
-import { ordersAPI } from '@/lib/api';
 import { useCart } from '@/contexts/CartContext';
-import { formatCurrency } from '@/lib/formatCurrency';
-import Card from '@/components/common/Card';
+import { useAuth } from '@/hooks/useAuth';
+import { motion } from 'framer-motion';
+import { ArrowLeft, MapPin, Phone, User, CreditCard, Wallet, Loader2 } from 'lucide-react';
+import Button from '@/components/Button';
+import LoadingState from '@/components/common/LoadingState';
 
-interface CheckoutPageClientProps {
+interface CheckoutClientProps {
   locale: string;
 }
 
-interface ShippingAddress {
-  fullName: string;
-  street: string;
-  city: string;
-  country: string;
-  zipCode: string;
-  phone?: string;
-}
-
-interface PaymentDetails {
-  cardName: string;
-  cardNumber: string;
-  expiry: string;
-  cvc: string;
-}
-
-export default function CheckoutPageClient({ locale }: CheckoutPageClientProps) {
+export default function CheckoutClient({ locale }: CheckoutClientProps) {
   const router = useRouter();
-  const { items, total: cartTotal, clearCart } = useCart();
-  
-  const [shippingAddress, setShippingAddress] = useState<ShippingAddress>({
-    fullName: '',
-    street: '',
+  const { items, total, itemCount, clearCart } = useCart();
+  const { user } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Form state
+  const [formData, setFormData] = useState({
+    fullName: user?.name || '',
+    email: user?.email || '',
+    phone: '',
+    address: '',
     city: '',
     country: '',
-    zipCode: '',
-    phone: '',
+    postalCode: '',
+    paymentMethod: 'cod' as 'cod' | 'card',
   });
 
-  const [paymentDetails, setPaymentDetails] = useState<PaymentDetails>({
-    cardName: '',
-    cardNumber: '',
-    expiry: '',
-    cvc: '',
-  });
-  
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [orderStatus, setOrderStatus] = useState<{ type: 'success' | 'error'; message: string; orderId?: string } | null>(null);
-  const [shippingCost, setShippingCost] = useState<number>(0);
-  const [shippingLoading, setShippingLoading] = useState(false);
-  const [shippingDetails, setShippingDetails] = useState<{
-    chinaToUae: number;
-    handling: number;
-    uaeToCustomer: number;
-    region: string;
-  } | null>(null);
-
-  // Calculate order summary
-  const MOCK_TAX_RATE = 0.15;
-  const subtotal = cartTotal;
-  const taxAmount = subtotal * MOCK_TAX_RATE;
-  const shipping = shippingCost; // Use dynamic shipping cost from API
-  const grandTotal = subtotal + shipping + taxAmount;
-  const currency = items[0]?.currency || 'USD';
+  // Detect mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Redirect if cart is empty
   useEffect(() => {
-    if (items.length === 0 && !orderStatus) {
-      router.push(`/${locale}/cart`);
+    if (items.length === 0 && !isSubmitting) {
+      router.push(`/${locale}/products`);
     }
-  }, [items.length, locale, router, orderStatus]);
+  }, [items.length, locale, router, isSubmitting]);
 
-  // Calculate shipping when country changes
-  useEffect(() => {
-    const calculateShipping = async () => {
-      if (!shippingAddress.country || shippingAddress.country.trim() === '') {
-        setShippingCost(0);
-        setShippingDetails(null);
-        return;
-      }
-
-      if (items.length === 0) {
-        setShippingCost(0);
-        setShippingDetails(null);
-        return;
-      }
-
-      setShippingLoading(true);
-      try {
-        // Prepare items for shipping calculation (use default weight 1kg if not specified)
-        const shippingItems = items.map(item => ({
-          weightInKg: (item as any).weightInKg || 1, // Default 1kg per item
-          quantity: item.quantity,
-        }));
-
-        const response = await ordersAPI.calculateShipping({
-          country: shippingAddress.country.trim(),
-          items: shippingItems,
-        });
-
-        if (response.success && response.shipping) {
-          // Convert from AED to USD (approximate rate: 1 AED = 0.27 USD)
-          // Or keep in AED if currency is AED
-          const costInAED = response.shipping.cost;
-          const costInCurrency = currency === 'AED' ? costInAED : costInAED * 0.27;
-          
-          setShippingCost(costInCurrency);
-          setShippingDetails(response.shipping.details);
-        } else {
-          setShippingCost(0);
-          setShippingDetails(null);
-        }
-      } catch (err: any) {
-        console.error('Error calculating shipping:', err);
-        // On error, set shipping to 0 (will show error or use fallback)
-        setShippingCost(0);
-        setShippingDetails(null);
-      } finally {
-        setShippingLoading(false);
-      }
+  const formatPrice = (price: number, currency: string = 'AED') => {
+    const symbols: Record<string, string> = {
+      USD: '$',
+      EUR: '€',
+      CNY: '¥',
+      SAR: 'ر.س',
+      AED: 'د.إ',
     };
+    return `${symbols[currency] || currency} ${price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
 
-    // Debounce the API call (wait 500ms after user stops typing)
-    const timeoutId = setTimeout(() => {
-      calculateShipping();
-    }, 500);
+  const shippingCost = 25.00; // Fixed shipping cost
+  const finalTotal = total + shippingCost;
 
-    return () => clearTimeout(timeoutId);
-  }, [shippingAddress.country, items, currency]);
-
-  // Translations
   const texts = {
     ar: {
       title: 'إتمام الطلب',
-      shippingAddress: 'عنوان الشحن',
+      shippingInfo: 'معلومات الشحن',
+      paymentMethod: 'طريقة الدفع',
       orderSummary: 'ملخص الطلب',
       fullName: 'الاسم الكامل',
-      fullNamePlaceholder: 'أدخل الاسم الكامل',
-      street: 'العنوان',
-      streetPlaceholder: 'اسم الشارع والرقم',
+      email: 'البريد الإلكتروني',
+      phone: 'رقم الهاتف',
+      address: 'العنوان',
       city: 'المدينة',
-      cityPlaceholder: 'أدخل المدينة',
       country: 'الدولة',
-      countryPlaceholder: 'أدخل الدولة',
-      zipCode: 'الرمز البريدي',
-      zipCodePlaceholder: 'أدخل الرمز البريدي',
-      phone: 'رقم الهاتف (اختياري)',
-      phonePlaceholder: 'أدخل رقم الهاتف',
+      postalCode: 'الرمز البريدي',
+      cod: 'الدفع عند الاستلام',
+      card: 'الدفع بالبطاقة',
       subtotal: 'المجموع الفرعي',
-      shipping: 'رسوم الشحن',
-      tax: 'الضرائب (15%)',
+      shipping: 'الشحن',
       total: 'الإجمالي',
-      secureCheckout: 'تأكيد الطلب',
-      processing: 'جاري المعالجة...',
-      error: 'حدث خطأ',
-      required: 'هذا الحقل مطلوب',
-      backToProducts: 'العودة إلى المنتجات',
-      continueShopping: 'متابعة التسوق',
-      paymentInfo: 'معلومات الدفع',
-      cardName: 'الاسم على البطاقة',
-      cardNumber: 'رقم البطاقة',
-      expiry: 'تاريخ الانتهاء (MM/YY)',
-      cvc: 'رمز الأمان (CVC)',
-      emptyCart: 'لا يمكن إتمام الشراء. سلتك فارغة.',
-      success: 'تم تأكيد طلبك بنجاح! رقم الطلب هو:',
+      confirmOrder: 'تأكيد الطلب',
+      backToCart: '← العودة للسلة',
+      items: 'منتج',
+      itemsPlural: 'منتجات',
     },
     en: {
       title: 'Checkout',
-      shippingAddress: 'Shipping Address',
+      shippingInfo: 'Shipping Information',
+      paymentMethod: 'Payment Method',
       orderSummary: 'Order Summary',
       fullName: 'Full Name',
-      fullNamePlaceholder: 'Enter full name',
-      street: 'Street Address',
-      streetPlaceholder: 'Street name and number',
+      email: 'Email',
+      phone: 'Phone Number',
+      address: 'Address',
       city: 'City',
-      cityPlaceholder: 'Enter city',
       country: 'Country',
-      countryPlaceholder: 'Enter country',
-      zipCode: 'Zip Code',
-      zipCodePlaceholder: 'Enter zip code',
-      phone: 'Phone Number (Optional)',
-      phonePlaceholder: 'Enter phone number',
+      postalCode: 'Postal Code',
+      cod: 'Cash on Delivery',
+      card: 'Credit Card',
       subtotal: 'Subtotal',
       shipping: 'Shipping',
-      tax: 'Tax (15%)',
       total: 'Total',
-      secureCheckout: 'Place Order',
-      processing: 'Processing...',
-      error: 'An error occurred',
-      required: 'This field is required',
-      backToProducts: 'Back to Products',
-      continueShopping: 'Continue Shopping',
-      paymentInfo: 'Payment Information',
-      cardName: 'Name on Card',
-      cardNumber: 'Card Number',
-      expiry: 'Expiry (MM/YY)',
-      cvc: 'CVC',
-      emptyCart: 'Cannot proceed to checkout. Your cart is empty.',
-      success: 'Your order has been placed successfully! Order ID:',
+      confirmOrder: 'Confirm Order',
+      backToCart: '← Back to Cart',
+      items: 'item',
+      itemsPlural: 'items',
     },
     zh: {
       title: '结账',
-      shippingAddress: '送货地址',
+      shippingInfo: '配送信息',
+      paymentMethod: '支付方式',
       orderSummary: '订单摘要',
       fullName: '全名',
-      fullNamePlaceholder: '输入全名',
-      street: '街道地址',
-      streetPlaceholder: '街道名称和号码',
+      email: '电子邮件',
+      phone: '电话号码',
+      address: '地址',
       city: '城市',
-      cityPlaceholder: '输入城市',
       country: '国家',
-      countryPlaceholder: '输入国家',
-      zipCode: '邮政编码',
-      zipCodePlaceholder: '输入邮政编码',
-      phone: '电话号码（可选）',
-      phonePlaceholder: '输入电话号码',
+      postalCode: '邮政编码',
+      cod: '货到付款',
+      card: '信用卡',
       subtotal: '小计',
       shipping: '运费',
-      tax: '税费 (15%)',
       total: '总计',
-      secureCheckout: '确认订单',
-      processing: '处理中...',
-      error: '发生错误',
-      required: '此字段为必填项',
-      backToProducts: '返回产品',
-      continueShopping: '继续购物',
-      paymentInfo: '支付信息',
-      cardName: '持卡人姓名',
-      cardNumber: '卡号',
-      expiry: '有效期 (MM/YY)',
-      cvc: '安全码',
-      emptyCart: '无法结账。购物车为空。',
-      success: '订单已成功确认！订单号：',
+      confirmOrder: '确认订单',
+      backToCart: '← 返回购物车',
+      items: '件商品',
+      itemsPlural: '件商品',
     },
   };
 
   const t = texts[locale as keyof typeof texts] || texts.en;
 
-  // List of countries with codes for dropdown
-  const countries = [
-    { code: 'US', name: { ar: 'الولايات المتحدة', en: 'United States', zh: '美国' } },
-    { code: 'DE', name: { ar: 'ألمانيا', en: 'Germany', zh: '德国' } },
-    { code: 'FR', name: { ar: 'فرنسا', en: 'France', zh: '法国' } },
-    { code: 'GB', name: { ar: 'بريطانيا', en: 'United Kingdom', zh: '英国' } },
-    { code: 'IT', name: { ar: 'إيطاليا', en: 'Italy', zh: '意大利' } },
-    { code: 'ES', name: { ar: 'إسبانيا', en: 'Spain', zh: '西班牙' } },
-    { code: 'NL', name: { ar: 'هولندا', en: 'Netherlands', zh: '荷兰' } },
-    { code: 'BE', name: { ar: 'بلجيكا', en: 'Belgium', zh: '比利时' } },
-    { code: 'SA', name: { ar: 'السعودية', en: 'Saudi Arabia', zh: '沙特阿拉伯' } },
-    { code: 'AE', name: { ar: 'الإمارات', en: 'United Arab Emirates', zh: '阿拉伯联合酋长国' } },
-    { code: 'KW', name: { ar: 'الكويت', en: 'Kuwait', zh: '科威特' } },
-    { code: 'QA', name: { ar: 'قطر', en: 'Qatar', zh: '卡塔尔' } },
-    { code: 'BH', name: { ar: 'البحرين', en: 'Bahrain', zh: '巴林' } },
-    { code: 'OM', name: { ar: 'عمان', en: 'Oman', zh: '阿曼' } },
-    { code: 'EG', name: { ar: 'مصر', en: 'Egypt', zh: '埃及' } },
-    { code: 'IN', name: { ar: 'الهند', en: 'India', zh: '印度' } },
-    { code: 'AU', name: { ar: 'أستراليا', en: 'Australia', zh: '澳大利亚' } },
-    { code: 'CA', name: { ar: 'كندا', en: 'Canada', zh: '加拿大' } },
-    { code: 'JP', name: { ar: 'اليابان', en: 'Japan', zh: '日本' } },
-    { code: 'CN', name: { ar: 'الصين', en: 'China', zh: '中国' } },
-  ];
-
-  const handleShippingChange = (field: keyof ShippingAddress, value: string) => {
-    setShippingAddress((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-    if (error) setError(null);
-  };
-
-  const handlePaymentChange = (field: keyof PaymentDetails, value: string) => {
-    setPaymentDetails((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-    if (error) setError(null);
-  };
-
-  const validateForm = (): boolean => {
-    if (!shippingAddress.fullName.trim()) {
-      setError(t.required + ': ' + t.fullName);
-      return false;
-    }
-    if (!shippingAddress.street.trim()) {
-      setError(t.required + ': ' + t.street);
-      return false;
-    }
-    if (!shippingAddress.city.trim()) {
-      setError(t.required + ': ' + t.city);
-      return false;
-    }
-    if (!shippingAddress.country.trim()) {
-      setError(t.required + ': ' + t.country);
-      return false;
-    }
-    if (!shippingAddress.zipCode.trim()) {
-      setError(t.required + ': ' + t.zipCode);
-      return false;
-    }
-    if (items.length === 0) {
-      setError(t.emptyCart);
-      return false;
-    }
-    return true;
-  };
-
-  const handleCheckout = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm()) {
+    // Basic validation
+    if (!formData.fullName || !formData.phone || !formData.address || !formData.city) {
+      alert(locale === 'ar' ? 'يرجى ملء جميع الحقول المطلوبة' : locale === 'zh' ? '请填写所有必填字段' : 'Please fill in all required fields');
       return;
     }
 
-    setLoading(true);
-    setError(null);
-    setOrderStatus(null);
+    setIsSubmitting(true);
 
-    try {
-      // Prepare order data
-      const orderData = {
-        items: items.map(item => ({
-          productId: item.productId,
-          quantity: item.quantity,
-          price: item.price,
-        })),
-        shipping: {
-          name: shippingAddress.fullName,
-          address: shippingAddress.street,
-          city: shippingAddress.city,
-          zip: shippingAddress.zipCode,
-          country: shippingAddress.country,
-          phone: shippingAddress.phone,
-        },
-        payment: {
-          cardName: paymentDetails.cardName,
-          cardNumber: paymentDetails.cardNumber,
-          expiry: paymentDetails.expiry,
-          cvc: paymentDetails.cvc,
-        },
-        total: grandTotal,
-      };
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
-      // Create order via API
-      const response = await ordersAPI.createOrder(orderData);
+    // Generate order ID
+    const orderId = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
-      if (response.success || response.orderId) {
-        setOrderStatus({
-          type: 'success',
-          message: `${t.success} ${response.orderId || response.id || 'N/A'}`,
-          orderId: response.orderId || response.id,
-        });
-        clearCart(); // Clear cart after successful order
-      } else {
-        setError(response.message || response.error || t.error);
-        setLoading(false);
-      }
-    } catch (err: any) {
-      console.error('Checkout error:', err);
-      setError(err.response?.data?.error || err.message || t.error);
-      setLoading(false);
-    }
+    // Clear cart
+    clearCart();
+
+    // Redirect to success page
+    router.push(`/${locale}/order-success?orderId=${orderId}`);
   };
 
-  // Show success screen
-  if (orderStatus?.type === 'success') {
-    return (
-      <div className="min-h-screen bg-gray-50 py-16" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="bg-white rounded-lg shadow-lg p-8">
-            <svg className="w-16 h-16 text-green-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">
-              {locale === 'ar' ? 'تم تأكيد طلبك!' : locale === 'zh' ? '订单已确认！' : 'Order Confirmed!'}
-            </h1>
-            <p className="text-lg text-gray-600 mb-8">{orderStatus.message}</p>
-            <Link
-              href={`/${locale}/products`}
-              className="inline-block px-6 py-3 bg-sky-600 text-white font-semibold rounded-lg hover:bg-sky-700 transition duration-150"
-            >
-              {t.continueShopping}
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Show empty cart message
   if (items.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 py-16" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">{t.title}</h1>
-          <p className="text-xl text-gray-600 mb-8">{t.emptyCart}</p>
-          <Link
-            href={`/${locale}/products`}
-            className="inline-block px-6 py-3 bg-sky-600 text-white font-semibold rounded-lg hover:bg-sky-700 transition duration-150"
-          >
-            {t.continueShopping}
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">
+            {locale === 'ar' ? 'السلة فارغة' : locale === 'zh' ? '购物车为空' : 'Cart is Empty'}
+          </h1>
+          <Link href={`/${locale}/products`}>
+            <Button variant="primary">
+              {locale === 'ar' ? '← العودة للمنتجات' : locale === 'zh' ? '← 返回产品' : '← Back to Products'}
+            </Button>
           </Link>
         </div>
       </div>
@@ -412,314 +177,306 @@ export default function CheckoutPageClient({ locale }: CheckoutPageClientProps) 
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8">{t.title}</h1>
-
-        <form onSubmit={handleCheckout}>
-          <Grid
-            columns={{ base: 1, lg: 3 }}
-            gap="gap-8"
-            className="mb-8"
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <Link
+            href={`/${locale}/products`}
+            className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors mb-4"
           >
-            {/* Main Column - Shipping Address Form */}
-            <GridItem className="lg:col-span-2 space-y-6">
-              <Card className="p-6 md:p-8">
-                <h2 className="text-xl font-semibold text-gray-900 mb-6">
-                  {t.shippingAddress}
+            <ArrowLeft className="w-5 h-5" />
+            <span>{t.backToCart}</span>
+          </Link>
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
+            {t.title}
+          </h1>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left Column - Shipping & Payment Form */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Shipping Information */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+              >
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-primary" />
+                  {t.shippingInfo}
                 </h2>
 
                 <div className="space-y-4">
-                  {/* Full Name */}
                   <div>
-                    <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       {t.fullName} <span className="text-red-500">*</span>
                     </label>
-                    <input
-                      type="text"
-                      id="fullName"
-                      value={shippingAddress.fullName}
-                      onChange={(e) => handleShippingChange('fullName', e.target.value)}
-                      placeholder={t.fullNamePlaceholder}
-                      required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E7D32] focus:border-transparent"
-                      disabled={loading}
-                    />
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <input
+                        type="text"
+                        id="fullName"
+                        name="fullName"
+                        required
+                        value={formData.fullName}
+                        onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white"
+                        placeholder={t.fullName}
+                      />
+                    </div>
                   </div>
 
-                  {/* Street Address */}
                   <div>
-                    <label htmlFor="street" className="block text-sm font-medium text-gray-700 mb-2">
-                      {t.street} <span className="text-red-500">*</span>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      {t.email}
                     </label>
                     <input
-                      type="text"
-                      id="street"
-                      value={shippingAddress.street}
-                      onChange={(e) => handleShippingChange('street', e.target.value)}
-                      placeholder={t.streetPlaceholder}
-                      required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E7D32] focus:border-transparent"
-                      disabled={loading}
+                      type="email"
+                      id="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      placeholder={t.email}
                     />
                   </div>
 
-                  {/* City and Country Row */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      {t.phone} <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <input
+                        type="tel"
+                        id="phone"
+                        name="phone"
+                        required
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white"
+                        placeholder={t.phone}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      {t.address} <span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      id="address"
+                      name="address"
+                      required
+                      rows={3}
+                      value={formData.address}
+                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      placeholder={t.address}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         {t.city} <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
                         id="city"
-                      value={shippingAddress.city}
-                      onChange={(e) => handleShippingChange('city', e.target.value)}
-                        placeholder={t.cityPlaceholder}
+                        name="city"
                         required
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E7D32] focus:border-transparent"
-                        disabled={loading}
+                        value={formData.city}
+                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white"
+                        placeholder={t.city}
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         {t.country} <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        id="country"
-                        value={shippingAddress.country}
-                        onChange={(e) => handleShippingChange('country', e.target.value)}
-                        required
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E7D32] focus:border-transparent bg-white"
-                        disabled={loading}
-                      >
-                        <option value="">{t.countryPlaceholder}</option>
-                        {countries.map((country) => (
-                          <option key={country.code} value={country.code}>
-                            {country.name[locale as keyof typeof country.name] || country.name.en} ({country.code})
-                          </option>
-                        ))}
-                      </select>
-                      {shippingLoading && shippingAddress.country && (
-                        <p className="mt-1 text-xs text-gray-500">
-                          {locale === 'ar' ? 'جاري حساب الشحن...' : locale === 'zh' ? '正在计算运费...' : 'Calculating shipping...'}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Zip Code and Phone Row */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="zipCode" className="block text-sm font-medium text-gray-700 mb-2">
-                        {t.zipCode} <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
-                        id="zipCode"
-                      value={shippingAddress.zipCode}
-                      onChange={(e) => handleShippingChange('zipCode', e.target.value)}
-                        placeholder={t.zipCodePlaceholder}
+                        id="country"
+                        name="country"
                         required
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E7D32] focus:border-transparent"
-                        disabled={loading}
-                      />
-                    </div>
-
-                    <div>
-                      <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                        {t.phone}
-                      </label>
-                      <input
-                        type="tel"
-                        id="phone"
-                      value={shippingAddress.phone || ''}
-                      onChange={(e) => handleShippingChange('phone', e.target.value)}
-                        placeholder={t.phonePlaceholder}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E7D32] focus:border-transparent"
-                        disabled={loading}
+                        value={formData.country}
+                        onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white"
+                        placeholder={t.country}
                       />
                     </div>
                   </div>
-                </div>
-              </Card>
 
-              {/* Payment Information */}
-              <Card className="p-6 md:p-8">
-                <h2 className="text-xl font-semibold text-gray-900 mb-6">
-                  {t.paymentInfo}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      {t.postalCode}
+                    </label>
+                    <input
+                      type="text"
+                      id="postalCode"
+                      name="postalCode"
+                      value={formData.postalCode}
+                      onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      placeholder={t.postalCode}
+                    />
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Payment Method */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+              >
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                  <CreditCard className="w-5 h-5 text-primary" />
+                  {t.paymentMethod}
                 </h2>
-                <div className="p-3 mb-4 text-sm text-yellow-800 bg-yellow-100 dark:bg-yellow-900 dark:text-yellow-100 rounded-lg">
-                  {locale === 'ar' 
-                    ? '**ملاحظة:** يتم استخدام بيانات دفع وهمية (Mock Payment) حاليًا لغرض الاختبار.'
-                    : locale === 'zh'
-                    ? '**注意：** 当前使用模拟支付数据进行测试。'
-                    : '**Note:** Mock payment data is currently used for testing purposes.'}
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="cardName" className="block text-sm font-medium text-gray-700 mb-2">
-                      {t.cardName} <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      id="cardName"
-                      value={paymentDetails.cardName}
-                      onChange={(e) => handlePaymentChange('cardName', e.target.value)}
-                      required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E7D32] focus:border-transparent"
-                      disabled={loading}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="cardNumber" className="block text-sm font-medium text-gray-700 mb-2">
-                      {t.cardNumber} <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      id="cardNumber"
-                      value={paymentDetails.cardNumber}
-                      onChange={(e) => handlePaymentChange('cardNumber', e.target.value.replace(/\s/g, ''))}
-                      pattern="[0-9]{16}"
-                      placeholder="**** **** **** ****"
-                      required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E7D32] focus:border-transparent"
-                      disabled={loading}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="expiry" className="block text-sm font-medium text-gray-700 mb-2">
-                      {t.expiry} <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      id="expiry"
-                      value={paymentDetails.expiry}
-                      onChange={(e) => handlePaymentChange('expiry', e.target.value)}
-                      pattern="(0[1-9]|1[0-2])\/\d{2}"
-                      placeholder="MM/YY"
-                      required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E7D32] focus:border-transparent"
-                      disabled={loading}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="cvc" className="block text-sm font-medium text-gray-700 mb-2">
-                      {t.cvc} <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      id="cvc"
-                      value={paymentDetails.cvc}
-                      onChange={(e) => handlePaymentChange('cvc', e.target.value)}
-                      pattern="[0-9]{3,4}"
-                      required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E7D32] focus:border-transparent"
-                      disabled={loading}
-                    />
-                  </div>
-                </div>
-              </Card>
-            </GridItem>
 
-            {/* Side Column - Order Summary */}
-            <GridItem className="lg:col-span-1">
-              <Card className="p-6 md:p-8 sticky top-8">
-                <h2 className="text-xl font-semibold text-gray-900 mb-6">
+                <div className="space-y-3">
+                  {/* Cash on Delivery */}
+                  <label className="flex items-center gap-4 p-4 border-2 border-primary rounded-lg cursor-pointer hover:bg-primary/5 transition-colors">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="cod"
+                      checked={formData.paymentMethod === 'cod'}
+                      onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value as 'cod' | 'card' })}
+                      className="w-5 h-5 text-primary focus:ring-primary"
+                    />
+                    <div className="flex items-center gap-3 flex-1">
+                      <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
+                        <Wallet className="w-6 h-6 text-green-600 dark:text-green-400" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-semibold text-gray-900 dark:text-white">{t.cod}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {locale === 'ar' ? 'ادفع عند استلام الطلب' : locale === 'zh' ? '货到付款' : 'Pay when you receive your order'}
+                        </p>
+                      </div>
+                    </div>
+                  </label>
+
+                  {/* Credit Card */}
+                  <label className="flex items-center gap-4 p-4 border-2 border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="card"
+                      checked={formData.paymentMethod === 'card'}
+                      onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value as 'cod' | 'card' })}
+                      className="w-5 h-5 text-primary focus:ring-primary"
+                    />
+                    <div className="flex items-center gap-3 flex-1">
+                      <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
+                        <CreditCard className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-semibold text-gray-900 dark:text-white">{t.card}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {locale === 'ar' ? 'دفع آمن عبر البطاقة' : locale === 'zh' ? '安全信用卡支付' : 'Secure card payment'}
+                        </p>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              </motion.div>
+            </div>
+
+            {/* Right Column - Order Summary */}
+            <div className="lg:col-span-1">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 sticky top-4"
+              >
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
                   {t.orderSummary}
                 </h2>
 
-                <div className="space-y-4">
-                  {/* Cart Items List */}
-                  <div className="space-y-2 mb-4 max-h-48 overflow-y-auto border-b border-gray-200 pb-4">
-                    {items.map((item) => (
-                      <div key={item.id} className="flex justify-between text-sm text-gray-600">
-                        <span className="truncate pr-2">{item.name} (x{item.quantity})</span>
-                        <span className="font-medium">{formatCurrency(item.subtotal, item.currency, locale)}</span>
+                {/* Items List */}
+                <div className="space-y-4 mb-6 max-h-64 overflow-y-auto">
+                  {items.map((item) => (
+                    <div key={item.id} className="flex gap-3 pb-4 border-b border-gray-200 dark:border-gray-700 last:border-0">
+                      <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
+                        {item.imageUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={item.imageUrl}
+                            alt={item.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-xl">
+                            🛍️
+                          </div>
+                        )}
                       </div>
-                    ))}
-                  </div>
-
-                  {/* Subtotal */}
-                  <div className="flex justify-between text-gray-700">
-                    <span>{t.subtotal}</span>
-                    <span className="font-medium">
-                      {formatCurrency(subtotal, currency, locale)}
-                    </span>
-                  </div>
-
-                  {/* Shipping */}
-                  <div className="flex justify-between text-gray-700">
-                    <span>
-                      {t.shipping}
-                      {shippingLoading && shippingAddress.country && (
-                        <span className="ml-2 text-xs text-gray-400">
-                          {locale === 'ar' ? '(جاري الحساب...)' : locale === 'zh' ? '(计算中...)' : '(calculating...)'}
-                        </span>
-                      )}
-                    </span>
-                    <span className="font-medium">
-                      {shippingLoading && shippingAddress.country ? (
-                        <span className="text-gray-400">...</span>
-                      ) : (
-                        formatCurrency(shipping, currency, locale)
-                      )}
-                    </span>
-                  </div>
-
-                  {/* Tax */}
-                  <div className="flex justify-between text-gray-700">
-                    <span>{t.tax}</span>
-                    <span className="font-medium">
-                      {formatCurrency(taxAmount, currency, locale)}
-                    </span>
-                  </div>
-
-                  {/* Divider */}
-                  <div className="border-t border-gray-200 pt-4"></div>
-
-                  {/* Total */}
-                  <div className="flex justify-between text-lg font-bold text-gray-900">
-                    <span>{t.total}</span>
-                    <span className="text-sky-600">
-                      {formatCurrency(grandTotal, currency, locale)}
-                    </span>
-                  </div>
-
-                  {/* Error Message */}
-                  {error && (
-                    <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                      <p className="text-sm text-red-800">{error}</p>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 dark:text-white text-sm line-clamp-2">
+                          {item.name}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          {locale === 'ar' ? 'الكمية' : locale === 'zh' ? '数量' : 'Qty'}: {item.quantity}
+                        </p>
+                        <p className="text-sm font-bold text-primary mt-1">
+                          {formatPrice(item.subtotal, item.currency)}
+                        </p>
+                      </div>
                     </div>
-                  )}
+                  ))}
+                </div>
 
-                  {/* Checkout Button */}
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    className="w-full mt-6 py-3 text-lg"
-                    disabled={loading || items.length === 0}
-                  >
-                    {loading ? t.processing : t.secureCheckout}
-                  </Button>
-
-                  {/* Back Link */}
-                  <div className="mt-4 text-center">
-                    <Link
-                      href={`/${locale}/cart`}
-                      className="text-sm text-[#2E7D32] hover:text-[#256628] underline"
-                    >
-                      {t.backToProducts}
-                    </Link>
+                {/* Price Breakdown */}
+                <div className="space-y-3 mb-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                  <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                    <span>{t.subtotal}:</span>
+                    <span>{formatPrice(total, items[0]?.currency || 'AED')}</span>
+                  </div>
+                  <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                    <span>{t.shipping}:</span>
+                    <span>{formatPrice(shippingCost, items[0]?.currency || 'AED')}</span>
+                  </div>
+                  <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-white pt-3 border-t border-gray-200 dark:border-gray-700">
+                    <span>{t.total}:</span>
+                    <span className="text-red-600">{formatPrice(finalTotal, items[0]?.currency || 'AED')}</span>
                   </div>
                 </div>
-              </Card>
-            </GridItem>
-          </Grid>
+
+                {/* Confirm Button */}
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className="w-full min-h-[56px] text-lg font-bold bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      {locale === 'ar' ? 'جاري المعالجة...' : locale === 'zh' ? '处理中...' : 'Processing...'}
+                    </span>
+                  ) : (
+                    t.confirmOrder
+                  )}
+                </Button>
+
+                <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-4">
+                  {itemCount} {itemCount === 1 ? t.items : t.itemsPlural}
+                </p>
+              </motion.div>
+            </div>
+          </div>
         </form>
       </div>
     </div>
   );
 }
-

@@ -209,7 +209,7 @@ export default function CartDrawer({ locale }: CartDrawerProps) {
               <Link
                 href={`/${locale}/checkout`}
                 onClick={toggleDrawer}
-                className="w-full block text-center py-3 rounded-lg font-semibold transition duration-150 mb-2 bg-primary text-white hover:bg-primary/90"
+                className="w-full block text-center py-3 rounded-lg font-semibold transition duration-150 mb-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg hover:shadow-xl"
               >
                 {t.checkout}
               </Link>

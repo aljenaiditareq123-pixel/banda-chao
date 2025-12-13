@@ -1,20 +1,26 @@
 import { notFound } from 'next/navigation';
-import CheckoutClient from './page-client';
+import OrderSuccessClient from './page-client';
 
 interface PageProps {
   params: Promise<{
     locale: string;
   }>;
+  searchParams: Promise<{
+    orderId?: string;
+  }>;
 }
 
 const validLocales = ['zh', 'en', 'ar'];
 
-export default async function CheckoutPage({ params }: PageProps) {
+export default async function OrderSuccessPage({ params, searchParams }: PageProps) {
   let locale: string;
+  let orderId: string | undefined;
   
   try {
     const resolvedParams = await params;
     locale = resolvedParams.locale;
+    const resolvedSearchParams = await searchParams;
+    orderId = resolvedSearchParams.orderId;
   } catch (error) {
     console.error('Error resolving params:', error);
     notFound();
@@ -24,5 +30,5 @@ export default async function CheckoutPage({ params }: PageProps) {
     notFound();
   }
 
-  return <CheckoutClient locale={locale} />;
+  return <OrderSuccessClient locale={locale} orderId={orderId} />;
 }
