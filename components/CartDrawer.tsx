@@ -76,17 +76,18 @@ export default function CartDrawer({ locale }: CartDrawerProps) {
             aria-hidden={!isDrawerOpen}
           />
 
-      {/* Drawer - Enhanced with framer-motion */}
-      <motion.div
-        initial={{ x: locale === 'ar' ? '100%' : '-100%' }}
-        animate={{ x: isDrawerOpen ? 0 : (locale === 'ar' ? '100%' : '-100%') }}
-        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className={`fixed ${locale === 'ar' ? 'right-0' : 'left-0'} top-0 w-full md:w-96 h-full bg-white dark:bg-gray-800 shadow-xl z-[100]`}
-        role="dialog"
-        aria-modal="true"
-        aria-label={t.cartTitle}
-        dir={locale === 'ar' ? 'rtl' : 'ltr'}
-      >
+          {/* Drawer - Enhanced with framer-motion */}
+          <motion.div
+            initial={{ x: locale === 'ar' ? '100%' : '-100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: locale === 'ar' ? '100%' : '-100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className={`fixed ${locale === 'ar' ? 'right-0' : 'left-0'} top-0 w-full md:w-96 h-full bg-white dark:bg-gray-800 shadow-xl z-[100]`}
+            role="dialog"
+            aria-modal="true"
+            aria-label={t.cartTitle}
+            dir={locale === 'ar' ? 'rtl' : 'ltr'}
+          >
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
