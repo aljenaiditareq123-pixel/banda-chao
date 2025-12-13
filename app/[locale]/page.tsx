@@ -51,6 +51,13 @@ export default async function HomePage({ params }: PageProps) {
     // Continue with empty arrays - don't throw error
   }
 
+  // Use mock products as fallback if API fails or returns empty
+  if (featuredProducts.length === 0) {
+    const { getAllMockProducts, mockProductToApiFormat } = await import('@/lib/mock-products');
+    const mockProducts = getAllMockProducts();
+    featuredProducts = mockProducts.slice(0, 8).map(p => mockProductToApiFormat(p, locale));
+  }
+
   return (
     <HomePageClient
       locale={locale}

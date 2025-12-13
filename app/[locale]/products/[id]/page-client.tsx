@@ -208,19 +208,32 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
               </div>
             )}
 
-            <div className="mb-6">
-              <div className="flex items-center gap-3 mb-2">
-                <p className="text-4xl font-bold text-primary">
+            {/* Price Section - AliExpress/Temu Style */}
+            <div className="mb-6 p-4 bg-gradient-to-br from-red-50 to-orange-50 rounded-xl border-2 border-red-200">
+              <div className="flex items-baseline gap-3 mb-2">
+                <p className="text-5xl font-black text-red-600">
                   {formatPrice(product.price, product.currency)}
                 </p>
+                {(product as any).originalPrice && (product as any).originalPrice > product.price && (
+                  <div className="flex flex-col">
+                    <p className="text-lg text-gray-500 line-through">
+                      {formatPrice((product as any).originalPrice, product.currency)}
+                    </p>
+                    <span className="text-xs font-bold text-red-600 bg-red-100 px-2 py-0.5 rounded">
+                      {Math.round(((product as any).originalPrice - product.price) / (product as any).originalPrice * 100)}% OFF
+                    </span>
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-4 flex-wrap">
                 {/* Urgency Indicator - Low Stock Warning */}
                 {product.stock !== undefined && product.stock > 0 && product.stock <= 50 && (
-                  <div className="flex items-center gap-2 px-3 py-1 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-full">
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-red-100 border-2 border-red-300 rounded-full">
                     <div className="relative">
-                      <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                      <div className="absolute inset-0 w-2 h-2 bg-red-500 rounded-full animate-ping opacity-75"></div>
+                      <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></div>
+                      <div className="absolute inset-0 w-2 h-2 bg-red-600 rounded-full animate-ping opacity-75"></div>
                     </div>
-                    <p className="text-sm font-semibold text-red-700 dark:text-red-400 whitespace-nowrap">
+                    <p className="text-sm font-bold text-red-700 whitespace-nowrap">
                       {locale === 'ar'
                         ? `بقي ${lowStockCount} فقط!`
                         : locale === 'zh'
@@ -229,12 +242,32 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
                     </p>
                   </div>
                 )}
+                {(product as any).sold && (
+                  <p className="text-sm font-semibold text-gray-700">
+                    {locale === 'ar' 
+                      ? `✅ ${(product as any).sold.toLocaleString()} تم البيع`
+                      : locale === 'zh'
+                      ? `✅ 已售出 ${(product as any).sold.toLocaleString()} 件`
+                      : `✅ ${(product as any).sold.toLocaleString()} sold`}
+                  </p>
+                )}
+                {(product as any).rating && (
+                  <div className="flex items-center gap-1">
+                    <span className="text-yellow-500 text-lg">⭐</span>
+                    <span className="text-sm font-bold text-gray-700">{(product as any).rating}</span>
+                    {(product as any).reviews && (
+                      <span className="text-xs text-gray-500">
+                        ({((product as any).reviews / 1000).toFixed(1)}k)
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
               {product.stock !== undefined && (
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 mt-2">
                   {product.stock > 0 
-                    ? `${product.stock} ${locale === 'ar' ? 'متوفر' : locale === 'zh' ? '有库存' : 'in stock'}`
-                    : locale === 'ar' ? 'غير متوفر' : locale === 'zh' ? '缺货' : 'Out of stock'
+                    ? `📦 ${product.stock} ${locale === 'ar' ? 'متوفر في المخزون' : locale === 'zh' ? '有库存' : 'in stock'}`
+                    : locale === 'ar' ? '❌ غير متوفر' : locale === 'zh' ? '❌ 缺货' : '❌ Out of stock'
                   }
                 </p>
               )}
@@ -264,31 +297,36 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
               productUrl={productUrl}
             />
 
+            {/* Specifications Section */}
+            {(product as any).specifications && Object.keys((product as any).specifications).length > 0 && (
+              <div className="mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <span className="text-2xl">📋</span>
+                  {locale === 'ar' ? 'المواصفات' : locale === 'zh' ? '规格' : 'Specifications'}
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {Object.entries((product as any).specifications).map(([key, value]) => (
+                    <div key={key} className="flex justify-between items-center py-2 border-b border-gray-200 last:border-0">
+                      <span className="text-sm font-medium text-gray-600">{key}:</span>
+                      <span className="text-sm font-bold text-gray-900">{value as string}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Description Section */}
             {product.description && (
               <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
+                  <span className="text-2xl">📝</span>
                   {locale === 'ar' ? 'الوصف' : locale === 'zh' ? '描述' : 'Description'}
                 </h3>
-                {/* Auto Translator - Magic Translation Feature */}
-                <AutoTranslator
-                  originalText={
-                    // إذا كان الوصف يحتوي على أحرف صينية، استخدمه كـ original
-                    /[\u4e00-\u9fff]/.test(product.description)
-                      ? product.description
-                      : // إذا لم يكن صيني، استخدم نص تجريبي صيني للعرض
-                        '这是一款高品质的手工竹椅，由中国大师精心制作。坚固耐用，环保设计。适合现代家居装饰，带来自然与艺术的完美结合。'
-                  }
-                  translatedText={
-                    // إذا كان الوصف عربي أو إنجليزي، استخدمه كـ translated
-                    /[\u4e00-\u9fff]/.test(product.description)
-                      ? // إذا كان الوصف صيني، استخدم ترجمة تجريبية
-                        'هذا كرسي خيزران عالي الجودة مصنوع يدوياً، تم تصنيعه بعناية من قبل أساتذة صينيين. قوي ومتين، وبتصميم صديق للبيئة. مناسب لديكور المنازل الحديثة، يجلب مزيجاً مثالياً بين الطبيعة والفن.'
-                      : product.description
-                  }
-                  originalLang={/[\u4e00-\u9fff]/.test(product.description) ? 'zh' : locale === 'ar' ? 'ar' : 'en'}
-                  translatedLang={locale === 'ar' ? 'ar' : locale === 'zh' ? 'zh' : 'en'}
-                  className="bg-gray-50 p-4 rounded-xl border border-gray-200"
-                />
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                  <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+                    {product.description}
+                  </p>
+                </div>
               </div>
             )}
 
@@ -383,35 +421,16 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
                 </div>
               )}
 
-              <div className="flex gap-4">
-                {/* Add to Cart Button - Enhanced for Mobile */}
+              {/* Action Buttons - AliExpress/Temu Style */}
+              <div className="space-y-3">
+                {/* Buy Now Button - Large & Prominent (Red) */}
                 <Button
                   variant="primary"
-                  className="flex-1 min-h-[48px] text-base font-semibold"
-                  onClick={() => {
-                    if (product && (product.stock === undefined || product.stock > 0)) {
-                      addItem({
-                        productId: product.id,
-                        name: product.name,
-                        imageUrl: mainImage,
-                        price: product.price,
-                        currency: product.currency || 'USD',
-                        quantity: quantity,
-                      });
-                    }
-                  }}
-                  disabled={product.stock !== undefined && product.stock === 0}
-                >
-                  {locale === 'ar' ? 'أضف إلى السلة' : locale === 'zh' ? '添加到购物车' : 'Add to Cart'}
-                </Button>
-                <Button
-                  variant="secondary"
-                  className="flex-1 min-h-[48px] text-base font-semibold bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white border-0"
+                  className="w-full min-h-[56px] text-lg font-bold bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg hover:shadow-xl transition-all"
                   onClick={async () => {
                     setCheckoutLoading(true);
                     setCheckoutError(null);
                     try {
-                      // Track checkout started
                       trackCheckoutStarted(product.id, quantity, product.price * quantity);
 
                       const response = await paymentsAPI.createCheckout({
@@ -421,7 +440,6 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
                       });
 
                       if (response.checkoutUrl) {
-                        // Redirect to Stripe checkout
                         window.location.href = response.checkoutUrl;
                       } else {
                         setCheckoutError(
@@ -445,12 +463,33 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
                   disabled={checkoutLoading || (product.stock !== undefined && product.stock === 0)}
                 >
                   {checkoutLoading
-                    ? (locale === 'ar' ? 'جاري المعالجة...' : 'Processing...')
+                    ? (locale === 'ar' ? '⏳ جاري المعالجة...' : '⏳ Processing...')
                     : locale === 'ar'
-                    ? 'شراء مباشر'
+                    ? '🛒 شراء الآن'
                     : locale === 'zh'
-                    ? '直接购买'
-                    : 'Buy Now'}
+                    ? '🛒 立即购买'
+                    : '🛒 Buy Now'}
+                </Button>
+                
+                {/* Add to Cart Button - Secondary but Clear */}
+                <Button
+                  variant="secondary"
+                  className="w-full min-h-[52px] text-base font-bold border-2 border-primary-600 text-primary-600 hover:bg-primary-50 transition-all"
+                  onClick={() => {
+                    if (product && (product.stock === undefined || product.stock > 0)) {
+                      addItem({
+                        productId: product.id,
+                        name: product.name,
+                        imageUrl: mainImage,
+                        price: product.price,
+                        currency: product.currency || 'USD',
+                        quantity: quantity,
+                      });
+                    }
+                  }}
+                  disabled={product.stock !== undefined && product.stock === 0}
+                >
+                  {locale === 'ar' ? '➕ أضف إلى السلة' : locale === 'zh' ? '➕ 添加到购物车' : '➕ Add to Cart'}
                 </Button>
               </div>
 

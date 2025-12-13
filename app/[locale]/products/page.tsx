@@ -68,6 +68,19 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
     error = err.response?.data?.message || err.message || 'Failed to load products';
   }
 
+  // Use mock products as fallback if API fails or returns empty
+  if (products.length === 0) {
+    const { getAllMockProducts, mockProductToApiFormat } = await import('@/lib/mock-products');
+    const mockProducts = getAllMockProducts();
+    products = mockProducts.map(p => mockProductToApiFormat(p, locale));
+    pagination = {
+      page: 1,
+      pageSize: products.length,
+      total: products.length,
+      totalPages: 1,
+    };
+  }
+
   return (
     <ProductsPageClient 
       locale={locale} 

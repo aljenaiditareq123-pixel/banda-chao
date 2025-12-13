@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import ProductDetailClient from './page-client';
 import { productsAPI } from '@/lib/api';
+import { getMockProductById, mockProductToApiFormat } from '@/lib/mock-products';
 
 interface PageProps {
   params: Promise<{
@@ -55,6 +56,21 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       };
     }
   } catch (error: any) {
+    // Try mock data for metadata
+    const mockProduct = getMockProductById(id);
+    if (mockProduct) {
+      const apiFormatProduct = mockProductToApiFormat(mockProduct, locale);
+      return {
+        metadataBase: new URL(metadataBaseUrl),
+        title: `${apiFormatProduct.name} - Banda Chao`,
+        description: apiFormatProduct.description || `Buy ${apiFormatProduct.name} from Banda Chao`,
+        openGraph: {
+          title: apiFormatProduct.name,
+          description: apiFormatProduct.description || `Buy ${apiFormatProduct.name} from Banda Chao`,
+          images: apiFormatProduct.images?.[0]?.url ? [apiFormatProduct.images[0].url] : apiFormatProduct.imageUrl ? [apiFormatProduct.imageUrl] : [],
+        },
+      };
+    }
     // Silently handle 404 errors - they're expected for invalid product IDs
     if (error?.response?.status !== 404) {
       console.error('Error generating metadata:', error);
@@ -94,6 +110,25 @@ export default async function ProductDetailPage({ params }: PageProps) {
     const product = response.product;
 
     if (!product) {
+      // Try mock data as fallback
+      const mockProduct = getMockProductById(id);
+      if (mockProduct) {
+        const apiFormatProduct = mockProductToApiFormat(mockProduct, locale);
+        // Get related products from mock data
+        const allMockProducts = require('@/lib/mock-products').getAllMockProducts();
+        const relatedProducts = allMockProducts
+          .filter((p: any) => p.id !== id && p.maker.id === mockProduct.maker.id)
+          .slice(0, 4)
+          .map((p: any) => mockProductToApiFormat(p, locale));
+        
+        return (
+          <ProductDetailClient
+            locale={locale}
+            product={apiFormatProduct}
+            relatedProducts={relatedProducts}
+          />
+        );
+      }
       notFound();
     }
 
@@ -105,6 +140,12 @@ export default async function ProductDetailPage({ params }: PageProps) {
         relatedProducts = (relatedResponse.products || []).filter((p: any) => p.id !== product.id);
       } catch (error) {
         console.error('Error fetching related products:', error);
+        // Use mock products as fallback for related products
+        const allMockProducts = require('@/lib/mock-products').getAllMockProducts();
+        relatedProducts = allMockProducts
+          .filter((p: any) => p.id !== id && p.maker.id === product.makerId)
+          .slice(0, 4)
+          .map((p: any) => mockProductToApiFormat(p, locale));
       }
     }
 
@@ -116,6 +157,26 @@ export default async function ProductDetailPage({ params }: PageProps) {
       />
     );
   } catch (error: any) {
+    // Try mock data as fallback before showing 404
+    const mockProduct = getMockProductById(id);
+    if (mockProduct) {
+      const apiFormatProduct = mockProductToApiFormat(mockProduct, locale);
+      // Get related products from mock data
+      const allMockProducts = require('@/lib/mock-products').getAllMockProducts();
+      const relatedProducts = allMockProducts
+        .filter((p: any) => p.id !== id && p.maker.id === mockProduct.maker.id)
+        .slice(0, 4)
+        .map((p: any) => mockProductToApiFormat(p, locale));
+      
+      return (
+        <ProductDetailClient
+          locale={locale}
+          product={apiFormatProduct}
+          relatedProducts={relatedProducts}
+        />
+      );
+    }
+    
     // Silently handle 404 errors - they're expected for invalid product IDs
     if (error?.response?.status !== 404 && error?.status !== 404) {
       console.error('Error fetching product details:', error);
