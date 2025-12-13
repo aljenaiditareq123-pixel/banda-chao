@@ -56,6 +56,7 @@ model users {
   shares                               shares[]
   product_variants                     product_variants[]
   inventory_movements                  inventory_movements[]
+  social_accounts                      social_accounts[]
 
   @@index([email])
   @@index([role])
@@ -310,6 +311,9 @@ model posts {
   likes_count    Int             @default(0)
   comments_count Int             @default(0)
   shares_count   Int             @default(0)
+  // Mirror System - External Platform Integration
+  external_id    String? // ID on external platform (TikTok, YouTube, etc.)
+  platform       String? // TIKTOK, YOUTUBE, INSTAGRAM, etc.
   created_at     DateTime        @default(now())
   updated_at     DateTime        @updatedAt
   post_likes     post_likes[]
@@ -319,6 +323,7 @@ model posts {
   @@index([user_id])
   @@index([created_at])
   @@index([is_pinned])
+  @@index([platform, external_id])
 }
 
 model post_products {
@@ -353,6 +358,9 @@ model videos {
   likes          Int              @default(0)
   comments_count Int              @default(0)
   shares_count   Int              @default(0)
+  // Mirror System - External Platform Integration
+  external_id    String? // ID on external platform (TikTok, YouTube, etc.)
+  platform       String? // TIKTOK, YOUTUBE, INSTAGRAM, etc.
   created_at     DateTime         @default(now())
   updated_at     DateTime         @updatedAt
   comments       comments[]
@@ -363,6 +371,7 @@ model videos {
   @@index([created_at])
   @@index([type])
   @@index([user_id])
+  @@index([platform, external_id])
 }
 
 model video_products {
@@ -483,6 +492,30 @@ model follows {
 }
 
 // ============================================
+// SOCIAL ACCOUNTS - حسابات المنصات الخارجية
+// ============================================
+
+model social_accounts {
+  id                String   @id @default(uuid())
+  user_id           String
+  platform          String   // TIKTOK, YOUTUBE, INSTAGRAM, FACEBOOK, TWITTER
+  platform_user_id  String?  // User ID on the external platform
+  access_token      String   // Encrypted access token
+  refresh_token     String?  // Encrypted refresh token
+  token_expires_at  DateTime? // Token expiration time
+  is_active         Boolean  @default(true)
+  metadata          String?  // JSON stored as string (profile info, permissions, etc.)
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+  users             users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, platform])
+  @@index([user_id])
+  @@index([platform])
+  @@index([is_active])
+}
+
+// ============================================
 // AI TRINITY BRAIN - الكيانات الذكية
 // ============================================
 
@@ -565,10 +598,14 @@ model pricing_rules {
 model coordinator_logs {
   id            String   @id @default(uuid())
   order_id      String?
-  action_type   String // ORDER_PROCESSED, INVENTORY_UPDATED, SUPPLIER_NOTIFIED, SHIPPING_ARRANGED
+  action_type   String // ORDER_PROCESSED, INVENTORY_UPDATED, SUPPLIER_NOTIFIED, SHIPPING_ARRANGED, CONTENT_SYNCED
   status        String // SUCCESS, FAILED, PENDING
   details       String? // JSON stored as string
   error_message String?
+  // Mirror System - Content Sync Tracking
+  content_type  String? // VIDEO, POST
+  content_id    String? // ID of video or post
+  platform      String? // TIKTOK, YOUTUBE, etc.
   created_at    DateTime @default(now())
   orders        orders?  @relation(fields: [order_id], references: [id], onDelete: SetNull)
 
@@ -576,6 +613,8 @@ model coordinator_logs {
   @@index([action_type])
   @@index([status])
   @@index([created_at])
+  @@index([content_type, content_id])
+  @@index([platform])
 }
 
 // ============================================
