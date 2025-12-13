@@ -28,6 +28,7 @@ export interface MockProduct {
   rating?: number;
   reviews?: number;
   sold?: number;
+  colors?: string[];
 }
 
 export const MOCK_PRODUCTS: MockProduct[] = [
@@ -70,6 +71,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     rating: 4.8,
     reviews: 1247,
     sold: 8934,
+    colors: ['Black', 'White', 'Blue', 'Red'],
   },
   {
     id: '2',
@@ -109,6 +111,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     rating: 4.9,
     reviews: 892,
     sold: 3456,
+    colors: ['Brown', 'Black', 'Tan'],
   },
   {
     id: '3',
@@ -148,6 +151,7 @@ export const MOCK_PRODUCTS: MockProduct[] = [
     rating: 4.7,
     reviews: 2156,
     sold: 12456,
+    colors: ['Black', 'Silver', 'Rose Gold'],
   },
   {
     id: '4',
@@ -389,5 +393,6 @@ export function mockProductToApiFormat(product: MockProduct, locale: string = 'e
     reviews: product.reviews,
     sold: product.sold,
     originalPrice: product.originalPrice,
+    colors: product.colors,
   };
 }

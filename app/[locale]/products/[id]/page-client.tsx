@@ -370,6 +370,153 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
               </button>
             </div>
 
+            {/* Color Options Section */}
+            {(product as any).colors && Array.isArray((product as any).colors) && (product as any).colors.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
+                  <span className="text-2xl">🎨</span>
+                  {locale === 'ar' ? 'الألوان المتاحة' : locale === 'zh' ? '可选颜色' : 'Available Colors'}
+                </h3>
+                <div className="flex flex-wrap gap-3">
+                  {(product as any).colors.map((color: string, index: number) => (
+                    <button
+                      key={index}
+                      className="px-4 py-2 rounded-lg border-2 border-gray-300 hover:border-primary-500 transition-colors font-medium text-sm"
+                      style={{ 
+                        backgroundColor: color.toLowerCase() === 'white' ? '#fff' : color.toLowerCase(),
+                        color: ['white', 'yellow', 'lightyellow'].includes(color.toLowerCase()) ? '#000' : '#fff',
+                        borderColor: color.toLowerCase() === 'white' ? '#ccc' : color.toLowerCase()
+                      }}
+                    >
+                      {color}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Reviews Section */}
+            <div className="mb-6 p-4 bg-white rounded-xl border border-gray-200">
+              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <span className="text-2xl">⭐</span>
+                {locale === 'ar' ? 'التقييمات والمراجعات' : locale === 'zh' ? '评价和评论' : 'Reviews & Ratings'}
+                {(product as any).reviews && (
+                  <span className="text-sm font-normal text-gray-500">
+                    ({(product as any).reviews.toLocaleString()})
+                  </span>
+                )}
+              </h3>
+              
+              {/* Rating Summary */}
+              {(product as any).rating && (
+                <div className="mb-4 p-4 bg-gradient-to-br from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
+                  <div className="flex items-center gap-4">
+                    <div className="text-center">
+                      <div className="text-4xl font-black text-yellow-600">
+                        {(product as any).rating}
+                      </div>
+                      <div className="flex items-center gap-1 mt-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <span
+                            key={star}
+                            className={`text-xl ${
+                              star <= Math.round((product as any).rating)
+                                ? 'text-yellow-500'
+                                : 'text-gray-300'
+                            }`}
+                          >
+                            ⭐
+                          </span>
+                        ))}
+                      </div>
+                      <p className="text-xs text-gray-600 mt-1">
+                        {(product as any).reviews || 0} {locale === 'ar' ? 'تقييم' : locale === 'zh' ? '评价' : 'reviews'}
+                      </p>
+                    </div>
+                    <div className="flex-1">
+                      <div className="space-y-1">
+                        {[5, 4, 3, 2, 1].map((star) => {
+                          const percentage = Math.random() * 30 + 50; // Mock percentage
+                          return (
+                            <div key={star} className="flex items-center gap-2">
+                              <span className="text-sm text-gray-600 w-8">{star} ⭐</span>
+                              <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-yellow-500 transition-all"
+                                  style={{ width: `${percentage}%` }}
+                                />
+                              </div>
+                              <span className="text-xs text-gray-500 w-12 text-right">
+                                {Math.round(percentage)}%
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Sample Reviews */}
+              <div className="space-y-4">
+                {[
+                  {
+                    name: locale === 'ar' ? 'أحمد محمد' : locale === 'zh' ? '张明' : 'John Doe',
+                    rating: 5,
+                    date: '2024-01-15',
+                    comment: locale === 'ar' 
+                      ? 'منتج رائع! الجودة ممتازة والتسليم كان سريعاً. أنصح به بشدة.'
+                      : locale === 'zh'
+                      ? '很棒的产品！质量很好，发货也很快。强烈推荐！'
+                      : 'Great product! Excellent quality and fast delivery. Highly recommended!',
+                  },
+                  {
+                    name: locale === 'ar' ? 'فاطمة علي' : locale === 'zh' ? '李华' : 'Jane Smith',
+                    rating: 4,
+                    date: '2024-01-10',
+                    comment: locale === 'ar'
+                      ? 'جيد جداً، لكن يمكن تحسين التغليف قليلاً.'
+                      : locale === 'zh'
+                      ? '很好，但包装可以稍微改进。'
+                      : 'Very good, but packaging could be improved slightly.',
+                  },
+                ].map((review, index) => (
+                  <div key={index} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center text-white text-sm font-bold">
+                          {review.name.charAt(0)}
+                        </div>
+                        <span className="font-semibold text-gray-900">{review.name}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <span
+                              key={star}
+                              className={`text-sm ${
+                                star <= review.rating ? 'text-yellow-500' : 'text-gray-300'
+                              }`}
+                            >
+                              ⭐
+                            </span>
+                          ))}
+                        </div>
+                        <span className="text-xs text-gray-500">{review.date}</span>
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-700">{review.comment}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* View All Reviews Button */}
+              <button className="w-full mt-4 py-2 text-center text-primary-600 font-semibold hover:bg-primary-50 rounded-lg transition-colors">
+                {locale === 'ar' ? 'عرض جميع التقييمات →' : locale === 'zh' ? '查看所有评价 →' : 'View All Reviews →'}
+              </button>
+            </div>
+
             {/* Comments Section */}
             {showComments && (
               <div className="mb-6 pt-6 border-t border-gray-200">
@@ -398,11 +545,14 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
                     </button>
                     <input
                       type="number"
+                      id="product-quantity"
+                      name="quantity"
                       min="1"
                       max={product.stock || 100}
                       value={quantity}
                       onChange={(e) => setQuantity(Math.max(1, Math.min(product.stock || 100, parseInt(e.target.value) || 1)))}
                       className="w-16 text-center border border-gray-300 rounded px-2 py-1"
+                      aria-label={locale === 'ar' ? 'الكمية' : locale === 'zh' ? '数量' : 'Quantity'}
                     />
                     <button
                       onClick={() => setQuantity(Math.min(product.stock || 100, quantity + 1))}

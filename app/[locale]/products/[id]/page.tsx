@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
+import Link from 'next/link';
 import ProductDetailClient from './page-client';
 import { productsAPI } from '@/lib/api';
 import { getMockProductById, mockProductToApiFormat } from '@/lib/mock-products';
@@ -181,7 +182,31 @@ export default async function ProductDetailPage({ params }: PageProps) {
     if (error?.response?.status !== 404 && error?.status !== 404) {
       console.error('Error fetching product details:', error);
     }
-    notFound();
+    
+    // Show elegant Product Not Found page instead of default 404
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+        <div className="max-w-md w-full text-center">
+          <div className="text-9xl mb-6">🔍</div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+            {locale === 'ar' ? 'المنتج غير موجود' : locale === 'zh' ? '产品未找到' : 'Product Not Found'}
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-8">
+            {locale === 'ar' 
+              ? 'عذراً، المنتج الذي تبحث عنه غير موجود أو تم حذفه.'
+              : locale === 'zh'
+              ? '抱歉，您查找的产品不存在或已被删除。'
+              : 'Sorry, the product you are looking for does not exist or has been removed.'}
+          </p>
+          <Link
+            href={`/${locale}/products`}
+            className="inline-block px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors"
+          >
+            {locale === 'ar' ? '← العودة للمنتجات' : locale === 'zh' ? '← 返回产品' : '← Back to Products'}
+          </Link>
+        </div>
+      </div>
+    );
   }
 }
 
