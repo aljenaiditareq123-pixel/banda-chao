@@ -54,8 +54,11 @@ export default async function VideoDetailPage({ params }: PageProps) {
         relatedVideos={relatedVideos}
       />
     );
-  } catch (error) {
-    console.error('Error fetching video details:', error);
+  } catch (error: any) {
+    // Silently handle 404 errors - they're expected for invalid video IDs
+    if (error?.response?.status !== 404 && error?.status !== 404) {
+      console.error('Error fetching video details:', error);
+    }
     notFound();
   }
 }

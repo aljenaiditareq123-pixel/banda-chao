@@ -115,8 +115,11 @@ export default async function ProductDetailPage({ params }: PageProps) {
         relatedProducts={relatedProducts}
       />
     );
-  } catch (error) {
-    console.error('Error fetching product details:', error);
+  } catch (error: any) {
+    // Silently handle 404 errors - they're expected for invalid product IDs
+    if (error?.response?.status !== 404 && error?.status !== 404) {
+      console.error('Error fetching product details:', error);
+    }
     notFound();
   }
 }

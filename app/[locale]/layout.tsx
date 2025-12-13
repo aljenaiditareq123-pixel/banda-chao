@@ -165,9 +165,12 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
   }
   
   // Validate locale and fallback to default if invalid (don't call notFound())
-  if (!locale || !validLocales.includes(locale) || locale.includes('.') || locale === 'robots.txt' || locale === 'favicon.ico') {
+  // Check for static files first to avoid logging warnings
+  const isStaticFile = !locale || locale.includes('.') || locale === 'robots.txt' || locale === 'favicon.ico' || locale === 'manifest.json' || locale === 'og-image.png';
+  
+  if (!locale || !validLocales.includes(locale) || isStaticFile) {
     // Only log warning if it's a real locale issue, not a static file
-    if (locale && locale !== 'ar' && !locale.includes('.') && locale !== 'robots.txt' && locale !== 'favicon.ico') {
+    if (!isStaticFile && locale && locale !== 'ar' && validLocales.includes(locale) === false) {
       console.warn(`Invalid locale in layout: ${locale}, falling back to 'ar'`);
     }
     locale = 'ar';
