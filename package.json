@@ -18,6 +18,10 @@
     "db:studio": "prisma studio",
     "postinstall": "prisma generate"
   },
+  "engines": {
+    "node": ">=20.9.0",
+    "npm": ">=10.0.0"
+  },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },
