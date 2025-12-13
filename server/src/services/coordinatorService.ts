@@ -1,4 +1,5 @@
 import { prisma } from '../utils/prisma';
+import { queue } from '../lib/queue';
 
 /**
  * Coordinator Service - نظام المرآة (Mirror System)
@@ -7,6 +8,7 @@ import { prisma } from '../utils/prisma';
  * - نشر المحتوى (Videos, Posts) على المنصات الخارجية (TikTok, YouTube, Instagram)
  * - تتبع حالة المزامنة
  * - إدارة Access Tokens للمنصات
+ * - معالجة المهام عبر الطابور (Queue) لحماية قاعدة البيانات
  */
 
 export interface ContentSyncRequest {
@@ -35,7 +37,7 @@ export interface SyncStatus {
 }
 
 /**
- * المنسق: مزامنة المحتوى مع المنصات الخارجية
+ * المنسق: مزامنة المحتوى مع المنصات الخارجية (معالجة مباشرة)
  * 
  * @param request - طلب المزامنة
  * @returns نتائج المزامنة لكل منصة
@@ -315,4 +317,84 @@ export async function upsertSocialAccount(
       updated_at: new Date(),
     },
   });
+}
+
+/**
+ * المنسق: مزامنة المحتوى عبر الطابور (Queue-based)
+ * 
+ * هذا يضيف المهمة للطابور بدلاً من المعالجة المباشرة
+ * لحماية قاعدة البيانات من الضغط العالي
+ * 
+ * @param request - طلب المزامنة
+ * @returns Job ID
+ */
+export async function queueContentSync(request: ContentSyncRequest): Promise<string> {
+  const jobId = await queue.add('sync_content', request, {
+    priority: 1, // High priority for content sync
+    maxAttempts: 3,
+  });
+
+  // تسجيل في coordinator_logs كـ PENDING
+  await prisma.coordinator_logs.create({
+    data: {
+      action_type: 'CONTENT_SYNCED',
+      status: 'PENDING',
+      content_type: request.contentType,
+      content_id: request.contentId,
+      details: JSON.stringify({
+        jobId,
+        platforms: request.platforms,
+        queuedAt: new Date().toISOString(),
+      }),
+    },
+  });
+
+  return jobId;
+}
+
+/**
+ * معالج مهام المزامنة (Background Job Processor)
+ * يتم استدعاؤه من index.ts عند بدء الخادم
+ */
+export async function processContentSyncJob(job: any): Promise<void> {
+  const request: ContentSyncRequest = job.data;
+
+  try {
+    // معالجة المزامنة
+    const results = await syncContentToPlatforms(request);
+
+    // تحديث coordinator_logs
+    for (const result of results) {
+      await prisma.coordinator_logs.create({
+        data: {
+          action_type: 'CONTENT_SYNCED',
+          status: result.success ? 'SUCCESS' : 'FAILED',
+          content_type: request.contentType,
+          content_id: request.contentId,
+          platform: result.platform,
+          details: JSON.stringify({
+            externalId: result.externalId,
+            syncedAt: result.syncedAt,
+          }),
+          error_message: result.error,
+        },
+      });
+    }
+  } catch (error: any) {
+    // تسجيل الخطأ
+    await prisma.coordinator_logs.create({
+      data: {
+        action_type: 'CONTENT_SYNCED',
+        status: 'FAILED',
+        content_type: request.contentType,
+        content_id: request.contentId,
+        error_message: error.message,
+        details: JSON.stringify({
+          error: error.message,
+          attemptedAt: new Date().toISOString(),
+        }),
+      },
+    });
+    throw error;
+  }
 }

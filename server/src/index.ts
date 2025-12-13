@@ -3,6 +3,14 @@ import { createServer } from 'http';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import {
+  defaultRateLimiter,
+  authRateLimiter,
+  apiRateLimiter,
+  interactionRateLimiter,
+  uploadRateLimiter,
+  roleBasedRateLimiter,
+} from './middleware/rateLimit';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import path from 'path';
@@ -32,6 +40,8 @@ import serviceRoutes from './api/services';
 import advisorRoutes from './api/advisor';
 import treasurerRoutes from './api/treasurer';
 import coordinatorRoutes from './api/coordinator';
+import { queue } from './lib/queue';
+import { processContentSyncJob } from './services/coordinatorService';
 import { errorHandler } from './middleware/errorHandler';
 import { requestLogger } from './middleware/requestLogger';
 import { authenticateToken } from './middleware/auth';
@@ -208,15 +218,8 @@ app.options('*', cors({
   credentials: true,
 }));
 
-// Rate Limiting
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 50, // 50 requests per window
-  message: 'Too many requests from this IP, please try again later.',
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
+// Legacy rate limiters (kept for backward compatibility)
+const authLimiter = authRateLimiter;
 const aiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 30, // 30 requests per window
@@ -346,6 +349,29 @@ server.listen(PORT, async () => {
   } catch (err) {
     console.warn(`⚠️ Database connection check failed:`, err);
   }
+
+  // Initialize Queue Processors (Background Jobs)
+  console.log(`📦 Initializing queue processors...`);
+  
+  // Register Coordinator content sync processor
+  queue.process(async (job) => {
+    if (job.type === 'sync_content') {
+      await processContentSyncJob(job);
+    } else {
+      console.warn(`⚠️ Unknown job type: ${job.type}`);
+    }
+  });
+
+  // Queue event listeners for monitoring
+  queue.on('job:completed', (job) => {
+    console.log(`✅ Job completed: ${job.type} (${job.id})`);
+  });
+
+  queue.on('job:failed', (job) => {
+    console.error(`❌ Job failed: ${job.type} (${job.id}) - ${job.error}`);
+  });
+
+  console.log(`✅ Queue processors initialized`);
 });
 
 // Export app for testing

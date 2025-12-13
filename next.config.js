@@ -10,17 +10,16 @@ const nextConfig = {
   trailingSlash: false,
   
   // Optimize images for production
+  // Mirror System: Allow images from external platforms to reduce hosting costs
   images: {
     remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**',
-      },
+      // Local development
       {
         protocol: 'http',
         hostname: 'localhost',
         port: '3001',
       },
+      // Render deployments
       {
         protocol: 'https',
         hostname: 'banda-chao-backend.onrender.com',
@@ -29,9 +28,62 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'banda-chao-frontend.onrender.com',
       },
+      // External CDNs - Mirror System (Image Proxy)
+      {
+        protocol: 'https',
+        hostname: '**.alicdn.com', // AliExpress CDN
+      },
+      {
+        protocol: 'https',
+        hostname: '**.tiktokcdn.com', // TikTok CDN
+      },
+      {
+        protocol: 'https',
+        hostname: '**.tiktok.com', // TikTok
+      },
+      {
+        protocol: 'https',
+        hostname: '**.googleusercontent.com', // Google/YouTube CDN
+      },
+      {
+        protocol: 'https',
+        hostname: '**.ytimg.com', // YouTube thumbnails
+      },
+      {
+        protocol: 'https',
+        hostname: '**.fbcdn.net', // Facebook/Instagram CDN
+      },
+      {
+        protocol: 'https',
+        hostname: '**.cdninstagram.com', // Instagram CDN
+      },
+      {
+        protocol: 'https',
+        hostname: '**.unsplash.com', // Unsplash
+      },
+      {
+        protocol: 'https',
+        hostname: '**.cloudinary.com', // Cloudinary
+      },
+      {
+        protocol: 'https',
+        hostname: '**.imgur.com', // Imgur
+      },
+      {
+        protocol: 'https',
+        hostname: '**.amazonaws.com', // AWS S3
+      },
+      {
+        protocol: 'https',
+        hostname: '**.storage.googleapis.com', // Google Cloud Storage
+      },
     ],
     // Optimize image formats
     formats: ['image/avif', 'image/webp'],
+    // Image optimization settings
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    minimumCacheTTL: 60, // Cache images for 60 seconds
   },
   
   // Disable source maps in production to reduce build size

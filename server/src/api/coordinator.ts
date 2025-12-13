@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import {
   syncContentToPlatforms,
+  queueContentSync,
   getSyncStatus,
   getUserSocialAccounts,
   upsertSocialAccount,
@@ -8,23 +9,27 @@ import {
 } from '../services/coordinatorService';
 import { authenticateToken } from '../middleware/auth';
 import { requireRole } from '../middleware/roleCheck';
+import { interactionRateLimiter } from '../middleware/rateLimit';
 
 const router = express.Router();
 
 /**
  * POST /api/v1/coordinator/sync-content
  * مزامنة المحتوى (فيديو أو منشور) مع المنصات الخارجية
+ * يستخدم الطابور (Queue) لحماية قاعدة البيانات من الضغط العالي
  * 
  * Body:
  * {
  *   "contentId": "video-id-123",
  *   "contentType": "VIDEO" | "POST",
- *   "platforms": ["TIKTOK", "YOUTUBE"]
+ *   "platforms": ["TIKTOK", "YOUTUBE"],
+ *   "useQueue": true (optional, default: true)
  * }
  */
 router.post(
   '/sync-content',
   authenticateToken,
+  interactionRateLimiter,
   async (req: Request, res: Response) => {
     try {
       const userId = (req as any).user?.id;
@@ -32,7 +37,7 @@ router.post(
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
-      const { contentId, contentType, platforms } = req.body;
+      const { contentId, contentType, platforms, useQueue = true } = req.body;
 
       if (!contentId || !contentType || !platforms || !Array.isArray(platforms)) {
         return res.status(400).json({
@@ -53,13 +58,24 @@ router.post(
         userId,
       };
 
-      const results = await syncContentToPlatforms(request);
-
-      res.json({
-        success: true,
-        results,
-        message: 'Content sync initiated',
-      });
+      if (useQueue) {
+        // استخدام الطابور (Queue) - آمن للضغط العالي
+        const jobId = await queueContentSync(request);
+        res.json({
+          success: true,
+          jobId,
+          message: 'Content sync queued successfully',
+          note: 'Sync will be processed in the background',
+        });
+      } else {
+        // معالجة مباشرة (للاستخدام في الاختبار فقط)
+        const results = await syncContentToPlatforms(request);
+        res.json({
+          success: true,
+          results,
+          message: 'Content sync completed',
+        });
+      }
     } catch (error: any) {
       console.error('Error syncing content:', error);
       res.status(500).json({
