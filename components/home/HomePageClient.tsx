@@ -18,7 +18,12 @@ import MysteryBox from '@/components/MysteryBox';
 import LuckyWheel from '@/components/LuckyWheel';
 import LiveStreamModal from '@/components/LiveStreamModal';
 import FameEngine from '@/components/home/FameEngine';
+import HeroSlider from '@/components/home/HeroSlider';
+import CategoryCircles from '@/components/home/CategoryCircles';
+import FlashSale from '@/components/home/FlashSale';
+import ProductGrid from '@/components/home/ProductGrid';
 import { servicesAPI } from '@/lib/api';
+import { getAllMockProducts, mockProductToApiFormat } from '@/lib/mock-products';
 
 interface HomePageClientProps {
   locale: string;
@@ -165,26 +170,55 @@ export default function HomePageClient({
         onClose={() => setShowOnboarding(false)}
       />
 
-      {/* Hero Section */}
-      <section className="bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800 text-white relative z-0 mt-16 py-12 md:py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
-            {texts.headline}
-          </h1>
-          <p className="text-lg md:text-xl text-primary-50 max-w-3xl mx-auto mb-10">
-            {texts.description}
-          </p>
-          <div className="flex justify-center">
-            <Link href={`/${locale}/makers`}>
-              <Button variant="secondary" className="px-8 py-3 text-base md:text-lg bg-white text-primary hover:bg-primary-50">
-                {texts.cta1}
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
+      {/* Main Storefront Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Hero Slider */}
+        <HeroSlider locale={locale} />
 
-      {/* Hall of Fame Leaderboards */}
+        {/* Category Circles */}
+        <CategoryCircles locale={locale} />
+
+        {/* Flash Sale */}
+        <FlashSale locale={locale} />
+
+        {/* All Products Grid */}
+        <ProductGrid
+          locale={locale}
+          products={featuredProducts.length > 0 
+            ? featuredProducts.map(p => ({
+                id: p.id,
+                name: p.name,
+                description: p.description,
+                imageUrl: p.images?.[0]?.url || p.imageUrl || '',
+                price: p.price,
+                currency: p.currency,
+                category: p.category,
+                rating: (p as any).rating,
+                reviews: (p as any).reviews,
+                originalPrice: (p as any).originalPrice,
+              }))
+            : getAllMockProducts().map(p => {
+                const apiProduct = mockProductToApiFormat(p, locale);
+                return {
+                  id: apiProduct.id,
+                  name: apiProduct.name,
+                  description: apiProduct.description,
+                  imageUrl: apiProduct.imageUrl || '',
+                  price: apiProduct.price,
+                  currency: apiProduct.currency,
+                  category: apiProduct.category,
+                  rating: apiProduct.rating,
+                  reviews: apiProduct.reviews,
+                  originalPrice: apiProduct.originalPrice,
+                };
+              })
+          }
+          title={locale === 'ar' ? 'جميع المنتجات' : locale === 'zh' ? '所有产品' : 'All Products'}
+          showLoadMore={true}
+        />
+      </div>
+
+      {/* Hall of Fame Leaderboards - Keep for gamification */}
       <FameEngine />
 
       {/* Panda Stories Ring - Live Streaming Section */}

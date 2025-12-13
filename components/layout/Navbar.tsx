@@ -9,6 +9,7 @@ import { authAPI } from '@/lib/api';
 import AuthButtons from './AuthButtons';
 import UploadButton from './UploadButton';
 import NotificationBell from '@/components/common/NotificationBell';
+import SearchBar from './SearchBar';
 
 interface NavbarProps {
   locale: string;
@@ -89,6 +90,10 @@ export default function Navbar({ locale }: NavbarProps) {
               Banda Chao
             </Link>
           </div>
+          
+          {/* Search Bar */}
+          <SearchBar locale={locale} />
+          
           <div className="flex items-center gap-4 relative z-[9999] pointer-events-auto">
             <Link 
               href={`/${locale}/makers`} 
