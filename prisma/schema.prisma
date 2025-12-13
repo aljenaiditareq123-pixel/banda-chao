@@ -4,6 +4,8 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  // Note: In Prisma 7+, URL should be in prisma.config.ts or passed to PrismaClient
+  // For now, we'll use the traditional approach compatible with Prisma 6
   url      = env("DATABASE_URL")
 }
 
@@ -121,6 +123,7 @@ model products {
   post_products post_products[]
   video_products video_products[]
   supplier_products supplier_products[]
+  cart_items    cart_items[]
 
   @@index([category_id])
   @@index([user_id])
@@ -310,7 +313,6 @@ model posts {
   created_at    DateTime     @default(now())
   updated_at    DateTime     @updatedAt
   post_likes    post_likes[]
-  shares        shares[]
   post_products post_products[]
   users         users        @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
@@ -356,7 +358,6 @@ model videos {
   comments      comments[]
   video_likes   video_likes[]
   video_products video_products[]
-  shares        shares[]
   users         users         @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([created_at])
@@ -388,8 +389,6 @@ model shares {
   platform      String?   // FACEBOOK, TWITTER, WHATSAPP, etc.
   created_at    DateTime  @default(now())
   users         users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  posts         posts?    @relation(fields: [target_id], references: [id], onDelete: Cascade)
-  videos        videos?   @relation(fields: [target_id], references: [id], onDelete: Cascade)
 
   @@index([user_id])
   @@index([target_type, target_id])
