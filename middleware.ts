@@ -193,6 +193,22 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Protect /admin routes - require authentication
+  if (pathname.startsWith('/admin')) {
+    // Check for JWT token (admin uses JWT auth)
+    const jwtToken = request.cookies.get('auth_token');
+    
+    // If no token, redirect to login
+    if (!jwtToken) {
+      const loginUrl = new URL('/auth/login', request.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+    
+    // Note: Full role verification (ADMIN/FOUNDER) happens in AdminLayout component
+    // This middleware just checks for token presence
+  }
+
   // Check authentication for protected routes
   if (isProtectedRoute(pathname)) {
     // Get locale for redirect
