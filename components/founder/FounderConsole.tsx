@@ -34,7 +34,7 @@ export default function FounderConsole() {
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
   const [conversationId] = useState(`founder-${user?.id || 'default'}`);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'advisor'>('advisor');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'advisor' | 'treasurer'>('advisor');
 
   const fetchRecentData = useCallback(async () => {
     try {
@@ -429,6 +429,16 @@ export default function FounderConsole() {
             🐼 لوحة تحكم المستشار
           </button>
           <button
+            onClick={() => setActiveTab('treasurer')}
+            className={`px-4 py-2 font-semibold border-b-2 transition-colors ${
+              activeTab === 'treasurer'
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
+            }`}
+          >
+            💰 لوحة تحكم الخازن
+          </button>
+          <button
             onClick={() => setActiveTab('dashboard')}
             className={`px-4 py-2 font-semibold border-b-2 transition-colors ${
               activeTab === 'dashboard'
@@ -443,6 +453,9 @@ export default function FounderConsole() {
 
       {/* Advisor Dashboard Tab */}
       {activeTab === 'advisor' && <AdvisorDashboard />}
+
+      {/* Treasurer Dashboard Tab */}
+      {activeTab === 'treasurer' && <TreasurerDashboard />}
 
       {/* Main Dashboard Tab */}
       {activeTab === 'dashboard' && (
