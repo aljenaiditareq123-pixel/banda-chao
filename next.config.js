@@ -40,6 +40,28 @@ const nextConfig = {
   // Disable SWC minification to fix ReflectApply TypeError in production
   swcMinify: false,
   
+  // Webpack configuration to fix Function.prototype.apply errors
+  webpack: (config, { isServer }) => {
+    // Fix for Function.prototype.apply errors in production
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+      };
+    }
+    
+    // Ensure proper function binding
+    config.optimization = {
+      ...config.optimization,
+      minimize: true,
+      minimizer: config.optimization.minimizer || [],
+    };
+    
+    return config;
+  },
+  
   // Note: Middleware handles locale routing
   // Rewrites removed - can conflict with middleware in App Router
   
