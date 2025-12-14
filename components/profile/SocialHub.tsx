@@ -2,17 +2,48 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle, Phone, Globe, X, Copy, Check } from 'lucide-react';
+import { MessageCircle, Phone, Globe, X, Copy, Check, Share2 } from 'lucide-react';
 import { FaWeixin, FaTwitter, FaWhatsapp } from 'react-icons/fa';
+import ToastContainer, { Toast, ToastType } from '@/components/common/Toast';
 
 export default function SocialHub() {
   const [activeModal, setActiveModal] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [toasts, setToasts] = useState<Toast[]>([]);
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleShare = async () => {
+    try {
+      const url = window.location.href;
+      await navigator.clipboard.writeText(url);
+      
+      // Show toast notification
+      const newToast: Toast = {
+        id: `toast-${Date.now()}`,
+        message: 'Page URL copied to clipboard!',
+        type: 'success' as ToastType,
+        duration: 3000,
+      };
+      setToasts((prev) => [...prev, newToast]);
+    } catch (error) {
+      console.error('Failed to copy URL:', error);
+      const errorToast: Toast = {
+        id: `toast-error-${Date.now()}`,
+        message: 'Failed to copy URL. Please try again.',
+        type: 'error' as ToastType,
+        duration: 3000,
+      };
+      setToasts((prev) => [...prev, errorToast]);
+    }
+  };
+
+  const handleCloseToast = (id: string) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
   };
 
   const CONTACTS = [
@@ -79,6 +110,22 @@ export default function SocialHub() {
           </motion.div>
         ))}
       </div>
+
+      {/* Share Button */}
+      <motion.button
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={handleShare}
+        className="w-full bg-white/5 border border-white/10 rounded-xl p-4 cursor-pointer hover:bg-white/10 transition-colors flex items-center gap-3"
+      >
+        <div className="p-3 rounded-full bg-blue-500/20 border border-blue-500/30 text-blue-400 shrink-0">
+          <Share2 className="w-5 h-5" />
+        </div>
+        <div className="flex-1 text-left">
+          <h4 className="font-bold text-white">Share Page</h4>
+          <p className="text-sm text-white/60">Copy link to share this page</p>
+        </div>
+      </motion.button>
 
       {/* Floating Action Bar (Sticky Bottom for Mobile) */}
       <div className="fixed bottom-6 right-6 z-40 flex flex-col gap-3">
@@ -157,6 +204,9 @@ export default function SocialHub() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Toast Container */}
+      <ToastContainer toasts={toasts} onClose={handleCloseToast} position="top-right" />
     </div>
   );
 }

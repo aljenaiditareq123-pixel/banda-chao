@@ -1,6 +1,8 @@
 'use client';
 
 import Link from 'next/link';
+import { useNightMarketContext } from '@/contexts/NightMarketContext';
+import { Moon, Sun } from 'lucide-react';
 
 interface FooterProps {
   locale: string;
@@ -8,6 +10,7 @@ interface FooterProps {
 
 export default function Footer({ locale }: FooterProps) {
   const currentYear = new Date().getFullYear();
+  const { isNightMarket, toggleNightMarket } = useNightMarketContext();
 
   const texts = {
     ar: {
@@ -122,6 +125,28 @@ export default function Footer({ locale }: FooterProps) {
           <p>
             © {currentYear} {currentTexts.company}. {currentTexts.allRightsReserved}.
           </p>
+          {/* Dev Only: Night Market Toggle Button */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="mt-4 flex justify-center">
+              <button
+                onClick={toggleNightMarket}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors text-xs font-medium border border-gray-700"
+                title="Toggle Night Market Mode (Dev Only)"
+              >
+                {isNightMarket ? (
+                  <>
+                    <Sun className="w-4 h-4" />
+                    <span>Disable Night Market</span>
+                  </>
+                ) : (
+                  <>
+                    <Moon className="w-4 h-4" />
+                    <span>Enable Night Market</span>
+                  </>
+                )}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </footer>
