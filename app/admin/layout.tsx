@@ -1,9 +1,10 @@
-import AdminLayout from '@/components/admin/AdminLayout';
+import AdminLayoutClient from './layout-client';
 
-export default function AdminLayoutWrapper({
+export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <AdminLayout>{children}</AdminLayout>;
+  // This will be handled by the client component for auth check
+  return <AdminLayoutClient>{children}</AdminLayoutClient>;
 }
