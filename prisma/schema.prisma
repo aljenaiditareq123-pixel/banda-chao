@@ -487,6 +487,8 @@ model comments {
   product_id    String?
   post_id       String?
   content       String
+  review_video_url String?      // URL to uploaded video review (15s max, 10MB)
+  review_rating   Float?        // Rating (1-5) for product reviews
   likes         Int             @default(0)
   created_at    DateTime        @default(now())
   updated_at    DateTime
@@ -500,6 +502,7 @@ model comments {
   @@index([user_id])
   @@index([video_id])
   @@index([post_id])
+  @@index([review_video_url])
 }
 
 model comment_likes {

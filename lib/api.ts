@@ -623,9 +623,42 @@ export const commentsAPI = {
     });
     return response.data;
   },
-  create: async (data: { targetType: 'POST' | 'VIDEO' | 'PRODUCT'; targetId: string; content: string }) => {
+  create: async (data: { 
+    targetType: 'POST' | 'VIDEO' | 'PRODUCT'; 
+    targetId: string; 
+    content: string;
+    reviewVideoUrl?: string;
+    reviewRating?: number;
+  }) => {
     const response = await apiClient.post('/comments', data);
     return response.data;
+  },
+};
+
+// ============================================
+// Video Upload API
+// ============================================
+
+export const videoUploadAPI = {
+  uploadReview: async (videoFile: File): Promise<{ success: boolean; videoUrl?: string; error?: string }> => {
+    try {
+      const formData = new FormData();
+      formData.append('video', videoFile);
+
+      const response = await apiClient.post('/video-upload/review', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        timeout: 60000, // 60 seconds for video upload
+      });
+      return response.data;
+    } catch (error: unknown) {
+      const errorMessage = error && typeof error === 'object' && 'response' in error
+        ? (error as { response?: { data?: { message?: string; error?: string } } }).response?.data?.message || 
+          (error as { response?: { data?: { error?: string } } }).response?.data?.error
+        : 'Failed to upload video';
+      return { success: false, error: errorMessage || 'Failed to upload video' };
+    }
   },
 };
 

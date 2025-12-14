@@ -19,6 +19,7 @@ import LikeButton from '@/components/social/LikeButton';
 import CommentList from '@/components/social/CommentList';
 import CommentForm from '@/components/social/CommentForm';
 import CommentsSection from '@/components/shared/CommentsSection';
+import VideoReviewsCarousel from '@/components/product/VideoReviewsCarousel';
 import { useAuth } from '@/hooks/useAuth';
 import AutoTranslator from '@/components/AutoTranslator';
 import { MessageCircle, Factory, Shield, Lock, Plane } from 'lucide-react';

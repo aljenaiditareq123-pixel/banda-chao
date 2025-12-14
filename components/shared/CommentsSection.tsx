@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import CommentForm from '@/components/social/CommentForm';
 import CommentList from '@/components/social/CommentList';
+import VideoReviewsCarousel from '@/components/product/VideoReviewsCarousel';
 import Card from '@/components/common/Card';
 
 interface CommentsSectionProps {
@@ -65,6 +66,13 @@ export default function CommentsSection({
         </h2>
       )}
 
+      {/* Video Reviews Carousel (for products only) */}
+      {targetType === 'PRODUCT' && comments.length > 0 && (
+        <Card className="p-6 mb-8">
+          <VideoReviewsCarousel reviews={comments} locale={locale} />
+        </Card>
+      )}
+
       {/* Comment Form */}
       <Card className="p-6 mb-8">
         <CommentForm
@@ -72,6 +80,8 @@ export default function CommentsSection({
           targetId={targetId}
           locale={locale}
           onCommentAdded={handleCommentAdded}
+          showVideoUpload={targetType === 'PRODUCT'}
+          showRating={targetType === 'PRODUCT'}
         />
       </Card>
 
@@ -83,6 +93,7 @@ export default function CommentsSection({
           targetId={targetId}
           locale={locale}
           onCommentsCountChange={handleCommentsCountChange}
+          onCommentsLoaded={handleCommentsLoaded}
         />
       </Card>
     </section>

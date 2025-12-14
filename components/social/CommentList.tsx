@@ -9,11 +9,14 @@ interface CommentListProps {
   targetId: string;
   locale: string;
   onCommentsCountChange?: (count: number) => void;
+  onCommentsLoaded?: (comments: Comment[]) => void;
 }
 
 interface Comment {
   id: string;
   content: string;
+  review_video_url?: string;
+  review_rating?: number;
   likes: number;
   created_at: string | Date;
   users: {
@@ -28,6 +31,7 @@ export default function CommentList({
   targetId,
   locale,
   onCommentsCountChange,
+  onCommentsLoaded,
 }: CommentListProps) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,6 +46,9 @@ export default function CommentList({
         setComments(response.comments);
         if (onCommentsCountChange) {
           onCommentsCountChange(response.comments.length);
+        }
+        if (onCommentsLoaded) {
+          onCommentsLoaded(response.comments);
         }
       }
     } catch (err: any) {

@@ -42,6 +42,8 @@ router.get('/', async (req: Request, res: Response) => {
         select: {
           id: true,
           content: true,
+          review_video_url: true,
+          review_rating: true,
           likes: true,
           created_at: true,
           updated_at: true,
@@ -92,6 +94,8 @@ router.post('/', authenticateToken, validate(createCommentSchema), async (req: A
     const { randomUUID } = await import('crypto');
     const commentId = randomUUID();
     
+    const { reviewVideoUrl, reviewRating } = req.body;
+    
     const data: any = {
       id: commentId,
       user_id: req.userId!,
@@ -100,6 +104,14 @@ router.post('/', authenticateToken, validate(createCommentSchema), async (req: A
       created_at: new Date(),
       updated_at: new Date(),
     };
+
+    // Add video review fields if provided
+    if (reviewVideoUrl) {
+      data.review_video_url = reviewVideoUrl;
+    }
+    if (reviewRating !== undefined && reviewRating !== null) {
+      data.review_rating = parseFloat(reviewRating);
+    }
     
     if (targetType === 'PRODUCT') {
       data.product_id = targetId;
@@ -112,6 +124,8 @@ router.post('/', authenticateToken, validate(createCommentSchema), async (req: A
       select: {
         id: true,
         content: true,
+        review_video_url: true,
+        review_rating: true,
         likes: true,
         created_at: true,
         updated_at: true,
