@@ -89,7 +89,7 @@ export async function analyzeMarketTrends(
         created_at: {
           gte: startDate,
         },
-      },
+      } as any,
       include: {
         order_items: true,
       },
@@ -297,7 +297,7 @@ export async function analyzeProductPerformance(
           include: {
             posts: true,
           },
-        } as any,
+        },
         video_products: {
           include: {
             videos: true,
@@ -349,7 +349,7 @@ export async function analyzeProductPerformance(
         purchases,
         revenue,
         conversionRate,
-        avgRating: product.rating || 0,
+        avgRating: (product as any).rating || 0,
       },
     };
   } catch (error) {
