@@ -32,38 +32,26 @@ function checkProductColorMatch(product: any, luckyColor: string): boolean {
   const searchText = `${product.name || ''} ${product.description || ''} ${product.category || ''}`.toLowerCase();
   
   const colorKeywords: Record<string, string[]> = {
-    red: ['red', 'أحمر', '红色', 'crimson', 'scarlet', 'ruby'],
-    gold: ['gold', 'ذهبي', '金色', 'golden', 'yellow', 'amber'],
-    green: ['green', 'أخضر', '绿色', 'emerald', 'jade', 'mint'],
-    blue: ['blue', 'أزرق', '蓝色', 'navy', 'azure', 'cyan'],
-    yellow: ['yellow', 'أصفر', '黄色', 'golden', 'amber', 'lemon'],
-    purple: ['purple', 'بنفسجي', '紫色', 'violet', 'lavender', 'plum'],
-    orange: ['orange', 'برتقالي', '橙色', 'tangerine', 'coral', 'peach'],
-    pink: ['pink', 'وردي', '粉色', 'rose', 'salmon', 'fuchsia'],
+    red: ['red', 'أحمر', '红色', 'crimson', 'scarlet', 'ruby', '红'],
+    gold: ['gold', 'ذهبي', '金色', 'golden', 'yellow', 'amber', '金'],
+    green: ['green', 'أخضر', '绿色', 'emerald', 'jade', 'mint', '绿'],
+    blue: ['blue', 'أزرق', '蓝色', 'navy', 'azure', 'cyan', '蓝'],
+    yellow: ['yellow', 'أصفر', '黄色', 'golden', 'amber', 'lemon', '黄'],
+    purple: ['purple', 'بنفسجي', '紫色', 'violet', 'lavender', 'plum', '紫'],
+    orange: ['orange', 'برتقالي', '橙色', 'tangerine', 'coral', 'peach', '橙'],
+    pink: ['pink', 'وردي', '粉色', 'rose', 'salmon', 'fuchsia', '粉'],
   };
 
   const keywords = colorKeywords[luckyColor] || [];
   return keywords.some(keyword => searchText.includes(keyword));
 }
 
-// Helper function to check if product matches lucky color
-function checkProductColorMatch(product: any, luckyColor: string): boolean {
-  // Check product name, description, category, or image for color keywords
-  const searchText = `${product.name || ''} ${product.description || ''} ${product.category || ''}`.toLowerCase();
+// Filter and return exactly 3 products matching lucky color
+function getLuckyProducts(products: any[], luckyColor: string | null, maxCount: number = 3): any[] {
+  if (!luckyColor) return [];
   
-  const colorKeywords: Record<string, string[]> = {
-    red: ['red', 'أحمر', '红色', 'crimson', 'scarlet', 'ruby'],
-    gold: ['gold', 'ذهبي', '金色', 'golden', 'yellow', 'amber'],
-    green: ['green', 'أخضر', '绿色', 'emerald', 'jade', 'mint'],
-    blue: ['blue', 'أزرق', '蓝色', 'navy', 'azure', 'cyan'],
-    yellow: ['yellow', 'أصفر', '黄色', 'golden', 'amber', 'lemon'],
-    purple: ['purple', 'بنفسجي', '紫色', 'violet', 'lavender', 'plum'],
-    orange: ['orange', 'برتقالي', '橙色', 'tangerine', 'coral', 'peach'],
-    pink: ['pink', 'وردي', '粉色', 'rose', 'salmon', 'fuchsia'],
-  };
-
-  const keywords = colorKeywords[luckyColor] || [];
-  return keywords.some(keyword => searchText.includes(keyword));
+  const matching = products.filter(p => checkProductColorMatch(p, luckyColor));
+  return matching.slice(0, maxCount);
 }
 
 interface HomePageClientProps {
