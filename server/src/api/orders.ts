@@ -430,7 +430,7 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
         // Check if product is a blind box
         const product = await prisma.products.findUnique({
           where: { id: item.productId },
-          select: { is_blind_box: true },
+          select: { is_blind_box: true } as any,
         });
         
         return prisma.order_items.create({
@@ -440,10 +440,10 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
             product_id: item.productId,
             quantity: item.quantity,
             price: item.price * item.quantity,
-            is_blind_box: product?.is_blind_box || false,
+            is_blind_box: (product as any)?.is_blind_box || false,
             revealed_product_id: null, // Will be set after payment confirmation
             created_at: new Date(),
-          },
+          } as any,
         });
       })
     );
@@ -601,7 +601,7 @@ router.get('/:id', authenticateToken, async (req: any, res: Response) => {
                 image_url: true,
                 price: true,
                 currency: true,
-              },
+              } as any,
             },
           },
         },
@@ -622,24 +622,26 @@ router.get('/:id', authenticateToken, async (req: any, res: Response) => {
       return res.status(403).json({ success: false, message: 'Forbidden' });
     }
 
+    const orderData = order as any;
+    
     res.json({
       success: true,
       order: {
-        id: order.id,
-        status: order.status,
-        totalAmount: order.totalAmount,
-        subtotal: order.subtotal,
-        shipping_cost: order.shipping_cost,
-        currency: order.currency,
-        created_at: order.created_at,
-        order_items: order.order_items.map((item: any) => ({
+        id: orderData.id,
+        status: orderData.status,
+        totalAmount: orderData.totalAmount,
+        subtotal: orderData.subtotal || orderData.totalAmount,
+        shipping_cost: orderData.shipping_cost || 0,
+        currency: orderData.currency || 'USD',
+        created_at: orderData.created_at,
+        order_items: (orderData.order_items || []).map((item: any) => ({
           id: item.id,
           product_id: item.product_id,
           variant_id: item.variant_id,
           quantity: item.quantity,
           price: item.price,
           haggled_price: item.haggled_price,
-          is_blind_box: item.is_blind_box,
+          is_blind_box: item.is_blind_box || false,
           revealed_product_id: item.revealed_product_id,
           product: item.products,
         })),
