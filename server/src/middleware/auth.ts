@@ -10,6 +10,9 @@ export interface AuthRequest extends Request {
     name: string;
     role: string;
   };
+  body?: any;
+  query?: any;
+  params?: any;
 }
 
 export function authenticateToken(req: AuthRequest, res: Response, next: NextFunction) {
