@@ -138,10 +138,10 @@ async function reserveInventoryDatabase(
         // Fallback: check product stock field if exists
         const product = await prisma.products.findUnique({
           where: { id: productId },
-          select: { stock: true },
+          select: { stock: true } as any,
         });
 
-        if (!product || (product.stock || 0) < quantity) {
+        if (!product || ((product as any).stock || 0) < quantity) {
           return {
             success: false,
             error: 'Insufficient stock',
@@ -160,7 +160,7 @@ async function reserveInventoryDatabase(
 
         return {
           success: true,
-          remainingStock: (product.stock || 0) - quantity,
+          remainingStock: ((product as any).stock || 0) - quantity,
         };
       }
 
