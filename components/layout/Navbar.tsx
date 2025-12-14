@@ -128,6 +128,12 @@ export default function Navbar({ locale }: NavbarProps) {
               📹 {locale === 'ar' ? 'البث المباشر' : locale === 'zh' ? '视频流' : 'Feed'}
             </Link>
             <Link 
+              href={`/${locale}/games`} 
+              className="text-yellow-600 hover:text-yellow-700 font-semibold transition-colors flex items-center gap-1"
+            >
+              🎮 {locale === 'ar' ? 'الألعاب' : locale === 'zh' ? '游戏' : 'Games'}
+            </Link>
+            <Link 
               href={`/${locale}/videos`} 
               className="text-gray-600 hover:text-gray-900 transition-colors"
             >

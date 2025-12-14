@@ -1084,6 +1084,101 @@ export const viralAPI = {
 };
 
 // ============================================
+// Games API (Gamification Center)
+// ============================================
+
+export const gamesAPI = {
+  performCheckIn: async (): Promise<{
+    success: boolean;
+    streak?: number;
+    pointsEarned?: number;
+    totalPoints?: number;
+    error?: string;
+  }> => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+      const response = await apiClient.post('/games/check-in', {}, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('Check-in error:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message || 'Failed to check in',
+      };
+    }
+  },
+  getCheckInStatus: async (): Promise<{
+    success: boolean;
+    hasCheckedIn?: boolean;
+    streak?: number;
+    lastCheckIn?: string | null;
+    weeklyHistory?: boolean[];
+    error?: string;
+  }> => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+      const response = await apiClient.get('/games/check-in/status', {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('Check-in status error:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message,
+      };
+    }
+  },
+  spinWheel: async (): Promise<{
+    success: boolean;
+    result?: {
+      prize: string;
+      prizeType: 'discount' | 'points' | 'nothing';
+      value: number;
+      message: string;
+    };
+    error?: string;
+  }> => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+      const response = await apiClient.post('/games/spin-wheel', {}, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('Spin wheel error:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message || 'Failed to spin wheel',
+      };
+    }
+  },
+  getStats: async (): Promise<{
+    success: boolean;
+    points?: number;
+    level?: number;
+    streak?: number;
+    error?: string;
+  }> => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+      const response = await apiClient.get('/games/stats', {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('Game stats error:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message,
+      };
+    }
+  },
+};
+
+// ============================================
 // Operations API (Banda Ops)
 // ============================================
 
