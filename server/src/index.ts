@@ -46,6 +46,7 @@ import blindBoxRoutes from './api/blindBox';
 import flashDropRoutes from './api/flashDrop';
 import videoUploadRoutes from './api/videoUpload';
 import aiContentRoutes from './api/aiContent';
+import searchRoutes from './api/search';
 import { queue } from './lib/queue';
 import { processContentSyncJob } from './services/coordinatorService';
 import { errorHandler } from './middleware/errorHandler';
