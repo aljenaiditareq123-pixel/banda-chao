@@ -1286,6 +1286,48 @@ export const walletAPI = {
 };
 
 // ============================================
+// Tracking API (Visual Order Tracking)
+// ============================================
+
+export const trackingAPI = {
+  getTracking: async (orderId: string, locale: string = 'en'): Promise<{
+    success: boolean;
+    order?: any;
+    timeline?: {
+      orderId: string;
+      currentStatus: string;
+      events: Array<{
+        id: string;
+        status: string;
+        title: string;
+        description: string;
+        timestamp: Date | string;
+        location?: string;
+        completed: boolean;
+        isCurrent?: boolean;
+      }>;
+      estimatedArrival?: Date | string;
+      trackingNumber?: string;
+    };
+    error?: string;
+  }> => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+      const response = await apiClient.get(`/tracking/${orderId}?locale=${locale}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('Tracking error:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message || 'Failed to get tracking information',
+      };
+    }
+  },
+};
+
+// ============================================
 // Operations API (Banda Ops)
 // ============================================
 

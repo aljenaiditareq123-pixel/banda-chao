@@ -51,6 +51,7 @@ import chatRoutes from './api/chat';
 import viralRoutes from './api/viral';
 import gamesRoutes from './api/games';
 import walletRoutes from './api/wallet';
+import trackingRoutes from './api/tracking';
 import { queue } from './lib/queue';
 import { processContentSyncJob } from './services/coordinatorService';
 import { errorHandler } from './middleware/errorHandler';
@@ -336,6 +337,7 @@ app.use('/api/v1/chat', chatRoutes);
 app.use('/api/v1/viral', viralRoutes);
 app.use('/api/v1/games', gamesRoutes);
 app.use('/api/v1/wallet', walletRoutes);
+app.use('/api/v1/tracking', trackingRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {
