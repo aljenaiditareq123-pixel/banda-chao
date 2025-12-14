@@ -55,7 +55,7 @@ router.get('/', async (req: Request, res: Response) => {
               profile_picture: true,
             },
           },
-        },
+        } as any,
         orderBy: {
           created_at: 'asc',
         },
@@ -137,7 +137,7 @@ router.post('/', authenticateToken, validate(createCommentSchema), async (req: A
             profile_picture: true,
           },
         },
-      },
+      } as any,
     });
 
     res.status(201).json({ comment });
