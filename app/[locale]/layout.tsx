@@ -266,7 +266,6 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
                   {children}
                 </main>
                 <Footer locale={validLocale} />
-              </div>
                 <CartDrawer locale={validLocale} />
                 {/* Bottom Navigation Bar - Mobile Only */}
                 <BottomNav />
