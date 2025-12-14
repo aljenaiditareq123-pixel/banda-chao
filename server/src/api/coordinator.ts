@@ -233,7 +233,8 @@ router.delete(
 
       // التحقق من أن الحساب يخص المستخدم
       const { prisma } = await import('../utils/prisma');
-      const account = await prisma.social_accounts.findUnique({
+      // Use snake_case for Prisma model name
+      const account = await (prisma as any).social_accounts.findUnique({
         where: { id: accountId },
       });
 
@@ -242,7 +243,7 @@ router.delete(
       }
 
       // إلغاء التفعيل بدلاً من الحذف
-      await prisma.social_accounts.update({
+      await (prisma as any).social_accounts.update({
         where: { id: accountId },
         data: { is_active: false },
       });

@@ -49,7 +49,7 @@ export async function syncContentToPlatforms(
   const results: ContentSyncResult[] = [];
 
   // التحقق من وجود حسابات منصات نشطة للمستخدم
-  const socialAccounts = await prisma.social_accounts.findMany({
+  const socialAccounts = await (prisma as any).social_accounts.findMany({
     where: {
       user_id: userId,
       platform: { in: platforms },
@@ -119,7 +119,7 @@ export async function syncContentToPlatforms(
       }
 
       // تسجيل العملية في coordinator_logs
-      await prisma.coordinator_logs.create({
+      await (prisma as any).coordinator_logs.create({
         data: {
           action_type: 'CONTENT_SYNCED',
           status: 'SUCCESS',
@@ -239,7 +239,7 @@ export async function getSyncStatus(
   contentId: string,
   contentType: 'VIDEO' | 'POST'
 ): Promise<SyncStatus[]> {
-  const logs = await prisma.coordinator_logs.findMany({
+  const logs = await (prisma as any).coordinator_logs.findMany({
     where: {
       content_id: contentId,
       content_type: contentType,
@@ -263,7 +263,7 @@ export async function getSyncStatus(
  * الحصول على حسابات المنصات النشطة للمستخدم
  */
 export async function getUserSocialAccounts(userId: string) {
-  return await prisma.social_accounts.findMany({
+  return await (prisma as any).social_accounts.findMany({
     where: {
       user_id: userId,
       is_active: true,
@@ -335,7 +335,7 @@ export async function queueContentSync(request: ContentSyncRequest): Promise<str
   });
 
   // تسجيل في coordinator_logs كـ PENDING
-  await prisma.coordinator_logs.create({
+  await (prisma as any).coordinator_logs.create({
     data: {
       action_type: 'CONTENT_SYNCED',
       status: 'PENDING',
@@ -365,7 +365,7 @@ export async function processContentSyncJob(job: any): Promise<void> {
 
     // تحديث coordinator_logs
     for (const result of results) {
-      await prisma.coordinator_logs.create({
+      await (prisma as any).coordinator_logs.create({
         data: {
           action_type: 'CONTENT_SYNCED',
           status: result.success ? 'SUCCESS' : 'FAILED',
@@ -382,7 +382,7 @@ export async function processContentSyncJob(job: any): Promise<void> {
     }
   } catch (error: any) {
     // تسجيل الخطأ
-    await prisma.coordinator_logs.create({
+    await (prisma as any).coordinator_logs.create({
       data: {
         action_type: 'CONTENT_SYNCED',
         status: 'FAILED',

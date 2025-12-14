@@ -228,7 +228,7 @@ export async function logSuspiciousTransaction(
   risk: TransactionRisk,
   ip?: string
 ): Promise<void> {
-  await prisma.coordinator_logs.create({
+  await (prisma as any).coordinator_logs.create({
     data: {
       action_type: 'FRAUD_CHECK',
       status: risk.shouldBlock ? 'FAILED' : 'SUCCESS',

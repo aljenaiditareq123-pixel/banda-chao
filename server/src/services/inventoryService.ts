@@ -101,7 +101,7 @@ async function reserveInventoryDatabase(
   try {
     if (variantId) {
       // حجز من Variant
-      const variant = await prisma.product_variants.findUnique({
+      const variant = await (prisma as any).product_variants.findUnique({
         where: { id: variantId },
       });
 
@@ -112,7 +112,7 @@ async function reserveInventoryDatabase(
         };
       }
 
-      await prisma.product_variants.update({
+      await (prisma as any).product_variants.update({
         where: { id: variantId },
         data: {
           stock: {
@@ -165,7 +165,7 @@ async function reserveInventoryDatabase(
       }
 
       // Update inventory_items
-      await prisma.inventory_items.update({
+      await (prisma as any).inventory_items.update({
         where: { id: inventoryItem.id },
         data: {
           quantity: {
@@ -209,7 +209,7 @@ export async function releaseInventory(
     } else {
     // Fallback إلى قاعدة البيانات
     if (variantId) {
-      await prisma.product_variants.update({
+      await (prisma as any).product_variants.update({
         where: { id: variantId },
         data: {
           stock: {
@@ -227,7 +227,7 @@ export async function releaseInventory(
       });
 
       if (inventoryItem) {
-        await prisma.inventory_items.update({
+        await (prisma as any).inventory_items.update({
           where: { id: inventoryItem.id },
           data: {
             quantity: {
@@ -290,7 +290,7 @@ export async function syncInventoryToRedis(): Promise<void> {
     }
 
     // مزامنة Variants
-    const variants = await prisma.product_variants.findMany({
+    const variants = await (prisma as any).product_variants.findMany({
       where: {
         stock: { gt: 0 },
       },

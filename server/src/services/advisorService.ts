@@ -323,7 +323,7 @@ export async function analyzeProductPerformance(
     const shares = sharesCount;
     
     // Get add to cart events
-    const addToCartEvents = await prisma.customer_insights.count({
+    const addToCartEvents = await (prisma as any).customer_insights.count({
       where: {
         target_id: productId,
         target_type: 'PRODUCT',

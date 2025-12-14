@@ -62,7 +62,7 @@ export async function calculateDynamicPrice(
     const appliedRules: PriceCalculation['appliedRules'] = [];
 
     // Get all active pricing rules
-    const activeRules = await prisma.pricing_rules.findMany({
+    const activeRules = await (prisma as any).pricing_rules.findMany({
       where: {
         is_active: true,
         OR: [
