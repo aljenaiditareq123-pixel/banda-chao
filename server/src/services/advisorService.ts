@@ -107,7 +107,7 @@ export async function analyzeMarketTrends(
           gte: previousStartDate,
           lt: previousEndDate,
         },
-      },
+      } as any,
       include: {
         order_items: true,
       },
@@ -297,7 +297,7 @@ export async function analyzeProductPerformance(
           include: {
             posts: true,
           },
-        },
+        } as any,
         video_products: {
           include: {
             videos: true,
