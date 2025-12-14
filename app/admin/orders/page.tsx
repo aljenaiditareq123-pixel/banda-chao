@@ -2,6 +2,9 @@
 
 import AdminOrdersPageClient from './page-client';
 
+// Force dynamic rendering - prevent static generation
+export const dynamic = 'force-dynamic';
+
 /**
  * Admin Orders Management Page
  * Displays all orders in a table format
