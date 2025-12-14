@@ -1,15 +1,14 @@
-'use client';
-
 import AdminOrdersPageClient from './page-client';
 
 // Force dynamic rendering - prevent static generation
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 /**
  * Admin Orders Management Page
  * Displays all orders in a table format
  * This page is ALWAYS in Arabic regardless of site locale
- * Made a client component to prevent SSR issues with hooks
+ * Server component wrapper that prevents SSR/prerendering
  */
 export default function AdminOrdersPage() {
   return (

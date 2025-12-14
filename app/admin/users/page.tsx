@@ -1,13 +1,12 @@
-'use client';
-
 import AdminUsersPageClient from './page-client';
 
 // Force dynamic rendering - prevent static generation
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 /**
  * Admin Users Management Page
- * Made a client component to prevent SSR issues with hooks
+ * Server component wrapper that prevents SSR/prerendering
  */
 export default function AdminUsersPage() {
   return <AdminUsersPageClient />;
