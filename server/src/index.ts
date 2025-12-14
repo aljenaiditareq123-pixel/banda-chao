@@ -47,6 +47,7 @@ import flashDropRoutes from './api/flashDrop';
 import videoUploadRoutes from './api/videoUpload';
 import aiContentRoutes from './api/aiContent';
 import searchRoutes from './api/search';
+import chatRoutes from './api/chat';
 import { queue } from './lib/queue';
 import { processContentSyncJob } from './services/coordinatorService';
 import { errorHandler } from './middleware/errorHandler';
@@ -328,6 +329,7 @@ app.use('/api/v1/flash-drop', flashDropRoutes);
 app.use('/api/v1/video-upload', videoUploadRoutes);
 app.use('/api/v1/ai-content', aiContentRoutes);
 app.use('/api/v1/search', searchRoutes);
+app.use('/api/v1/chat', chatRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {

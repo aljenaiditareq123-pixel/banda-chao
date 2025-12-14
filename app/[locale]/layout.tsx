@@ -15,6 +15,7 @@ import BottomNav from '@/components/BottomNav';
 import BandaPet from '@/components/pet/BandaPet';
 import SmartToasts from '@/components/SmartToasts';
 import CartToast from '@/components/cart/CartToast';
+import PandaChatBubble from '@/components/chat/PandaChatBubble';
 import '../globals.css';
 
 // Premium Arabic font
@@ -272,6 +273,8 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
                 <BottomNav />
                 {/* Banda Pet - Floating */}
                 <BandaPet locale={validLocale} position="floating" size="medium" />
+                {/* Panda Chat Bubble - AI Butler */}
+                <PandaChatBubble locale={validLocale} />
               </div>
               </NightMarketProvider>
             </CartProvider>

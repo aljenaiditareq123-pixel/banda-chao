@@ -972,6 +972,53 @@ export const searchAPI = {
 };
 
 // ============================================
+// Chat API (PandaChat - AI Butler)
+// ============================================
+
+export const chatAPI = {
+  sendMessage: async (message: string, options?: {
+    context?: {
+      currentProductId?: string;
+      recentOrderId?: string;
+      conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string; timestamp: Date }>;
+    };
+    locale?: string;
+  }): Promise<{
+    success: boolean;
+    message?: string;
+    suggestions?: string[];
+    action?: {
+      type: 'redirect' | 'show_order' | 'show_product';
+      data?: any;
+    };
+    error?: string;
+  }> => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+      const endpoint = token ? '/chat/message/auth' : '/chat/message';
+      
+      const response = await apiClient.post(endpoint, {
+        message,
+        context: options?.context,
+        locale: options?.locale || 'en',
+      }, {
+        headers: token ? {
+          Authorization: `Bearer ${token}`,
+        } : {},
+      });
+      
+      return response.data;
+    } catch (error: any) {
+      console.error('Chat error:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message || 'Failed to send message',
+      };
+    }
+  },
+};
+
+// ============================================
 // Operations API (Banda Ops)
 // ============================================
 
