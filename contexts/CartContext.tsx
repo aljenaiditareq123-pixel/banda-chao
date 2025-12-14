@@ -104,8 +104,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       } else {
         // Add new item
         const finalPrice = (item as any).haggledPrice || item.price;
+        const isBlindBox = (item as any).isBlindBox || false;
         const newItem: CartItem = {
           ...item,
+          isBlindBox,
           id: `${item.productId}-${Date.now()}`,
           price: finalPrice,
           haggledPrice: (item as any).haggledPrice,

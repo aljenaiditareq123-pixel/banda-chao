@@ -127,7 +127,11 @@ export default function CartDrawer({ locale }: CartDrawerProps) {
                   className="flex items-start gap-4 border-b border-gray-100 dark:border-gray-700 pb-4"
                 >
                   <div className="flex-shrink-0 w-16 h-16 rounded-md overflow-hidden bg-gray-100">
-                    {item.imageUrl ? (
+                    {item.isBlindBox ? (
+                      <div className="w-full h-full flex items-center justify-center text-3xl bg-gradient-to-br from-purple-400 to-pink-500">
+                        📦
+                      </div>
+                    ) : item.imageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={item.imageUrl}

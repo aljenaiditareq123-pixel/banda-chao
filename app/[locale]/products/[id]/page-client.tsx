@@ -805,6 +805,7 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
                         price: product.price,
                         currency: product.currency || 'USD',
                         quantity: quantity,
+                        isBlindBox: (product as any).is_blind_box || false,
                       }, locale);
                     }
                   }}
@@ -945,6 +946,7 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
               price: clanPrice,
               currency: product.currency || 'USD',
               quantity: quantity,
+              isBlindBox: (product as any).is_blind_box || false,
             }, locale);
             setIsClanBuyModalOpen(false);
           }}
