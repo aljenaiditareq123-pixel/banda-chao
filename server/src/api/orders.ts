@@ -426,6 +426,13 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
     const orderItems = await Promise.all(
       items.map(async (item: any) => {
         const itemId = randomUUID();
+        
+        // Check if product is a blind box
+        const product = await prisma.products.findUnique({
+          where: { id: item.productId },
+          select: { is_blind_box: true },
+        });
+        
         return prisma.order_items.create({
           data: {
             id: itemId,
@@ -433,6 +440,8 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
             product_id: item.productId,
             quantity: item.quantity,
             price: item.price * item.quantity,
+            is_blind_box: product?.is_blind_box || false,
+            revealed_product_id: null, // Will be set after payment confirmation
             created_at: new Date(),
           },
         });
