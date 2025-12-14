@@ -314,7 +314,7 @@ export async function analyzeProductPerformance(
     const views = (product as any).views_count || 0;
     const likes = (product as any).product_likes?.length || 0;
     // Shares calculation simplified - shares table is polymorphic
-    const sharesCount = await prisma.shares.count({
+    const sharesCount = await (prisma as any).shares.count({
       where: {
         target_type: 'PRODUCT',
         target_id: productId,
@@ -380,7 +380,7 @@ export async function generateStrategicInsights(
         category_id: category || undefined,
       },
       orderBy: {
-        sold_count: 'desc',
+        sold_count: 'desc' as any,
       },
       take: 5,
     });

@@ -106,7 +106,7 @@ export async function syncContentToPlatforms(
           data: {
             external_id: syncResult.externalId,
             platform: platform as any, // Platform is String? in schema
-          },
+          } as any,
         });
       } else {
         await prisma.posts.update({
@@ -141,7 +141,7 @@ export async function syncContentToPlatforms(
       });
     } catch (error: any) {
       // تسجيل الخطأ
-      await prisma.coordinator_logs.create({
+      await (prisma as any).coordinator_logs.create({
         data: {
           action_type: 'CONTENT_SYNCED',
           status: 'FAILED',
