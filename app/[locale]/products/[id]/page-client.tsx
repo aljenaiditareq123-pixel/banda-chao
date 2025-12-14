@@ -25,6 +25,7 @@ import AutoTranslator from '@/components/AutoTranslator';
 import { MessageCircle, Factory, Shield, Lock, Plane } from 'lucide-react';
 import GroupBuyWidget from '@/components/product/GroupBuyWidget';
 import ProductPoster from '@/components/product/ProductPoster';
+import VirtualTryOn from '@/components/product/VirtualTryOn';
 
 interface Maker {
   id: string;
@@ -72,6 +73,7 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
   const [showComments, setShowComments] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [lowStockCount] = useState(Math.floor(Math.random() * 9) + 1); // Random number 1-9
+  const [isTryOnOpen, setIsTryOnOpen] = useState(false);
 
   // Detect mobile/tablet
   useEffect(() => {
@@ -589,6 +591,34 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
 
               {/* Action Buttons - AliExpress/Temu Style */}
               <div className="space-y-3">
+                {/* Try On Button (Fashion category only) */}
+                {(product.category?.toLowerCase().includes('fashion') || 
+                  product.category?.toLowerCase().includes('clothing') ||
+                  product.category?.toLowerCase().includes('apparel') ||
+                  product.category?.toLowerCase().includes('ملابس') ||
+                  product.category?.toLowerCase().includes('服装')) && (
+                  <Button
+                    variant="secondary"
+                    className="w-full h-12 border-2 border-primary-500 text-primary-600 hover:bg-primary-50 font-semibold flex items-center justify-center gap-2"
+                    onClick={() => setIsTryOnOpen(true)}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="w-5 h-5"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                      <circle cx="12" cy="13" r="4" />
+                    </svg>
+                    {locale === 'ar' ? 'جرب الآن' : locale === 'zh' ? '试穿' : 'Try On'}
+                  </Button>
+                )}
+                
                 {/* Buy Now Button - Large & Prominent (Red) */}
                 <Button
                   variant="primary"
@@ -952,7 +982,15 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
             setIsClanBuyModalOpen(false);
           }}
         />
-      )}
+
+      {/* Virtual Try-On Modal */}
+      <VirtualTryOn
+        productImage={mainImage}
+        productName={product.name}
+        locale={locale}
+        isOpen={isTryOnOpen}
+        onClose={() => setIsTryOnOpen(false)}
+      />
     </div>
   );
 }
