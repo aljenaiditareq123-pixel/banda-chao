@@ -158,6 +158,11 @@ export const authOptions: NextAuthConfig = {
         token.id = user.id;
         token.role = (user as any).role || 'BUYER';
         
+        // CRITICAL: Override role for founder@banda-chao.com to ADMIN
+        if (user.email === 'founder@banda-chao.com') {
+          token.role = 'ADMIN';
+        }
+        
         // Sync user with database (find existing user by email)
         if (user.email) {
           try {
@@ -170,6 +175,12 @@ export const authOptions: NextAuthConfig = {
               // Use database user ID for consistency
               token.id = dbUser.id;
               token.email = dbUser.email;
+              // Override role for founder@banda-chao.com even if DB has different role
+              if (dbUser.email === 'founder@banda-chao.com') {
+                token.role = 'ADMIN';
+              } else {
+                token.role = dbUser.role || token.role;
+              }
             }
           } catch (e) {
             // Ignore errors - use token ID
@@ -177,13 +188,26 @@ export const authOptions: NextAuthConfig = {
           }
         }
       }
+      
+      // Also check token.email in case it's already set (for subsequent calls)
+      if (token.email === 'founder@banda-chao.com') {
+        token.role = 'ADMIN';
+      }
+      
       return token;
     },
     async session({ session, token }) {
       // Send properties to the client
       if (session?.user) {
         (session.user as any).id = token.id as string;
-        (session.user as any).role = token.role || 'BUYER';
+        
+        // CRITICAL: Override role for founder@banda-chao.com to ADMIN
+        if (session.user.email === 'founder@banda-chao.com') {
+          (session.user as any).role = 'ADMIN';
+        } else {
+          (session.user as any).role = token.role || 'BUYER';
+        }
+        
         (session as any).accessToken = token.accessToken;
       }
       return session;

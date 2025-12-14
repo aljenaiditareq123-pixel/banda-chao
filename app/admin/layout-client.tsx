@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { 
   Package, 
@@ -20,9 +21,20 @@ export default function AdminLayoutClient({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, loading } = useAuth();
+  const { user: jwtUser, loading: jwtLoading } = useAuth();
+  const { data: session, status: sessionStatus } = useSession();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Merge user data from both JWT and NextAuth
+  const user = jwtUser || (session?.user ? {
+    id: (session.user as any).id || '',
+    email: session.user.email || '',
+    name: session.user.name || '',
+    role: (session.user as any).role || 'BUYER',
+  } : null);
+  
+  const loading = jwtLoading || sessionStatus === 'loading';
 
   useEffect(() => {
     if (!loading) {
@@ -61,8 +73,17 @@ export default function AdminLayoutClient({
     return null;
   }
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    // Clear JWT auth
     localStorage.removeItem('auth_token');
+    localStorage.removeItem('bandaChao_user');
+    
+    // Sign out from NextAuth if session exists
+    if (session) {
+      const { signOut } = await import('next-auth/react');
+      await signOut({ redirect: false });
+    }
+    
     router.push('/auth/signin');
   };
 

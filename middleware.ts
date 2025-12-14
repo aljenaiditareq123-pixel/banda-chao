@@ -195,18 +195,24 @@ export function middleware(request: NextRequest) {
 
   // Protect /admin routes - require authentication
   if (pathname.startsWith('/admin')) {
-    // Check for JWT token (admin uses JWT auth)
+    // Check for NextAuth session tokens (primary auth method)
+    const sessionToken = request.cookies.get('next-auth.session-token') || 
+                         request.cookies.get('__Secure-next-auth.session-token') ||
+                         request.cookies.get('__Host-next-auth.session-token');
+    
+    // Also check for JWT token (legacy auth system)
     const jwtToken = request.cookies.get('auth_token');
     
-    // If no token, redirect to login
-    if (!jwtToken) {
-      const loginUrl = new URL('/auth/login', request.url);
-      loginUrl.searchParams.set('redirect', pathname);
-      return NextResponse.redirect(loginUrl);
+    // If no session token and no JWT token, redirect to sign-in
+    if (!sessionToken && !jwtToken) {
+      const signInUrl = new URL('/auth/signin', request.url);
+      signInUrl.searchParams.set('callbackUrl', pathname);
+      return NextResponse.redirect(signInUrl);
     }
     
     // Note: Full role verification (ADMIN/FOUNDER) happens in AdminLayout component
     // This middleware just checks for token presence
+    // founder@banda-chao.com email check is handled in NextAuth session callback
   }
 
   // Check authentication for protected routes
