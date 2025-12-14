@@ -326,6 +326,7 @@ app.use('/api/v1/blind-box', blindBoxRoutes);
 app.use('/api/v1/flash-drop', flashDropRoutes);
 app.use('/api/v1/video-upload', videoUploadRoutes);
 app.use('/api/v1/ai-content', aiContentRoutes);
+app.use('/api/v1/search', searchRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {

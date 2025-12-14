@@ -898,6 +898,80 @@ export const founderAPI = {
 };
 
 // ============================================
+// Search API (Semantic Search)
+// ============================================
+
+export const searchAPI = {
+  search: async (query: string, options?: {
+    locale?: string;
+    category?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    limit?: number;
+    offset?: number;
+  }): Promise<{
+    success: boolean;
+    products?: any[];
+    total?: number;
+    keywords?: string[];
+    suggestions?: string[];
+    error?: string;
+  }> => {
+    try {
+      const response = await apiClient.post('/search', {
+        query,
+        ...options,
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('Search error:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message || 'Search failed',
+      };
+    }
+  },
+  getSuggestions: async (query: string, locale: string = 'en'): Promise<{
+    success: boolean;
+    suggestions?: string[];
+    error?: string;
+  }> => {
+    try {
+      const response = await apiClient.get('/search/suggestions', {
+        params: { q: query, locale },
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('Suggestions error:', error);
+      return {
+        success: false,
+        suggestions: [],
+        error: error.response?.data?.error || error.message,
+      };
+    }
+  },
+  getPopular: async (limit: number = 10): Promise<{
+    success: boolean;
+    searches?: string[];
+    error?: string;
+  }> => {
+    try {
+      const response = await apiClient.get('/search/popular', {
+        params: { limit },
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('Popular searches error:', error);
+      return {
+        success: false,
+        searches: [],
+        error: error.response?.data?.error || error.message,
+      };
+    }
+  },
+};
+
+// ============================================
 // Operations API (Banda Ops)
 // ============================================
 
