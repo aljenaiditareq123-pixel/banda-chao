@@ -350,8 +350,7 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
     // Declare inventoryReservations outside try block for catch block access
     const inventoryReservations: Array<{ productId: string; variantId?: string; quantity: number }> = [];
 
-    try {
-      // 1. Fraud Check - فحص الاحتيال المالي
+    // 1. Fraud Check - فحص الاحتيال المالي
       const ip = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
       const fraudCheck = await checkTransactionRisk(userId, calculatedTotal, ip as string);
       
@@ -373,40 +372,41 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
         });
       }
 
-      if (fraudCheck.requiresReview) {
-        console.warn('[Orders] ⚠️ Transaction requires manual review:', fraudCheck.risk);
-      }
+    if (fraudCheck.requiresReview) {
+      console.warn('[Orders] ⚠️ Transaction requires manual review:', fraudCheck.risk);
+    }
 
-      // 2. Atomic Inventory Reservation - حجز المخزون ذرياً
-      for (const item of items) {
-        const reservation = await reserveInventory(
-          item.productId,
-          item.quantity,
-          item.variantId
-        );
+    // 2. Atomic Inventory Reservation - حجز المخزون ذرياً
+    for (const item of items) {
+      const reservation = await reserveInventory(
+        item.productId,
+        item.quantity,
+        item.variantId
+      );
 
-        if (!reservation.success) {
-          // إعادة المخزون المحجوز مسبقاً
-          for (const reserved of inventoryReservations) {
-            await releaseInventory(reserved.productId, reserved.quantity, reserved.variantId);
-          }
-
-          return res.status(400).json({
-            success: false,
-            message: reservation.error || 'Insufficient stock',
-            code: 'OUT_OF_STOCK',
-            productId: item.productId,
-          });
+      if (!reservation.success) {
+        // إعادة المخزون المحجوز مسبقاً
+        for (const reserved of inventoryReservations) {
+          await releaseInventory(reserved.productId, reserved.quantity, reserved.variantId);
         }
 
-        inventoryReservations.push({
+        return res.status(400).json({
+          success: false,
+          message: reservation.error || 'Insufficient stock',
+          code: 'OUT_OF_STOCK',
           productId: item.productId,
-          variantId: item.variantId,
-          quantity: item.quantity,
         });
       }
 
-      // 3. Create Order - إنشاء الطلب
+      inventoryReservations.push({
+        productId: item.productId,
+        variantId: item.variantId,
+        quantity: item.quantity,
+      });
+    }
+
+    // 3. Create Order - إنشاء الطلب
+    try {
       const order = await prisma.orders.create({
         data: {
           id: orderId,
@@ -469,24 +469,32 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
         items: orderItems,
       },
     });
-  } catch (error: any) {
-    console.error('[Orders] ❌ Error creating order:', {
-      error: error.message,
-      stack: error.stack,
-    });
+    } catch (error: any) {
+      console.error('[Orders] ❌ Error creating order:', {
+        error: error.message,
+        stack: error.stack,
+      });
 
-    // إعادة المخزون المحجوز في حالة الخطأ
-    if (inventoryReservations && inventoryReservations.length > 0) {
-      for (const reserved of inventoryReservations) {
-        await releaseInventory(reserved.productId, reserved.quantity, reserved.variantId).catch(console.error);
+      // إعادة المخزون المحجوز في حالة الخطأ
+      if (inventoryReservations && inventoryReservations.length > 0) {
+        for (const reserved of inventoryReservations) {
+          await releaseInventory(reserved.productId, reserved.quantity, reserved.variantId).catch(console.error);
+        }
       }
-    }
 
+      res.status(500).json({
+        success: false,
+        message: 'Failed to create order',
+        code: 'ORDER_CREATION_ERROR',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      });
+    }
+  } catch (error: any) {
+    console.error('[Orders] ❌ Outer error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to create order',
       code: 'ORDER_CREATION_ERROR',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 });
