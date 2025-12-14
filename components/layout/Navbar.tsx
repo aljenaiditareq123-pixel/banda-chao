@@ -122,6 +122,12 @@ export default function Navbar({ locale }: NavbarProps) {
               ⚡ {locale === 'ar' ? 'عرض البرق' : locale === 'zh' ? '闪电特卖' : 'Flash Drop'}
             </Link>
             <Link 
+              href={`/${locale}/feed`} 
+              className="text-primary-600 hover:text-primary-700 font-semibold transition-colors flex items-center gap-1"
+            >
+              📹 {locale === 'ar' ? 'البث المباشر' : locale === 'zh' ? '视频流' : 'Feed'}
+            </Link>
+            <Link 
               href={`/${locale}/videos`} 
               className="text-gray-600 hover:text-gray-900 transition-colors"
             >
