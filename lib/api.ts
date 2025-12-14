@@ -1019,6 +1019,71 @@ export const chatAPI = {
 };
 
 // ============================================
+// Viral Growth API (Referral & Clan Buying)
+// ============================================
+
+export const viralAPI = {
+  getReferralLink: async (): Promise<{
+    success: boolean;
+    referralLink?: string;
+    code?: string;
+    error?: string;
+  }> => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+      const response = await apiClient.get('/viral/referral-link', {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('Error getting referral link:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message || 'Failed to get referral link',
+      };
+    }
+  },
+  trackReferral: async (referralCode: string, visitorId?: string): Promise<{
+    success: boolean;
+    error?: string;
+  }> => {
+    try {
+      const response = await apiClient.post('/viral/track-referral', {
+        referralCode,
+        visitorId,
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('Error tracking referral:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message,
+      };
+    }
+  },
+  getClanStats: async (productId: string): Promise<{
+    success: boolean;
+    stats?: {
+      activeClans: number;
+      totalMembers: number;
+      averageDiscount: number;
+    };
+    error?: string;
+  }> => {
+    try {
+      const response = await apiClient.get(`/viral/clan-stats/${productId}`);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error getting clan stats:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message,
+      };
+    }
+  },
+};
+
+// ============================================
 // Operations API (Banda Ops)
 // ============================================
 
