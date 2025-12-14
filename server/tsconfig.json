@@ -13,8 +13,7 @@
     "moduleResolution": "node",
     "types": ["node", "express"],
     "typeRoots": ["./node_modules/@types"],
-    "noImplicitAny": false,
-    "suppressImplicitAnyIndexErrors": true
+    "noImplicitAny": false
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
