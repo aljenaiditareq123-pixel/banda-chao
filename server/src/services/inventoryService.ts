@@ -155,7 +155,7 @@ async function reserveInventoryDatabase(
             stock: {
               decrement: quantity,
             },
-          },
+          } as any,
         });
 
         return {
@@ -236,15 +236,15 @@ export async function releaseInventory(
           },
         });
       } else {
-        // Fallback to product stock
-        await prisma.products.update({
-          where: { id: productId },
-          data: {
-            stock: {
-              increment: quantity,
-            },
+      // Fallback to product stock
+      await prisma.products.update({
+        where: { id: productId },
+        data: {
+          stock: {
+            increment: quantity,
           },
-        });
+        } as any,
+      });
       }
     }
     }
@@ -266,7 +266,7 @@ export async function syncInventoryToRedis(): Promise<void> {
     const products = await prisma.products.findMany({
       where: {
         OR: [
-          { stock: { gt: 0 } },
+          { stock: { gt: 0 } } as any,
           {
             inventory: {
               some: {
@@ -280,7 +280,7 @@ export async function syncInventoryToRedis(): Promise<void> {
       select: {
         id: true,
         stock: true,
-      },
+      } as any,
     });
 
     for (const product of products) {
@@ -357,9 +357,9 @@ export async function getAvailableStock(
       // Fallback to product stock
       const product = await prisma.products.findUnique({
         where: { id: productId },
-        select: { stock: true },
+        select: { stock: true } as any,
       });
-      return product?.stock || 0;
+      return (product as any)?.stock || 0;
     }
   } catch (error) {
     console.error('Error getting available stock:', error);

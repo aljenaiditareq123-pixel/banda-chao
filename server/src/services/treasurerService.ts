@@ -48,9 +48,6 @@ export async function calculateDynamicPrice(
     // Get product
     const product = await prisma.products.findUnique({
       where: { id: productId },
-      include: {
-        category: true,
-      },
     });
 
     if (!product || !product.price) {
@@ -67,7 +64,7 @@ export async function calculateDynamicPrice(
         is_active: true,
         OR: [
           { product_id: productId },
-          { category_id: product.category_id || null },
+          { category_id: (product as any).category_id || null },
           { product_id: null, category_id: null }, // Global rules
         ],
         AND: [
@@ -125,7 +122,7 @@ export async function calculateDynamicPrice(
       discount: totalDiscount,
       discountPercentage,
       appliedRules,
-      currency: product.currency || 'USD',
+      currency: (product as any).currency || 'USD',
     };
   } catch (error) {
     console.error('[TreasurerService] Error calculating dynamic price:', error);
@@ -347,7 +344,7 @@ export async function calculateRevenueOptimization(
               some: {
                 products: {
                   category_id: categoryId,
-                },
+                } as any,
               },
             }
           : undefined,
