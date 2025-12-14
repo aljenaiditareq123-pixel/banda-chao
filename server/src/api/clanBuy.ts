@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authenticateToken } from '../middleware/auth';
-import { v4 as uuidv4 } from 'uuid';
+import { randomBytes } from 'crypto';
 
 const router = Router();
 const prisma = new PrismaClient() as any;
@@ -35,8 +35,8 @@ router.post('/create', authenticateToken, async (req: any, res: Response) => {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
 
-    // Generate unique join token
-    const joinToken = uuidv4().replace(/-/g, '').substring(0, 16);
+    // Generate unique join token (16 characters, hex)
+    const joinToken = randomBytes(8).toString('hex');
 
     // Create clan buy (expires in 24 hours)
     const expiresAt = new Date();
