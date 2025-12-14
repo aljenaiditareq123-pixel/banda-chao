@@ -396,7 +396,7 @@ export async function getActiveUserInsights(days: number = 7): Promise<{
  */
 export async function getLatestMarketAnalyses(limit: number = 5): Promise<MarketAnalysisResult[]> {
   try {
-    const analyses = await prisma.market_analysis.findMany({
+    const analyses = await (prisma as any).market_analysis.findMany({
       take: limit,
       orderBy: {
         created_at: 'desc',
