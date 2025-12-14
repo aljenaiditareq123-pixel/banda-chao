@@ -126,22 +126,49 @@ async function reserveInventoryDatabase(
         remainingStock: variant.stock - quantity,
       };
     } else {
-      // حجز من Product
-      const product = await prisma.products.findUnique({
-        where: { id: productId },
+      // حجز من Product - استخدام inventory_items بدلاً من stock مباشرة
+      const inventoryItem = await prisma.inventory_items.findFirst({
+        where: {
+          product_id: productId,
+          variant_id: null,
+        },
       });
 
-      if (!product || (product.stock || 0) < quantity) {
+      if (!inventoryItem || inventoryItem.quantity < quantity) {
+        // Fallback: check product stock field if exists
+        const product = await prisma.products.findUnique({
+          where: { id: productId },
+          select: { stock: true },
+        });
+
+        if (!product || (product.stock || 0) < quantity) {
+          return {
+            success: false,
+            error: 'Insufficient stock',
+          };
+        }
+
+        // Update product stock directly
+        await prisma.products.update({
+          where: { id: productId },
+          data: {
+            stock: {
+              decrement: quantity,
+            },
+          },
+        });
+
         return {
-          success: false,
-          error: 'Insufficient stock',
+          success: true,
+          remainingStock: (product.stock || 0) - quantity,
         };
       }
 
-      await prisma.products.update({
-        where: { id: productId },
+      // Update inventory_items
+      await prisma.inventory_items.update({
+        where: { id: inventoryItem.id },
         data: {
-          stock: {
+          quantity: {
             decrement: quantity,
           },
         },
@@ -149,7 +176,7 @@ async function reserveInventoryDatabase(
 
       return {
         success: true,
-        remainingStock: (product.stock || 0) - quantity,
+        remainingStock: inventoryItem.quantity - quantity,
       };
     }
   } catch (error: any) {
@@ -180,17 +207,36 @@ export async function releaseInventory(
       await redis.incrby(key, quantity);
       await redis.expire(key, 86400);
     } else {
-      // Fallback إلى قاعدة البيانات
-      if (variantId) {
-        await prisma.product_variants.update({
-          where: { id: variantId },
+    // Fallback إلى قاعدة البيانات
+    if (variantId) {
+      await prisma.product_variants.update({
+        where: { id: variantId },
+        data: {
+          stock: {
+            increment: quantity,
+          },
+        },
+      });
+    } else {
+      // Try inventory_items first
+      const inventoryItem = await prisma.inventory_items.findFirst({
+        where: {
+          product_id: productId,
+          variant_id: null,
+        },
+      });
+
+      if (inventoryItem) {
+        await prisma.inventory_items.update({
+          where: { id: inventoryItem.id },
           data: {
-            stock: {
+            quantity: {
               increment: quantity,
             },
           },
         });
       } else {
+        // Fallback to product stock
         await prisma.products.update({
           where: { id: productId },
           data: {
@@ -200,6 +246,7 @@ export async function releaseInventory(
           },
         });
       }
+    }
     }
   } catch (error) {
     console.error('Error releasing inventory:', error);
@@ -215,10 +262,20 @@ export async function syncInventoryToRedis(): Promise<void> {
   if (!redis) return;
 
   try {
-    // مزامنة Products
+    // مزامنة Products - استخدام inventory_items أو stock
     const products = await prisma.products.findMany({
       where: {
-        stock: { gt: 0 },
+        OR: [
+          { stock: { gt: 0 } },
+          {
+            inventory: {
+              some: {
+                quantity: { gt: 0 },
+                variant_id: null,
+              },
+            },
+          },
+        ],
       },
       select: {
         id: true,
@@ -284,6 +341,20 @@ export async function getAvailableStock(
       });
       return variant?.stock || 0;
     } else {
+      // Try inventory_items first
+      const inventoryItem = await prisma.inventory_items.findFirst({
+        where: {
+          product_id: productId,
+          variant_id: null,
+        },
+        select: { quantity: true },
+      });
+
+      if (inventoryItem) {
+        return inventoryItem.quantity;
+      }
+
+      // Fallback to product stock
       const product = await prisma.products.findUnique({
         where: { id: productId },
         select: { stock: true },

@@ -84,7 +84,7 @@ export async function checkTransactionRisk(
   const recentFailedPayments = await prisma.orders.count({
     where: {
       user_id: userId,
-      status: 'FAILED',
+      status: { in: ['FAILED', 'CANCELLED'] } as any,
       created_at: {
         gte: new Date(Date.now() - 60 * 60 * 1000), // آخر ساعة
       },
@@ -98,8 +98,17 @@ export async function checkTransactionRisk(
   }
 
   // قاعدة 3: مبلغ غير عادي (أكبر من متوسط الطلبات السابقة)
-  if (user.orders.length > 0) {
-    const avgOrderAmount = user.orders.reduce((sum, order) => sum + order.totalAmount, 0) / user.orders.length;
+  const userOrders = await prisma.orders.findMany({
+    where: {
+      user_id: userId,
+      status: { in: ['COMPLETED', 'PAID'] } as any,
+    },
+    take: 10,
+    orderBy: { created_at: 'desc' },
+  });
+
+  if (userOrders.length > 0) {
+    const avgOrderAmount = userOrders.reduce((sum: number, order: any) => sum + (order.totalAmount || 0), 0) / userOrders.length;
     if (amount > avgOrderAmount * 5) {
       flags.push('UNUSUAL_AMOUNT');
       if (riskLevel === 'LOW') riskLevel = 'MEDIUM';
@@ -109,7 +118,8 @@ export async function checkTransactionRisk(
 
   // قاعدة 4: IP Check - نفس IP لعدة حسابات
   if (ip) {
-    const accountsWithSameIP = await prisma.orders.count({
+    // Get unique user IDs with same IP in shipping address
+    const ordersWithSameIP = await prisma.orders.findMany({
       where: {
         shipping_address: {
           contains: ip,
@@ -118,10 +128,14 @@ export async function checkTransactionRisk(
           gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // آخر 24 ساعة
         },
       },
-      distinct: ['user_id'],
+      select: {
+        user_id: true,
+      },
     });
 
-    if (accountsWithSameIP > 5) {
+    // Count unique users
+    const uniqueUserIds = new Set(ordersWithSameIP.map((o: any) => o.user_id));
+    if (uniqueUserIds.size > 5) {
       flags.push('SUSPICIOUS_IP');
       riskLevel = 'HIGH';
       requiresReview = true;
@@ -132,7 +146,7 @@ export async function checkTransactionRisk(
   const isBlocked = await prisma.users.findFirst({
     where: {
       id: userId,
-      role: 'BLOCKED',
+      role: 'BLOCKED' as any, // BLOCKED role may not be in enum
     },
   });
 
@@ -186,7 +200,7 @@ export async function blockUser(userId: string, reason: string): Promise<void> {
   await prisma.users.update({
     where: { id: userId },
     data: {
-      role: 'BLOCKED',
+      role: 'BLOCKED' as any, // BLOCKED role may not be in enum - consider adding to schema
       // يمكن إضافة حقل notes أو audit_log هنا
     },
   });

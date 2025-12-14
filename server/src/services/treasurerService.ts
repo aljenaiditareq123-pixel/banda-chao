@@ -67,7 +67,7 @@ export async function calculateDynamicPrice(
         is_active: true,
         OR: [
           { product_id: productId },
-          { category_id: product.category_id },
+          { category_id: product.category_id || null },
           { product_id: null, category_id: null }, // Global rules
         ],
         AND: [

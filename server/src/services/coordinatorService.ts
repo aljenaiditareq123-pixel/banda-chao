@@ -105,7 +105,7 @@ export async function syncContentToPlatforms(
           where: { id: contentId },
           data: {
             external_id: syncResult.externalId,
-            platform: platform,
+            platform: platform as any, // Platform is String? in schema
           },
         });
       } else {
@@ -113,7 +113,7 @@ export async function syncContentToPlatforms(
           where: { id: contentId },
           data: {
             external_id: syncResult.externalId,
-            platform: platform,
+            platform: platform as any, // Platform is String? in schema
           },
         });
       }

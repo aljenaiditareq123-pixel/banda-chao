@@ -7,8 +7,7 @@ import {
   upsertSocialAccount,
   ContentSyncRequest,
 } from '../services/coordinatorService';
-import { authenticateToken } from '../middleware/auth';
-import { requireRole } from '../middleware/roleCheck';
+import { authenticateToken, requireRole } from '../middleware/auth';
 import { interactionRateLimiter } from '../middleware/rateLimit';
 
 const router = express.Router();

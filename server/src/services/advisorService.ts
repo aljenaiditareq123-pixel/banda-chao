@@ -91,11 +91,7 @@ export async function analyzeMarketTrends(
         },
       },
       include: {
-        order_items: {
-          include: {
-            orders: true,
-          },
-        },
+        order_items: true,
       },
     });
 
@@ -113,31 +109,27 @@ export async function analyzeMarketTrends(
         },
       },
       include: {
-        order_items: {
-          include: {
-            orders: true,
-          },
-        },
+        order_items: true,
       },
     });
 
     // Calculate current metrics
     const totalProducts = products.length;
-    const totalOrders = products.reduce((sum, p) => sum + p.order_items.length, 0);
-    const totalRevenue = products.reduce((sum, p) => {
-      return sum + p.order_items.reduce((orderSum, item) => orderSum + (item.price * item.quantity), 0);
+    const totalOrders = products.reduce((sum: number, p: any) => sum + (p.order_items?.length || 0), 0);
+    const totalRevenue = products.reduce((sum: number, p: any) => {
+      return sum + (p.order_items?.reduce((orderSum: number, item: any) => orderSum + ((item.price || 0) * (item.quantity || 0)), 0) || 0);
     }, 0);
     const avgPrice = products.length > 0
-      ? products.reduce((sum, p) => sum + (p.price || 0), 0) / products.length
+      ? products.reduce((sum: number, p: any) => sum + (p.price || 0), 0) / products.length
       : 0;
 
     // Calculate views and conversions
-    const totalViews = products.reduce((sum, p) => sum + p.views_count, 0);
+    const totalViews = products.reduce((sum: number, p: any) => sum + ((p as any).views_count || 0), 0);
     const conversionRate = totalViews > 0 ? totalOrders / totalViews : 0;
 
     // Calculate previous period metrics
     const previousTotalProducts = previousProducts.length;
-    const previousTotalOrders = previousProducts.reduce((sum, p) => sum + p.order_items.length, 0);
+    const previousTotalOrders = previousProducts.reduce((sum: number, p: any) => sum + (p.order_items?.length || 0), 0);
     const growthRate = previousTotalProducts > 0
       ? ((totalProducts - previousTotalProducts) / previousTotalProducts) * 100
       : 0;
@@ -202,7 +194,7 @@ export async function analyzeUserBehavior(
     let purchaseCount = 0;
     let viewCount = 0;
 
-    insights.forEach((insight) => {
+    insights.forEach((insight: any) => {
       eventsByType[insight.event_type] = (eventsByType[insight.event_type] || 0) + 1;
 
       if (insight.event_type === 'PURCHASE') {
@@ -303,32 +295,12 @@ export async function analyzeProductPerformance(
         },
         post_products: {
           include: {
-            posts: {
-              include: {
-                shares: {
-                  where: {
-                    created_at: {
-                      gte: startDate,
-                    },
-                  },
-                },
-              },
-            },
+            posts: true,
           },
         },
         video_products: {
           include: {
-            videos: {
-              include: {
-                shares: {
-                  where: {
-                    created_at: {
-                      gte: startDate,
-                    },
-                  },
-                },
-              },
-            },
+            videos: true,
           },
         },
       },
@@ -339,10 +311,16 @@ export async function analyzeProductPerformance(
     }
 
     // Calculate metrics
-    const views = product.views_count;
-    const likes = product.product_likes.length;
-    const shares = (product.post_products?.reduce((sum, pp) => sum + (pp.posts?.shares?.length || 0), 0) || 0) +
-                   (product.video_products?.reduce((sum, vp) => sum + (vp.videos?.shares?.length || 0), 0) || 0);
+    const views = (product as any).views_count || 0;
+    const likes = (product as any).product_likes?.length || 0;
+    // Shares calculation simplified - shares table is polymorphic
+    const sharesCount = await prisma.shares.count({
+      where: {
+        target_type: 'PRODUCT',
+        target_id: productId,
+      },
+    });
+    const shares = sharesCount;
     
     // Get add to cart events
     const addToCartEvents = await prisma.customer_insights.count({
@@ -356,8 +334,8 @@ export async function analyzeProductPerformance(
       },
     });
 
-    const purchases = product.order_items.length;
-    const revenue = product.order_items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const purchases = (product as any).order_items?.length || 0;
+    const revenue = (product as any).order_items?.reduce((sum: number, item: any) => sum + ((item.price || 0) * (item.quantity || 0)), 0) || 0;
     const conversionRate = views > 0 ? purchases / views : 0;
 
     return {

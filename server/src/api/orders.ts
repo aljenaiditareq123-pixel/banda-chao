@@ -347,74 +347,77 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
     // التحصينات الأمنية - Security Guards
     // ============================================
 
-    // 1. Fraud Check - فحص الاحتيال المالي
-    const ip = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    const fraudCheck = await checkTransactionRisk(userId, calculatedTotal, ip as string);
-    
-    await logSuspiciousTransaction(userId, calculatedTotal, fraudCheck.risk, ip as string);
-
-    if (!fraudCheck.allowed) {
-      console.error('[Orders] ❌ Fraud check failed:', fraudCheck.risk);
-      
-      if (fraudCheck.risk.shouldBlock) {
-        await blockUser(userId, fraudCheck.risk.reason);
-      }
-
-      return res.status(403).json({
-        success: false,
-        message: 'Transaction blocked due to security risk',
-        code: 'FRAUD_DETECTED',
-        risk: fraudCheck.risk.riskLevel,
-        requiresReview: fraudCheck.requiresReview,
-      });
-    }
-
-    if (fraudCheck.requiresReview) {
-      console.warn('[Orders] ⚠️ Transaction requires manual review:', fraudCheck.risk);
-    }
-
-    // 2. Atomic Inventory Reservation - حجز المخزون ذرياً
+    // Declare inventoryReservations outside try block for catch block access
     const inventoryReservations: Array<{ productId: string; variantId?: string; quantity: number }> = [];
-    
-    for (const item of items) {
-      const reservation = await reserveInventory(
-        item.productId,
-        item.quantity,
-        item.variantId
-      );
 
-      if (!reservation.success) {
-        // إعادة المخزون المحجوز مسبقاً
-        for (const reserved of inventoryReservations) {
-          await releaseInventory(reserved.productId, reserved.quantity, reserved.variantId);
+    try {
+      // 1. Fraud Check - فحص الاحتيال المالي
+      const ip = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+      const fraudCheck = await checkTransactionRisk(userId, calculatedTotal, ip as string);
+      
+      await logSuspiciousTransaction(userId, calculatedTotal, fraudCheck.risk, ip as string);
+
+      if (!fraudCheck.allowed) {
+        console.error('[Orders] ❌ Fraud check failed:', fraudCheck.risk);
+        
+        if (fraudCheck.risk.shouldBlock) {
+          await blockUser(userId, fraudCheck.risk.reason);
         }
 
-        return res.status(400).json({
+        return res.status(403).json({
           success: false,
-          message: reservation.error || 'Insufficient stock',
-          code: 'OUT_OF_STOCK',
-          productId: item.productId,
+          message: 'Transaction blocked due to security risk',
+          code: 'FRAUD_DETECTED',
+          risk: fraudCheck.risk.riskLevel,
+          requiresReview: fraudCheck.requiresReview,
         });
       }
 
-      inventoryReservations.push({
-        productId: item.productId,
-        variantId: item.variantId,
-        quantity: item.quantity,
-      });
-    }
+      if (fraudCheck.requiresReview) {
+        console.warn('[Orders] ⚠️ Transaction requires manual review:', fraudCheck.risk);
+      }
 
-    // 3. Create Order - إنشاء الطلب
-    const order = await prisma.orders.create({
-      data: {
-        id: orderId,
-        user_id: userId,
-        status: 'PENDING',
-        totalAmount: calculatedTotal,
-        created_at: new Date(),
-        updated_at: new Date(),
-      },
-    });
+      // 2. Atomic Inventory Reservation - حجز المخزون ذرياً
+      for (const item of items) {
+        const reservation = await reserveInventory(
+          item.productId,
+          item.quantity,
+          item.variantId
+        );
+
+        if (!reservation.success) {
+          // إعادة المخزون المحجوز مسبقاً
+          for (const reserved of inventoryReservations) {
+            await releaseInventory(reserved.productId, reserved.quantity, reserved.variantId);
+          }
+
+          return res.status(400).json({
+            success: false,
+            message: reservation.error || 'Insufficient stock',
+            code: 'OUT_OF_STOCK',
+            productId: item.productId,
+          });
+        }
+
+        inventoryReservations.push({
+          productId: item.productId,
+          variantId: item.variantId,
+          quantity: item.quantity,
+        });
+      }
+
+      // 3. Create Order - إنشاء الطلب
+      const order = await prisma.orders.create({
+        data: {
+          id: orderId,
+          user_id: userId,
+          status: 'PENDING',
+          totalAmount: calculatedTotal,
+          subtotal: productsTotal,
+          created_at: new Date(),
+          updated_at: new Date(),
+        },
+      });
 
     // حفظ تفاصيل الشحن في metadata (يمكن إضافتها كحقل منفصل لاحقاً)
     // Store shipping details in order metadata (can be added as separate field later)
