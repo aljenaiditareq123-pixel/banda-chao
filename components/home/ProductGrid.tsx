@@ -18,6 +18,7 @@ interface Product {
   rating?: number;
   reviews?: number;
   originalPrice?: number;
+  isLuckyColor?: boolean;
 }
 
 interface ProductGridProps {
@@ -77,7 +78,18 @@ export default function ProductGrid({ locale, products, title, showLoadMore = tr
             className="group"
           >
             <Link href={`/${locale}/products/${product.id}`}>
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-all">
+              <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm border overflow-hidden hover:shadow-lg transition-all ${
+                product.isLuckyColor 
+                  ? 'ring-4 ring-yellow-400 ring-offset-2 border-yellow-400 shadow-lg' 
+                  : 'border-gray-200 dark:border-gray-700'
+              }`}>
+                {/* Lucky Badge */}
+                {product.isLuckyColor && (
+                  <div className="absolute top-2 left-2 z-10 bg-yellow-400 text-yellow-900 px-2 py-1 rounded-full text-xs font-bold shadow-lg flex items-center gap-1">
+                    <span>🔮</span>
+                    <span>{locale === 'ar' ? 'محظوظ!' : locale === 'zh' ? '幸运!' : 'Lucky!'}</span>
+                  </div>
+                )}
                 {/* Product Image */}
                 <div className="relative aspect-square bg-gray-100 dark:bg-gray-700">
                   {product.imageUrl ? (
