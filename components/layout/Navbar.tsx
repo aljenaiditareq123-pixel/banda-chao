@@ -116,6 +116,12 @@ export default function Navbar({ locale }: NavbarProps) {
               {locale === 'ar' ? 'المنتجات' : locale === 'zh' ? '产品' : 'Products'}
             </Link>
             <Link 
+              href={`/${locale}/flash-drop`} 
+              className="text-yellow-600 hover:text-yellow-700 font-semibold transition-colors flex items-center gap-1"
+            >
+              ⚡ {locale === 'ar' ? 'عرض البرق' : locale === 'zh' ? '闪电特卖' : 'Flash Drop'}
+            </Link>
+            <Link 
               href={`/${locale}/videos`} 
               className="text-gray-600 hover:text-gray-900 transition-colors"
             >

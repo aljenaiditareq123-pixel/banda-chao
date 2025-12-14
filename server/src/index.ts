@@ -43,6 +43,7 @@ import coordinatorRoutes from './api/coordinator';
 import clanBuyRoutes from './api/clanBuy';
 import petRoutes from './api/pet';
 import blindBoxRoutes from './api/blindBox';
+import flashDropRoutes from './api/flashDrop';
 import { queue } from './lib/queue';
 import { processContentSyncJob } from './services/coordinatorService';
 import { errorHandler } from './middleware/errorHandler';
@@ -320,6 +321,7 @@ app.use('/api/v1/services', serviceRoutes);
 app.use('/api/v1/clan-buy', clanBuyRoutes);
 app.use('/api/v1/pet', petRoutes);
 app.use('/api/v1/blind-box', blindBoxRoutes);
+app.use('/api/v1/flash-drop', flashDropRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {

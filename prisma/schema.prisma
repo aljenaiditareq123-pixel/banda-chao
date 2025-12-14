@@ -62,6 +62,7 @@ model users {
   pet_state                            pet_states?
   pet_feed_history                     pet_feed_history[]
   discount_codes                       discount_codes[]
+  flash_drop_participants              flash_drop_participants[]
 
   @@index([email])
   @@index([role])
@@ -137,6 +138,7 @@ model products {
   cart_items        cart_items[]
   blind_box_mysteries mystery_lists[] @relation("BlindBoxProducts")
   mystery_reveals    mystery_lists[] @relation("MysteryProducts")
+  flash_drop        flash_drops?
 
   @@index([category_id])
   @@index([user_id])
