@@ -114,7 +114,7 @@ export async function syncContentToPlatforms(
           data: {
             external_id: syncResult.externalId,
             platform: platform as any, // Platform is String? in schema
-          },
+          } as any,
         });
       }
 
@@ -293,7 +293,7 @@ export async function upsertSocialAccount(
   // TODO: تشفير Access Token قبل الحفظ
   // const encryptedToken = encryptToken(accessToken);
 
-  return await prisma.social_accounts.upsert({
+  return await (prisma as any).social_accounts.upsert({
     where: {
       user_id_platform: {
         user_id: userId,
