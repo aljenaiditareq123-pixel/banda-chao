@@ -297,13 +297,13 @@ export async function analyzeProductPerformance(
           include: {
             posts: true,
           },
-        },
+        } as any,
         video_products: {
           include: {
             videos: true,
           },
-        },
-      },
+        } as any,
+      } as any,
     });
 
     if (!product) {
