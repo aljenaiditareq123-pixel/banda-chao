@@ -116,6 +116,9 @@ model products {
   rating         Float?      @default(0)
   reviews_count  Int         @default(0)
   status         String      @default("ACTIVE") // ACTIVE, INACTIVE, DRAFT, OUT_OF_STOCK
+  product_type   String      @default("REGULAR") // REGULAR, BLIND_BOX
+  is_blind_box   Boolean     @default(false) // True if this is a mystery blind box
+  blind_box_price Float?     // Fixed price for blind box (if different from regular price)
   created_at     DateTime    @default(now())
   updated_at     DateTime    @updatedAt
 
@@ -132,6 +135,8 @@ model products {
   video_products    video_products[]
   supplier_products supplier_products[]
   cart_items        cart_items[]
+  blind_box_mysteries mystery_lists[] @relation("BlindBoxProducts")
+  mystery_reveals    mystery_lists[] @relation("MysteryProducts")
 
   @@index([category_id])
   @@index([user_id])
@@ -215,12 +220,32 @@ model order_items {
   quantity      Int      @default(1)
   price         Float
   haggled_price Float? // Negotiated price from Panda Haggle feature
+  is_blind_box  Boolean  @default(false) // True if this item was a blind box
+  revealed_product_id String? // The actual product revealed from blind box (null until revealed)
   created_at    DateTime @default(now())
   orders     orders   @relation(fields: [order_id], references: [id], onDelete: Cascade)
   products   products @relation(fields: [product_id], references: [id])
 
   @@index([order_id])
   @@index([product_id])
+  @@index([is_blind_box])
+}
+
+// Mystery List - Products that can be revealed from blind boxes
+model mystery_lists {
+  id            String   @id @default(uuid())
+  blind_box_product_id String // The blind box product
+  mystery_product_id   String // A product that can be revealed
+  weight        Float    @default(1.0) // Probability weight (higher = more likely)
+  created_at    DateTime @default(now())
+  
+  // Relations
+  blind_box     products @relation("BlindBoxProducts", fields: [blind_box_product_id], references: [id], onDelete: Cascade)
+  mystery_product products @relation("MysteryProducts", fields: [mystery_product_id], references: [id], onDelete: Cascade)
+  
+  @@unique([blind_box_product_id, mystery_product_id])
+  @@index([blind_box_product_id])
+  @@index([mystery_product_id])
 }
 
 // ============================================

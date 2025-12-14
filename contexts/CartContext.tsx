@@ -12,6 +12,7 @@ export interface CartItem {
   currency: string;
   quantity: number;
   subtotal: number;
+  isBlindBox?: boolean; // True if this is a mystery blind box
 }
 
 interface CartContextType {

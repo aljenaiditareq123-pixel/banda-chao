@@ -6,15 +6,55 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { CheckCircle, ShoppingBag, Package, ArrowRight, Home } from 'lucide-react';
 import Button from '@/components/Button';
+import BlindBoxReveal from '@/components/blindbox/BlindBoxReveal';
+import { useAuth } from '@/hooks/useAuth';
 
 interface OrderSuccessClientProps {
   locale: string;
   orderId?: string;
 }
 
+interface OrderItem {
+  id: string;
+  product_id: string;
+  is_blind_box: boolean;
+  revealed_product_id: string | null;
+}
+
 export default function OrderSuccessClient({ locale, orderId }: OrderSuccessClientProps) {
   const router = useRouter();
+  const { user } = useAuth();
   const [showConfetti, setShowConfetti] = useState(true);
+  const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Fetch order items if orderId is provided
+  useEffect(() => {
+    if (orderId && user) {
+      fetchOrderItems();
+    }
+  }, [orderId, user]);
+
+  const fetchOrderItems = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://banda-chao.onrender.com'}/api/v1/orders/${orderId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+      if (data.success && data.order?.order_items) {
+        setOrderItems(data.order.order_items);
+      }
+    } catch (error) {
+      console.error('Error fetching order items:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Generate confetti effect
   useEffect(() => {
@@ -181,6 +221,31 @@ export default function OrderSuccessClient({ locale, orderId }: OrderSuccessClie
               {t.estimatedDelivery}: <span className="text-primary-600 dark:text-primary-400">{estimatedDays} {t.days}</span>
             </span>
           </motion.div>
+
+          {/* Blind Box Reveals */}
+          {orderItems.filter(item => item.is_blind_box).length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.65 }}
+              className="mb-8"
+            >
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 text-center">
+                {locale === 'ar' ? '📦 كشف الصناديق الغامضة' : locale === 'zh' ? '📦 揭开神秘盲盒' : '📦 Reveal Mystery Boxes'}
+              </h3>
+              <div className="space-y-4">
+                {orderItems
+                  .filter(item => item.is_blind_box)
+                  .map((item) => (
+                    <BlindBoxReveal
+                      key={item.id}
+                      orderItemId={item.id}
+                      locale={locale}
+                    />
+                  ))}
+              </div>
+            </motion.div>
+          )}
 
           {/* What's Next */}
           <motion.div

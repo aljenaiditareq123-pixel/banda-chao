@@ -146,12 +146,19 @@ export default function CartDrawer({ locale }: CartDrawerProps) {
                   </div>
                   <div className="flex-grow min-w-0">
                     <Link
-                      href={`/${locale}/products/${item.productId}`}
-                      onClick={toggleDrawer}
+                      href={item.isBlindBox ? '#' : `/${locale}/products/${item.productId}`}
+                      onClick={item.isBlindBox ? (e) => e.preventDefault() : toggleDrawer}
                       className="text-base font-medium text-gray-900 dark:text-white hover:text-primary transition-colors block truncate"
                     >
-                      {item.name}
+                      {item.isBlindBox 
+                        ? (locale === 'ar' ? '📦 صندوق غامض' : locale === 'zh' ? '📦 神秘盲盒' : '📦 Mystery Box')
+                        : item.name}
                     </Link>
+                    {item.isBlindBox && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        {locale === 'ar' ? 'سيتم الكشف بعد الدفع' : locale === 'zh' ? '付款后揭晓' : 'Revealed after payment'}
+                      </p>
+                    )}
                     <p className="text-sm font-bold text-primary mt-1">
                       {formatCurrency(item.subtotal, item.currency || 'USD', locale)}
                     </p>
