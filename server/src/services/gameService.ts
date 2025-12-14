@@ -100,7 +100,8 @@ export async function performDailyCheckIn(userId: string): Promise<{
     const basePoints = 10;
     const streakBonus = Math.min(newStreak * 2, 50); // Max 50 bonus points
     const pointsEarned = basePoints + streakBonus;
-    const newTotalPoints = (user.points || 0) + pointsEarned;
+    const currentPoints = (user as any).points || 0;
+    const newTotalPoints = currentPoints + pointsEarned;
 
     // Update user (using raw SQL if columns don't exist)
     try {
@@ -306,13 +307,18 @@ export async function spinTheWheel(userId: string): Promise<{
         message: `Awesome! You won ${points} points!`,
       };
 
-      // Add points to user
-      await prisma.users.update({
-        where: { id: userId },
-        data: {
-          points: ((user.points || 0) + points),
-        },
-      });
+      // Add points to user (using raw SQL)
+      const currentPoints = (user as any).points || 0;
+      const newPoints = currentPoints + points;
+      try {
+        await prisma.$executeRawUnsafe(
+          `UPDATE users SET points = $1 WHERE id = $2`,
+          newPoints,
+          userId
+        );
+      } catch (error) {
+        console.error('Error updating points:', error);
+      }
     } else {
       // 35% - Better luck next time
       prize = {
@@ -354,40 +360,43 @@ export async function getUserGameStats(userId: string): Promise<{
   streak: number;
 }> {
   try {
-    const user = await prisma.users.findUnique({
-      where: { id: userId },
-      select: {
-        points: true,
-        level: true,
-      },
-    } as any);
+    // Get all stats using raw SQL
+    const statsData = await prisma.$queryRawUnsafe<Array<{ points: number; level: number; check_in_streak: number }>>(
+      `SELECT points, level, check_in_streak FROM users WHERE id = $1`,
+      userId
+    );
 
-    // Get streak using raw SQL
-    let streak = 0;
-    try {
-      const streakData = await prisma.$queryRawUnsafe<Array<{ check_in_streak: number }>>(
-        `SELECT check_in_streak FROM users WHERE id = $1`,
-        userId
-      );
-      if (streakData && streakData.length > 0) {
-        streak = streakData[0].check_in_streak || 0;
-      }
-    } catch (error) {
-      // Column might not exist
-      console.log('check_in_streak column not found');
+    if (statsData && statsData.length > 0) {
+      return {
+        points: statsData[0].points || 0,
+        level: statsData[0].level || 1,
+        streak: statsData[0].check_in_streak || 0,
+      };
     }
 
-    return {
-      points: user?.points || 0,
-      level: user?.level || 1,
-      streak: streak,
-    };
-  } catch (error) {
-    console.error('Error getting game stats:', error);
     return {
       points: 0,
       level: 1,
       streak: 0,
     };
+  } catch (error) {
+    console.error('Error getting game stats:', error);
+    // Fallback: try to get from Prisma (if columns exist)
+    try {
+      const user = await prisma.users.findUnique({
+        where: { id: userId },
+      } as any);
+      return {
+        points: (user as any)?.points || 0,
+        level: (user as any)?.level || 1,
+        streak: 0,
+      };
+    } catch (err) {
+      return {
+        points: 0,
+        level: 1,
+        streak: 0,
+      };
+    }
   }
 }
