@@ -40,6 +40,7 @@ import serviceRoutes from './api/services';
 import advisorRoutes from './api/advisor';
 import treasurerRoutes from './api/treasurer';
 import coordinatorRoutes from './api/coordinator';
+import clanBuyRoutes from './api/clanBuy';
 import { queue } from './lib/queue';
 import { processContentSyncJob } from './services/coordinatorService';
 import { errorHandler } from './middleware/errorHandler';
@@ -314,6 +315,7 @@ app.use('/api/v1/speech', speechRoutes);
 app.use('/api/v1/beta', betaRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/services', serviceRoutes);
+app.use('/api/v1/clan-buy', clanBuyRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {

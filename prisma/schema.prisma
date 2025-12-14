@@ -57,6 +57,8 @@ model users {
   product_variants                     product_variants[]
   inventory_movements                  inventory_movements[]
   social_accounts                      social_accounts[]
+  clan_buys_created                    clan_buys[]                    @relation("ClanBuyCreator")
+  clan_buy_memberships                 clan_buy_members[]            @relation("ClanBuyMember")
 
   @@index([email])
   @@index([role])
@@ -103,6 +105,7 @@ model products {
   category       categories? @relation(fields: [category_id], references: [id], onDelete: SetNull)
   price          Float?
   original_price Float?
+  clan_price     Float?      // Discounted price for clan/group purchase (2 people)
   currency       String      @default("USD")
   stock          Int         @default(0)
   sold_count     Int         @default(0)
@@ -116,6 +119,7 @@ model products {
   // Relations
   comments          comments[]
   group_buys        group_buys[]
+  clan_buys         clan_buys[]
   order_items       order_items[]
   product_likes     product_likes[]
   users             users               @relation(fields: [user_id], references: [id], onDelete: Cascade)
@@ -650,6 +654,49 @@ model group_buys {
   @@index([expiresAt])
   @@index([productId])
   @@index([status])
+}
+
+// Clan Buying - Simple 2-person group purchase
+model clan_buys {
+  id            String   @id @default(uuid())
+  product_id    String
+  creator_id    String   // User who started the clan
+  join_token    String   @unique // Unique shareable token for the clan link
+  status        String   @default("WAITING") // WAITING, COMPLETE, EXPIRED, CANCELLED
+  member_count  Int      @default(1) // Starts with creator, needs 1 more
+  required_count Int     @default(2) // Always 2 for clan buying
+  clan_price    Float    // Discounted price per person
+  expires_at    DateTime // Clan expires if not completed
+  completed_at  DateTime?
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  
+  // Relations
+  product       products @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  creator       users    @relation("ClanBuyCreator", fields: [creator_id], references: [id], onDelete: Cascade)
+  members       clan_buy_members[]
+  
+  @@index([product_id])
+  @@index([creator_id])
+  @@index([join_token])
+  @@index([status])
+  @@index([expires_at])
+}
+
+// Clan Buy Members - Track who joined
+model clan_buy_members {
+  id         String   @id @default(uuid())
+  clan_id    String
+  user_id    String
+  joined_at  DateTime @default(now())
+  
+  // Relations
+  clan       clan_buys @relation(fields: [clan_id], references: [id], onDelete: Cascade)
+  user       users     @relation("ClanBuyMember", fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@unique([clan_id, user_id])
+  @@index([clan_id])
+  @@index([user_id])
 }
 
 model messages {

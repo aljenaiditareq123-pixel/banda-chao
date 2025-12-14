@@ -13,6 +13,7 @@ import ErrorState from '@/components/common/ErrorState';
 import GroupBuyButton from '@/components/GroupBuyButton';
 import ShareModal from '@/components/ShareModal';
 import PandaHaggleModal from '@/components/product/PandaHaggleModal';
+import ClanBuyModal from '@/components/product/ClanBuyModal';
 import { useCart } from '@/contexts/CartContext';
 import LikeButton from '@/components/social/LikeButton';
 import CommentList from '@/components/social/CommentList';
@@ -66,6 +67,7 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isHaggleModalOpen, setIsHaggleModalOpen] = useState(false);
+  const [isClanBuyModalOpen, setIsClanBuyModalOpen] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [lowStockCount] = useState(Math.floor(Math.random() * 9) + 1); // Random number 1-9
@@ -78,6 +80,17 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Check for clan join link in URL
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const clanToken = urlParams.get('clan');
+      if (clanToken) {
+        setIsClanBuyModalOpen(true);
+      }
+    }
   }, []);
 
   const formatPrice = (price: number, currency: string = 'USD') => {
@@ -623,26 +636,51 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
                     : '🛒 Buy Now'}
                 </Button>
                 
-                {/* Add to Cart Button - Secondary but Clear */}
-                <Button
-                  variant="secondary"
-                  className="w-full min-h-[52px] text-base font-bold border-2 border-primary-600 text-primary-600 hover:bg-primary-50 transition-all"
-                  onClick={() => {
-                    if (product && (product.stock === undefined || product.stock > 0)) {
-                      addItem({
-                        productId: product.id,
-                        name: product.name,
-                        imageUrl: mainImage,
-                        price: product.price,
-                        currency: product.currency || 'USD',
-                        quantity: quantity,
-                      }, locale);
-                    }
-                  }}
-                  disabled={product.stock !== undefined && product.stock === 0}
-                >
-                  {locale === 'ar' ? '➕ أضف إلى السلة' : locale === 'zh' ? '➕ 添加到购物车' : '➕ Add to Cart'}
-                </Button>
+                {/* Clan Buy Buttons */}
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Buy Alone Button */}
+                  <Button
+                    variant="secondary"
+                    className="min-h-[52px] text-base font-bold border-2 border-primary-600 text-primary-600 hover:bg-primary-50 transition-all"
+                    onClick={() => {
+                      if (product && (product.stock === undefined || product.stock > 0)) {
+                        addItem({
+                          productId: product.id,
+                          name: product.name,
+                          imageUrl: mainImage,
+                          price: product.price,
+                          currency: product.currency || 'USD',
+                          quantity: quantity,
+                        }, locale);
+                      }
+                    }}
+                    disabled={product.stock !== undefined && product.stock === 0}
+                  >
+                    {locale === 'ar' 
+                      ? `شراء فردي (${formatPrice(product.price, product.currency || 'USD')})`
+                      : locale === 'zh'
+                      ? `单独购买 (${formatPrice(product.price, product.currency || 'USD')})`
+                      : `Buy Alone (${formatPrice(product.price, product.currency || 'USD')})`}
+                  </Button>
+
+                  {/* Start Clan Button */}
+                  <Button
+                    variant="primary"
+                    className="min-h-[52px] text-base font-bold bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white transition-all"
+                    onClick={() => {
+                      // Check if product has clan_price, otherwise use 50% of regular price
+                      const clanPrice = (product as any).clan_price || Math.round(product.price * 0.5);
+                      setIsClanBuyModalOpen(true);
+                    }}
+                    disabled={product.stock !== undefined && product.stock === 0}
+                  >
+                    {locale === 'ar'
+                      ? `ابدأ عشيرة (${formatPrice((product as any).clan_price || Math.round(product.price * 0.5), product.currency || 'USD')})`
+                      : locale === 'zh'
+                      ? `开始团购 (${formatPrice((product as any).clan_price || Math.round(product.price * 0.5), product.currency || 'USD')})`
+                      : `Start Clan (${formatPrice((product as any).clan_price || Math.round(product.price * 0.5), product.currency || 'USD')})`}
+                  </Button>
+                </div>
 
                 {/* Haggle Button - Panda Negotiation */}
                 <Button
@@ -885,6 +923,33 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
           console.log('Haggle successful! Price:', haggledPrice);
         }}
       />
+
+      {/* Clan Buy Modal */}
+      {isClanBuyModalOpen && (
+        <ClanBuyModal
+          isOpen={isClanBuyModalOpen}
+          onClose={() => setIsClanBuyModalOpen(false)}
+          productId={product.id}
+          productName={product.name}
+          soloPrice={product.price}
+          clanPrice={(product as any).clan_price || Math.round(product.price * 0.5)}
+          currency={product.currency || 'USD'}
+          locale={locale}
+          onSuccess={() => {
+            // Add to cart at clan price when complete
+            const clanPrice = (product as any).clan_price || Math.round(product.price * 0.5);
+            addItem({
+              productId: product.id,
+              name: product.name,
+              imageUrl: mainImage,
+              price: clanPrice,
+              currency: product.currency || 'USD',
+              quantity: quantity,
+            }, locale);
+            setIsClanBuyModalOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }
