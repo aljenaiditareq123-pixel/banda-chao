@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "load-test": "tsx scripts/load-test.ts",
+    "cleanup-check": "bash scripts/cleanup-console-logs.sh",
     "dev": "next dev",
     "build": "next build --webpack",
     "start": "next start",
