@@ -413,10 +413,10 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
           user_id: userId,
           status: 'PENDING',
           totalAmount: calculatedTotal,
-          subtotal: productsTotal,
+          subtotal: productsTotal, // Note: subtotal field exists in schema
           created_at: new Date(),
           updated_at: new Date(),
-        },
+        } as any, // Type assertion needed due to Prisma type generation
       });
 
     // حفظ تفاصيل الشحن في metadata (يمكن إضافتها كحقل منفصل لاحقاً)

@@ -9,7 +9,7 @@
  * - Forecast trends
  */
 
-import { prisma } from '../../utils/prisma';
+import { prisma } from '../../../utils/prisma';
 import { generateFounderAIResponse } from '../../gemini';
 
 export interface UserBehaviorEvent {
