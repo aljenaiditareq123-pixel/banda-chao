@@ -1179,6 +1179,113 @@ export const gamesAPI = {
 };
 
 // ============================================
+// Wallet API (Digital Wallet & Loyalty)
+// ============================================
+
+export const walletAPI = {
+  getBalance: async (): Promise<{
+    success: boolean;
+    balance?: number;
+    points?: number;
+    currency?: string;
+    error?: string;
+  }> => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+      const response = await apiClient.get('/wallet/balance', {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('Wallet balance error:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message || 'Failed to get wallet balance',
+      };
+    }
+  },
+  convertPoints: async (points: number): Promise<{
+    success: boolean;
+    balanceAdded?: number;
+    pointsDeducted?: number;
+    newBalance?: number;
+    newPoints?: number;
+    error?: string;
+  }> => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+      const response = await apiClient.post(
+        '/wallet/convert-points',
+        { points },
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        }
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error('Convert points error:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message || 'Failed to convert points',
+      };
+    }
+  },
+  getTransactions: async (limit?: number, offset?: number): Promise<{
+    success: boolean;
+    transactions?: Array<{
+      id: string;
+      type: string;
+      amount: number;
+      currency: string;
+      description: string;
+      relatedOrderId?: string;
+      createdAt: string;
+    }>;
+    total?: number;
+    error?: string;
+  }> => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+      const params = new URLSearchParams();
+      if (limit) params.append('limit', limit.toString());
+      if (offset) params.append('offset', offset.toString());
+
+      const response = await apiClient.get(`/wallet/transactions?${params.toString()}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('Transaction history error:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message,
+      };
+    }
+  },
+  getStats: async (): Promise<{
+    success: boolean;
+    totalEarned?: number;
+    totalSpent?: number;
+    totalTransactions?: number;
+    error?: string;
+  }> => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+      const response = await apiClient.get('/wallet/stats', {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('Wallet stats error:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || error.message,
+      };
+    }
+  },
+};
+
+// ============================================
 // Operations API (Banda Ops)
 // ============================================
 

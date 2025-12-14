@@ -134,6 +134,12 @@ export default function Navbar({ locale }: NavbarProps) {
               🎮 {locale === 'ar' ? 'الألعاب' : locale === 'zh' ? '游戏' : 'Games'}
             </Link>
             <Link 
+              href={`/${locale}/wallet`} 
+              className="text-green-600 hover:text-green-700 font-semibold transition-colors flex items-center gap-1"
+            >
+              💳 {locale === 'ar' ? 'المحفظة' : locale === 'zh' ? '钱包' : 'Wallet'}
+            </Link>
+            <Link 
               href={`/${locale}/videos`} 
               className="text-gray-600 hover:text-gray-900 transition-colors"
             >
