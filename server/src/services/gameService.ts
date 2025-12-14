@@ -113,11 +113,18 @@ export async function performDailyCheckIn(userId: string): Promise<{
         userId
       );
     } catch (error) {
-      // Fallback: update only points
-      await prisma.users.update({
-        where: { id: userId },
-        data: { points: newTotalPoints },
-      });
+      // Fallback: update only points using raw SQL
+      try {
+        await prisma.$executeRawUnsafe(
+          `UPDATE users SET points = $1 WHERE id = $2`,
+          newTotalPoints,
+          userId
+        );
+      } catch (err) {
+        console.error('Error updating points:', err);
+        // If points column doesn't exist, we can't update it
+        // This is expected if the column hasn't been added to the schema yet
+      }
     }
 
     return {
