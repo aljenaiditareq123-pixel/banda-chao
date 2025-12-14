@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import LoadingState from '@/components/common/LoadingState';
+import BandaPet from '@/components/pet/BandaPet';
 
 interface ProfilePageClientProps {
   locale: string;
@@ -165,6 +166,11 @@ export default function ProfilePageClient({ locale }: ProfilePageClientProps) {
             </div>
           </motion.div>
         </div>
+      </div>
+
+      {/* Banda Pet Widget */}
+      <div className="max-w-4xl mx-auto px-4 mt-6">
+        <BandaPet locale={locale} position="dashboard" size="medium" />
       </div>
 
       {/* Menu Items */}

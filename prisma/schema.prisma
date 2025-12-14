@@ -59,6 +59,9 @@ model users {
   social_accounts                      social_accounts[]
   clan_buys_created                    clan_buys[]                    @relation("ClanBuyCreator")
   clan_buy_memberships                 clan_buy_members[]            @relation("ClanBuyMember")
+  pet_state                            pet_states?
+  pet_feed_history                     pet_feed_history[]
+  discount_codes                       discount_codes[]
 
   @@index([email])
   @@index([role])
@@ -697,6 +700,73 @@ model clan_buy_members {
   @@unique([clan_id, user_id])
   @@index([clan_id])
   @@index([user_id])
+}
+
+// ============================================
+// BANDA PET GAMIFICATION - نظام الرفيق
+// ============================================
+
+model pet_states {
+  id              String   @id @default(uuid())
+  user_id         String   @unique
+  hunger_level    Int      @default(100) // 0-100, 0 = very hungry, 100 = full
+  happiness_level Int      @default(50) // 0-100
+  last_fed_at     DateTime?
+  last_hunger_update DateTime @default(now())
+  total_feeds     Int      @default(0)
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  
+  // Relations
+  user            users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  feed_history    pet_feed_history[]
+  
+  @@index([user_id])
+  @@index([hunger_level])
+}
+
+model pet_feed_history {
+  id            String   @id @default(uuid())
+  pet_state_id String
+  user_id      String
+  feed_type    String   // BROWSE, SHARE, DIRECT_FEED
+  feed_amount  Int      @default(10) // How much hunger was restored
+  metadata     String?  // JSON: product_id, product_name, etc.
+  created_at   DateTime @default(now())
+  
+  // Relations
+  pet_state    pet_states @relation(fields: [pet_state_id], references: [id], onDelete: Cascade)
+  user         users      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@index([pet_state_id])
+  @@index([user_id])
+  @@index([created_at])
+}
+
+model discount_codes {
+  id              String   @id @default(uuid())
+  user_id         String
+  code            String   @unique
+  discount_type   String   // PERCENTAGE, FIXED_AMOUNT
+  discount_value  Float    // Percentage (0-100) or fixed amount
+  min_purchase    Float?   @default(0)
+  max_discount    Float?
+  valid_from       DateTime @default(now())
+  valid_until      DateTime
+  used_count       Int      @default(0)
+  max_uses         Int      @default(1)
+  is_active        Boolean  @default(true)
+  source           String   @default("PET_REWARD") // PET_REWARD, PROMOTION, etc.
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+  
+  // Relations
+  user            users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@index([user_id])
+  @@index([code])
+  @@index([is_active])
+  @@index([valid_until])
 }
 
 model messages {

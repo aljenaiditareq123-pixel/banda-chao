@@ -12,6 +12,7 @@ import CartDrawer from '@/components/CartDrawer';
 import FlashSale from '@/components/FlashSale';
 import NightMarketBanner from '@/components/nightmarket/NightMarketBanner';
 import BottomNav from '@/components/BottomNav';
+import BandaPet from '@/components/pet/BandaPet';
 import SmartToasts from '@/components/SmartToasts';
 import CartToast from '@/components/cart/CartToast';
 import '../globals.css';
@@ -269,6 +270,8 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
                 <CartDrawer locale={validLocale} />
                 {/* Bottom Navigation Bar - Mobile Only */}
                 <BottomNav />
+                {/* Banda Pet - Floating */}
+                <BandaPet locale={validLocale} position="floating" size="medium" />
               </div>
               </NightMarketProvider>
             </CartProvider>
