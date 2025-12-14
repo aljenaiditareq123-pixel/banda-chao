@@ -47,7 +47,7 @@ export async function checkTransactionRisk(
     include: {
       orders: {
         where: {
-          status: { in: ['COMPLETED', 'PENDING'] },
+          status: { in: ['COMPLETED', 'PENDING'] as any },
         },
         orderBy: { created_at: 'desc' },
         take: 10,
