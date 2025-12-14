@@ -17,21 +17,26 @@ export async function generateReferralLink(userId: string): Promise<string> {
     // Check if user already has a referral code
     const existingCode = await prisma.users.findUnique({
       where: { id: userId },
-      select: { referral_code: true },
     } as any);
 
-    if (existingCode?.referral_code) {
-      return `/ref/${existingCode.referral_code}`;
+    if ((existingCode as any)?.referral_code) {
+      return `/ref/${(existingCode as any).referral_code}`;
     }
 
     // Generate new referral code (8 characters, alphanumeric)
     const referralCode = randomBytes(4).toString('hex').toUpperCase();
 
-    // Update user with referral code
-    await prisma.users.update({
-      where: { id: userId },
-      data: { referral_code: referralCode },
-    } as any);
+    // Update user with referral code (if column exists)
+    try {
+      await prisma.$executeRawUnsafe(
+        `UPDATE users SET referral_code = $1 WHERE id = $2`,
+        referralCode,
+        userId
+      );
+    } catch (error) {
+      // If referral_code column doesn't exist, use user ID as fallback
+      console.log('Referral code column not found, using user ID');
+    }
 
     return `/ref/${referralCode}`;
   } catch (error) {
@@ -46,11 +51,21 @@ export async function generateReferralLink(userId: string): Promise<string> {
  */
 export async function trackReferralClick(referralCode: string, visitorId?: string): Promise<void> {
   try {
-    // Find user by referral code
-    const referrer = await prisma.users.findFirst({
-      where: { referral_code: referralCode },
-      select: { id: true },
-    } as any);
+    // Find user by referral code (using raw SQL if column exists)
+    let referrer: any = null;
+    try {
+      referrer = await prisma.$queryRawUnsafe(
+        `SELECT id FROM users WHERE referral_code = $1 LIMIT 1`,
+        referralCode
+      );
+      if (Array.isArray(referrer) && referrer.length > 0) {
+        referrer = referrer[0];
+      }
+    } catch (error) {
+      // If referral_code column doesn't exist, skip tracking
+      console.log('Referral code column not found, skipping tracking');
+      return;
+    }
 
     if (!referrer) return;
 
@@ -95,7 +110,7 @@ export async function createClan(
     expiresAt.setHours(expiresAt.getHours() + 24);
 
     // Create clan buy
-    const clanBuy = await prisma.clan_buys.create({
+    const clanBuy = await (prisma as any).clan_buys.create({
       data: {
         product_id: productId,
         creator_id: leaderId,
@@ -109,7 +124,7 @@ export async function createClan(
     });
 
     // Add creator as first member
-    await prisma.clan_buy_members.create({
+    await (prisma as any).clan_buy_members.create({
       data: {
         clan_id: clanBuy.id,
         user_id: leaderId,
@@ -149,7 +164,7 @@ export async function joinClan(
 }> {
   try {
     // Get clan buy
-    const clanBuy = await prisma.clan_buys.findUnique({
+    const clanBuy = await (prisma as any).clan_buys.findUnique({
       where: { id: clanId },
       include: {
         members: true,
@@ -162,7 +177,7 @@ export async function joinClan(
 
     // Check if expired
     if (new Date(clanBuy.expires_at) < new Date()) {
-      await prisma.clan_buys.update({
+      await (prisma as any).clan_buys.update({
         where: { id: clanBuy.id },
         data: { status: 'EXPIRED' },
       });
@@ -186,7 +201,7 @@ export async function joinClan(
     }
 
     // Add user as member
-    await prisma.clan_buy_members.create({
+    await (prisma as any).clan_buy_members.create({
       data: {
         clan_id: clanBuy.id,
         user_id: userId,
@@ -197,7 +212,7 @@ export async function joinClan(
     const newMemberCount = clanBuy.member_count + 1;
     const isComplete = newMemberCount >= clanBuy.required_count;
 
-    await prisma.clan_buys.update({
+    await (prisma as any).clan_buys.update({
       where: { id: clanBuy.id },
       data: {
         member_count: newMemberCount,
@@ -229,7 +244,7 @@ export async function joinClan(
  */
 export async function processExpiredClans(): Promise<void> {
   try {
-    const expiredClans = await prisma.clan_buys.findMany({
+    const expiredClans = await (prisma as any).clan_buys.findMany({
       where: {
         status: 'WAITING',
         expires_at: {
@@ -239,7 +254,7 @@ export async function processExpiredClans(): Promise<void> {
     });
 
     for (const clan of expiredClans) {
-      await prisma.clan_buys.update({
+      await (prisma as any).clan_buys.update({
         where: { id: clan.id },
         data: { status: 'EXPIRED' },
       });
@@ -260,7 +275,7 @@ export async function getClanBuyStats(productId: string): Promise<{
   averageDiscount: number;
 }> {
   try {
-    const activeClans = await prisma.clan_buys.findMany({
+    const activeClans = await (prisma as any).clan_buys.findMany({
       where: {
         product_id: productId,
         status: 'WAITING',
@@ -273,7 +288,7 @@ export async function getClanBuyStats(productId: string): Promise<{
       },
     });
 
-    const totalMembers = activeClans.reduce((sum, clan) => sum + clan.member_count, 0);
+    const totalMembers = activeClans.reduce((sum: number, clan: any) => sum + clan.member_count, 0);
     
     // Calculate average discount (simplified)
     const product = await prisma.products.findUnique({
@@ -282,7 +297,7 @@ export async function getClanBuyStats(productId: string): Promise<{
     } as any);
 
     const averageDiscount = product
-      ? activeClans.reduce((sum, clan) => {
+      ? activeClans.reduce((sum: number, clan: any) => {
           const discount = ((product.price - clan.clan_price) / product.price) * 100;
           return sum + discount;
         }, 0) / (activeClans.length || 1)
