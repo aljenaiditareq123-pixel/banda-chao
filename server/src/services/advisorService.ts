@@ -378,10 +378,10 @@ export async function generateStrategicInsights(
     const topProducts = await prisma.products.findMany({
       where: {
         category_id: category || undefined,
-      },
+      } as any,
       orderBy: {
         sold_count: 'desc' as any,
-      },
+      } as any,
       take: 5,
     });
 
