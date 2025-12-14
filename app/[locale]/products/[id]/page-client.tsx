@@ -982,6 +982,7 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
             setIsClanBuyModalOpen(false);
           }}
         />
+      )}
 
       {/* Virtual Try-On Modal */}
       <VirtualTryOn
