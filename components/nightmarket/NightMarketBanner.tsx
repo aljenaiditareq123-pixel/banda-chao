@@ -82,11 +82,7 @@ export default function NightMarketBanner({ locale = 'en' }: NightMarketBannerPr
             // Hide banner for this session
             if (typeof window !== 'undefined') {
               sessionStorage.setItem('night_market_banner_hidden', 'true');
-              // Trigger re-render by removing class temporarily
-              document.documentElement.classList.remove('night-market');
-              setTimeout(() => {
-                document.documentElement.classList.add('night-market');
-              }, 100);
+              setIsHidden(true);
             }
           }}
           className="text-white hover:text-cyan-300 transition-colors px-2 py-1 rounded-lg hover:bg-white/10 backdrop-blur-sm"
