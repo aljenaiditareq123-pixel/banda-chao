@@ -8,6 +8,7 @@ export interface CartItem {
   name: string;
   imageUrl?: string;
   price: number;
+  haggledPrice?: number; // Negotiated price from Panda Haggle
   currency: string;
   quantity: number;
   subtotal: number;
@@ -101,10 +102,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
         return updatedItems;
       } else {
         // Add new item
+        const finalPrice = (item as any).haggledPrice || item.price;
         const newItem: CartItem = {
           ...item,
           id: `${item.productId}-${Date.now()}`,
-          subtotal: item.price * item.quantity,
+          price: finalPrice,
+          haggledPrice: (item as any).haggledPrice,
+          subtotal: finalPrice * item.quantity,
         };
         
         // Dispatch toast event for new item

@@ -22,8 +22,49 @@ import HeroSlider from '@/components/home/HeroSlider';
 import CategoryCircles from '@/components/home/CategoryCircles';
 import FlashSale from '@/components/home/FlashSale';
 import ProductGrid from '@/components/home/ProductGrid';
+import DailyFengShui from '@/components/home/DailyFengShui';
 import { servicesAPI } from '@/lib/api';
 import { getAllMockProducts, mockProductToApiFormat } from '@/lib/mock-products';
+
+// Helper function to check if product matches lucky color
+function checkProductColorMatch(product: any, luckyColor: string): boolean {
+  // Check product name, description, category, or image for color keywords
+  const searchText = `${product.name || ''} ${product.description || ''} ${product.category || ''}`.toLowerCase();
+  
+  const colorKeywords: Record<string, string[]> = {
+    red: ['red', 'أحمر', '红色', 'crimson', 'scarlet', 'ruby'],
+    gold: ['gold', 'ذهبي', '金色', 'golden', 'yellow', 'amber'],
+    green: ['green', 'أخضر', '绿色', 'emerald', 'jade', 'mint'],
+    blue: ['blue', 'أزرق', '蓝色', 'navy', 'azure', 'cyan'],
+    yellow: ['yellow', 'أصفر', '黄色', 'golden', 'amber', 'lemon'],
+    purple: ['purple', 'بنفسجي', '紫色', 'violet', 'lavender', 'plum'],
+    orange: ['orange', 'برتقالي', '橙色', 'tangerine', 'coral', 'peach'],
+    pink: ['pink', 'وردي', '粉色', 'rose', 'salmon', 'fuchsia'],
+  };
+
+  const keywords = colorKeywords[luckyColor] || [];
+  return keywords.some(keyword => searchText.includes(keyword));
+}
+
+// Helper function to check if product matches lucky color
+function checkProductColorMatch(product: any, luckyColor: string): boolean {
+  // Check product name, description, category, or image for color keywords
+  const searchText = `${product.name || ''} ${product.description || ''} ${product.category || ''}`.toLowerCase();
+  
+  const colorKeywords: Record<string, string[]> = {
+    red: ['red', 'أحمر', '红色', 'crimson', 'scarlet', 'ruby'],
+    gold: ['gold', 'ذهبي', '金色', 'golden', 'yellow', 'amber'],
+    green: ['green', 'أخضر', '绿色', 'emerald', 'jade', 'mint'],
+    blue: ['blue', 'أزرق', '蓝色', 'navy', 'azure', 'cyan'],
+    yellow: ['yellow', 'أصفر', '黄色', 'golden', 'amber', 'lemon'],
+    purple: ['purple', 'بنفسجي', '紫色', 'violet', 'lavender', 'plum'],
+    orange: ['orange', 'برتقالي', '橙色', 'tangerine', 'coral', 'peach'],
+    pink: ['pink', 'وردي', '粉色', 'rose', 'salmon', 'fuchsia'],
+  };
+
+  const keywords = colorKeywords[luckyColor] || [];
+  return keywords.some(keyword => searchText.includes(keyword));
+}
 
 interface HomePageClientProps {
   locale: string;
@@ -46,6 +87,7 @@ export default function HomePageClient({
   const [services, setServices] = useState<any[]>(featuredServices);
   const [loadingServices, setLoadingServices] = useState(false);
   const [showLiveStream, setShowLiveStream] = useState(false);
+  const [luckyColor, setLuckyColor] = useState<string | null>(null);
   // Use ref to track if we've attempted to fetch services (prevents infinite loop)
   const hasFetchedServicesRef = useRef(false);
 
@@ -196,6 +238,7 @@ export default function HomePageClient({
                 rating: (p as any).rating,
                 reviews: (p as any).reviews,
                 originalPrice: (p as any).originalPrice,
+                isLuckyColor: luckyColor ? checkProductColorMatch(p, luckyColor) : false,
               }))
             : getAllMockProducts().map(p => {
                 const apiProduct = mockProductToApiFormat(p, locale);
@@ -210,6 +253,7 @@ export default function HomePageClient({
                   rating: apiProduct.rating,
                   reviews: apiProduct.reviews,
                   originalPrice: apiProduct.originalPrice,
+                  isLuckyColor: luckyColor ? checkProductColorMatch(apiProduct, luckyColor) : false,
                 };
               })
           }

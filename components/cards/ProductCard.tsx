@@ -3,7 +3,7 @@ import { Product } from '@/types';
 import Card from '@/components/common/Card';
 
 interface ProductCardProps {
-  product: Product;
+  product: Product & { isLuckyColor?: boolean };
   href: string;
 }
 
@@ -21,7 +21,13 @@ export default function ProductCard({ product, href }: ProductCardProps) {
 
   return (
     <Link href={href} className="block">
-      <Card hover>
+      <Card hover className={product.isLuckyColor ? 'ring-4 ring-yellow-400 ring-offset-2 shadow-lg' : ''}>
+        {product.isLuckyColor && (
+          <div className="absolute top-2 right-2 z-10 bg-yellow-400 text-yellow-900 px-2 py-1 rounded-full text-xs font-bold shadow-lg flex items-center gap-1">
+            <span>🔮</span>
+            <span>Lucky!</span>
+          </div>
+        )}
         <div className="aspect-[4/3] bg-gray-200 relative overflow-hidden">
           {product.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element

@@ -12,6 +12,7 @@ import LoadingState from '@/components/common/LoadingState';
 import ErrorState from '@/components/common/ErrorState';
 import GroupBuyButton from '@/components/GroupBuyButton';
 import ShareModal from '@/components/ShareModal';
+import PandaHaggleModal from '@/components/product/PandaHaggleModal';
 import { useCart } from '@/contexts/CartContext';
 import LikeButton from '@/components/social/LikeButton';
 import CommentList from '@/components/social/CommentList';
@@ -64,6 +65,7 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isHaggleModalOpen, setIsHaggleModalOpen] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [lowStockCount] = useState(Math.floor(Math.random() * 9) + 1); // Random number 1-9
@@ -641,6 +643,17 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
                 >
                   {locale === 'ar' ? '➕ أضف إلى السلة' : locale === 'zh' ? '➕ 添加到购物车' : '➕ Add to Cart'}
                 </Button>
+
+                {/* Haggle Button - Panda Negotiation */}
+                <Button
+                  variant="outline"
+                  className="w-full min-h-[52px] text-base font-bold border-2 border-yellow-500 text-yellow-600 hover:bg-yellow-50 transition-all flex items-center justify-center gap-2"
+                  onClick={() => setIsHaggleModalOpen(true)}
+                  disabled={product.stock !== undefined && product.stock === 0}
+                >
+                  <span className="text-xl">🐼</span>
+                  {locale === 'ar' ? 'تفاوض مع الباندا' : locale === 'zh' ? '与熊猫讨价还价' : 'Haggle with Panda'}
+                </Button>
               </div>
 
               {/* Group Buy Button */}
@@ -857,6 +870,20 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
         productId={product.id}
         productName={product.name}
         locale={locale}
+      />
+
+      <PandaHaggleModal
+        isOpen={isHaggleModalOpen}
+        onClose={() => setIsHaggleModalOpen(false)}
+        productId={product.id}
+        productName={product.name}
+        originalPrice={product.price}
+        currency={product.currency || 'USD'}
+        locale={locale}
+        onSuccess={(haggledPrice) => {
+          // Product already added to cart in modal
+          console.log('Haggle successful! Price:', haggledPrice);
+        }}
       />
     </div>
   );

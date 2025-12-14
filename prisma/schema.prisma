@@ -154,16 +154,17 @@ model product_variants {
 }
 
 model cart_items {
-  id         String   @id @default(uuid())
-  user_id    String
-  product_id String
-  variant_id String?
-  quantity   Int      @default(1)
-  price      Float // Snapshot price at add time
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  products   products @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  id           String   @id @default(uuid())
+  user_id      String
+  product_id   String
+  variant_id  String?
+  quantity     Int      @default(1)
+  price        Float // Snapshot price at add time
+  haggled_price Float? // Negotiated price from Panda Haggle feature
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+  users        users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  products     products @relation(fields: [product_id], references: [id], onDelete: Cascade)
 
   @@unique([user_id, product_id, variant_id])
   @@index([user_id])
@@ -200,13 +201,14 @@ model orders {
 }
 
 model order_items {
-  id         String   @id @default(uuid())
-  order_id   String
-  product_id String
-  variant_id String?
-  quantity   Int      @default(1)
-  price      Float
-  created_at DateTime @default(now())
+  id            String   @id @default(uuid())
+  order_id      String
+  product_id    String
+  variant_id    String?
+  quantity      Int      @default(1)
+  price         Float
+  haggled_price Float? // Negotiated price from Panda Haggle feature
+  created_at    DateTime @default(now())
   orders     orders   @relation(fields: [order_id], references: [id], onDelete: Cascade)
   products   products @relation(fields: [product_id], references: [id])
 
