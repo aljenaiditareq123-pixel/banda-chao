@@ -261,7 +261,7 @@ export async function getActivePricingRules(filters?: {
   categoryId?: string;
 }) {
   try {
-    const rules = await prisma.pricing_rules.findMany({
+    const rules = await (prisma as any).pricing_rules.findMany({
       where: {
         is_active: true,
         rule_type: filters?.ruleType,

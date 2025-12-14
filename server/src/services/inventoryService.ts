@@ -127,7 +127,7 @@ async function reserveInventoryDatabase(
       };
     } else {
       // حجز من Product - استخدام inventory_items بدلاً من stock مباشرة
-      const inventoryItem = await prisma.inventory_items.findFirst({
+      const inventoryItem = await (prisma as any).inventory_items.findFirst({
         where: {
           product_id: productId,
           variant_id: null,
@@ -219,7 +219,7 @@ export async function releaseInventory(
       });
     } else {
       // Try inventory_items first
-      const inventoryItem = await prisma.inventory_items.findFirst({
+      const inventoryItem = await (prisma as any).inventory_items.findFirst({
         where: {
           product_id: productId,
           variant_id: null,
@@ -335,14 +335,14 @@ export async function getAvailableStock(
 
     // Fallback إلى قاعدة البيانات
     if (variantId) {
-      const variant = await prisma.product_variants.findUnique({
+      const variant = await (prisma as any).product_variants.findUnique({
         where: { id: variantId },
         select: { stock: true },
       });
       return variant?.stock || 0;
     } else {
       // Try inventory_items first
-      const inventoryItem = await prisma.inventory_items.findFirst({
+      const inventoryItem = await (prisma as any).inventory_items.findFirst({
         where: {
           product_id: productId,
           variant_id: null,

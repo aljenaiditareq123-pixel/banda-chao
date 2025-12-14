@@ -47,7 +47,7 @@ export interface Recommendation {
 export async function analyzeUserBehavior(event: UserBehaviorEvent): Promise<void> {
   try {
     // Store the insight in database
-    await prisma.customer_insights.create({
+    await (prisma as any).customer_insights.create({
       data: {
         id: crypto.randomUUID(),
         user_id: event.userId,
@@ -85,7 +85,7 @@ export async function getUserBehaviorInsights(
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    const insights = await prisma.customer_insights.findMany({
+    const insights = await (prisma as any).customer_insights.findMany({
       where: {
         user_id: userId,
         created_at: {
@@ -320,7 +320,7 @@ export async function getActiveUserInsights(days: number = 7): Promise<{
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    const insights = await prisma.customer_insights.findMany({
+    const insights = await (prisma as any).customer_insights.findMany({
       where: {
         created_at: {
           gte: startDate,

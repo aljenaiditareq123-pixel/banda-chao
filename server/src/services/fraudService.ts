@@ -206,7 +206,7 @@ export async function blockUser(userId: string, reason: string): Promise<void> {
   });
 
   // تسجيل في coordinator_logs
-  await prisma.coordinator_logs.create({
+  await (prisma as any).coordinator_logs.create({
     data: {
       action_type: 'USER_BLOCKED',
       status: 'SUCCESS',

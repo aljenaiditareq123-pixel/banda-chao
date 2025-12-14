@@ -178,7 +178,7 @@ export async function analyzeUserBehavior(
     }
 
     // Get user insights
-    const insights = await prisma.customer_insights.findMany({
+    const insights = await (prisma as any).customer_insights.findMany({
       where: {
         user_id: userId,
         created_at: {
