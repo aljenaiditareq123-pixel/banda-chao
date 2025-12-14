@@ -14,7 +14,10 @@ import { useOrders } from '@/hooks/useOrders';
 export default function AdminOrdersPageClient() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [mounted, setMounted] = useState(false);
-  const ordersResult = useOrders('all'); // Get all orders stats for summary cards
+  
+  // Call hook at top level (React requirement)
+  // Hook should handle SSR internally
+  const ordersResult = useOrders('all');
   
   useEffect(() => {
     setMounted(true);

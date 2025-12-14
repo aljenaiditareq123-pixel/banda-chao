@@ -109,6 +109,10 @@ export function useOrders(statusFilter?: string): UseOrdersReturn {
   };
 
   useEffect(() => {
+    // Only fetch in browser (not during SSR/build)
+    if (typeof window === 'undefined') {
+      return;
+    }
     fetchOrders();
   }, [statusFilter]);
 
