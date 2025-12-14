@@ -125,15 +125,9 @@ export async function createProduct(data: CreateProductData) {
       },
     });
 
-    // Create inventory record via InventoryService
-    try {
-      // Import dynamically to avoid circular dependencies
-      const { syncInventoryToRedis } = await import('@/../server/src/services/inventoryService');
-      await syncInventoryToRedis();
-    } catch (inventoryError) {
-      console.warn('Inventory sync failed, will use database fallback:', inventoryError);
-      // Continue - database fallback will work
-    }
+    // Note: Inventory sync to Redis is handled by the backend service
+    // This is a server action, so we don't need to import server services here
+    // The inventory will be synced when the backend processes the product creation
 
     // Create product variants for colors and sizes
     if (data.colors && data.colors.length > 0) {
