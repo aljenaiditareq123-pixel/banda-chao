@@ -128,147 +128,174 @@ const fengShuiData: FengShuiData[] = [
 ];
 
 export default function DailyFengShui({ locale = 'en', onColorChange }: DailyFengShuiProps) {
-  const [todayData, setTodayData] = useState<FengShuiData | null>(null);
+  const [sessionData, setSessionData] = useState<FengShuiData | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
-    // Get today's date as seed for consistent daily result
-    const today = new Date();
-    const seed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+    // Session-based: Get or create random luck for this session
+    const sessionKey = 'feng_shui_session_luck';
+    let selected: FengShuiData;
     
-    // Use seed to get consistent random selection for the day
-    const index = seed % fengShuiData.length;
-    const selected = fengShuiData[index];
+    if (typeof window !== 'undefined') {
+      const stored = sessionStorage.getItem(sessionKey);
+      if (stored) {
+        // Use stored session luck
+        const parsed = JSON.parse(stored);
+        selected = fengShuiData.find(d => d.color === parsed.color) || fengShuiData[0];
+      } else {
+        // Generate new random luck for this session
+        const randomIndex = Math.floor(Math.random() * fengShuiData.length);
+        selected = fengShuiData[randomIndex];
+        sessionStorage.setItem(sessionKey, JSON.stringify({ color: selected.color, element: selected.element }));
+      }
+    } else {
+      // Fallback for SSR
+      selected = fengShuiData[0];
+    }
     
-    setTodayData(selected);
+    setSessionData(selected);
     
     if (onColorChange) {
       onColorChange(selected.color, selected.element);
     }
   }, [onColorChange]);
 
-  if (!todayData) return null;
+  if (!sessionData) return null;
 
   const t = {
     ar: {
-      title: 'حظي اليومي',
+      title: 'حظي اليوم',
       luckyColor: 'اللون الميمون',
       element: 'العنصر',
-      clickToSee: 'انقر لرؤية التفاصيل',
       close: 'إغلاق',
     },
     zh: {
-      title: '我的每日运势',
+      title: '我的今日运势',
       luckyColor: '幸运颜色',
       element: '元素',
-      clickToSee: '点击查看详情',
       close: '关闭',
     },
     en: {
       title: 'My Daily Luck',
       luckyColor: 'Lucky Color',
       element: 'Element',
-      clickToSee: 'Click to see details',
       close: 'Close',
     },
   };
 
   const translations = t[locale as keyof typeof t] || t.en;
 
-  const colorClasses: Record<string, string> = {
-    red: 'bg-red-500',
-    gold: 'bg-yellow-400',
-    green: 'bg-green-500',
-    blue: 'bg-blue-500',
-    yellow: 'bg-yellow-300',
-    purple: 'bg-purple-500',
-    orange: 'bg-orange-500',
-    pink: 'bg-pink-500',
+  // Chinese aesthetic color gradients
+  const colorGradients: Record<string, string> = {
+    red: 'bg-gradient-to-r from-red-600 to-red-500',
+    gold: 'bg-gradient-to-r from-yellow-500 via-yellow-400 to-amber-400',
+    green: 'bg-gradient-to-r from-green-600 to-emerald-500',
+    blue: 'bg-gradient-to-r from-blue-600 to-cyan-500',
+    yellow: 'bg-gradient-to-r from-yellow-400 to-yellow-300',
+    purple: 'bg-gradient-to-r from-purple-600 to-pink-500',
+    orange: 'bg-gradient-to-r from-orange-500 to-red-500',
+    pink: 'bg-gradient-to-r from-pink-500 to-rose-500',
   };
 
   return (
     <div className="relative">
-      {/* Compact Widget */}
-      <button
-        onClick={() => setIsExpanded(true)}
-        className={`w-full p-4 rounded-xl shadow-lg transition-all hover:shadow-xl transform hover:scale-105 ${
-          colorClasses[todayData.color] || 'bg-gradient-to-r from-yellow-400 to-orange-500'
-        } text-white`}
+      {/* Compact Widget - Chinese Style */}
+      <div
+        className={`w-full p-5 rounded-2xl shadow-xl transition-all hover:shadow-2xl transform hover:scale-[1.02] ${
+          colorGradients[sessionData.color] || 'bg-gradient-to-r from-yellow-400 to-orange-500'
+        } text-white border-2 border-white/20`}
       >
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="text-3xl">{todayData.emoji}</div>
+          <div className="flex items-center gap-4">
+            {/* Large Icon */}
+            <div className="text-5xl drop-shadow-lg">{sessionData.emoji}</div>
+            
+            {/* Info */}
             <div className="text-right" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
-              <p className="text-sm font-medium opacity-90">{translations.title}</p>
-              <p className="text-lg font-bold">
-                {translations.luckyColor}: {todayData.colorName[locale as keyof typeof todayData.colorName] || todayData.colorName.en}
-              </p>
+              <h3 className="text-xl font-bold mb-1 drop-shadow-md">
+                {locale === 'zh' ? '今日运势' : locale === 'ar' ? translations.title : translations.title}
+              </h3>
+              <div className="flex items-center gap-3">
+                <div className="bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-lg">
+                  <p className="text-xs opacity-90 mb-0.5">{translations.luckyColor}</p>
+                  <p className="text-lg font-bold">
+                    {sessionData.colorName[locale as keyof typeof sessionData.colorName] || sessionData.colorName.zh}
+                  </p>
+                </div>
+                <div className="bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-lg">
+                  <p className="text-xs opacity-90 mb-0.5">{translations.element}</p>
+                  <p className="text-lg font-bold">
+                    {sessionData.elementName[locale as keyof typeof sessionData.elementName] || sessionData.elementName.zh}
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
-          <div className="text-2xl">🔮</div>
+          
+          {/* Decorative Element */}
+          <div className="text-4xl opacity-80">🔮</div>
         </div>
-        <p className="text-xs mt-2 opacity-80 text-right" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
-          {translations.clickToSee}
-        </p>
-      </button>
+      </div>
 
-      {/* Expanded Modal */}
+      {/* Expanded Modal - Simplified Chinese Style */}
       {isExpanded && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           {/* Backdrop */}
           <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setIsExpanded(false)}
           />
 
           {/* Modal */}
           <div
-            className={`relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 md:p-8 animate-in fade-in zoom-in duration-200 ${
-              colorClasses[todayData.color] || 'bg-gradient-to-br from-yellow-400 to-orange-500'
-            } text-white`}
+            className={`relative rounded-3xl shadow-2xl max-w-sm w-full p-8 animate-in fade-in zoom-in duration-200 ${
+              colorGradients[sessionData.color] || 'bg-gradient-to-br from-yellow-400 to-orange-500'
+            } text-white border-4 border-white/30`}
           >
             {/* Close Button */}
             <button
               onClick={() => setIsExpanded(false)}
-              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+              className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-full bg-white/30 hover:bg-white/40 transition-colors backdrop-blur-sm"
               aria-label={translations.close}
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
 
-            {/* Content */}
+            {/* Content - Chinese Aesthetic */}
             <div className="text-center">
-              <div className="text-6xl mb-4">{todayData.emoji}</div>
-              <h2 className="text-3xl font-bold mb-2">{translations.title}</h2>
+              <div className="text-7xl mb-6 drop-shadow-2xl">{sessionData.emoji}</div>
+              <h2 className="text-3xl font-bold mb-6 drop-shadow-md">
+                {locale === 'zh' ? '今日运势' : translations.title}
+              </h2>
               
-              <div className="bg-white/20 rounded-xl p-4 mb-4 backdrop-blur-sm">
-                <div className="mb-3">
-                  <p className="text-sm opacity-90 mb-1">{translations.luckyColor}</p>
-                  <p className="text-2xl font-bold">
-                    {todayData.colorName[locale as keyof typeof todayData.colorName] || todayData.colorName.en}
+              <div className="bg-white/25 backdrop-blur-md rounded-2xl p-6 mb-6 border-2 border-white/30">
+                <div className="mb-4">
+                  <p className="text-sm opacity-90 mb-2 font-medium">{translations.luckyColor}</p>
+                  <p className="text-3xl font-bold drop-shadow-md">
+                    {sessionData.colorName[locale as keyof typeof sessionData.colorName] || sessionData.colorName.zh}
                   </p>
                 </div>
-                <div>
-                  <p className="text-sm opacity-90 mb-1">{translations.element}</p>
-                  <p className="text-xl font-semibold">
-                    {todayData.elementName[locale as keyof typeof todayData.elementName] || todayData.elementName.en}
+                <div className="pt-4 border-t border-white/30">
+                  <p className="text-sm opacity-90 mb-2 font-medium">{translations.element}</p>
+                  <p className="text-2xl font-semibold drop-shadow-md">
+                    {sessionData.elementName[locale as keyof typeof sessionData.elementName] || sessionData.elementName.zh}
                   </p>
                 </div>
               </div>
 
-              <p className="text-sm opacity-90 leading-relaxed">
-                {todayData.description[locale as keyof typeof todayData.description] || todayData.description.en}
+              <p className="text-base opacity-95 leading-relaxed mb-4 drop-shadow-sm">
+                {sessionData.description[locale as keyof typeof sessionData.description] || sessionData.description.zh}
               </p>
 
-              <div className="mt-6 pt-4 border-t border-white/20">
-                <p className="text-xs opacity-75">
+              <div className="mt-6 pt-6 border-t border-white/30">
+                <p className="text-sm opacity-90 font-medium">
                   {locale === 'ar'
-                    ? 'ابحث عن المنتجات بهذا اللون للحصول على حظ أفضل!'
+                    ? '✨ ابحث عن 3 منتجات بهذا اللون للحظ الأفضل'
                     : locale === 'zh'
-                    ? '寻找这个颜色的产品以获得更好的运气！'
-                    : 'Look for products in this color for better luck!'}
+                    ? '✨ 寻找3个这个颜色的产品以获得最佳运气'
+                    : '✨ Find 3 products in this color for best luck'}
                 </p>
               </div>
             </div>

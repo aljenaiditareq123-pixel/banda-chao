@@ -223,6 +223,100 @@ export default function HomePageClient({
         {/* Flash Sale */}
         <FlashSale locale={locale} />
 
+        {/* Lucky Products Section - Show 3 matching products */}
+        {luckyColor && (() => {
+          const allProducts = featuredProducts.length > 0 
+            ? featuredProducts.map(p => ({
+                id: p.id,
+                name: p.name,
+                description: p.description,
+                imageUrl: p.images?.[0]?.url || p.imageUrl || '',
+                price: p.price,
+                currency: p.currency,
+                category: p.category,
+                rating: (p as any).rating,
+                reviews: (p as any).reviews,
+                originalPrice: (p as any).originalPrice,
+              }))
+            : getAllMockProducts().map(p => {
+                const apiProduct = mockProductToApiFormat(p, locale);
+                return {
+                  id: apiProduct.id,
+                  name: apiProduct.name,
+                  description: apiProduct.description,
+                  imageUrl: apiProduct.imageUrl || '',
+                  price: apiProduct.price,
+                  currency: apiProduct.currency,
+                  category: apiProduct.category,
+                  rating: apiProduct.rating,
+                  reviews: apiProduct.reviews,
+                  originalPrice: apiProduct.originalPrice,
+                };
+              });
+          
+          const luckyProducts = getLuckyProducts(allProducts, luckyColor, 3);
+          
+          if (luckyProducts.length > 0) {
+            return (
+              <section className="mb-12">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="text-3xl">🔮</div>
+                  <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+                    {locale === 'ar' 
+                      ? 'منتجاتك المحظوظة' 
+                      : locale === 'zh' 
+                      ? '你的幸运产品' 
+                      : 'Your Lucky Products'}
+                  </h2>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                  {luckyProducts.map((product) => (
+                    <div
+                      key={product.id}
+                      className="bg-white rounded-2xl shadow-lg border-4 border-yellow-400 overflow-hidden hover:shadow-2xl transition-all transform hover:scale-105"
+                    >
+                      <div className="relative">
+                        <div className="absolute top-3 left-3 z-10 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-sm font-bold shadow-lg flex items-center gap-1">
+                          <span>🔮</span>
+                          <span>{locale === 'zh' ? '幸运' : locale === 'ar' ? 'محظوظ' : 'Lucky'}</span>
+                        </div>
+                        <Link href={`/${locale}/products/${product.id}`}>
+                          {product.imageUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={product.imageUrl}
+                              alt={product.name}
+                              className="w-full h-64 object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-64 bg-gray-200 flex items-center justify-center">
+                              <span className="text-5xl">🛍️</span>
+                            </div>
+                          )}
+                        </Link>
+                      </div>
+                      <div className="p-5">
+                        <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2">
+                          {product.name}
+                        </h3>
+                        <p className="text-2xl font-bold text-red-600 mb-3">
+                          {product.currency || 'USD'} {product.price.toLocaleString()}
+                        </p>
+                        <Link href={`/${locale}/products/${product.id}`}>
+                          <Button variant="primary" className="w-full bg-yellow-500 hover:bg-yellow-600 text-white">
+                            {locale === 'ar' ? 'عرض المنتج' : locale === 'zh' ? '查看产品' : 'View Product'}
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            );
+          }
+          return null;
+        })()}
+
         {/* All Products Grid */}
         <ProductGrid
           locale={locale}
@@ -238,7 +332,6 @@ export default function HomePageClient({
                 rating: (p as any).rating,
                 reviews: (p as any).reviews,
                 originalPrice: (p as any).originalPrice,
-                isLuckyColor: luckyColor ? checkProductColorMatch(p, luckyColor) : false,
               }))
             : getAllMockProducts().map(p => {
                 const apiProduct = mockProductToApiFormat(p, locale);
@@ -253,7 +346,6 @@ export default function HomePageClient({
                   rating: apiProduct.rating,
                   reviews: apiProduct.reviews,
                   originalPrice: apiProduct.originalPrice,
-                  isLuckyColor: luckyColor ? checkProductColorMatch(apiProduct, luckyColor) : false,
                 };
               })
           }
