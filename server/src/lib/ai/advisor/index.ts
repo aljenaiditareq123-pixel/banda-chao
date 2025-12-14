@@ -196,7 +196,7 @@ export async function generateMarketAnalysis(
     };
 
     // Store analysis in database
-    const analysis = await prisma.market_analysis.create({
+    const analysis = await (prisma as any).market_analysis.create({
       data: {
         id: crypto.randomUUID(),
         analysis_type: analysisType,
