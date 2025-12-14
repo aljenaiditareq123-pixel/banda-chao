@@ -64,9 +64,29 @@ module.exports = {
           '0%': { transform: 'translateX(-100%)' },
           '100%': { transform: 'translateX(100%)' },
         },
+        'gradient-shift': {
+          '0%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
+          '100%': { backgroundPosition: '0% 50%' },
+        },
+        'glow-pulse': {
+          '0%, 100%': { opacity: 1 },
+          '50%': { opacity: 0.7 },
+        },
       },
       animation: {
         shimmer: 'shimmer 3s infinite',
+        'gradient-shift': 'gradient-shift 8s ease infinite',
+        'glow-pulse': 'glow-pulse 2s ease-in-out infinite',
+      },
+      colors: {
+        // Night Market Cyberpunk Colors
+        'nm-cyan': '#00f0ff',
+        'nm-pink': '#ff00ff',
+        'nm-gold': '#ffd700',
+        'nm-dark': '#0a0a0f',
+        'nm-dark-secondary': '#1a1a2e',
+        'nm-dark-tertiary': '#16213e',
       },
     },
   },

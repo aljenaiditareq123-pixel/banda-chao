@@ -4,11 +4,13 @@ import Script from 'next/script';
 import { Almarai, Inter } from 'next/font/google';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { CartProvider } from '@/contexts/CartContext';
+import { NightMarketProvider } from '@/contexts/NightMarketContext';
 import SessionProviderWrapper from '@/components/providers/SessionProviderWrapper';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import CartDrawer from '@/components/CartDrawer';
 import FlashSale from '@/components/FlashSale';
+import NightMarketBanner from '@/components/nightmarket/NightMarketBanner';
 import BottomNav from '@/components/BottomNav';
 import SmartToasts from '@/components/SmartToasts';
 import CartToast from '@/components/cart/CartToast';
@@ -249,10 +251,13 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
         <LanguageProvider defaultLanguage={validLocale as 'zh' | 'en' | 'ar'}>
           <SessionProviderWrapper>
             <CartProvider>
-              <div className="flex flex-col min-h-screen pb-20 lg:pb-0">
-                {/* Flash Sale Countdown Banner - Top of Page */}
-                <FlashSale />
-                <Navbar locale={validLocale} />
+              <NightMarketProvider>
+                <div className="flex flex-col min-h-screen pb-20 lg:pb-0">
+                  {/* Night Market Banner - Shows during 8 PM - 6 AM */}
+                  <NightMarketBanner locale={validLocale} />
+                  {/* Flash Sale Countdown Banner - Top of Page */}
+                  <FlashSale />
+                  <Navbar locale={validLocale} />
                 {/* Smart Social Proof Toasts - Premium Live Activity Notifications */}
                 <SmartToasts />
                 {/* Cart Toast Notifications */}
@@ -262,9 +267,11 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
                 </main>
                 <Footer locale={validLocale} />
               </div>
-              <CartDrawer locale={validLocale} />
-              {/* Bottom Navigation Bar - Mobile Only */}
-              <BottomNav />
+                <CartDrawer locale={validLocale} />
+                {/* Bottom Navigation Bar - Mobile Only */}
+                <BottomNav />
+              </div>
+              </NightMarketProvider>
             </CartProvider>
           </SessionProviderWrapper>
         </LanguageProvider>

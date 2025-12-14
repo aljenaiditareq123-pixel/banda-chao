@@ -71,5 +71,224 @@ body {
   animation: shimmer 3s infinite;
 }
 
+/* ============================================
+   PANDA NIGHT MARKET - Cyberpunk/Neon Theme
+   ============================================ */
+
+/* Night Market CSS Variables */
+:root {
+  /* Default (Day) Colors */
+  --nm-bg-primary: #ffffff;
+  --nm-bg-secondary: #f8fafc;
+  --nm-text-primary: #1e293b;
+  --nm-text-secondary: #64748b;
+  --nm-border: #e2e8f0;
+  --nm-accent: #2d62ff;
+}
+
+/* Night Market Active Theme */
+.night-market {
+  /* Cyberpunk Color Palette */
+  --nm-bg-primary: #0a0a0f;
+  --nm-bg-secondary: #1a1a2e;
+  --nm-bg-tertiary: #16213e;
+  --nm-text-primary: #e0e7ff;
+  --nm-text-secondary: #a5b4fc;
+  --nm-border: #3b3b5c;
+  --nm-accent: #00f0ff;
+  --nm-accent-secondary: #ff00ff;
+  --nm-accent-tertiary: #ffd700;
+  --nm-glow-cyan: rgba(0, 240, 255, 0.6);
+  --nm-glow-pink: rgba(255, 0, 255, 0.6);
+  --nm-glow-gold: rgba(255, 215, 0, 0.4);
+}
+
+/* Apply Night Market Theme */
+.night-market body {
+  background: linear-gradient(135deg, var(--nm-bg-primary) 0%, var(--nm-bg-secondary) 50%, var(--nm-bg-tertiary) 100%);
+  color: var(--nm-text-primary);
+  transition: background 0.5s ease, color 0.5s ease;
+}
+
+.night-market .bg-white {
+  background-color: var(--nm-bg-secondary) !important;
+  border-color: var(--nm-border) !important;
+}
+
+.night-market .bg-gray-50 {
+  background-color: var(--nm-bg-primary) !important;
+}
+
+.night-market .text-gray-900 {
+  color: var(--nm-text-primary) !important;
+}
+
+.night-market .text-gray-600 {
+  color: var(--nm-text-secondary) !important;
+}
+
+.night-market .border-gray-200 {
+  border-color: var(--nm-border) !important;
+}
+
+/* Neon Glow Effects */
+.night-market .neon-glow-cyan {
+  box-shadow: 0 0 10px var(--nm-glow-cyan),
+              0 0 20px var(--nm-glow-cyan),
+              0 0 30px var(--nm-glow-cyan);
+}
+
+.night-market .neon-glow-pink {
+  box-shadow: 0 0 10px var(--nm-glow-pink),
+              0 0 20px var(--nm-glow-pink),
+              0 0 30px var(--nm-glow-pink);
+}
+
+.night-market .neon-glow-gold {
+  box-shadow: 0 0 10px var(--nm-glow-gold),
+              0 0 20px var(--nm-glow-gold),
+              0 0 30px var(--nm-glow-gold);
+}
+
+/* Night Market Banner Styles */
+.night-market-banner {
+  background: linear-gradient(135deg, 
+    rgba(139, 0, 255, 0.9) 0%,
+    rgba(255, 0, 150, 0.9) 50%,
+    rgba(0, 240, 255, 0.9) 100%);
+  border-bottom: 2px solid var(--nm-accent);
+  box-shadow: 0 4px 20px rgba(0, 240, 255, 0.3);
+  position: relative;
+  z-index: 50;
+}
+
+/* Animated gradient background */
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient-shift {
+  background-size: 200% 200%;
+  animation: gradient-shift 8s ease infinite;
+}
+
+/* Grid pattern overlay */
+.grid-pattern {
+  background-image: 
+    linear-gradient(rgba(0, 240, 255, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.1) 1px, transparent 1px);
+  background-size: 20px 20px;
+  width: 100%;
+  height: 100%;
+}
+
+/* Neon text effects */
+.night-market .neon-text-cyan {
+  color: var(--nm-accent);
+  text-shadow: 
+    0 0 5px var(--nm-accent),
+    0 0 10px var(--nm-accent),
+    0 0 15px var(--nm-accent),
+    0 0 20px var(--nm-accent);
+}
+
+.night-market .neon-text-pink {
+  color: var(--nm-accent-secondary);
+  text-shadow: 
+    0 0 5px var(--nm-accent-secondary),
+    0 0 10px var(--nm-accent-secondary),
+    0 0 15px var(--nm-accent-secondary);
+}
+
+/* Button glow effects */
+.night-market .btn-neon {
+  background: linear-gradient(135deg, var(--nm-accent), var(--nm-accent-secondary));
+  border: 1px solid var(--nm-accent);
+  box-shadow: 
+    0 0 10px var(--nm-glow-cyan),
+    0 0 20px var(--nm-glow-cyan),
+    inset 0 0 10px rgba(0, 240, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.night-market .btn-neon:hover {
+  box-shadow: 
+    0 0 20px var(--nm-glow-cyan),
+    0 0 30px var(--nm-glow-cyan),
+    0 0 40px var(--nm-glow-cyan),
+    inset 0 0 15px rgba(0, 240, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+/* Card glow effects */
+.night-market .card-neon {
+  border: 1px solid var(--nm-border);
+  background: var(--nm-bg-secondary);
+  box-shadow: 
+    0 4px 6px rgba(0, 0, 0, 0.3),
+    0 0 10px rgba(0, 240, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.night-market .card-neon:hover {
+  border-color: var(--nm-accent);
+  box-shadow: 
+    0 8px 12px rgba(0, 0, 0, 0.4),
+    0 0 20px var(--nm-glow-cyan);
+  transform: translateY(-4px);
+}
+
+/* Smooth transitions */
+* {
+  transition: background-color 0.3s ease, 
+              color 0.3s ease, 
+              border-color 0.3s ease,
+              box-shadow 0.3s ease;
+}
+
+/* Override specific components for night market */
+.night-market input,
+.night-market textarea,
+.night-market select {
+  background-color: var(--nm-bg-secondary);
+  border-color: var(--nm-border);
+  color: var(--nm-text-primary);
+}
+
+.night-market input:focus,
+.night-market textarea:focus,
+.night-market select:focus {
+  border-color: var(--nm-accent);
+  box-shadow: 0 0 0 3px rgba(0, 240, 255, 0.1);
+}
+
+/* Primary button override */
+.night-market .bg-primary-600 {
+  background: linear-gradient(135deg, var(--nm-accent), var(--nm-accent-secondary)) !important;
+  box-shadow: 0 0 15px var(--nm-glow-cyan) !important;
+}
+
+.night-market .bg-primary-600:hover {
+  box-shadow: 0 0 25px var(--nm-glow-cyan) !important;
+}
+
+/* Link colors */
+.night-market a {
+  color: var(--nm-accent);
+}
+
+.night-market a:hover {
+  color: var(--nm-accent-secondary);
+  text-shadow: 0 0 5px var(--nm-glow-pink);
+}
+
 
 
