@@ -81,7 +81,7 @@ function detectIntent(message: string, locale: string = 'en'): {
   }
 
   // Check other intents
-  let bestIntent: keyof typeof patterns = 'general';
+  let bestIntent: 'order_status' | 'product_inquiry' | 'return_policy' | 'shipping' | 'payment' | 'general' = 'general';
   let bestConfidence = 0;
 
   for (const [intent, langPatterns] of Object.entries(patterns)) {
@@ -94,7 +94,7 @@ function detectIntent(message: string, locale: string = 'en'): {
       const confidence = matches.length / intentPatterns.length;
       if (confidence > bestConfidence) {
         bestConfidence = confidence;
-        bestIntent = intent as keyof typeof patterns;
+        bestIntent = intent as 'order_status' | 'product_inquiry' | 'return_policy' | 'shipping' | 'payment' | 'general';
       }
     }
   }
@@ -282,6 +282,14 @@ export async function generateChatResponse(
     try {
       const product = await prisma.products.findUnique({
         where: { id: context.currentProductId },
+        select: {
+          id: true,
+          name: true,
+          name_ar: true,
+          name_zh: true,
+          price: true,
+          currency: true,
+        },
       } as any);
 
       if (!product) {
@@ -294,16 +302,18 @@ export async function generateChatResponse(
         };
       }
 
-      const price = product.price || 0;
-      const name = locale === 'ar' ? (product.name_ar || product.name) :
-                   locale === 'zh' ? (product.name_zh || product.name) : product.name;
+      const productData = product as any;
+      const price = productData.price || 0;
+      const name = locale === 'ar' ? (productData.name_ar || productData.name) :
+                   locale === 'zh' ? (productData.name_zh || productData.name) : productData.name;
+      const currency = productData.currency || 'USD';
 
       return {
         message: locale === 'ar'
-          ? `📦 المنتج: ${name}\n💰 السعر: ${price} ${product.currency || 'USD'}\n\nهل تريد إضافته للسلة؟`
+          ? `📦 المنتج: ${name}\n💰 السعر: ${price} ${currency}\n\nهل تريد إضافته للسلة؟`
           : locale === 'zh'
-          ? `📦 产品：${name}\n💰 价格：${price} ${product.currency || 'USD'}\n\n您想将其添加到购物车吗？`
-          : `📦 Product: ${name}\n💰 Price: ${price} ${product.currency || 'USD'}\n\nWould you like to add it to cart?`,
+          ? `📦 产品：${name}\n💰 价格：${price} ${currency}\n\n您想将其添加到购物车吗？`
+          : `📦 Product: ${name}\n💰 Price: ${price} ${currency}\n\nWould you like to add it to cart?`,
         action: {
           type: 'show_product',
           data: { productId: context.currentProductId },
