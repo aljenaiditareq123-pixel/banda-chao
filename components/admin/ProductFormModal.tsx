@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, Sparkles, Loader2 } from 'lucide-react';
 
 interface ProductFormModalProps {
   product?: any;
@@ -15,6 +15,7 @@ export default function ProductFormModal({
   onSubmit,
 }: ProductFormModalProps) {
   const [loading, setLoading] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     name_ar: '',
@@ -28,6 +29,7 @@ export default function ProductFormModal({
     external_images: [] as string[],
     colors: [] as string[],
     sizes: [] as string[],
+    category: '',
   });
 
   const [externalImageUrl, setExternalImageUrl] = useState('');
@@ -65,6 +67,62 @@ export default function ProductFormModal({
       alert('حدث خطأ أثناء حفظ المنتج');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAnalyzeWithAI = async () => {
+    const imageUrl = formData.image_url || externalImageUrl;
+    
+    if (!imageUrl.trim()) {
+      alert('يرجى إدخال رابط الصورة أولاً');
+      return;
+    }
+
+    try {
+      setAnalyzing(true);
+      
+      const token = localStorage.getItem('auth_token');
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      
+      const response = await fetch(`${apiUrl}/api/v1/ai-content/analyze-product`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ imageUrl: imageUrl.trim() }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'فشل التحليل');
+      }
+
+      const analysis = data.analysis;
+
+      // Auto-fill form fields
+      setFormData({
+        ...formData,
+        name: analysis.name || formData.name,
+        name_ar: analysis.name_ar || formData.name_ar,
+        name_zh: analysis.name_zh || formData.name_zh,
+        description: analysis.description || formData.description,
+        description_ar: analysis.description_ar || formData.description_ar,
+        description_zh: analysis.description_zh || formData.description_zh,
+        price: analysis.suggestedPrice ? analysis.suggestedPrice.toFixed(2) : formData.price,
+        category: analysis.category || formData.category,
+        // If image_url was empty, set it from the analyzed URL
+        image_url: formData.image_url || imageUrl.trim(),
+      });
+
+      // Show success message
+      alert(`✅ تم التحليل بنجاح!\nالثقة: ${analysis.confidence}%\nالفئة المقترحة: ${analysis.category}`);
+    } catch (error: any) {
+      console.error('Error analyzing with AI:', error);
+      alert(`❌ فشل التحليل: ${error.message || 'حدث خطأ'}`);
+    } finally {
+      setAnalyzing(false);
     }
   };
 
@@ -177,6 +235,18 @@ export default function ProductFormModal({
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    الفئة
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    placeholder="سيتم اقتراحها تلقائياً"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
               </div>
               <div className="mt-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -221,6 +291,52 @@ export default function ProductFormModal({
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
+              </div>
+            </div>
+
+            {/* Main Image URL */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">رابط الصورة الرئيسية</h3>
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    placeholder="أدخل رابط الصورة (مثال: https://alicdn.com/image.jpg)"
+                    value={formData.image_url}
+                    onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAnalyzeWithAI}
+                    disabled={analyzing || !formData.image_url.trim()}
+                    className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-semibold shadow-lg transition-all"
+                  >
+                    {analyzing ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>جاري التحليل...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4" />
+                        <span>✨ Analyze with AI</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+                {formData.image_url && (
+                  <div className="mt-2">
+                    <img
+                      src={formData.image_url}
+                      alt="Preview"
+                      className="w-32 h-32 object-cover rounded-lg border-2 border-gray-200"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
               </div>
             </div>
 

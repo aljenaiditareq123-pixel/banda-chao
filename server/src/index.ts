@@ -45,6 +45,7 @@ import petRoutes from './api/pet';
 import blindBoxRoutes from './api/blindBox';
 import flashDropRoutes from './api/flashDrop';
 import videoUploadRoutes from './api/videoUpload';
+import aiContentRoutes from './api/aiContent';
 import { queue } from './lib/queue';
 import { processContentSyncJob } from './services/coordinatorService';
 import { errorHandler } from './middleware/errorHandler';
@@ -324,6 +325,7 @@ app.use('/api/v1/pet', petRoutes);
 app.use('/api/v1/blind-box', blindBoxRoutes);
 app.use('/api/v1/flash-drop', flashDropRoutes);
 app.use('/api/v1/video-upload', videoUploadRoutes);
+app.use('/api/v1/ai-content', aiContentRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {
