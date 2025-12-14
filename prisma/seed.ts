@@ -232,6 +232,115 @@ async function main() {
     console.log('✅ Supplier already exists');
   }
 
+  // ============================================
+  // 6. Create Demo Product for Flash Drop
+  // ============================================
+  const fashionCategory = await prisma.categories.findUnique({
+    where: { slug: 'fashion' },
+  });
+
+  if (fashionCategory && adminUser) {
+    // Create a demo product for Flash Drop
+    const flashDropProduct = await prisma.products.findFirst({
+      where: { name: 'Flash Drop Demo Product' },
+    });
+
+    if (!flashDropProduct) {
+      const product = await prisma.products.create({
+        data: {
+          name: 'Flash Drop Demo Product',
+          name_ar: 'منتج تجريبي للمزاد العكسي',
+          name_zh: '闪电特卖演示产品',
+          description: 'A demo product for Flash Drop feature',
+          description_ar: 'منتج تجريبي لميزة المزاد العكسي',
+          description_zh: '闪电特卖功能的演示产品',
+          price: 100,
+          currency: 'USD',
+          stock: 10,
+          user_id: adminUser.id,
+          category_id: fashionCategory.id,
+          status: 'ACTIVE',
+        },
+      });
+
+      // Create Flash Drop for this product
+      const flashDrop = await (prisma as any).flash_drops.create({
+        data: {
+          product_id: product.id,
+          starting_price: 100,
+          current_price: 100,
+          min_price: 50,
+          price_decrement: 1.0,
+          interval_seconds: 10,
+          status: 'ACTIVE',
+          started_at: new Date(),
+          last_price_update: new Date(),
+        },
+      });
+      console.log('✅ Created Flash Drop product and flash drop:', product.name);
+    } else {
+      console.log('✅ Flash Drop product already exists');
+    }
+  }
+
+  // ============================================
+  // 7. Create Demo Discount Code (Pet Reward)
+  // ============================================
+  if (adminUser) {
+    const discountCode = await prisma.discount_codes.findFirst({
+      where: { code: 'PET2024' },
+    });
+
+    if (!discountCode) {
+      const validUntil = new Date();
+      validUntil.setMonth(validUntil.getMonth() + 1); // Valid for 1 month
+
+      await prisma.discount_codes.create({
+        data: {
+          user_id: adminUser.id,
+          code: 'PET2024',
+          discount_type: 'PERCENTAGE',
+          discount_value: 15,
+          min_purchase: 50,
+          max_discount: 20,
+          valid_from: new Date(),
+          valid_until: validUntil,
+          max_uses: 1,
+          is_active: true,
+          source: 'PET_REWARD',
+        },
+      });
+      console.log('✅ Created demo discount code: PET2024 (15% off, min $50)');
+    } else {
+      console.log('✅ Discount code already exists');
+    }
+  }
+
+  // ============================================
+  // 8. Create Demo Pet State for Admin
+  // ============================================
+  if (adminUser) {
+    const petState = await prisma.pet_states.findUnique({
+      where: { user_id: adminUser.id },
+    });
+
+    if (!petState) {
+      await (prisma as any).pet_states.create({
+        data: {
+          user_id: adminUser.id,
+          hunger_level: 75,
+          happiness_level: 60,
+          last_fed_at: new Date(),
+          last_hunger_update: new Date(),
+          total_feeds: 0,
+        },
+      });
+      console.log('✅ Created pet state for admin user');
+    } else {
+      console.log('✅ Pet state already exists for admin');
+    }
+  }
+
   console.log('🎉 Database seed completed successfully!');
   console.log('\n📋 Summary:');
   console.log('  - Admin user: admin@bandachao.com / admin123');
@@ -239,6 +348,9 @@ async function main() {
   console.log('  - Categories: 5 categories created');
   console.log('  - Pricing Rules: 4 rules created');
   console.log('  - Supplier: 1 supplier created');
+  console.log('  - Flash Drop: 1 demo flash drop created');
+  console.log('  - Discount Code: PET2024 (15% off)');
+  console.log('  - Pet State: Created for admin user');
 }
 
 main()
