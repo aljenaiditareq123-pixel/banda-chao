@@ -378,15 +378,27 @@ export default function WalletPageClient({ locale }: WalletPageClientProps) {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className={`font-bold text-lg ${getTransactionColor(transaction.type)}`}>
-                      {transaction.type === 'WITHDRAWAL' || transaction.type === 'PURCHASE'
-                        ? '-'
-                        : '+'}
-                      {formatPrice(transaction.amount, transaction.currency)}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {transaction.type}
-                    </p>
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <p className={`font-bold text-lg ${getTransactionColor(transaction.type)}`}>
+                          {transaction.type === 'WITHDRAWAL' || transaction.type === 'PURCHASE'
+                            ? '-'
+                            : '+'}
+                          {formatPrice(transaction.amount, transaction.currency)}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {transaction.type}
+                        </p>
+                      </div>
+                      {transaction.relatedOrderId && (
+                        <a
+                          href={`/${locale}/orders/${transaction.relatedOrderId}/track`}
+                          className="px-3 py-1 text-xs font-semibold bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-lg hover:bg-primary-200 dark:hover:bg-primary-900/50 transition-colors whitespace-nowrap"
+                        >
+                          {locale === 'ar' ? 'تتبع' : locale === 'zh' ? '跟踪' : 'Track'}
+                        </a>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
