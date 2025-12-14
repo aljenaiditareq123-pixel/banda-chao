@@ -247,26 +247,89 @@ router.post('/track-browse', authenticateToken, async (req: any, res: Response) 
       });
     }
 
-    // Feed pet with BROWSE type
-    const feedResponse = await fetch(`${req.protocol}://${req.get('host')}/api/v1/pet/feed`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': req.headers.authorization,
-      },
-      body: JSON.stringify({
-        feedType: 'BROWSE',
-        metadata: { productIds },
-      }),
+    // Feed pet with BROWSE type - call the feed handler directly
+    // Instead of making HTTP request, we'll call the feed logic directly
+    let petState = await prisma.pet_states.findUnique({
+      where: { user_id: userId },
     });
 
-    const feedData = await feedResponse.json();
+    if (!petState) {
+      petState = await prisma.pet_states.create({
+        data: {
+          user_id: userId,
+          hunger_level: MAX_HUNGER,
+          happiness_level: 50,
+          last_hunger_update: new Date(),
+        },
+      });
+    } else {
+      const currentHunger = calculateCurrentHunger(petState);
+      petState.hunger_level = currentHunger;
+    }
+
+    const feedAmount = 15; // BROWSE gives 15
+    const newHunger = Math.min(MAX_HUNGER, petState.hunger_level + feedAmount);
+    const hungerIncrease = newHunger - petState.hunger_level;
+
+    const updatedPetState = await prisma.pet_states.update({
+      where: { id: petState.id },
+      data: {
+        hunger_level: newHunger,
+        happiness_level: Math.min(100, petState.happiness_level + 5),
+        last_fed_at: new Date(),
+        last_hunger_update: new Date(),
+        total_feeds: petState.total_feeds + 1,
+      },
+    });
+
+    await prisma.pet_feed_history.create({
+      data: {
+        pet_state_id: petState.id,
+        user_id: userId,
+        feed_type: 'BROWSE',
+        feed_amount: hungerIncrease,
+        metadata: JSON.stringify({ productIds }),
+      },
+    });
+
+    // Check if pet is fully fed and generate discount code
+    let discountCode = null;
+    if (newHunger >= MAX_HUNGER && petState.hunger_level < MAX_HUNGER) {
+      const code = `PET${randomBytes(4).toString('hex').toUpperCase()}`;
+      const validUntil = new Date();
+      validUntil.setDate(validUntil.getDate() + 7);
+
+      discountCode = await prisma.discount_codes.create({
+        data: {
+          user_id: userId,
+          code,
+          discount_type: 'PERCENTAGE',
+          discount_value: 10,
+          min_purchase: 0,
+          max_discount: 50,
+          valid_until: validUntil,
+          max_uses: 1,
+          source: 'PET_REWARD',
+        },
+      });
+    }
 
     res.json({
       success: true,
       message: 'Browse tracked and pet fed!',
-      pet: feedData.pet,
-      discountCode: feedData.discountCode,
+      pet: {
+        id: updatedPetState.id,
+        hungerLevel: updatedPetState.hunger_level,
+        happinessLevel: updatedPetState.happiness_level,
+        lastFedAt: updatedPetState.last_fed_at,
+        totalFeeds: updatedPetState.total_feeds,
+      },
+      discountCode: discountCode ? {
+        code: discountCode.code,
+        discountValue: discountCode.discount_value,
+        discountType: discountCode.discount_type,
+        validUntil: discountCode.valid_until,
+      } : null,
     });
   } catch (error: any) {
     console.error('Error tracking browse:', error);
