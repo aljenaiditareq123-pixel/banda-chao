@@ -36,11 +36,11 @@ model users {
   // Relations
   comment_likes                        comment_likes[]
   comments                             comments[]
-  follows_follows_follower_idTousers   follows[]             @relation("follows_follower_idTousers")
-  follows_follows_following_idTousers  follows[]             @relation("follows_following_idTousers")
+  follows_follows_follower_idTousers   follows[]                 @relation("follows_follower_idTousers")
+  follows_follows_following_idTousers  follows[]                 @relation("follows_following_idTousers")
   makers                               makers?
-  messages_messages_receiver_idTousers messages[]            @relation("messages_receiver_idTousers")
-  messages_messages_sender_idTousers   messages[]            @relation("messages_sender_idTousers")
+  messages_messages_receiver_idTousers messages[]                @relation("messages_receiver_idTousers")
+  messages_messages_sender_idTousers   messages[]                @relation("messages_sender_idTousers")
   notifications                        notifications[]
   orders                               orders[]
   post_likes                           post_likes[]
@@ -57,12 +57,13 @@ model users {
   product_variants                     product_variants[]
   inventory_movements                  inventory_movements[]
   social_accounts                      social_accounts[]
-  clan_buys_created                    clan_buys[]                    @relation("ClanBuyCreator")
-  clan_buy_memberships                 clan_buy_members[]            @relation("ClanBuyMember")
+  clan_buys_created                    clan_buys[]               @relation("ClanBuyCreator")
+  clan_buy_memberships                 clan_buy_members[]        @relation("ClanBuyMember")
   pet_state                            pet_states?
   pet_feed_history                     pet_feed_history[]
   discount_codes                       discount_codes[]
-  flash_drop_participants              flash_drop_participants[]
+  flash_drop_participants              flash_drop_participants[] @relation("FlashDropParticipant")
+  flash_drops_frozen                   flash_drops[]             @relation("FlashDropFrozenBy")
 
   @@index([email])
   @@index([role])
@@ -93,52 +94,52 @@ model categories {
 }
 
 model products {
-  id             String      @id @default(uuid())
-  name           String
-  name_ar        String?
-  name_zh        String?
-  title          String?
-  description    String
-  description_ar String?
-  description_zh String?
-  image_url      String?
-  external_link  String?
-  video_url      String?
-  user_id        String
-  category_id    String?
-  category       categories? @relation(fields: [category_id], references: [id], onDelete: SetNull)
-  price          Float?
-  original_price Float?
-  clan_price     Float?      // Discounted price for clan/group purchase (2 people)
-  currency       String      @default("USD")
-  stock          Int         @default(0)
-  sold_count     Int         @default(0)
-  views_count    Int         @default(0)
-  rating         Float?      @default(0)
-  reviews_count  Int         @default(0)
-  status         String      @default("ACTIVE") // ACTIVE, INACTIVE, DRAFT, OUT_OF_STOCK
-  product_type   String      @default("REGULAR") // REGULAR, BLIND_BOX
-  is_blind_box   Boolean     @default(false) // True if this is a mystery blind box
-  blind_box_price Float?     // Fixed price for blind box (if different from regular price)
-  created_at     DateTime    @default(now())
-  updated_at     DateTime    @updatedAt
+  id              String      @id @default(uuid())
+  name            String
+  name_ar         String?
+  name_zh         String?
+  title           String?
+  description     String
+  description_ar  String?
+  description_zh  String?
+  image_url       String?
+  external_link   String?
+  video_url       String?
+  user_id         String
+  category_id     String?
+  category        categories? @relation(fields: [category_id], references: [id], onDelete: SetNull)
+  price           Float?
+  original_price  Float?
+  clan_price      Float? // Discounted price for clan/group purchase (2 people)
+  currency        String      @default("USD")
+  stock           Int         @default(0)
+  sold_count      Int         @default(0)
+  views_count     Int         @default(0)
+  rating          Float?      @default(0)
+  reviews_count   Int         @default(0)
+  status          String      @default("ACTIVE") // ACTIVE, INACTIVE, DRAFT, OUT_OF_STOCK
+  product_type    String      @default("REGULAR") // REGULAR, BLIND_BOX
+  is_blind_box    Boolean     @default(false) // True if this is a mystery blind box
+  blind_box_price Float? // Fixed price for blind box (if different from regular price)
+  created_at      DateTime    @default(now())
+  updated_at      DateTime    @updatedAt
 
   // Relations
-  comments          comments[]
-  group_buys        group_buys[]
-  clan_buys         clan_buys[]
-  order_items       order_items[]
-  product_likes     product_likes[]
-  users             users               @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  variants          product_variants[]
-  inventory         inventory_items[]
-  post_products     post_products[]
-  video_products    video_products[]
-  supplier_products supplier_products[]
-  cart_items        cart_items[]
-  blind_box_mysteries mystery_lists[] @relation("BlindBoxProducts")
-  mystery_reveals    mystery_lists[] @relation("MysteryProducts")
-  flash_drop        flash_drops?
+  comments            comments[]
+  group_buys          group_buys[]
+  clan_buys           clan_buys[]
+  order_items         order_items[]
+  product_likes       product_likes[]
+  users               users               @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  variants            product_variants[]
+  inventory           inventory_items[]
+  post_products       post_products[]
+  video_products      video_products[]
+  supplier_products   supplier_products[]
+  cart_items          cart_items[]
+  blind_box_mysteries mystery_lists[]     @relation("BlindBoxProducts")
+  mystery_reveals     mystery_lists[]     @relation("MysteryProducts")
+  flash_drop          flash_drops?
 
   @@index([category_id])
   @@index([user_id])
@@ -168,17 +169,17 @@ model product_variants {
 }
 
 model cart_items {
-  id           String   @id @default(uuid())
-  user_id      String
-  product_id   String
-  variant_id  String?
-  quantity     Int      @default(1)
-  price        Float // Snapshot price at add time
+  id            String   @id @default(uuid())
+  user_id       String
+  product_id    String
+  variant_id    String?
+  quantity      Int      @default(1)
+  price         Float // Snapshot price at add time
   haggled_price Float? // Negotiated price from Panda Haggle feature
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  users        users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  products     products @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  users         users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  products      products @relation(fields: [product_id], references: [id], onDelete: Cascade)
 
   @@unique([user_id, product_id, variant_id])
   @@index([user_id])
@@ -215,18 +216,18 @@ model orders {
 }
 
 model order_items {
-  id            String   @id @default(uuid())
-  order_id      String
-  product_id    String
-  variant_id    String?
-  quantity      Int      @default(1)
-  price         Float
-  haggled_price Float? // Negotiated price from Panda Haggle feature
-  is_blind_box  Boolean  @default(false) // True if this item was a blind box
+  id                  String   @id @default(uuid())
+  order_id            String
+  product_id          String
+  variant_id          String?
+  quantity            Int      @default(1)
+  price               Float
+  haggled_price       Float? // Negotiated price from Panda Haggle feature
+  is_blind_box        Boolean  @default(false) // True if this item was a blind box
   revealed_product_id String? // The actual product revealed from blind box (null until revealed)
-  created_at    DateTime @default(now())
-  orders     orders   @relation(fields: [order_id], references: [id], onDelete: Cascade)
-  products   products @relation(fields: [product_id], references: [id])
+  created_at          DateTime @default(now())
+  orders              orders   @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  products            products @relation(fields: [product_id], references: [id])
 
   @@index([order_id])
   @@index([product_id])
@@ -235,16 +236,16 @@ model order_items {
 
 // Mystery List - Products that can be revealed from blind boxes
 model mystery_lists {
-  id            String   @id @default(uuid())
+  id                   String   @id @default(uuid())
   blind_box_product_id String // The blind box product
   mystery_product_id   String // A product that can be revealed
-  weight        Float    @default(1.0) // Probability weight (higher = more likely)
-  created_at    DateTime @default(now())
-  
+  weight               Float    @default(1.0) // Probability weight (higher = more likely)
+  created_at           DateTime @default(now())
+
   // Relations
-  blind_box     products @relation("BlindBoxProducts", fields: [blind_box_product_id], references: [id], onDelete: Cascade)
+  blind_box       products @relation("BlindBoxProducts", fields: [blind_box_product_id], references: [id], onDelete: Cascade)
   mystery_product products @relation("MysteryProducts", fields: [mystery_product_id], references: [id], onDelete: Cascade)
-  
+
   @@unique([blind_box_product_id, mystery_product_id])
   @@index([blind_box_product_id])
   @@index([mystery_product_id])
@@ -532,18 +533,18 @@ model follows {
 // ============================================
 
 model social_accounts {
-  id                String   @id @default(uuid())
-  user_id           String
-  platform          String   // TIKTOK, YOUTUBE, INSTAGRAM, FACEBOOK, TWITTER
-  platform_user_id  String?  // User ID on the external platform
-  access_token      String   // Encrypted access token
-  refresh_token     String?  // Encrypted refresh token
-  token_expires_at  DateTime? // Token expiration time
-  is_active         Boolean  @default(true)
-  metadata          String?  // JSON stored as string (profile info, permissions, etc.)
-  created_at        DateTime @default(now())
-  updated_at        DateTime @updatedAt
-  users             users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  id               String    @id @default(uuid())
+  user_id          String
+  platform         String // TIKTOK, YOUTUBE, INSTAGRAM, FACEBOOK, TWITTER
+  platform_user_id String? // User ID on the external platform
+  access_token     String // Encrypted access token
+  refresh_token    String? // Encrypted refresh token
+  token_expires_at DateTime? // Token expiration time
+  is_active        Boolean   @default(true)
+  metadata         String? // JSON stored as string (profile info, permissions, etc.)
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+  users            users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@unique([user_id, platform])
   @@index([user_id])
@@ -688,24 +689,24 @@ model group_buys {
 
 // Clan Buying - Simple 2-person group purchase
 model clan_buys {
-  id            String   @id @default(uuid())
-  product_id    String
-  creator_id    String   // User who started the clan
-  join_token    String   @unique // Unique shareable token for the clan link
-  status        String   @default("WAITING") // WAITING, COMPLETE, EXPIRED, CANCELLED
-  member_count  Int      @default(1) // Starts with creator, needs 1 more
-  required_count Int     @default(2) // Always 2 for clan buying
-  clan_price    Float    // Discounted price per person
-  expires_at    DateTime // Clan expires if not completed
-  completed_at  DateTime?
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
-  
+  id             String    @id @default(uuid())
+  product_id     String
+  creator_id     String // User who started the clan
+  join_token     String    @unique // Unique shareable token for the clan link
+  status         String    @default("WAITING") // WAITING, COMPLETE, EXPIRED, CANCELLED
+  member_count   Int       @default(1) // Starts with creator, needs 1 more
+  required_count Int       @default(2) // Always 2 for clan buying
+  clan_price     Float // Discounted price per person
+  expires_at     DateTime // Clan expires if not completed
+  completed_at   DateTime?
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+
   // Relations
-  product       products @relation(fields: [product_id], references: [id], onDelete: Cascade)
-  creator       users    @relation("ClanBuyCreator", fields: [creator_id], references: [id], onDelete: Cascade)
-  members       clan_buy_members[]
-  
+  product products           @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  creator users              @relation("ClanBuyCreator", fields: [creator_id], references: [id], onDelete: Cascade)
+  members clan_buy_members[]
+
   @@index([product_id])
   @@index([creator_id])
   @@index([join_token])
@@ -715,15 +716,15 @@ model clan_buys {
 
 // Clan Buy Members - Track who joined
 model clan_buy_members {
-  id         String   @id @default(uuid())
-  clan_id    String
-  user_id    String
-  joined_at  DateTime @default(now())
-  
+  id        String   @id @default(uuid())
+  clan_id   String
+  user_id   String
+  joined_at DateTime @default(now())
+
   // Relations
-  clan       clan_buys @relation(fields: [clan_id], references: [id], onDelete: Cascade)
-  user       users     @relation("ClanBuyMember", fields: [user_id], references: [id], onDelete: Cascade)
-  
+  clan clan_buys @relation(fields: [clan_id], references: [id], onDelete: Cascade)
+  user users     @relation("ClanBuyMember", fields: [user_id], references: [id], onDelete: Cascade)
+
   @@unique([clan_id, user_id])
   @@index([clan_id])
   @@index([user_id])
@@ -734,66 +735,111 @@ model clan_buy_members {
 // ============================================
 
 model pet_states {
-  id              String   @id @default(uuid())
-  user_id         String   @unique
-  hunger_level    Int      @default(100) // 0-100, 0 = very hungry, 100 = full
-  happiness_level Int      @default(50) // 0-100
-  last_fed_at     DateTime?
-  last_hunger_update DateTime @default(now())
-  total_feeds     Int      @default(0)
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
-  
+  id                 String    @id @default(uuid())
+  user_id            String    @unique
+  hunger_level       Int       @default(100) // 0-100, 0 = very hungry, 100 = full
+  happiness_level    Int       @default(50) // 0-100
+  last_fed_at        DateTime?
+  last_hunger_update DateTime  @default(now())
+  total_feeds        Int       @default(0)
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @updatedAt
+
   // Relations
-  user            users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  feed_history    pet_feed_history[]
-  
+  user         users              @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  feed_history pet_feed_history[]
+
   @@index([user_id])
   @@index([hunger_level])
 }
 
 model pet_feed_history {
-  id            String   @id @default(uuid())
+  id           String   @id @default(uuid())
   pet_state_id String
   user_id      String
-  feed_type    String   // BROWSE, SHARE, DIRECT_FEED
+  feed_type    String // BROWSE, SHARE, DIRECT_FEED
   feed_amount  Int      @default(10) // How much hunger was restored
-  metadata     String?  // JSON: product_id, product_name, etc.
+  metadata     String? // JSON: product_id, product_name, etc.
   created_at   DateTime @default(now())
-  
+
   // Relations
-  pet_state    pet_states @relation(fields: [pet_state_id], references: [id], onDelete: Cascade)
-  user         users      @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  
+  pet_state pet_states @relation(fields: [pet_state_id], references: [id], onDelete: Cascade)
+  user      users      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
   @@index([pet_state_id])
   @@index([user_id])
   @@index([created_at])
 }
 
 model discount_codes {
-  id              String   @id @default(uuid())
-  user_id         String
-  code            String   @unique
-  discount_type   String   // PERCENTAGE, FIXED_AMOUNT
-  discount_value  Float    // Percentage (0-100) or fixed amount
-  min_purchase    Float?   @default(0)
-  max_discount    Float?
-  valid_from       DateTime @default(now())
-  valid_until      DateTime
-  used_count       Int      @default(0)
-  max_uses         Int      @default(1)
-  is_active        Boolean  @default(true)
-  source           String   @default("PET_REWARD") // PET_REWARD, PROMOTION, etc.
-  created_at       DateTime @default(now())
-  updated_at       DateTime @updatedAt
-  
+  id             String   @id @default(uuid())
+  user_id        String
+  code           String   @unique
+  discount_type  String // PERCENTAGE, FIXED_AMOUNT
+  discount_value Float // Percentage (0-100) or fixed amount
+  min_purchase   Float?   @default(0)
+  max_discount   Float?
+  valid_from     DateTime @default(now())
+  valid_until    DateTime
+  used_count     Int      @default(0)
+  max_uses       Int      @default(1)
+  is_active      Boolean  @default(true)
+  source         String   @default("PET_REWARD") // PET_REWARD, PROMOTION, etc.
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
   // Relations
-  user            users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  
+  user users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
   @@index([user_id])
   @@index([code])
   @@index([is_active])
   @@index([valid_until])
+}
+
+// ============================================
+// FLASH DROP (REVERSE AUCTION) - المزاد العكسي
+// ============================================
+
+model flash_drops {
+  id                String    @id @default(uuid())
+  product_id        String    @unique // One product per flash drop
+  starting_price    Float // High starting price
+  current_price     Float // Current price (decreases over time)
+  min_price         Float? // Minimum price (optional floor)
+  price_decrement   Float     @default(1.0) // Amount to decrease each interval
+  interval_seconds  Int       @default(10) // Seconds between price drops
+  status            String    @default("ACTIVE") // ACTIVE, FROZEN, SOLD, EXPIRED
+  frozen_by_user_id String? // User who froze the price (first buyer)
+  frozen_at         DateTime? // When price was frozen
+  started_at        DateTime  @default(now())
+  expires_at        DateTime? // Optional expiration
+  last_price_update DateTime  @default(now())
+
+  // Relations
+  product      products                  @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  frozen_by    users?                    @relation("FlashDropFrozenBy", fields: [frozen_by_user_id], references: [id], onDelete: SetNull)
+  participants flash_drop_participants[]
+
+  @@index([product_id])
+  @@index([status])
+  @@index([started_at])
+}
+
+model flash_drop_participants {
+  id            String   @id @default(uuid())
+  flash_drop_id String
+  user_id       String
+  watched_at    DateTime @default(now())
+  clicked_buy   Boolean  @default(false) // True if user clicked Buy Now
+
+  // Relations
+  flash_drop flash_drops @relation(fields: [flash_drop_id], references: [id], onDelete: Cascade)
+  user       users       @relation("FlashDropParticipant", fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([flash_drop_id, user_id])
+  @@index([flash_drop_id])
+  @@index([user_id])
 }
 
 model messages {
