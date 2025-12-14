@@ -1,4 +1,4 @@
-import { dynamic } from 'next/dynamic';
+import dynamic from 'next/dynamic';
 
 // Dynamically import the client component to prevent SSR issues
 // This page uses client-side hooks that require browser APIs
