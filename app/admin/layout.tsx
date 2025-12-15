@@ -1,10 +1,15 @@
 import AdminLayoutClient from './layout-client';
+import SessionProviderWrapper from '@/components/providers/SessionProviderWrapper';
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Restored layout with bulletproof client component
-  return <AdminLayoutClient>{children}</AdminLayoutClient>;
+  // Wrap with SessionProvider to ensure useSession works correctly
+  return (
+    <SessionProviderWrapper>
+      <AdminLayoutClient>{children}</AdminLayoutClient>
+    </SessionProviderWrapper>
+  );
 }
