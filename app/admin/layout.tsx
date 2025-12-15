@@ -1,10 +1,14 @@
-import AdminLayoutClient from './layout-client';
+// DEBUGGING: Temporarily bypassing layout to test if layout is causing the crash
+// import AdminLayoutClient from './layout-client';
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // This will be handled by the client component for auth check
-  return <AdminLayoutClient>{children}</AdminLayoutClient>;
+  // DEBUGGING: Strip layout completely - just render children directly
+  return <>{children}</>;
+  
+  // ORIGINAL CODE (commented out for debugging):
+  // return <AdminLayoutClient>{children}</AdminLayoutClient>;
 }
