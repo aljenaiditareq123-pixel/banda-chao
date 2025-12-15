@@ -124,15 +124,31 @@ export function useOrders(statusFilter?: string): UseOrdersReturn {
 
   // CRITICAL: Always return a valid object structure, never undefined
   // This prevents "Cannot destructure property" errors
-  // Wrap in try-catch as final safety net
+  // Multiple safety layers to ensure we NEVER return undefined
+  
+  // Safety layer 1: Ensure all values are defined
+  const safeOrders = Array.isArray(orders) ? orders : [];
+  const safeLoading = typeof loading === 'boolean' ? loading : true;
+  const safeError = error || null;
+  const safeStats = stats && typeof stats === 'object' && 'total' in stats && 'paid' in stats 
+    ? stats 
+    : { total: 0, paid: 0 };
+  const safeRefetch = typeof fetchOrders === 'function' ? fetchOrders : (async () => {});
+  
+  // Safety layer 2: Wrap in try-catch as final safety net
   try {
-    return {
-      orders: Array.isArray(orders) ? orders : [],
-      loading: typeof loading === 'boolean' ? loading : true,
-      error: error || null,
-      stats: stats && typeof stats === 'object' ? stats : { total: 0, paid: 0 },
-      refetch: fetchOrders,
+    const result = {
+      orders: safeOrders,
+      loading: safeLoading,
+      error: safeError,
+      stats: safeStats,
+      refetch: safeRefetch,
     };
+    // Safety layer 3: Verify the result is an object
+    if (result && typeof result === 'object') {
+      return result;
+    }
+    throw new Error('Result is not an object');
   } catch (err) {
     // Ultimate fallback - return safe defaults if anything goes wrong
     console.error('[useOrders] Critical error in return statement:', err);

@@ -133,13 +133,25 @@ export function useAuth(): UseAuthReturn {
 
   // CRITICAL: Always return a valid object structure, never undefined
   // This prevents "Cannot destructure property" errors
-  // Wrap in try-catch as final safety net
+  // Multiple safety layers to ensure we NEVER return undefined
+  
+  // Safety layer 1: Ensure all values are defined
+  const safeUser = user || null;
+  const safeLoading = typeof loading === 'boolean' ? loading : true;
+  const safeError = error || null;
+  
+  // Safety layer 2: Wrap in try-catch as final safety net
   try {
-    return {
-      user: user || null,
-      loading: typeof loading === 'boolean' ? loading : true,
-      error: error || null,
+    const result = {
+      user: safeUser,
+      loading: safeLoading,
+      error: safeError,
     };
+    // Safety layer 3: Verify the result is an object
+    if (result && typeof result === 'object') {
+      return result;
+    }
+    throw new Error('Result is not an object');
   } catch (err) {
     // Ultimate fallback - return safe defaults if anything goes wrong
     console.error('[useAuth] Critical error in return statement:', err);
