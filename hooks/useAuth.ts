@@ -105,6 +105,12 @@ export function useAuth(): UseAuthReturn {
   };
 
   useEffect(() => {
+    // Only fetch in browser (not during SSR/build)
+    if (typeof window === 'undefined') {
+      setLoading(false);
+      return;
+    }
+
     fetchUser();
 
     // Listen for auth state changes (e.g., after login)
@@ -121,5 +127,11 @@ export function useAuth(): UseAuthReturn {
     };
   }, []);
 
-  return { user, loading, error };
+  // CRITICAL: Always return a valid object structure, never undefined
+  // This prevents "Cannot destructure property" errors
+  return {
+    user: user || null,
+    loading: loading ?? true,
+    error: error || null,
+  };
 }

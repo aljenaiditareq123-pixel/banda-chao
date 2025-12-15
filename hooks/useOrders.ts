@@ -111,17 +111,21 @@ export function useOrders(statusFilter?: string): UseOrdersReturn {
   useEffect(() => {
     // Only fetch in browser (not during SSR/build)
     if (typeof window === 'undefined') {
+      // Set loading to false for SSR, but still return valid object below
+      setLoading(false);
       return;
     }
     fetchOrders();
   }, [statusFilter]);
 
+  // CRITICAL: Always return a valid object structure, never undefined
+  // This prevents "Cannot destructure property" errors
   return {
-    orders,
-    loading,
-    error,
-    stats,
-    refetch: fetchOrders,
+    orders: orders || [],
+    loading: loading ?? true,
+    error: error || null,
+    stats: stats || { total: 0, paid: 0 },
+    refetch: fetchOrders || (async () => {}),
   };
 }
 

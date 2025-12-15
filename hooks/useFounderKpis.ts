@@ -72,13 +72,20 @@ export function useFounderKpis(): UseFounderKpisReturn {
   };
 
   useEffect(() => {
+    // Only fetch in browser (not during SSR/build)
+    if (typeof window === 'undefined') {
+      setLoading(false);
+      return;
+    }
     fetchKpis();
   }, []);
 
+  // CRITICAL: Always return a valid object structure, never undefined
+  // This prevents "Cannot destructure property" errors
   return {
-    kpis,
-    loading,
-    error,
-    refetch: fetchKpis,
+    kpis: kpis || null,
+    loading: loading ?? true,
+    error: error || null,
+    refetch: fetchKpis || (async () => {}),
   };
 }
