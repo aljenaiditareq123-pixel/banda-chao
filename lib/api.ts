@@ -392,8 +392,13 @@ export interface GetProductsParams {
 
 export const productsAPI = {
   getAll: async (params?: GetProductsParams) => {
-    const response = await apiClient.get('/products', { params });
-    return response.data;
+    try {
+      const response = await apiClient.get('/products', { params });
+      return response.data || { products: [], pagination: { page: 1, pageSize: 20, total: 0, totalPages: 0 } };
+    } catch (error) {
+      console.error('[productsAPI.getAll] Error:', error);
+      return { products: [], pagination: { page: 1, pageSize: 20, total: 0, totalPages: 0 } };
+    }
   },
   getById: async (id: string) => {
     const response = await apiClient.get(`/products/${id}`);
@@ -759,8 +764,13 @@ export const ordersAPI = {
     return response.data;
   },
   getAll: async () => {
-    const response = await apiClient.get('/orders');
-    return response.data;
+    try {
+      const response = await apiClient.get('/orders');
+      return response.data || { orders: [], stats: { total: 0, paid: 0 } };
+    } catch (error) {
+      console.error('[ordersAPI.getAll] Error:', error);
+      return { orders: [], stats: { total: 0, paid: 0 } };
+    }
   },
   calculateShipping: async (data: {
     country: string;
@@ -1355,6 +1365,15 @@ export const opsAPI = {
 // ============================================
 
 export const usersAPI = {
+  getAll: async (params?: { page?: number; limit?: number; search?: string }) => {
+    try {
+      const response = await apiClient.get('/users', { params });
+      return response.data || { users: [], total: 0 };
+    } catch (error) {
+      console.error('[usersAPI.getAll] Error:', error);
+      return { users: [], total: 0 };
+    }
+  },
   getMe: async () => {
     const response = await apiClient.get('/users/me');
     return response.data;
