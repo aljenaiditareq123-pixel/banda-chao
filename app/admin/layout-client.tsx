@@ -30,7 +30,11 @@ export default function AdminLayoutClient({
   const router = useRouter();
   const pathname = usePathname(); // Get current pathname for active link highlighting
   const { user: jwtUser, loading: jwtLoading } = useAuth();
-  const { data: session, status: sessionStatus } = useSession();
+  
+  // Safe useSession - NextAuth's useSession can return undefined during SSR
+  const sessionResult = useSession();
+  const session = sessionResult?.data || null;
+  const sessionStatus = sessionResult?.status || 'unauthenticated';
 
   useEffect(() => {
     // Only set mounted to true after browser loads
