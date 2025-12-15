@@ -19,8 +19,12 @@ interface UseAuthReturn {
 /**
  * Custom hook to get current authenticated user
  * Uses centralized API client with retry logic
+ * 
+ * CRITICAL: This hook ALWAYS returns a valid object structure.
+ * Never returns undefined, even in error cases or during SSR.
  */
 export function useAuth(): UseAuthReturn {
+  // Initialize with safe defaults
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -129,9 +133,20 @@ export function useAuth(): UseAuthReturn {
 
   // CRITICAL: Always return a valid object structure, never undefined
   // This prevents "Cannot destructure property" errors
-  return {
-    user: user || null,
-    loading: loading ?? true,
-    error: error || null,
-  };
+  // Wrap in try-catch as final safety net
+  try {
+    return {
+      user: user || null,
+      loading: typeof loading === 'boolean' ? loading : true,
+      error: error || null,
+    };
+  } catch (err) {
+    // Ultimate fallback - return safe defaults if anything goes wrong
+    console.error('[useAuth] Critical error in return statement:', err);
+    return {
+      user: null,
+      loading: false,
+      error: 'An unexpected error occurred',
+    };
+  }
 }

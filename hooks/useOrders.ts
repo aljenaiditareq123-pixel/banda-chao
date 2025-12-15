@@ -40,8 +40,12 @@ interface UseOrdersReturn {
 /**
  * Custom hook to fetch orders from the backend
  * Requires FOUNDER or ADMIN role
+ * 
+ * CRITICAL: This hook ALWAYS returns a valid object structure.
+ * Never returns undefined, even in error cases or during SSR.
  */
 export function useOrders(statusFilter?: string): UseOrdersReturn {
+  // Initialize with safe defaults
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -120,12 +124,25 @@ export function useOrders(statusFilter?: string): UseOrdersReturn {
 
   // CRITICAL: Always return a valid object structure, never undefined
   // This prevents "Cannot destructure property" errors
-  return {
-    orders: orders || [],
-    loading: loading ?? true,
-    error: error || null,
-    stats: stats || { total: 0, paid: 0 },
-    refetch: fetchOrders || (async () => {}),
-  };
+  // Wrap in try-catch as final safety net
+  try {
+    return {
+      orders: Array.isArray(orders) ? orders : [],
+      loading: typeof loading === 'boolean' ? loading : true,
+      error: error || null,
+      stats: stats && typeof stats === 'object' ? stats : { total: 0, paid: 0 },
+      refetch: fetchOrders,
+    };
+  } catch (err) {
+    // Ultimate fallback - return safe defaults if anything goes wrong
+    console.error('[useOrders] Critical error in return statement:', err);
+    return {
+      orders: [],
+      loading: false,
+      error: 'An unexpected error occurred',
+      stats: { total: 0, paid: 0 },
+      refetch: async () => {},
+    };
+  }
 }
 

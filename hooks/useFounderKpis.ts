@@ -14,8 +14,12 @@ interface UseFounderKpisReturn {
 /**
  * Custom hook to fetch Founder KPIs from the backend
  * Uses centralized API client with retry logic
+ * 
+ * CRITICAL: This hook ALWAYS returns a valid object structure.
+ * Never returns undefined, even in error cases or during SSR.
  */
 export function useFounderKpis(): UseFounderKpisReturn {
+  // Initialize with safe defaults
   const [kpis, setKpis] = useState<FounderKPIs | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -82,10 +86,22 @@ export function useFounderKpis(): UseFounderKpisReturn {
 
   // CRITICAL: Always return a valid object structure, never undefined
   // This prevents "Cannot destructure property" errors
-  return {
-    kpis: kpis || null,
-    loading: loading ?? true,
-    error: error || null,
-    refetch: fetchKpis || (async () => {}),
-  };
+  // Wrap in try-catch as final safety net
+  try {
+    return {
+      kpis: kpis || null,
+      loading: typeof loading === 'boolean' ? loading : true,
+      error: error || null,
+      refetch: fetchKpis,
+    };
+  } catch (err) {
+    // Ultimate fallback - return safe defaults if anything goes wrong
+    console.error('[useFounderKpis] Critical error in return statement:', err);
+    return {
+      kpis: null,
+      loading: false,
+      error: 'An unexpected error occurred',
+      refetch: async () => {},
+    };
+  }
 }
