@@ -1,5 +1,4 @@
-// DEBUGGING: Temporarily removed client component import to test server component directly
-// import AdminOrdersPageClient from './page-client';
+import AdminOrdersPageClient from './page-client';
 
 // Force dynamic rendering - prevent static generation and prerendering
 export const dynamic = 'force-dynamic';
@@ -7,16 +6,15 @@ export const revalidate = 0;
 
 /**
  * Admin Orders Management Page
- * DEBUGGING MODE: Simple server component return to test if route works
+ * Displays all orders in a table format
+ * This page is ALWAYS in Arabic regardless of site locale
+ * Server component wrapper that prevents build-time prerendering
  */
 export default function AdminOrdersPage() {
-  return <h1>Server Page is Working Direct!</h1>;
-  
-  // ORIGINAL CODE (commented out for debugging):
-  // return (
-  //   <div dir="rtl" lang="ar">
-  //     <AdminOrdersPageClient />
-  //   </div>
-  // );
+  return (
+    <div dir="rtl" lang="ar">
+      <AdminOrdersPageClient />
+    </div>
+  );
 }
 

@@ -128,9 +128,17 @@ export default function AdminLayoutClient({
   ];
 
   // Hydration-safe active link check (only after mounted)
-  const isActive = (href: string) => {
-    if (!mounted || !currentPathname) return false;
-    return currentPathname === href || currentPathname.startsWith(href + '/');
+  // Bulletproof: Always returns false if anything fails to prevent crashes
+  const isActive = (href: string): boolean => {
+    try {
+      if (!mounted || !currentPathname || !href) return false;
+      if (typeof currentPathname !== 'string' || typeof href !== 'string') return false;
+      return currentPathname === href || currentPathname.startsWith(href + '/');
+    } catch (error) {
+      // If anything fails, default to false (non-active) to prevent crash
+      console.warn('[AdminLayout] Error checking active link:', error);
+      return false;
+    }
   };
 
   return (
@@ -167,33 +175,46 @@ export default function AdminLayoutClient({
 
             {/* User Info */}
             <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm font-semibold text-gray-900">{user.name || user.email}</p>
-              <p className="text-xs text-gray-600 mt-1">{user.email}</p>
+              <p className="text-sm font-semibold text-gray-900">
+                {user?.name || user?.email || 'User'}
+              </p>
+              <p className="text-xs text-gray-600 mt-1">{user?.email || ''}</p>
               <p className="text-xs text-gray-500 mt-1">
-                {user.role === 'FOUNDER' ? 'مؤسس' : user.role === 'ADMIN' ? 'مدير' : 'مستخدم'}
+                {user?.role === 'FOUNDER' ? 'مؤسس' : user?.role === 'ADMIN' ? 'مدير' : 'مستخدم'}
               </p>
             </div>
 
             {/* Navigation */}
             <nav className="space-y-2">
               {menuItems.map((item) => {
-                const Icon = item.icon;
-                const active = isActive(item.href);
-                return (
-                  <Link
-                    key={item.key}
-                    href={item.href}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                      active
-                        ? 'bg-primary-50 text-primary-600 font-medium'
-                        : 'text-gray-700 hover:bg-primary-50 hover:text-primary-600'
-                    }`}
-                    onClick={() => setSidebarOpen(false)}
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span className="font-medium">{item.label}</span>
-                  </Link>
-                );
+                try {
+                  const Icon = item.icon;
+                  // Safe active check with fallback
+                  const active = isActive(item.href || '');
+                  return (
+                    <Link
+                      key={item.key || item.href}
+                      href={item.href || '#'}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                        active
+                          ? 'bg-primary-50 text-primary-600 font-medium'
+                          : 'text-gray-700 hover:bg-primary-50 hover:text-primary-600'
+                      }`}
+                      onClick={() => setSidebarOpen(false)}
+                    >
+                      <Icon className="w-5 h-5" />
+                      <span className="font-medium">{item.label || ''}</span>
+                    </Link>
+                  );
+                } catch (error) {
+                  // If rendering a menu item fails, render a safe fallback
+                  console.warn('[AdminLayout] Error rendering menu item:', error);
+                  return (
+                    <div key={item.key || item.href} className="px-4 py-3 text-gray-500 text-sm">
+                      {item.label || 'Menu Item'}
+                    </div>
+                  );
+                }
               })}
             </nav>
 
