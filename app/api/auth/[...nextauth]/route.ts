@@ -217,9 +217,10 @@ export const authOptions: NextAuthConfig = {
     strategy: 'jwt', // Use JWT strategy (works without database)
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
-  // CRITICAL: NEXTAUTH_SECRET is required for production
+  // CRITICAL: AUTH_SECRET is required for NextAuth v5 (changed from NEXTAUTH_SECRET)
   // Render will auto-generate this via generateValue: true in render.yaml
-  secret: process.env.NEXTAUTH_SECRET || (process.env.NODE_ENV === 'production' ? 'fallback-secret-change-in-production' : 'dev-secret-only'),
+  // Support both old (NEXTAUTH_SECRET) and new (AUTH_SECRET) variable names for compatibility
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || (process.env.NODE_ENV === 'production' ? 'fallback-secret-change-in-production' : 'dev-secret-only'),
   debug: process.env.NODE_ENV === 'development',
   // CRITICAL: Trust host for Render deployment
   // This fixes "UntrustedHost" errors in production

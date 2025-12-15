@@ -31,7 +31,12 @@ services:
         # Required for standalone mode
       - key: PORT
         value: 3000
-      # NextAuth
+      # NextAuth v5 - Use AUTH_SECRET and AUTH_URL (new variable names)
+      - key: AUTH_URL
+        value: https://banda-chao-frontend.onrender.com
+      - key: AUTH_SECRET
+        generateValue: true
+      # Legacy support - keep old names for backward compatibility
       - key: NEXTAUTH_URL
         value: https://banda-chao-frontend.onrender.com
       - key: NEXTAUTH_SECRET
