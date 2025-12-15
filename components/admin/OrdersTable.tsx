@@ -16,7 +16,15 @@ interface OrdersTableProps {
  * Displays orders from database in a beautiful table format
  */
 export default function OrdersTable({ statusFilter }: OrdersTableProps) {
-  const { orders, loading, error, stats, refetch } = useOrders(statusFilter);
+  // Safe hook call with fallback - ensure we never destructure from undefined
+  const ordersResult = useOrders(statusFilter);
+  
+  // Safety: Ensure all properties exist with fallbacks
+  const orders = ordersResult?.orders || [];
+  const loading = ordersResult?.loading ?? true;
+  const error = ordersResult?.error || null;
+  const stats = ordersResult?.stats || { total: 0, paid: 0 };
+  const refetch = ordersResult?.refetch || (async () => {});
 
   // Status badge styling
   const getStatusBadge = (status: Order['status']) => {
