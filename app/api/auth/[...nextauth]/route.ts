@@ -219,6 +219,9 @@ export const authOptions: NextAuthConfig = {
   },
   secret: process.env.NEXTAUTH_SECRET || (process.env.NODE_ENV === 'production' ? undefined : 'dev-secret-only'),
   debug: process.env.NODE_ENV === 'development',
+  // CRITICAL: Trust host for Render deployment
+  // This fixes "UntrustedHost" errors in production
+  trustHost: true,
 };
 
 // NextAuth v5 beta - Export handlers directly
