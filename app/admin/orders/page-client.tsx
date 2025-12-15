@@ -16,13 +16,16 @@ export default function AdminOrdersPageClient() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [mounted, setMounted] = useState(false);
   
+  // Fetch stats for summary cards (separate from OrdersTable to show stats immediately)
+  // OrdersTable will fetch its own data for the table
+  const ordersResult = useOrders('all');
+  
   useEffect(() => {
     setMounted(true);
   }, []);
   
-  // Note: Stats are fetched by OrdersTable component, not here
-  // This prevents duplicate API calls
-  const safeStats = { total: 0, paid: 0 }; // Placeholder - actual stats come from OrdersTable
+  // Safety check - ensure stats is always defined
+  const safeStats = ordersResult?.stats || { total: 0, paid: 0 };
   
   // Don't render until mounted (prevents SSR issues)
   if (!mounted) {
