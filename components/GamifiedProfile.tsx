@@ -11,7 +11,10 @@ import { getUserStats, getUserProducts } from '@/app/actions/productActions';
 
 export default function GamifiedProfile() {
   const { language } = useLanguage();
-  const { data: session, status } = useSession();
+  // Safe useSession - NextAuth's useSession can return undefined during SSR
+  const sessionResult = useSession();
+  const session = sessionResult?.data || null;
+  const status = sessionResult?.status || 'unauthenticated';
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [userStats, setUserStats] = useState<any>(null);

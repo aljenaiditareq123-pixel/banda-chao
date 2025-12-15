@@ -11,7 +11,9 @@ import { useSession } from 'next-auth/react';
 export default function BottomNav() {
   const pathname = usePathname();
   const { language } = useLanguage();
-  const { data: session } = useSession();
+  // Safe useSession - NextAuth's useSession can return undefined during SSR
+  const sessionResult = useSession();
+  const session = sessionResult?.data || null;
 
   // دالة لتحديد هل الرابط نشط أم لا
   const isActive = (path: string) => {

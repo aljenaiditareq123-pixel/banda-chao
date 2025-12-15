@@ -11,7 +11,9 @@ import { createProduct } from '@/app/actions/productActions';
 
 export default function MakerStudio() {
   const { language } = useLanguage();
-  const { data: session } = useSession();
+  // Safe useSession - NextAuth's useSession can return undefined during SSR
+  const sessionResult = useSession();
+  const session = sessionResult?.data || null;
   const router = useRouter();
   const [step, setStep] = useState(1); // 1: تصوير، 2: تسجيل صوت، 3: معالجة، 4: نجاح
   const [isRecording, setIsRecording] = useState(false);
