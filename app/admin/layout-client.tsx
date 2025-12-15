@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useSession } from 'next-auth/react';
@@ -33,10 +33,18 @@ export default function AdminLayoutClient({
 
   useEffect(() => {
     // Only set mounted to true after browser loads
+    // This ensures all client-side only code runs after hydration
     setMounted(true);
+    
     // Store pathname after mounting to prevent hydration mismatch
-    if (pathname) {
-      setCurrentPathname(pathname);
+    // This is critical - pathname should only be used after mount
+    try {
+      if (pathname && typeof pathname === 'string') {
+        setCurrentPathname(pathname);
+      }
+    } catch (error) {
+      console.warn('[AdminLayout] Error setting pathname:', error);
+      setCurrentPathname(null);
     }
   }, [pathname]);
 
@@ -184,39 +192,45 @@ export default function AdminLayoutClient({
               </p>
             </div>
 
-            {/* Navigation */}
-            <nav className="space-y-2">
-              {menuItems.map((item) => {
-                try {
-                  const Icon = item.icon;
-                  // Safe active check with fallback
-                  const active = isActive(item.href || '');
-                  return (
-                    <Link
-                      key={item.key || item.href}
-                      href={item.href || '#'}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                        active
-                          ? 'bg-primary-50 text-primary-600 font-medium'
-                          : 'text-gray-700 hover:bg-primary-50 hover:text-primary-600'
-                      }`}
-                      onClick={() => setSidebarOpen(false)}
-                    >
-                      <Icon className="w-5 h-5" />
-                      <span className="font-medium">{item.label || ''}</span>
-                    </Link>
-                  );
-                } catch (error) {
-                  // If rendering a menu item fails, render a safe fallback
-                  console.warn('[AdminLayout] Error rendering menu item:', error);
-                  return (
-                    <div key={item.key || item.href} className="px-4 py-3 text-gray-500 text-sm">
-                      {item.label || 'Menu Item'}
-                    </div>
-                  );
-                }
-              })}
-            </nav>
+            {/* Navigation - Wrapped in Suspense for extra safety */}
+            <Suspense fallback={
+              <nav className="space-y-2">
+                <div className="px-4 py-3 text-gray-400 text-sm">جاري التحميل...</div>
+              </nav>
+            }>
+              <nav className="space-y-2">
+                {menuItems.map((item) => {
+                  try {
+                    const Icon = item.icon;
+                    // Safe active check with fallback - only after mounted
+                    const active = mounted ? isActive(item.href || '') : false;
+                    return (
+                      <Link
+                        key={item.key || item.href}
+                        href={item.href || '#'}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                          active
+                            ? 'bg-primary-50 text-primary-600 font-medium'
+                            : 'text-gray-700 hover:bg-primary-50 hover:text-primary-600'
+                        }`}
+                        onClick={() => setSidebarOpen(false)}
+                      >
+                        <Icon className="w-5 h-5" />
+                        <span className="font-medium">{item.label || ''}</span>
+                      </Link>
+                    );
+                  } catch (error) {
+                    // If rendering a menu item fails, render a safe fallback
+                    console.warn('[AdminLayout] Error rendering menu item:', error);
+                    return (
+                      <div key={item.key || item.href} className="px-4 py-3 text-gray-500 text-sm">
+                        {item.label || 'Menu Item'}
+                      </div>
+                    );
+                  }
+                })}
+              </nav>
+            </Suspense>
 
             {/* Logout Button */}
             <div className="mt-8 pt-8 border-t border-gray-200">
