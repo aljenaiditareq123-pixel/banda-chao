@@ -6,6 +6,7 @@ import Button from '@/components/Button';
 import Card from '@/components/common/Card';
 import OrdersTable from '@/components/admin/OrdersTable';
 import { useOrders } from '@/hooks/useOrders';
+import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 
 /**
  * Admin Orders Page Client Component
@@ -15,16 +16,13 @@ export default function AdminOrdersPageClient() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [mounted, setMounted] = useState(false);
   
-  // Call hook at top level (React requirement)
-  // Hook should handle SSR internally
-  const ordersResult = useOrders('all');
-  
   useEffect(() => {
     setMounted(true);
   }, []);
   
-  // Safety check for SSR - ensure stats is always defined
-  const safeStats = ordersResult?.stats || { total: 0, paid: 0 };
+  // Note: Stats are fetched by OrdersTable component, not here
+  // This prevents duplicate API calls
+  const safeStats = { total: 0, paid: 0 }; // Placeholder - actual stats come from OrdersTable
   
   // Don't render until mounted (prevents SSR issues)
   if (!mounted) {
@@ -98,8 +96,10 @@ export default function AdminOrdersPageClient() {
           </div>
         </div>
 
-        {/* Orders Table */}
-        <OrdersTable statusFilter={statusFilter} />
+        {/* Orders Table - Wrapped in ErrorBoundary for safety */}
+        <ErrorBoundary>
+          <OrdersTable statusFilter={statusFilter} />
+        </ErrorBoundary>
       </div>
     </div>
   );
