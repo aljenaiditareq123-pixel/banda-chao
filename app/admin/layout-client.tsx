@@ -21,10 +21,23 @@ export default function AdminLayoutClient({
 }: {
   children: React.ReactNode;
 }) {
-  const { user: jwtUser, loading: jwtLoading } = useAuth();
-  const { data: session, status: sessionStatus } = useSession();
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Hooks must be called unconditionally (React requirement)
+  const { user: jwtUser, loading: jwtLoading } = useAuth();
+  const { data: session, status: sessionStatus } = useSession();
+
+  useEffect(() => {
+    // Only set mounted to true after browser loads
+    setMounted(true);
+  }, []);
+
+  // Show loading until mounted (prevents SSR/hydration issues)
+  if (!mounted) {
+    return <LoadingState fullScreen />;
+  }
 
   // Merge user data from both JWT and NextAuth
   const user = jwtUser || (session?.user ? {
