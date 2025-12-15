@@ -32,9 +32,25 @@ export default function AdminLayoutClient({
   const { user: jwtUser, loading: jwtLoading } = useAuth();
   
   // Safe useSession - NextAuth's useSession can return undefined during SSR
-  const sessionResult = useSession();
-  const session = sessionResult?.data || null;
-  const sessionStatus = sessionResult?.status || 'unauthenticated';
+  // Use required: false to make it SSR-safe and prevent crashes
+  const sessionResult = useSession({ required: false });
+  
+  // CRITICAL: Safe destructuring with multiple layers of protection
+  // This prevents "Cannot destructure property 'data' of undefined" errors
+  let session: any = null;
+  let sessionStatus: string = 'unauthenticated';
+  
+  try {
+    if (sessionResult && typeof sessionResult === 'object' && 'data' in sessionResult) {
+      session = sessionResult.data || null;
+      sessionStatus = sessionResult.status || 'unauthenticated';
+    }
+  } catch (error) {
+    // If destructuring fails, use safe defaults
+    console.warn('[AdminLayout] Error destructuring session, using safe defaults:', error);
+    session = null;
+    sessionStatus = 'unauthenticated';
+  }
 
   useEffect(() => {
     // Only set mounted to true after browser loads
