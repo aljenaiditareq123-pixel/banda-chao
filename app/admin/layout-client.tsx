@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
@@ -22,7 +22,9 @@ export default function AdminLayoutClient({
   children: React.ReactNode;
 }) {
   const [mounted, setMounted] = useState(false);
+  const [currentPathname, setCurrentPathname] = useState<string | null>(null);
   const router = useRouter();
+  const pathname = usePathname(); // Get current pathname for active link highlighting
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Hooks must be called unconditionally (React requirement)
@@ -32,7 +34,11 @@ export default function AdminLayoutClient({
   useEffect(() => {
     // Only set mounted to true after browser loads
     setMounted(true);
-  }, []);
+    // Store pathname after mounting to prevent hydration mismatch
+    if (pathname) {
+      setCurrentPathname(pathname);
+    }
+  }, [pathname]);
 
   // Show loading until mounted (prevents SSR/hydration issues)
   if (!mounted) {
@@ -121,6 +127,12 @@ export default function AdminLayoutClient({
     },
   ];
 
+  // Hydration-safe active link check (only after mounted)
+  const isActive = (href: string) => {
+    if (!mounted || !currentPathname) return false;
+    return currentPathname === href || currentPathname.startsWith(href + '/');
+  };
+
   return (
     <div className="min-h-screen bg-gray-50" dir="rtl">
       {/* Mobile Header */}
@@ -166,11 +178,16 @@ export default function AdminLayoutClient({
             <nav className="space-y-2">
               {menuItems.map((item) => {
                 const Icon = item.icon;
+                const active = isActive(item.href);
                 return (
                   <Link
                     key={item.key}
                     href={item.href}
-                    className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-primary-50 hover:text-primary-600 rounded-lg transition-colors"
+                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                      active
+                        ? 'bg-primary-50 text-primary-600 font-medium'
+                        : 'text-gray-700 hover:bg-primary-50 hover:text-primary-600'
+                    }`}
                     onClick={() => setSidebarOpen(false)}
                   >
                     <Icon className="w-5 h-5" />
