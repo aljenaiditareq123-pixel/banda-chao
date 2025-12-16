@@ -123,21 +123,22 @@ export const authOptions: NextAuthConfig = {
           }),
         ]
       : []),
-    // Email (Magic Link)
-    EmailProvider({
-      server: {
-        host: process.env.SMTP_HOST || 'smtp.gmail.com',
-        port: parseInt(process.env.SMTP_PORT || '587'),
-        auth: {
-          user: process.env.SMTP_USER || '',
-          pass: process.env.SMTP_PASSWORD || '',
-        },
-      },
-      from: process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@banda-chao.com',
-      sendVerificationRequest({ identifier, url, provider }) {
-        console.log(`Sending magic link to ${identifier}: ${url}`);
-      },
-    }),
+    // Email (Magic Link) - DISABLED: Requires adapter in NextAuth v5
+    // TODO: Re-enable when PrismaAdapter is added
+    // EmailProvider({
+    //   server: {
+    //     host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    //     port: parseInt(process.env.SMTP_PORT || '587'),
+    //     auth: {
+    //       user: process.env.SMTP_USER || '',
+    //       pass: process.env.SMTP_PASSWORD || '',
+    //     },
+    //   },
+    //   from: process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@banda-chao.com',
+    //   sendVerificationRequest({ identifier, url, provider }) {
+    //     console.log(`Sending magic link to ${identifier}: ${url}`);
+    //   },
+    // }),
   ],
   pages: {
     signIn: '/auth/signin', // Custom sign-in page
