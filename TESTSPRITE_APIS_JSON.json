@@ -109,20 +109,31 @@
       "expectedStatus": 201
     },
     {
-      "name": "User Login",
+      "name": "User Login - Founder",
       "endpoint": "/api/v1/auth/login",
       "method": "POST",
       "authentication": "None",
-      "description": "Login and get JWT token",
+      "description": "Login and get JWT token. Use founder account for admin access.",
       "requestBody": {
-        "email": "founder@bandachao.com",
+        "email": "founder@banda-chao.com",
         "password": "founder_password"
       },
       "expectedStatus": 200,
       "expectedResponse": {
+        "success": true,
         "token": "JWT token string",
-        "user": {}
-      }
+        "user": {
+          "id": "string",
+          "email": "founder@banda-chao.com",
+          "name": "string",
+          "role": "FOUNDER"
+        }
+      },
+      "notes": [
+        "This account automatically gets ADMIN role in NextAuth",
+        "Use the returned token for subsequent authenticated requests",
+        "Token format: Bearer {token}"
+      ]
     },
     {
       "name": "Get Current User",
@@ -175,13 +186,41 @@
       "Founder Sessions should return 200 (not 500)",
       "Founder AI should return 200 with Gemini response (not 500)",
       "No more founder_sessions table errors",
-      "No more gemini-1.5-flash errors"
+      "No more gemini-1.5-flash errors",
+      "Admin Dashboard crash fixed - React error #310 resolved",
+      "useOrders hook temporarily using hardcoded data"
     ],
     "authentication": {
       "note": "Get JWT token from /api/v1/auth/login first",
-      "format": "Bearer {token}"
+      "format": "Bearer {token}",
+      "testCredentials": {
+        "email": "founder@banda-chao.com",
+        "password": "founder_password",
+        "note": "This account gets ADMIN role automatically in NextAuth"
+      },
+      "alternativeCredentials": {
+        "note": "Or create a test user via /api/v1/auth/register",
+        "example": {
+          "email": "test@bandachao.com",
+          "password": "TestPassword123!",
+          "name": "Test User"
+        }
+      }
     },
-    "baseUrl": "https://banda-chao-backend.onrender.com"
+    "baseUrl": {
+      "backend": "https://banda-chao-backend.onrender.com",
+      "frontend": "https://banda-chao-frontend.onrender.com"
+    },
+    "frontendTesting": {
+      "note": "Frontend pages (like /admin/orders) return HTML, not JSON",
+      "recommendation": "Use Browser Automation (Playwright/Selenium) for frontend tests",
+      "apiAlternative": "For API testing, use backend endpoints like /api/v1/orders (if available)"
+    },
+    "adminDashboard": {
+      "status": "Fixed - React error #310 resolved",
+      "currentState": "Using hardcoded dummy data temporarily",
+      "note": "Will restore API fetching after confirming UI works"
+    }
   }
 }
 
