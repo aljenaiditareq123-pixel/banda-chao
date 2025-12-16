@@ -31,12 +31,55 @@ export default function AdminProductsPageClient() {
   }, []);
 
   const fetchProducts = async () => {
+    // HARDCODE MODE - Return dummy data, no API calls
     try {
       setLoading(true);
-      const response = await productsAPI.getAll({ limit: 100 });
-      setProducts(response.products || []);
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Return static dummy data
+      const dummyProducts: Product[] = [
+        {
+          id: 'prod-1',
+          name: 'منتج تجريبي 1',
+          name_ar: 'منتج تجريبي 1',
+          description: 'وصف المنتج التجريبي الأول',
+          price: 100,
+          stock: 50,
+          status: 'active',
+          image_url: 'https://via.placeholder.com/300',
+          created_at: new Date().toISOString(),
+        },
+        {
+          id: 'prod-2',
+          name: 'منتج تجريبي 2',
+          name_ar: 'منتج تجريبي 2',
+          description: 'وصف المنتج التجريبي الثاني',
+          price: 200,
+          stock: 30,
+          status: 'active',
+          image_url: 'https://via.placeholder.com/300',
+          created_at: new Date().toISOString(),
+        },
+        {
+          id: 'prod-3',
+          name: 'منتج تجريبي 3',
+          name_ar: 'منتج تجريبي 3',
+          description: 'وصف المنتج التجريبي الثالث',
+          price: 150,
+          stock: 25,
+          status: 'active',
+          image_url: 'https://via.placeholder.com/300',
+          created_at: new Date().toISOString(),
+        },
+      ];
+      
+      setProducts(dummyProducts);
     } catch (error) {
       console.error('Error fetching products:', error);
+      // Fallback to empty array
+      setProducts([]);
     } finally {
       setLoading(false);
     }

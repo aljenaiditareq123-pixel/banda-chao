@@ -22,27 +22,29 @@ export default function AdminDashboardClient() {
   }, [user, loading]);
 
   const fetchStats = async () => {
+    // HARDCODE MODE - Return dummy data, no API calls
     try {
       setLoadingStats(true);
-      const [productsRes, ordersRes, usersRes] = await Promise.all([
-        productsAPI.getAll({ limit: 1 }).catch(() => ({ products: [], total: 0 })),
-        ordersAPI.getAll().catch(() => ({ orders: [], stats: { total: 0, paid: 0 } })),
-        usersAPI.getAll().catch(() => ({ users: [], total: 0 })),
-      ]);
-
-      const revenue = ordersRes.orders?.reduce(
-        (sum: number, order: any) => sum + (order.totalAmount || 0),
-        0
-      ) || 0;
-
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Return static dummy data
       setStats({
-        products: productsRes.total || productsRes.products?.length || 0,
-        orders: ordersRes.stats?.total || ordersRes.orders?.length || 0,
-        users: usersRes.total || usersRes.users?.length || 0,
-        revenue,
+        products: 150,
+        orders: 500,
+        users: 1200,
+        revenue: 50000,
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
+      // Fallback to dummy data even on error
+      setStats({
+        products: 150,
+        orders: 500,
+        users: 1200,
+        revenue: 50000,
+      });
     } finally {
       setLoadingStats(false);
     }

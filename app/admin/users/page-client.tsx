@@ -22,12 +22,57 @@ export default function AdminUsersPageClient() {
   }, []);
 
   const fetchUsers = async () => {
+    // HARDCODE MODE - Return dummy data, no API calls
     try {
       setLoading(true);
-      const response = await usersAPI.getAll();
-      setUsers(response.users || []);
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Return static dummy data
+      const dummyUsers: User[] = [
+        {
+          id: 'user-1',
+          email: 'founder@banda-chao.com',
+          name: 'الساحر العظيم',
+          role: 'FOUNDER',
+          created_at: new Date().toISOString(),
+        },
+        {
+          id: 'user-2',
+          email: 'admin@bandachao.com',
+          name: 'مدير النظام',
+          role: 'ADMIN',
+          created_at: new Date().toISOString(),
+        },
+        {
+          id: 'user-3',
+          email: 'maker@bandachao.com',
+          name: 'حرفي تجريبي',
+          role: 'MAKER',
+          created_at: new Date().toISOString(),
+        },
+        {
+          id: 'user-4',
+          email: 'buyer@bandachao.com',
+          name: 'مشتري تجريبي',
+          role: 'BUYER',
+          created_at: new Date().toISOString(),
+        },
+        {
+          id: 'user-5',
+          email: 'client@test.com',
+          name: 'Test Client',
+          role: 'BUYER',
+          created_at: new Date().toISOString(),
+        },
+      ];
+      
+      setUsers(dummyUsers);
     } catch (error) {
       console.error('Error fetching users:', error);
+      // Fallback to empty array
+      setUsers([]);
     } finally {
       setLoading(false);
     }
