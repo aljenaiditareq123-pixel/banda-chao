@@ -106,18 +106,13 @@ export default function AdminLayoutClient({
       if (typeof window !== 'undefined') {
         localStorage.removeItem('auth_token');
         localStorage.removeItem('bandaChao_user');
+        localStorage.removeItem('bandaChao_isLoggedIn');
+        localStorage.removeItem('bandaChao_userEmail');
+        localStorage.removeItem('bandaChao_userName');
+        localStorage.removeItem('bandaChao_userRole');
       }
       
-      // Sign out from NextAuth if session exists
-      if (session) {
-        try {
-          const { signOut } = await import('next-auth/react');
-          await signOut({ redirect: false });
-        } catch (error) {
-          console.warn('[AdminLayout] Error signing out from NextAuth:', error);
-        }
-      }
-      
+      // Redirect to signin
       if (router) {
         router.push('/auth/signin');
       } else {
