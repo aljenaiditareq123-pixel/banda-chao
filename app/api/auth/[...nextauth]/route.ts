@@ -220,7 +220,15 @@ export const authOptions: NextAuthConfig = {
   // CRITICAL: AUTH_SECRET is required for NextAuth v5 (changed from NEXTAUTH_SECRET)
   // Render will auto-generate this via generateValue: true in render.yaml
   // Support both old (NEXTAUTH_SECRET) and new (AUTH_SECRET) variable names for compatibility
-  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || (process.env.NODE_ENV === 'production' ? 'fallback-secret-change-in-production' : 'dev-secret-only'),
+  secret: (() => {
+    const authSecret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
+    if (!authSecret && process.env.NODE_ENV === 'production') {
+      console.error('[NextAuth] CRITICAL: AUTH_SECRET or NEXTAUTH_SECRET is missing in production!');
+      // Use a fallback but log the error
+      return 'fallback-secret-change-in-production';
+    }
+    return authSecret || 'dev-secret-only';
+  })(),
   debug: process.env.NODE_ENV === 'development',
   // CRITICAL: Trust host for Render deployment
   // This fixes "UntrustedHost" errors in production
