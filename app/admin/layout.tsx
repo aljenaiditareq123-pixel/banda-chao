@@ -1,15 +1,10 @@
 import AdminLayoutClient from './layout-client';
-import SessionProviderWrapper from '@/components/providers/SessionProviderWrapper';
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Wrap with SessionProvider to ensure useSession works correctly
-  return (
-    <SessionProviderWrapper>
-      <AdminLayoutClient>{children}</AdminLayoutClient>
-    </SessionProviderWrapper>
-  );
+  // No SessionProvider needed - we use getSession() directly in the client component
+  return <AdminLayoutClient>{children}</AdminLayoutClient>;
 }
