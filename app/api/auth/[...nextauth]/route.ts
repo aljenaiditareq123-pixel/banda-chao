@@ -4,7 +4,7 @@ import type { NextAuthConfig } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import FacebookProvider from 'next-auth/providers/facebook';
 import TwitterProvider from 'next-auth/providers/twitter';
-import EmailProvider from 'next-auth/providers/email';
+// import EmailProvider from 'next-auth/providers/email'; // DISABLED: Requires adapter
 import CredentialsProvider from 'next-auth/providers/credentials';
 
 // Guest Login Provider (Demo/Testing Mode)
