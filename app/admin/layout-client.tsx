@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { useSession } from 'next-auth/react';
+import { useSession, getSession } from 'next-auth/react';
 import Link from 'next/link';
 import { 
   Package, 
@@ -33,24 +33,40 @@ export default function AdminLayoutClient({
   
   // Safe useSession - NextAuth's useSession can return undefined during SSR
   // Use required: false to make it SSR-safe and prevent crashes
+  // Also use state to store session to prevent hydration mismatches
+  const [session, setSession] = useState<any>(null);
+  const [sessionStatus, setSessionStatus] = useState<string>('unauthenticated');
   const sessionResult = useSession({ required: false });
   
-  // CRITICAL: Safe destructuring with multiple layers of protection
-  // This prevents "Cannot destructure property 'data' of undefined" errors
-  let session: any = null;
-  let sessionStatus: string = 'unauthenticated';
-  
-  try {
-    if (sessionResult && typeof sessionResult === 'object' && 'data' in sessionResult) {
-      session = sessionResult.data || null;
-      sessionStatus = sessionResult.status || 'unauthenticated';
+  // Sync session from useSession hook after mount
+  useEffect(() => {
+    if (sessionResult && typeof sessionResult === 'object') {
+      try {
+        if ('data' in sessionResult) {
+          setSession(sessionResult.data || null);
+          setSessionStatus(sessionResult.status || 'unauthenticated');
+        }
+      } catch (error) {
+        console.warn('[AdminLayout] Error syncing session:', error);
+        setSession(null);
+        setSessionStatus('unauthenticated');
+      }
+    } else {
+      // Fallback: try to get session directly
+      getSession().then((s) => {
+        if (s) {
+          setSession(s);
+          setSessionStatus('authenticated');
+        } else {
+          setSession(null);
+          setSessionStatus('unauthenticated');
+        }
+      }).catch(() => {
+        setSession(null);
+        setSessionStatus('unauthenticated');
+      });
     }
-  } catch (error) {
-    // If destructuring fails, use safe defaults
-    console.warn('[AdminLayout] Error destructuring session, using safe defaults:', error);
-    session = null;
-    sessionStatus = 'unauthenticated';
-  }
+  }, [sessionResult]);
 
   useEffect(() => {
     // Only set mounted to true after browser loads
