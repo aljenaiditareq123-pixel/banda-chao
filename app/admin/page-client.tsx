@@ -1,62 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { productsAPI, ordersAPI, usersAPI } from '@/lib/api';
 import { Package, ShoppingCart, Users, DollarSign } from 'lucide-react';
 
+/**
+ * HARDCODE MODE: Force return static data immediately
+ * No loading states, no API calls, no delays
+ */
 export default function AdminDashboardClient() {
-  const { user, loading } = useAuth();
-  const [stats, setStats] = useState({
-    products: 0,
-    orders: 0,
-    users: 0,
-    revenue: 0,
-  });
-  const [loadingStats, setLoadingStats] = useState(true);
-
-  useEffect(() => {
-    if (!loading && user && (user.role === 'ADMIN' || user.role === 'FOUNDER')) {
-      fetchStats();
-    }
-  }, [user, loading]);
-
-  const fetchStats = async () => {
-    // HARDCODE MODE - Return dummy data, no API calls
-    try {
-      setLoadingStats(true);
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Return static dummy data
-      setStats({
-        products: 150,
-        orders: 500,
-        users: 1200,
-        revenue: 50000,
-      });
-    } catch (error) {
-      console.error('Error fetching stats:', error);
-      // Fallback to dummy data even on error
-      setStats({
-        products: 150,
-        orders: 500,
-        users: 1200,
-        revenue: 50000,
-      });
-    } finally {
-      setLoadingStats(false);
-    }
+  // FORCE STATIC DATA - NO LOADING, NO DELAYS
+  const stats = {
+    products: 150,
+    orders: 5000, // Changed to 5000 as requested
+    users: 1200,
+    revenue: 50000,
   };
-
-  if (loading || loadingStats) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
 
   const statCards = [
     {
