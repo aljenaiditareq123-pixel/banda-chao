@@ -3,7 +3,6 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { getSession } from 'next-auth/react';
 import Link from 'next/link';
 import { 
   Package, 
@@ -29,34 +28,7 @@ export default function AdminLayoutClient({
   // Hooks must be called unconditionally (React requirement)
   const router = useRouter();
   const pathname = usePathname(); // Get current pathname for active link highlighting
-  const { user: jwtUser, loading: jwtLoading } = useAuth();
-  
-  // Use getSession instead of useSession to avoid React hooks error #310
-  // This prevents hydration mismatches and hooks violations
-  const [session, setSession] = useState<any>(null);
-  const [sessionStatus, setSessionStatus] = useState<string>('loading');
-  
-  // Fetch session only after mount to prevent SSR issues
-  useEffect(() => {
-    if (!mounted) return;
-    
-    // Fetch session using getSession (doesn't require SessionProvider)
-    getSession()
-      .then((s) => {
-        if (s) {
-          setSession(s);
-          setSessionStatus('authenticated');
-        } else {
-          setSession(null);
-          setSessionStatus('unauthenticated');
-        }
-      })
-      .catch((error) => {
-        console.warn('[AdminLayout] Error fetching session:', error);
-        setSession(null);
-        setSessionStatus('unauthenticated');
-      });
-  }, [mounted]);
+  const { user, loading } = useAuth();
 
   useEffect(() => {
     // Only set mounted to true after browser loads
@@ -80,15 +52,8 @@ export default function AdminLayoutClient({
     return <LoadingState fullScreen />;
   }
 
-  // Merge user data from both JWT and NextAuth
-  const user = jwtUser || (session?.user ? {
-    id: (session.user as any).id || '',
-    email: session.user.email || '',
-    name: session.user.name || '',
-    role: (session.user as any).role || 'BUYER',
-  } : null);
-  
-  const loading = jwtLoading || sessionStatus === 'loading';
+  // Use only JWT auth from useAuth hook (simpler and more reliable)
+  // No NextAuth session needed - useAuth handles JWT tokens from localStorage
 
   useEffect(() => {
     if (!loading && router) {
