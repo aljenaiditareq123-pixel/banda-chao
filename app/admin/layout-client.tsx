@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { useSession, getSession } from 'next-auth/react';
+import { getSession } from 'next-auth/react';
 import Link from 'next/link';
 import { 
   Package, 
@@ -31,29 +31,18 @@ export default function AdminLayoutClient({
   const pathname = usePathname(); // Get current pathname for active link highlighting
   const { user: jwtUser, loading: jwtLoading } = useAuth();
   
-  // Safe useSession - NextAuth's useSession can return undefined during SSR
-  // Use required: false to make it SSR-safe and prevent crashes
-  // Also use state to store session to prevent hydration mismatches
+  // Use getSession instead of useSession to avoid React hooks error #310
+  // This prevents hydration mismatches and hooks violations
   const [session, setSession] = useState<any>(null);
-  const [sessionStatus, setSessionStatus] = useState<string>('unauthenticated');
-  const sessionResult = useSession({ required: false });
+  const [sessionStatus, setSessionStatus] = useState<string>('loading');
   
-  // Sync session from useSession hook after mount
+  // Fetch session only after mount to prevent SSR issues
   useEffect(() => {
-    if (sessionResult && typeof sessionResult === 'object') {
-      try {
-        if ('data' in sessionResult) {
-          setSession(sessionResult.data || null);
-          setSessionStatus(sessionResult.status || 'unauthenticated');
-        }
-      } catch (error) {
-        console.warn('[AdminLayout] Error syncing session:', error);
-        setSession(null);
-        setSessionStatus('unauthenticated');
-      }
-    } else {
-      // Fallback: try to get session directly
-      getSession().then((s) => {
+    if (!mounted) return;
+    
+    // Fetch session using getSession (doesn't require SessionProvider)
+    getSession()
+      .then((s) => {
         if (s) {
           setSession(s);
           setSessionStatus('authenticated');
@@ -61,12 +50,13 @@ export default function AdminLayoutClient({
           setSession(null);
           setSessionStatus('unauthenticated');
         }
-      }).catch(() => {
+      })
+      .catch((error) => {
+        console.warn('[AdminLayout] Error fetching session:', error);
         setSession(null);
         setSessionStatus('unauthenticated');
       });
-    }
-  }, [sessionResult]);
+  }, [mounted]);
 
   useEffect(() => {
     // Only set mounted to true after browser loads
