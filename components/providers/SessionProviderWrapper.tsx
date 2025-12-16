@@ -7,5 +7,14 @@ export default function SessionProviderWrapper({
 }: {
   children: React.ReactNode;
 }) {
-  return <SessionProvider>{children}</SessionProvider>;
+  // Add basePath and refetchInterval for better compatibility
+  return (
+    <SessionProvider
+      basePath="/api/auth"
+      refetchInterval={0}
+      refetchOnWindowFocus={false}
+    >
+      {children}
+    </SessionProvider>
+  );
 }
