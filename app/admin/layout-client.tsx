@@ -56,7 +56,7 @@ export default function AdminLayoutClient({
         setSession(null);
         setSessionStatus('unauthenticated');
       });
-  }, [mounted]);
+  }, [mounted]); [mounted]);
 
   useEffect(() => {
     // Only set mounted to true after browser loads
