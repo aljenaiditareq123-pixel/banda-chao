@@ -93,8 +93,40 @@ router.post('/register', validate(registerSchema), async (req: Request, res: Res
       token, // Still return token for client-side storage (backward compatibility)
     });
   } catch (error: any) {
-    console.error('Register error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    // Enhanced error logging for database connection issues
+    console.error('[REGISTER_ERROR]', {
+      message: error.message,
+      code: error.code,
+      meta: error.meta,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+    });
+    
+    // Check if it's a database connection error
+    const isConnectionError = 
+      error.message?.includes('connection') ||
+      error.message?.includes('connect') ||
+      error.message?.includes('SSL') ||
+      error.code === 'P1001' || // Prisma connection error
+      error.code === 'ECONNREFUSED' ||
+      error.code === 'P1000' || // Authentication failed
+      error.code === 'P1003'; // Database not found
+    
+    // Return more specific error message
+    if (isConnectionError) {
+      return res.status(500).json({ 
+        error: 'Database connection error',
+        message: 'Unable to connect to database. Please check DATABASE_URL configuration.',
+        details: process.env.NODE_ENV === 'development' ? {
+          code: error.code,
+          message: error.message,
+        } : undefined,
+      });
+    }
+    
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: process.env.NODE_ENV === 'development' ? error.message : 'An error occurred during registration',
+    });
   }
 });
 
