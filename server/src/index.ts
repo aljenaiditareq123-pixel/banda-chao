@@ -123,6 +123,11 @@ const allowedOriginPatterns: (string | RegExp)[] = NODE_ENV === 'production'
       'https://banda-chao.vercel.app',
       'https://banda-chao-frontend.onrender.com',
       'https://banda-chao.onrender.com',
+      // LOCAL DEVELOPMENT against production API (for testing)
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://localhost:10000',
+      /^http:\/\/localhost:\d+$/, // Allow any localhost port
       // Vercel Preview URLs (dynamic - using regex pattern)
       /^https:\/\/.*\.vercel\.app$/, // Matches all *.vercel.app subdomains
       // Render URLs
