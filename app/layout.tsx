@@ -4,6 +4,7 @@ import { LanguageProvider } from '@/contexts/LanguageContext'
 import EnvCheckInit from '@/components/common/EnvCheckInit'
 import { ErrorBoundary } from '@/components/common/ErrorBoundary'
 import ChatWidget from '@/components/common/ChatWidget'
+import VirtualHost from '@/components/avatar/VirtualHost'
 
 // Get base URL for metadataBase
 const metadataBaseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 
@@ -60,6 +61,7 @@ export default function RootLayout({
           <LanguageProvider defaultLanguage="ar">
             {children}
             <ChatWidget />
+            <VirtualHost />
           </LanguageProvider>
         </ErrorBoundary>
       </body>
