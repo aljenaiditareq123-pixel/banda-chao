@@ -73,6 +73,12 @@ import { testDatabaseConnection } from './utils/db-connection-test';
 
 checkBackendEnv();
 
+// Fix database schema issues on startup (role column enum to varchar)
+import { fixRoleColumn } from './utils/fix-role-column';
+fixRoleColumn().catch((err) => {
+  console.warn('[STARTUP] ⚠️ Database fix error (non-fatal):', err);
+});
+
 // Test database connection on startup (development only)
 if (process.env.NODE_ENV === 'development' || process.env.TEST_DB_ON_START === 'true') {
   testDatabaseConnection()
