@@ -26,6 +26,7 @@ import { MessageCircle, Factory, Shield, Lock, Plane } from 'lucide-react';
 import GroupBuyWidget from '@/components/product/GroupBuyWidget';
 import ProductPoster from '@/components/product/ProductPoster';
 import VirtualTryOn from '@/components/product/VirtualTryOn';
+import MagicVideoGenerator from '@/components/product/MagicVideoGenerator';
 
 interface Maker {
   id: string;
@@ -723,6 +724,14 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
                   <span className="text-xl">🐼</span>
                   {locale === 'ar' ? 'تفاوض مع الباندا' : locale === 'zh' ? '与熊猫讨价还价' : 'Haggle with Panda'}
                 </Button>
+
+                {/* Magic Video Generator - Create marketing video from product images */}
+                <MagicVideoGenerator
+                  productName={product.name}
+                  productPrice={formatPrice(product.price, product.currency || 'USD')}
+                  productImages={images.map(img => ({ url: img.url || img, alt: product.name }))}
+                  locale={locale}
+                />
               </div>
 
               {/* Group Buy Button */}

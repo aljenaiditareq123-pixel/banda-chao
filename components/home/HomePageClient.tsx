@@ -16,6 +16,7 @@ import OnboardingModal from '@/components/common/OnboardingModal';
 import RedEnvelope from '@/components/RedEnvelope';
 import MysteryBox from '@/components/MysteryBox';
 import LuckyWheel from '@/components/LuckyWheel';
+import SocialBlindBox from '@/components/blindbox/SocialBlindBox';
 import LiveStreamModal from '@/components/LiveStreamModal';
 import FameEngine from '@/components/home/FameEngine';
 import HeroSlider from '@/components/home/HeroSlider';
@@ -491,6 +492,13 @@ export default function HomePageClient({
       <section className="py-16 bg-gradient-to-b from-gray-50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <MysteryBox />
+        </div>
+      </section>
+
+      {/* 🎁 NEW: Social Blind Box - Viral Marketing Feature */}
+      <section className="py-16 bg-gradient-to-b from-slate-900 via-purple-900/50 to-slate-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <SocialBlindBox />
         </div>
       </section>
 
