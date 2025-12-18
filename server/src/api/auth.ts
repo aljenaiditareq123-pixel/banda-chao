@@ -41,17 +41,19 @@ router.post('/register', validate(registerSchema), async (req: Request, res: Res
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Validate role
-    const userRole = role && ['FOUNDER', 'MAKER', 'BUYER', 'ADMIN'].includes(role) 
+    // Validate role - Use USER as default (matches schema default)
+    // Accepted roles: FOUNDER, MAKER, USER, ADMIN
+    const userRole = role && ['FOUNDER', 'MAKER', 'USER', 'ADMIN'].includes(role) 
       ? role 
-      : 'BUYER';
+      : 'USER';
 
     // Create user (using raw SQL since table is 'users' not 'User')
     // Store email in lowercase for consistency
+    // NOTE: Role is now a String field, no enum cast needed
     const userId = randomUUID();
     await prisma.$executeRaw`
       INSERT INTO users (id, email, password, name, role, created_at, updated_at)
-      VALUES (${userId}, ${normalizedEmail}, ${hashedPassword}, ${name}, ${userRole}::"UserRole", NOW(), NOW());
+      VALUES (${userId}, ${normalizedEmail}, ${hashedPassword}, ${name}, ${userRole}, NOW(), NOW());
     `;
 
     // Fetch the created user
