@@ -185,5 +185,100 @@ router.get('/seed-products', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * Admin API: Promote User to FOUNDER
+ * POST /api/v1/admin/promote-founder
+ * 
+ * Body: { email: string, secret: string }
+ * The secret must match ADMIN_PROMOTE_SECRET env var
+ */
+router.post('/promote-founder', async (req: Request, res: Response) => {
+  try {
+    const { email, secret } = req.body;
+    
+    // Security: Require a secret key to prevent unauthorized access
+    const ADMIN_SECRET = process.env.ADMIN_PROMOTE_SECRET || 'banda-chao-founder-2024';
+    
+    if (secret !== ADMIN_SECRET) {
+      console.warn(`⚠️ [Admin API] Unauthorized promote attempt for: ${email}`);
+      return res.status(403).json({
+        success: false,
+        message: 'Unauthorized: Invalid secret',
+      });
+    }
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required',
+      });
+    }
+
+    console.log(`🔍 [Admin API] Looking for user: ${email}`);
+
+    // Find the user
+    const user = await prisma.users.findFirst({
+      where: {
+        email: {
+          equals: email,
+          mode: 'insensitive',
+        },
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: `User not found: ${email}`,
+      });
+    }
+
+    console.log(`✅ [Admin API] Found user: ${user.email}, current role: ${user.role}`);
+
+    if (user.role === 'FOUNDER') {
+      return res.json({
+        success: true,
+        message: 'User is already a FOUNDER',
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+        },
+      });
+    }
+
+    // Update role to FOUNDER
+    const updatedUser = await prisma.users.update({
+      where: { id: user.id },
+      data: { 
+        role: 'FOUNDER',
+        updated_at: new Date(),
+      },
+    });
+
+    console.log(`🎉 [Admin API] Successfully promoted ${email} to FOUNDER`);
+
+    res.json({
+      success: true,
+      message: `Successfully promoted ${email} to FOUNDER`,
+      user: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        name: updatedUser.name,
+        role: updatedUser.role,
+      },
+    });
+
+  } catch (error: any) {
+    console.error('❌ [Admin API] Error promoting user:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to promote user',
+      error: error.message,
+    });
+  }
+});
+
 export default router;
 
