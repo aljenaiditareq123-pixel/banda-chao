@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, X, Loader2, TrendingUp, Clock, Camera, Sparkles } from 'lucide-react';
+import { Search, X, Loader2, TrendingUp, Clock, Camera, Sparkles, Mic } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { searchAPI } from '@/lib/api';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -25,12 +25,66 @@ export default function SmartSearchBar({ locale, className = '', onSearch }: Sma
   const [isScanning, setIsScanning] = useState(false);
   const [similarProducts, setSimilarProducts] = useState<any[]>([]);
   const [showSimilarProducts, setShowSimilarProducts] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeechSupported, setIsSpeechSupported] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const recognitionRef = useRef<any>(null);
 
   // Debounce query for suggestions
   const debouncedQuery = useDebounce(query, 300);
+
+  // Check if Web Speech API is supported
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      setIsSpeechSupported(!!SpeechRecognition);
+    }
+  }, []);
+
+  // Initialize Speech Recognition
+  useEffect(() => {
+    if (typeof window !== 'undefined' && isSpeechSupported) {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = locale === 'ar' ? 'ar-SA' : locale === 'zh' ? 'zh-CN' : 'en-US';
+
+        recognition.onstart = () => {
+          setIsListening(true);
+        };
+
+        recognition.onresult = (event: any) => {
+          const transcript = event.results[0][0].transcript;
+          setQuery(transcript);
+          setIsListening(false);
+          // Auto-trigger search after voice input
+          setTimeout(() => {
+            handleSearch(transcript);
+          }, 100);
+        };
+
+        recognition.onerror = (event: any) => {
+          console.error('Speech recognition error:', event.error);
+          setIsListening(false);
+          if (event.error === 'no-speech') {
+            alert(locale === 'ar' ? 'لم يتم اكتشاف أي كلام' : locale === 'zh' ? '未检测到语音' : 'No speech detected');
+          } else if (event.error === 'not-allowed') {
+            alert(locale === 'ar' ? 'السماح بالوصول إلى الميكروفون مطلوب' : locale === 'zh' ? '需要麦克风权限' : 'Microphone permission required');
+          }
+        };
+
+        recognition.onend = () => {
+          setIsListening(false);
+        };
+
+        recognitionRef.current = recognition;
+      }
+    }
+  }, [locale, isSpeechSupported]);
 
   // Load popular searches on mount
   useEffect(() => {
@@ -203,6 +257,27 @@ export default function SmartSearchBar({ locale, className = '', onSearch }: Sma
     fileInputRef.current?.click();
   };
 
+  const handleVoiceSearch = () => {
+    if (!isSpeechSupported) {
+      alert(locale === 'ar' ? 'ميزة البحث الصوتي غير مدعومة في متصفحك' : locale === 'zh' ? '您的浏览器不支持语音搜索' : 'Voice search is not supported in your browser');
+      return;
+    }
+
+    if (recognitionRef.current) {
+      if (isListening) {
+        recognitionRef.current.stop();
+        setIsListening(false);
+      } else {
+        try {
+          recognitionRef.current.start();
+        } catch (error) {
+          console.error('Failed to start recognition:', error);
+          setIsListening(false);
+        }
+      }
+    }
+  };
+
   const placeholder = {
     ar: 'ابحث بذكاء... (مثال: شيء سريع للكتابة)',
     en: 'Search intelligently... (e.g., something fast for writing)',
@@ -238,15 +313,40 @@ export default function SmartSearchBar({ locale, className = '', onSearch }: Sma
             }}
             onFocus={() => setIsOpen(true)}
             placeholder={placeholder[locale as keyof typeof placeholder] || placeholder.en}
-            className={`block w-full ${locale === 'ar' ? 'pr-20 pl-10' : 'pl-12 pr-20'} py-3 border-2 ${
+            className={`block w-full ${locale === 'ar' ? 'pr-28 pl-10' : 'pl-12 pr-28'} py-3 border-2 ${
               isOpen ? 'border-primary-500' : 'border-gray-300'
             } rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all shadow-sm`}
           />
+          {/* Microphone Icon Button */}
+          <motion.button
+            type="button"
+            onClick={handleVoiceSearch}
+            disabled={!isSpeechSupported}
+            className={`absolute inset-y-0 ${locale === 'ar' ? 'left-10' : 'right-10'} flex items-center pr-2 pl-2 z-10 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors relative ${
+              !isSpeechSupported ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+            aria-label={locale === 'ar' ? 'البحث بالصوت' : locale === 'zh' ? '语音搜索' : 'Voice search'}
+            title={locale === 'ar' ? 'البحث بالصوت' : locale === 'zh' ? '语音搜索' : 'Voice search'}
+          >
+            <motion.div
+              animate={isListening ? { scale: [1, 1.2, 1] } : {}}
+              transition={{ duration: 0.5, repeat: isListening ? Infinity : 0 }}
+            >
+              <Mic className={`w-5 h-5 ${isListening ? 'text-red-500' : 'text-gray-400 hover:text-primary-500'}`} />
+            </motion.div>
+            {isListening && (
+              <motion.div
+                className="absolute inset-0 rounded-full bg-red-500/20"
+                animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
+                transition={{ duration: 1, repeat: Infinity }}
+              />
+            )}
+          </motion.button>
           {/* Camera Icon Button */}
           <motion.button
             type="button"
             onClick={handleCameraClick}
-            className={`absolute inset-y-0 ${locale === 'ar' ? 'left-10' : 'right-10'} flex items-center pr-2 pl-2 z-10 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors`}
+            className={`absolute inset-y-0 ${locale === 'ar' ? 'left-20' : 'right-20'} flex items-center pr-2 pl-2 z-10 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors`}
             aria-label={locale === 'ar' ? 'البحث بالصورة' : locale === 'zh' ? '图片搜索' : 'Search by image'}
           >
             <Camera className="w-5 h-5 text-gray-400 hover:text-primary-500 transition-colors" />
