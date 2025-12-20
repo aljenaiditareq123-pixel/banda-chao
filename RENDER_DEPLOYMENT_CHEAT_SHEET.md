@@ -12,10 +12,16 @@
 npm install --legacy-peer-deps && prisma generate && npm run build
 ```
 
-### Start Command:
+### Start Command (Option 1 - Recommended):
+```bash
+npm start
+```
+
+### Start Command (Option 2 - Standalone Mode):
 ```bash
 cd .next/standalone && node server.js
 ```
+**Note:** Use Option 1 (`npm start`) if standalone folder doesn't exist. It's more stable and works with standard Next.js build output.
 
 ---
 
