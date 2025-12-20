@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { notificationsAPI } from '@/lib/api';
+import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/hooks/useAuth';
 import Button from '@/components/Button';
 
 interface Notification {
@@ -13,11 +15,19 @@ interface Notification {
   createdAt: string;
 }
 
-export default function NotificationBell() {
+interface NotificationBellProps {
+  locale?: string;
+}
+
+export default function NotificationBell({ locale = 'ar' }: NotificationBellProps) {
+  const { items: cartItems } = useCart();
+  const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [smartNotification, setSmartNotification] = useState<string | null>(null);
+  const [loadingSmartNotification, setLoadingSmartNotification] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -26,6 +36,54 @@ export default function NotificationBell() {
     const interval = setInterval(fetchNotifications, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  // Generate smart notification based on user activity
+  useEffect(() => {
+    const generateSmartNotification = async () => {
+      // Only generate if user is logged in and has activity
+      if (!user || (!cartItems || cartItems.length === 0)) {
+        return;
+      }
+
+      try {
+        setLoadingSmartNotification(true);
+        const response = await fetch('/api/ai/notifications', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            cartItems: cartItems.map(item => ({
+              name: item.name,
+              productName: item.name,
+            })),
+            favoriteProducts: [], // TODO: Add favorites when available
+            recentlyViewed: [], // TODO: Add recently viewed when available
+            userName: user.name || undefined,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.message) {
+            setSmartNotification(data.message);
+          }
+        }
+      } catch (error) {
+        console.error('Error generating smart notification:', error);
+      } finally {
+        setLoadingSmartNotification(false);
+      }
+    };
+
+    // Generate smart notification when cart changes
+    if (cartItems && cartItems.length > 0) {
+      const timeoutId = setTimeout(generateSmartNotification, 2000); // Wait 2 seconds after cart update
+      return () => clearTimeout(timeoutId);
+    } else {
+      setSmartNotification(null);
+    }
+  }, [cartItems, user]);
 
   useEffect(() => {
     // Close dropdown when clicking outside
@@ -113,7 +171,9 @@ export default function NotificationBell() {
       {isOpen && (
         <div className="absolute right-0 mt-2 w-80 md:w-96 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-96 overflow-hidden flex flex-col">
           <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-            <h3 className="font-semibold text-gray-900">الإشعارات</h3>
+            <h3 className="font-semibold text-gray-900">
+              {locale === 'ar' ? 'الإشعارات' : locale === 'zh' ? '通知' : 'Notifications'}
+            </h3>
             {unreadCount > 0 && (
               <Button
                 variant="text"
@@ -121,14 +181,37 @@ export default function NotificationBell() {
                 disabled={loading}
                 className="text-sm"
               >
-                تعليم الكل كمقروء
+                {locale === 'ar' ? 'تعليم الكل كمقروء' : locale === 'zh' ? '全部标记为已读' : 'Mark all as read'}
               </Button>
             )}
           </div>
+          
+          {/* Smart AI Notification */}
+          {smartNotification && (
+            <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-200">
+              <div className="flex items-start gap-2">
+                <span className="text-lg">🤖</span>
+                <div className="flex-1">
+                  <p className="text-xs font-semibold text-blue-700 mb-1">
+                    {locale === 'ar' ? 'إشعار ذكي' : locale === 'zh' ? '智能通知' : 'Smart Notification'}
+                  </p>
+                  <p className="text-sm text-gray-800">{smartNotification}</p>
+                </div>
+                <button
+                  onClick={() => setSmartNotification(null)}
+                  className="text-gray-400 hover:text-gray-600 text-xs"
+                  aria-label="Close"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="overflow-y-auto flex-1">
-            {notifications.length === 0 ? (
+            {notifications.length === 0 && !smartNotification ? (
               <div className="p-8 text-center text-gray-500">
-                <p>لا توجد إشعارات</p>
+                <p>{locale === 'ar' ? 'لا توجد إشعارات' : locale === 'zh' ? '没有通知' : 'No notifications'}</p>
               </div>
             ) : (
               <div className="divide-y divide-gray-200">

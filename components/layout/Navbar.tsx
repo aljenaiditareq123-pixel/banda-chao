@@ -98,6 +98,7 @@ export default function Navbar({ locale }: NavbarProps) {
           <SearchBar locale={locale} />
           
           <div className="flex items-center gap-4 relative z-[9999] pointer-events-auto">
+            <NotificationBell locale={locale} />
             <Link 
               href={`/${locale}/makers`} 
               className="text-gray-600 hover:text-gray-900 transition-colors"
@@ -221,7 +222,7 @@ export default function Navbar({ locale }: NavbarProps) {
                 ZH
               </Link>
             </div>
-            <NotificationBell />
+            <NotificationBell locale={locale} />
             {/* Cart Icon */}
             <CartIcon locale={locale} />
           </div>
