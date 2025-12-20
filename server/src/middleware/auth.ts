@@ -10,6 +10,8 @@ export interface AuthRequest extends Request {
     name: string;
     role: string;
   };
+  file?: Express.Multer.File;
+  files?: { [fieldname: string]: Express.Multer.File[] } | Express.Multer.File[];
 }
 
 export function authenticateToken(req: AuthRequest, res: Response, next: NextFunction) {
