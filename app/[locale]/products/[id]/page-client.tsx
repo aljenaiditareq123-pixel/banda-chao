@@ -75,6 +75,9 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
   const [isMobile, setIsMobile] = useState(false);
   const [lowStockCount] = useState(Math.floor(Math.random() * 9) + 1); // Random number 1-9
   const [isTryOnOpen, setIsTryOnOpen] = useState(false);
+  const [translatedDescription, setTranslatedDescription] = useState<string | null>(null);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [showOriginal, setShowOriginal] = useState(false);
 
   // Detect mobile/tablet
   useEffect(() => {
@@ -106,6 +109,45 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
       AED: 'د.إ',
     };
     return `${symbols[currency] || currency} ${price.toLocaleString()}`;
+  };
+
+  const handleTranslate = async () => {
+    if (!product.description) return;
+
+    setIsTranslating(true);
+    try {
+      const response = await fetch('/api/ai/translate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: product.description,
+          targetLanguage: locale === 'ar' ? 'ar' : locale === 'zh' ? 'zh' : 'en',
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Translation failed');
+      }
+
+      const data = await response.json();
+      setTranslatedDescription(data.translatedText);
+      setShowOriginal(false);
+    } catch (error) {
+      console.error('Translation error:', error);
+      alert(locale === 'ar' ? 'فشلت الترجمة. يرجى المحاولة مرة أخرى.' : locale === 'zh' ? '翻译失败，请重试' : 'Translation failed. Please try again.');
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
+  const handleShowOriginal = () => {
+    setShowOriginal(true);
+  };
+
+  const handleShowTranslation = () => {
+    setShowOriginal(false);
   };
 
   const images = product.images || [];
@@ -337,13 +379,64 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
             {/* Description Section */}
             {product.description && (
               <div className="mb-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
-                  <span className="text-2xl">📝</span>
-                  {locale === 'ar' ? 'الوصف' : locale === 'zh' ? '描述' : 'Description'}
-                </h3>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <span className="text-2xl">📝</span>
+                    {locale === 'ar' ? 'الوصف' : locale === 'zh' ? '描述' : 'Description'}
+                  </h3>
+                  {!translatedDescription && (
+                    <button
+                      onClick={handleTranslate}
+                      disabled={isTranslating}
+                      className="flex items-center gap-2 px-3 py-1.5 text-sm bg-primary-50 hover:bg-primary-100 text-primary-600 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title={locale === 'ar' ? 'ترجمة إلى العربية' : locale === 'zh' ? '翻译成中文' : 'Translate to your language'}
+                    >
+                      {isTranslating ? (
+                        <>
+                          <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          <span>{locale === 'ar' ? 'جاري الترجمة...' : locale === 'zh' ? '翻译中...' : 'Translating...'}</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>🌍</span>
+                          <span>{locale === 'ar' ? 'ترجمة' : locale === 'zh' ? '翻译' : 'Translate'}</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+                  {translatedDescription && (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={handleShowOriginal}
+                        disabled={showOriginal}
+                        className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                          showOriginal
+                            ? 'bg-gray-200 text-gray-700 cursor-not-allowed'
+                            : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                        }`}
+                      >
+                        {locale === 'ar' ? 'الأصل' : locale === 'zh' ? '原文' : 'Original'}
+                      </button>
+                      <button
+                        onClick={handleShowTranslation}
+                        disabled={!showOriginal}
+                        className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                          !showOriginal
+                            ? 'bg-primary-100 text-primary-600 cursor-not-allowed'
+                            : 'bg-primary-50 hover:bg-primary-100 text-primary-600'
+                        }`}
+                      >
+                        {locale === 'ar' ? 'المترجم' : locale === 'zh' ? '翻译' : 'Translated'}
+                      </button>
+                    </div>
+                  )}
+                </div>
                 <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
                   <p className="text-gray-700 leading-relaxed whitespace-pre-line">
-                    {product.description}
+                    {translatedDescription && !showOriginal ? translatedDescription : product.description}
                   </p>
                 </div>
               </div>
