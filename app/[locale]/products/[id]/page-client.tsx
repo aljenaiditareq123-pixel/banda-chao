@@ -80,6 +80,12 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
   const [showOriginal, setShowOriginal] = useState(false);
   const [aiRecommendations, setAiRecommendations] = useState<any[]>([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
+  const [reviewSummary, setReviewSummary] = useState<{
+    pros: string[];
+    cons: string[];
+    summary: string;
+  } | null>(null);
+  const [loadingReviewSummary, setLoadingReviewSummary] = useState(false);
 
   // Detect mobile/tablet
   useEffect(() => {
@@ -124,6 +130,40 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
 
     if (product.id) {
       fetchRecommendations();
+    }
+  }, [product.id]);
+
+  // Fetch AI review summary
+  useEffect(() => {
+    const fetchReviewSummary = async () => {
+      try {
+        setLoadingReviewSummary(true);
+        const response = await fetch('/api/ai/summarize-reviews', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            productId: product.id,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.summary) {
+            setReviewSummary(data.summary);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching review summary:', error);
+        // Silently fail - summary is optional
+      } finally {
+        setLoadingReviewSummary(false);
+      }
+    };
+
+    if (product.id) {
+      fetchReviewSummary();
     }
   }, [product.id]);
 
@@ -655,6 +695,62 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
                 {locale === 'ar' ? 'عرض جميع التقييمات →' : locale === 'zh' ? '查看所有评价 →' : 'View All Reviews →'}
               </button>
             </div>
+
+            {/* AI Review Summary */}
+            {reviewSummary && (
+              <div className="mb-6 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+                  <span className="text-2xl">🤖</span>
+                  {locale === 'ar' ? 'ملخص الذكاء الاصطناعي' : locale === 'zh' ? 'AI摘要' : 'AI Summary'}
+                </h3>
+                
+                {reviewSummary.pros.length > 0 && (
+                  <div className="mb-4">
+                    <h4 className="text-sm font-semibold text-green-700 dark:text-green-400 mb-2 flex items-center gap-2">
+                      <span>✅</span>
+                      {locale === 'ar' ? 'إيجابيات' : locale === 'zh' ? '优点' : 'Pros'}
+                    </h4>
+                    <ul className="space-y-1">
+                      {reviewSummary.pros.map((pro, index) => (
+                        <li key={index} className="text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2">
+                          <span className="text-green-500 mt-1">•</span>
+                          <span>{pro}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {reviewSummary.cons.length > 0 && (
+                  <div className="mb-4">
+                    <h4 className="text-sm font-semibold text-orange-700 dark:text-orange-400 mb-2 flex items-center gap-2">
+                      <span>⚠️</span>
+                      {locale === 'ar' ? 'سلبيات' : locale === 'zh' ? '缺点' : 'Cons'}
+                    </h4>
+                    <ul className="space-y-1">
+                      {reviewSummary.cons.map((con, index) => (
+                        <li key={index} className="text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2">
+                          <span className="text-orange-500 mt-1">•</span>
+                          <span>{con}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {reviewSummary.summary && (
+                  <div className="mt-4 pt-4 border-t border-blue-200 dark:border-blue-800">
+                    <h4 className="text-sm font-semibold text-blue-700 dark:text-blue-400 mb-2 flex items-center gap-2">
+                      <span>💡</span>
+                      {locale === 'ar' ? 'الخلاصة النهائية' : locale === 'zh' ? '总结' : 'Summary'}
+                    </h4>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                      {reviewSummary.summary}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Comments Section */}
             {showComments && (
