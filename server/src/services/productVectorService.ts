@@ -122,6 +122,76 @@ export async function searchProductsBySimilarity(
 }
 
 /**
+ * Get related products using vector similarity (Nearest Neighbors)
+ * Finds products similar to the given product based on their embeddings
+ * @param productId - ID of the product to find similar products for
+ * @param limit - Maximum number of recommendations (default: 4)
+ * @param minSimilarity - Minimum similarity score (0-1, default: 0.5)
+ * @returns Array of product IDs with similarity scores
+ */
+export async function getRelatedProducts(
+  productId: string,
+  limit: number = 4,
+  minSimilarity: number = 0.5
+): Promise<ProductSearchResult[]> {
+  try {
+    // Get the embedding for the current product
+    const productEmbedding = await prisma.$queryRawUnsafe<Array<{
+      embedding: string;
+      metadata: any;
+    }>>(
+      `SELECT embedding, metadata
+       FROM ai_memories
+       WHERE metadata->>'productId' = $1
+         AND metadata->>'type' = 'product'
+         AND embedding IS NOT NULL
+       LIMIT 1`,
+      productId
+    );
+
+    if (productEmbedding.length === 0 || !productEmbedding[0].embedding) {
+      console.log(`[ProductVectorService] No embedding found for product: ${productId}`);
+      return [];
+    }
+
+    const embeddingString = productEmbedding[0].embedding;
+    
+    // Find nearest neighbors (similar products) excluding the current product
+    const results = await prisma.$queryRawUnsafe<Array<{
+      id: string;
+      metadata: any;
+      similarity: number;
+    }>>(
+      `SELECT 
+        id,
+        metadata,
+        1 - (embedding <=> $1::vector) as similarity
+      FROM ai_memories
+      WHERE metadata->>'type' = 'product'
+        AND metadata->>'productId' != $2
+        AND embedding IS NOT NULL
+        AND (1 - (embedding <=> $1::vector)) >= $3
+      ORDER BY embedding <=> $1::vector
+      LIMIT $4`,
+      embeddingString,
+      productId,
+      minSimilarity,
+      limit
+    );
+
+    return results.map(result => ({
+      productId: result.metadata?.productId || '',
+      similarity: result.similarity || 0,
+      name: result.metadata?.name,
+      category: result.metadata?.category,
+    }));
+  } catch (error: any) {
+    console.error(`[ProductVectorService] Failed to get related products for ${productId}:`, error);
+    return [];
+  }
+}
+
+/**
  * Delete product embedding
  */
 export async function deleteProductEmbedding(productId: string): Promise<void> {

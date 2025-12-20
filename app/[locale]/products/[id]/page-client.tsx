@@ -78,6 +78,8 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
   const [translatedDescription, setTranslatedDescription] = useState<string | null>(null);
   const [isTranslating, setIsTranslating] = useState(false);
   const [showOriginal, setShowOriginal] = useState(false);
+  const [aiRecommendations, setAiRecommendations] = useState<any[]>([]);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(false);
 
   // Detect mobile/tablet
   useEffect(() => {
@@ -99,6 +101,31 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
       }
     }
   }, []);
+
+  // Fetch AI-powered recommendations
+  useEffect(() => {
+    const fetchRecommendations = async () => {
+      try {
+        setLoadingRecommendations(true);
+        const response = await fetch(`/api/products/${product.id}/recommendations`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.products && data.products.length > 0) {
+            setAiRecommendations(data.products);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching AI recommendations:', error);
+        // Silently fail - recommendations are optional
+      } finally {
+        setLoadingRecommendations(false);
+      }
+    };
+
+    if (product.id) {
+      fetchRecommendations();
+    }
+  }, [product.id]);
 
   const formatPrice = (price: number, currency: string = 'USD') => {
     const symbols: Record<string, string> = {
@@ -999,10 +1026,46 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
           </div>
         )}
 
-        {/* Related Products */}
+        {/* AI-Powered Recommendations */}
+        {aiRecommendations.length > 0 && (
+          <section className="mt-12">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6 flex items-center gap-2">
+              <span>🎯</span>
+              {locale === 'ar' 
+                ? 'منتجات قد تعجبك'
+                : locale === 'zh'
+                ? '您可能喜欢的产品'
+                : 'You Might Also Like'
+              }
+            </h2>
+            <Grid columns={{ base: 1, sm: 2, md: 3, lg: 4 }} gap="gap-6">
+              {aiRecommendations.map((recommendedProduct) => (
+                <GridItem key={recommendedProduct.id}>
+                  <ProductCard
+                    product={{
+                      id: recommendedProduct.id,
+                      name: recommendedProduct.name || recommendedProduct.displayName || '',
+                      description: recommendedProduct.description || recommendedProduct.displayDescription || '',
+                      imageUrl: recommendedProduct.images?.[0]?.url || recommendedProduct.imageUrl || '',
+                      userId: recommendedProduct.userId || '',
+                      price: recommendedProduct.price,
+                      currency: recommendedProduct.currency,
+                      category: recommendedProduct.category,
+                      createdAt: recommendedProduct.createdAt?.toString() || new Date().toISOString(),
+                      updatedAt: recommendedProduct.updatedAt?.toString() || new Date().toISOString(),
+                    }}
+                    href={`/${locale}/products/${recommendedProduct.id}`}
+                  />
+                </GridItem>
+              ))}
+            </Grid>
+          </section>
+        )}
+
+        {/* Related Products (from same maker) */}
         {relatedProducts.length > 0 && (
-          <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+          <section className={aiRecommendations.length > 0 ? 'mt-12' : ''}>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">
               {locale === 'ar' 
                 ? `منتجات أخرى من ${product.maker?.displayName || 'نفس الصانع'}`
                 : locale === 'zh'
