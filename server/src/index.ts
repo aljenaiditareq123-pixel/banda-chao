@@ -121,6 +121,8 @@ const allowedOriginPatterns: (string | RegExp)[] = NODE_ENV === 'production'
   ? [
       // Production URLs (exact matches)
       FRONTEND_URL,
+      'https://bandachao.com',
+      'https://www.bandachao.com',
       'https://banda-chao.vercel.app',
       'https://banda-chao-frontend.onrender.com',
       'https://banda-chao.onrender.com',
