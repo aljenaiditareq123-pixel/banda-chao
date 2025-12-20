@@ -7,6 +7,7 @@ import { authenticateToken, AuthRequest, requireRole } from '../middleware/auth'
 import { getCache, setCache, invalidateCachePattern } from '../lib/cache';
 import { uploadToGCS, isGCSConfigured } from '../lib/gcs';
 import { randomUUID } from 'crypto';
+import { storeProductEmbedding } from '../services/productVectorService';
 
 const router = Router();
 
@@ -298,9 +299,10 @@ router.post('/', authenticateToken, requireRole(['MAKER']), upload.single('image
     }
 
     // Create product
+    const productId = randomUUID();
     const product = await prisma.products.create({
       data: {
-        id: randomUUID(),
+        id: productId,
         name: name.trim(),
         description: description.trim(),
         price: priceNum,
@@ -311,6 +313,17 @@ router.post('/', authenticateToken, requireRole(['MAKER']), upload.single('image
         created_at: new Date(),
         updated_at: new Date(),
       },
+    });
+
+    // Generate and store embedding for semantic search (async, non-blocking)
+    storeProductEmbedding(
+      productId,
+      name.trim(),
+      description.trim(),
+      category?.trim() || undefined
+    ).catch(error => {
+      console.error('[Products API] Failed to generate embedding for new product:', error);
+      // Don't fail the request if embedding generation fails
     });
 
     res.status(201).json({
@@ -403,6 +416,35 @@ router.put('/:id', authenticateToken, requireRole(['MAKER']), upload.single('ima
       data: updateData,
     });
 
+    // Update embedding if name, description, or category changed
+    const shouldUpdateEmbedding = name !== undefined || description !== undefined || category !== undefined;
+    if (shouldUpdateEmbedding) {
+      const finalName = name !== undefined ? name.trim() : existingProduct.name;
+      let finalDescription = description !== undefined ? description.trim() : '';
+      const finalCategory = category !== undefined ? (category?.trim() || undefined) : undefined;
+      
+      // Get full product to get description if not provided
+      if (description === undefined) {
+        const fullProduct = await prisma.products.findUnique({
+          where: { id: productId },
+          select: { description: true },
+        });
+        if (fullProduct) {
+          finalDescription = fullProduct.description;
+        }
+      }
+
+      storeProductEmbedding(
+        productId,
+        finalName,
+        finalDescription,
+        finalCategory
+      ).catch(error => {
+        console.error('[Products API] Failed to update embedding for product:', error);
+        // Don't fail the request if embedding generation fails
+      });
+    }
+
     res.json({
       success: true,
       product,
@@ -449,6 +491,13 @@ router.delete('/:id', authenticateToken, requireRole(['MAKER']), async (req: Aut
     // Delete product (hard delete)
     await prisma.products.delete({
       where: { id: productId },
+    });
+
+    // Delete embedding for the product
+    const { deleteProductEmbedding } = await import('../services/productVectorService');
+    deleteProductEmbedding(productId).catch(error => {
+      console.error('[Products API] Failed to delete embedding for product:', error);
+      // Don't fail the request if embedding deletion fails
     });
 
     res.json({

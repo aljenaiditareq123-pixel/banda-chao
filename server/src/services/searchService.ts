@@ -1,10 +1,9 @@
 import { prisma } from '../utils/prisma';
+import { searchProductsBySimilarity } from './productVectorService';
 
 /**
  * Semantic Search Service
- * Extracts keywords from natural language queries and searches intelligently
- * 
- * Future: This will be replaced with Vector Database & Embeddings
+ * Uses Vector Embeddings for semantic search + keyword-based search as fallback
  */
 
 interface SearchResult {
@@ -96,11 +95,113 @@ export async function searchProducts(
     offset = 0,
   } = options;
 
-  // Extract keywords from query
+  // Try semantic search first (vector-based)
+  try {
+    const semanticResults = await searchProductsBySimilarity(query, limit * 2, 0.3);
+    
+    if (semanticResults.length > 0) {
+      // Get product IDs from semantic search
+      const productIds = semanticResults.map(r => r.productId);
+      
+      // Build WHERE clause with product IDs
+      const conditions: string[] = [];
+      const params: any[] = [];
+      let paramIndex = 1;
+
+      // Filter by product IDs from semantic search
+      if (productIds.length > 0) {
+        // Use parameterized query for safety
+        const placeholders = productIds.map((_, idx) => `$${paramIndex + idx}`).join(',');
+        conditions.push(`p.id IN (${placeholders})`);
+        params.push(...productIds);
+        paramIndex += productIds.length;
+      }
+
+      // Category filter
+      if (category) {
+        conditions.push(`p.category = $${paramIndex}`);
+        params.push(category);
+        paramIndex++;
+      }
+
+      // Price filters
+      if (minPrice !== undefined) {
+        conditions.push(`p.price >= $${paramIndex}`);
+        params.push(minPrice);
+        paramIndex++;
+      }
+
+      if (maxPrice !== undefined) {
+        conditions.push(`p.price <= $${paramIndex}`);
+        params.push(maxPrice);
+        paramIndex++;
+      }
+
+      const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+      // Execute search with semantic ordering
+      // Note: Using NULL for columns that may not exist in actual DB schema
+      const products = await prisma.$queryRawUnsafe<Array<any>>(`
+        SELECT 
+          p.id,
+          p.name,
+          NULL as name_ar,
+          NULL as name_zh,
+          p.description,
+          NULL as description_ar,
+          NULL as description_zh,
+          p.price,
+          p.category,
+          p.image_url as "imageUrl",
+          p.external_link as "externalLink",
+          p.created_at as "createdAt",
+          p.updated_at as "updatedAt",
+          u.id as "userId",
+          u.name as "userName",
+          u.profile_picture as "userProfilePicture"
+        FROM products p
+        LEFT JOIN users u ON p."user_id" = u.id
+        ${whereClause}
+        ORDER BY 
+          array_position(ARRAY[${productIds.map((_, idx) => `$${paramIndex + idx}::text`).join(',')}], p.id)
+        LIMIT $${paramIndex + productIds.length} OFFSET $${paramIndex + productIds.length + 1}
+      `, ...params, ...productIds, limit, offset);
+
+      // Get total count
+      const countResult = await prisma.$queryRawUnsafe<Array<{ count: bigint }>>(`
+        SELECT COUNT(*) as count
+        FROM products p
+        ${whereClause}
+      `, ...params);
+
+      const total = Number(countResult[0]?.count || 0);
+
+      // Generate suggestions
+      const suggestions = generateSuggestions(query, locale);
+
+      return {
+        products: products.map((p: any) => ({
+          ...p,
+          displayName: locale === 'ar' ? (p.name_ar || p.name) : 
+                       locale === 'zh' ? (p.name_zh || p.name) : p.name,
+          displayDescription: locale === 'ar' ? (p.description_ar || p.description) :
+                              locale === 'zh' ? (p.description_zh || p.description) : p.description,
+        })),
+        total,
+        keywords: extractKeywords(query, locale),
+        suggestions,
+      };
+    }
+  } catch (error: any) {
+    console.error('[SearchService] Semantic search failed, falling back to keyword search:', error);
+    // Fall through to keyword search
+  }
+
+  // Fallback to keyword-based search
   const keywords = extractKeywords(query, locale);
   
   if (keywords.length === 0) {
-    // Fallback to simple LIKE search
+    // Final fallback to simple LIKE search
     return await simpleSearch(query, { category, minPrice, maxPrice, limit, offset });
   }
 
@@ -146,15 +247,16 @@ export async function searchProducts(
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
   // Execute search
+  // Note: Using NULL for columns that may not exist in actual DB schema
   const products = await prisma.$queryRawUnsafe<Array<any>>(`
     SELECT 
       p.id,
       p.name,
-      p.name_ar,
-      p.name_zh,
+      NULL as name_ar,
+      NULL as name_zh,
       p.description,
-      p.description_ar,
-      p.description_zh,
+      NULL as description_ar,
+      NULL as description_zh,
       p.price,
       p.category,
       p.image_url as "imageUrl",
@@ -249,15 +351,16 @@ async function simpleSearch(
 
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
+  // Note: Using NULL for columns that may not exist in actual DB schema
   const products = await prisma.$queryRawUnsafe<Array<any>>(`
     SELECT 
       p.id,
       p.name,
-      p.name_ar,
-      p.name_zh,
+      NULL as name_ar,
+      NULL as name_zh,
       p.description,
-      p.description_ar,
-      p.description_zh,
+      NULL as description_ar,
+      NULL as description_zh,
       p.price,
       p.category,
       p.image_url as "imageUrl",
