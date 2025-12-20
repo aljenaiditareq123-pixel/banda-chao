@@ -1,12 +1,14 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
+  provider   = "postgresql"
+  extensions = [vector]
   // Note: In Prisma 7+, URL should be in prisma.config.ts or passed to PrismaClient
   // For now, we'll use the traditional approach compatible with Prisma 6
-  url      = env("DATABASE_URL")
+  url = env("DATABASE_URL")
 }
 
 // ============================================
@@ -901,5 +903,19 @@ model beta_applications {
   created_at     DateTime @default(now())
 
   @@index([email])
+  @@index([created_at])
+}
+
+// ============================================
+// AI NEURO-GENESIS - نظام الذاكرة المتجهة
+// ============================================
+
+model ai_memories {
+  id        String   @id @default(uuid())
+  content   String   @db.Text
+  embedding Unsupported("vector(1536)") // OpenAI embeddings dimension
+  metadata  Json?
+  created_at DateTime @default(now())
+
   @@index([created_at])
 }

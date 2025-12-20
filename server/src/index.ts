@@ -25,6 +25,7 @@ import postRoutes from './api/posts';
 import likeRoutes from './api/likes';
 import commentRoutes from './api/comments';
 import aiRoutes from './api/ai';
+import brainAiRoutes from './routes/aiRoutes';
 import paymentRoutes from './api/payments';
 import analyticsRoutes from './api/analytics';
 import orderRoutes from './api/orders';
@@ -322,6 +323,7 @@ app.use('/api/v1/posts', postRoutes);
 app.use('/api/v1/likes', likeRoutes);
 app.use('/api/v1/comments', commentRoutes);
 app.use('/api/v1/ai', aiLimiter, aiRoutes);
+app.use('/api/ai', brainAiRoutes); // AI Brain routes (Neuro-Genesis)
 app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
 app.use('/api/v1/orders', orderRoutes);

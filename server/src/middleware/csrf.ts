@@ -127,6 +127,10 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
   // Get full path (including base path if mounted)
   const fullPath = req.path;
   const originalUrl = req.originalUrl || req.url;
+  const baseUrl = req.baseUrl || '';
+  
+  // Build complete path for checking
+  const completePath = baseUrl + fullPath;
   
   // Skip CSRF for safe methods
   const safeMethods = ['GET', 'HEAD', 'OPTIONS'];
@@ -156,6 +160,27 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
   // Also check if path matches /api/v1/ai/* pattern (more flexible)
   if (fullPath.startsWith('/api/v1/ai/') || originalUrl.startsWith('/api/v1/ai/')) {
     console.log('[CSRF] ✅ Skipping CSRF check for AI endpoint (pattern match):', fullPath, originalUrl);
+    return next();
+  }
+
+  // Skip CSRF for AI Brain endpoints (/api/ai/*) - Neuro-Genesis phase
+  // Check both originalUrl (full path), completePath, and fullPath
+  const isAiBrainEndpoint = originalUrl.startsWith('/api/ai/') || originalUrl.includes('/api/ai/') || 
+      completePath.startsWith('/api/ai/') || completePath.includes('/api/ai/') ||
+      fullPath.includes('/api/ai/') || (fullPath === '/chat' && baseUrl === '/api/ai');
+  
+  console.log('[CSRF] 🔍 Checking AI Brain endpoint:', { 
+    originalUrl, 
+    fullPath, 
+    completePath, 
+    baseUrl, 
+    isAiBrainEndpoint,
+    startsWithCheck: originalUrl.startsWith('/api/ai/'),
+    includesCheck: originalUrl.includes('/api/ai/')
+  });
+  
+  if (isAiBrainEndpoint) {
+    console.log('[CSRF] ✅ Skipping CSRF check for AI Brain endpoint');
     return next();
   }
 

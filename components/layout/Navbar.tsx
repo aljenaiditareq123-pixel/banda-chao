@@ -69,6 +69,9 @@ export default function Navbar({ locale }: NavbarProps) {
               <Link href={`/${locale}/videos`} className="text-gray-600 hover:text-gray-900">
                 {locale === 'ar' ? 'الفيديوهات' : locale === 'zh' ? '视频' : 'Videos'}
               </Link>
+              <Link href={`/${locale}/chat`} className="text-purple-600 hover:text-purple-700 font-semibold">
+                🧠 {locale === 'ar' ? 'مساعد باندا' : locale === 'zh' ? 'AI助手' : 'AI Assistant'}
+              </Link>
               <Link href={`/${locale}/about`} className="text-gray-600 hover:text-gray-900">
                 {locale === 'ar' ? 'عن' : locale === 'zh' ? '关于' : 'About'}
               </Link>
@@ -138,6 +141,12 @@ export default function Navbar({ locale }: NavbarProps) {
               className="text-green-600 hover:text-green-700 font-semibold transition-colors flex items-center gap-1"
             >
               💳 {locale === 'ar' ? 'المحفظة' : locale === 'zh' ? '钱包' : 'Wallet'}
+            </Link>
+            <Link 
+              href={`/${locale}/chat`} 
+              className="text-purple-600 hover:text-purple-700 font-semibold transition-colors flex items-center gap-1"
+            >
+              🧠 {locale === 'ar' ? 'مساعد باندا' : locale === 'zh' ? 'AI助手' : 'AI Assistant'}
             </Link>
             <Link 
               href={`/${locale}/videos`} 

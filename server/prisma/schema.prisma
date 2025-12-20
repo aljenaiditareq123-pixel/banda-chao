@@ -1,10 +1,12 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider   = "postgresql"
+  extensions = [vector]
+  url        = env("DATABASE_URL")
 }
 
 model comment_likes {
@@ -411,4 +413,18 @@ enum VideoType {
   SHORT  // Short-form content (Reels, TikTok videos)
   LONG   // Long-form content (Documentaries, full videos)
   DEMO   // Product demonstrations
+}
+
+// ============================================
+// AI NEURO-GENESIS - نظام الذاكرة المتجهة
+// ============================================
+
+model ai_memories {
+  id        String   @id @default(uuid())
+  content   String   @db.Text
+  embedding Unsupported("vector(1536)") // OpenAI embeddings dimension
+  metadata  Json?
+  created_at DateTime @default(now())
+
+  @@index([created_at])
 }
