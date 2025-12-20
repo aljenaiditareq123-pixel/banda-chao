@@ -37,6 +37,13 @@ export default function AddProductForm({ locale, onSuccess, onCancel, product }:
   const [submitting, setSubmitting] = useState(false);
   const [generatingDescription, setGeneratingDescription] = useState(false);
   const [analyzingImage, setAnalyzingImage] = useState(false);
+  const [suggestingPrice, setSuggestingPrice] = useState(false);
+  const [priceSuggestion, setPriceSuggestion] = useState<{
+    minPrice: number;
+    maxPrice: number;
+    currency: string;
+    reasoning: string;
+  } | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -89,6 +96,10 @@ export default function AddProductForm({ locale, onSuccess, onCancel, product }:
       nameRequiredForAI: 'يرجى كتابة اسم المنتج أولاً',
       analyzeImage: '👁️ تحليل الصورة وتعبئة البيانات',
       analyzingImage: 'جاري التحليل...',
+      suggestPrice: '💰 اقتراح سعر',
+      suggestingPrice: 'جاري التحليل...',
+      priceSuggestion: 'اقتراح السعر',
+      useSuggestion: 'استخدم هذا السعر',
     },
     en: {
       title: isEditing ? 'Edit Product' : 'Add New Product',
@@ -119,6 +130,10 @@ export default function AddProductForm({ locale, onSuccess, onCancel, product }:
       nameRequiredForAI: 'Please enter product name first',
       analyzeImage: '👁️ Analyze Image & Fill Data',
       analyzingImage: 'Analyzing...',
+      suggestPrice: '💰 Suggest Price',
+      suggestingPrice: 'Analyzing...',
+      priceSuggestion: 'Price Suggestion',
+      useSuggestion: 'Use this price',
     },
     zh: {
       title: isEditing ? '编辑产品' : '添加新产品',
@@ -149,6 +164,10 @@ export default function AddProductForm({ locale, onSuccess, onCancel, product }:
       nameRequiredForAI: '请先输入产品名称',
       analyzeImage: '👁️ 分析图片并填充数据',
       analyzingImage: '分析中...',
+      suggestPrice: '💰 建议价格',
+      suggestingPrice: '正在分析...',
+      priceSuggestion: '价格建议',
+      useSuggestion: '使用此价格',
     },
   };
 
@@ -292,6 +311,61 @@ export default function AddProductForm({ locale, onSuccess, onCancel, product }:
     } finally {
       setGeneratingDescription(false);
     }
+  };
+
+  const handleSuggestPrice = async () => {
+    // Check if product name is filled
+    if (!name.trim()) {
+      setErrors({ ...errors, name: t.nameRequiredForAI });
+      return;
+    }
+
+    try {
+      setSuggestingPrice(true);
+      setPriceSuggestion(null);
+      setErrors({ ...errors, price: '' });
+
+      const response = await fetch('/api/ai/pricing', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          productName: name.trim(),
+          category: category || undefined,
+          description: description.trim() || undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to get price suggestion');
+      }
+
+      const data = await response.json();
+      if (data.minPrice && data.maxPrice) {
+        setPriceSuggestion({
+          minPrice: data.minPrice,
+          maxPrice: data.maxPrice,
+          currency: data.currency || 'AED',
+          reasoning: data.reasoning || '',
+        });
+      } else {
+        throw new Error('No pricing suggestion received');
+      }
+    } catch (error: unknown) {
+      console.error('Error suggesting price:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to get price suggestion';
+      setErrors({ ...errors, price: errorMessage });
+    } finally {
+      setSuggestingPrice(false);
+    }
+  };
+
+  const handleUsePriceSuggestion = (suggestedPrice: number) => {
+    setPrice(suggestedPrice.toString());
+    setCurrency('AED'); // Set currency to AED as per API response
+    setPriceSuggestion(null); // Clear suggestion after use
   };
 
   const validate = (): boolean => {
@@ -470,9 +544,48 @@ export default function AddProductForm({ locale, onSuccess, onCancel, product }:
             {/* Price and Currency */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t.price}
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    {t.price}
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleSuggestPrice}
+                    disabled={suggestingPrice || !name.trim()}
+                    className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-yellow-600 bg-yellow-50 hover:bg-yellow-100 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed rounded-lg transition-colors duration-200 border border-yellow-200 disabled:border-gray-200"
+                  >
+                    {suggestingPrice ? (
+                      <>
+                        <svg
+                          className="animate-spin h-3 w-3"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                        <span>{t.suggestingPrice}</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>💰</span>
+                        <span>{t.suggestPrice}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
                 <input
                   type="number"
                   step="0.01"
@@ -489,6 +602,33 @@ export default function AddProductForm({ locale, onSuccess, onCancel, product }:
                 />
                 {errors.price && (
                   <p className="mt-1 text-sm text-red-600">{errors.price}</p>
+                )}
+                {priceSuggestion && (
+                  <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-start justify-between mb-2">
+                      <span className="text-sm font-semibold text-blue-900">{t.priceSuggestion}:</span>
+                      <button
+                        type="button"
+                        onClick={() => setPriceSuggestion(null)}
+                        className="text-blue-600 hover:text-blue-800 text-xs"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    <div className="text-sm text-blue-800 mb-2">
+                      <span className="font-medium">{priceSuggestion.minPrice.toFixed(2)} - {priceSuggestion.maxPrice.toFixed(2)} {priceSuggestion.currency}</span>
+                    </div>
+                    {priceSuggestion.reasoning && (
+                      <p className="text-xs text-blue-700 mb-2">{priceSuggestion.reasoning}</p>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleUsePriceSuggestion((priceSuggestion.minPrice + priceSuggestion.maxPrice) / 2)}
+                      className="text-xs px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                    >
+                      {t.useSuggestion} ({((priceSuggestion.minPrice + priceSuggestion.maxPrice) / 2).toFixed(2)} {priceSuggestion.currency})
+                    </button>
+                  </div>
                 )}
               </div>
               <div>
