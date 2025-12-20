@@ -15,13 +15,20 @@
 ### Current Status:
 - ✅ **11 out of 12 AI Bricks Completed** (91.7%)
 - ✅ **Core Platform Features:** 100% Complete
-- ⚠️ **Deployment:** Live but experiencing routing issue (JSON response instead of HTML)
-- ✅ **Codebase:** Production-ready with minor fixes needed
+- ✅ **Production Deployment:** Live on `https://bandachao.com`
+- ✅ **Backend API:** `https://banda-chao-backend.onrender.com`
+- ✅ **Codebase:** Production-ready and deployed
+
+### Production Environment:
+- **Frontend URL:** `https://bandachao.com` (Custom Domain via Cloudflare)
+- **Backend API:** `https://banda-chao-backend.onrender.com`
+- **Platform:** Render (Frontend + Backend) + Cloudflare (DNS/CDN)
+- **Database:** Render PostgreSQL
+- **Status:** ✅ **Production Live**
 
 ### Technical Debt:
-1. **Routing Issue:** Requests going to Backend Server instead of Next.js Frontend
-2. **Deployment Configuration:** Need to verify Render settings
-3. **Future:** Trend Spotter feature (Brick 8) - deferred
+1. **Future:** Trend Spotter feature (Brick 8) - deferred
+2. **Monitoring:** Enhanced error tracking and analytics recommended
 
 ---
 
@@ -407,15 +414,15 @@ banda-chao/
    - **Location:** Render Dashboard → Environment Variables
 
 2. **`FRONTEND_URL`:**
-   - **Previous:** `https://banda-chao-frontend.onrender.com` (incorrect)
-   - **Current:** `https://banda-chao.onrender.com`
+   - **Production:** `https://bandachao.com` (Custom Domain)
+   - **Legacy:** `https://banda-chao-frontend.onrender.com` (still works as backup)
    - **Note:** Removed `-frontend` suffix
    - **Location:** Render Dashboard → Environment Variables
 
 3. **`NEXTAUTH_URL`:**
-   - **Previous:** `https://banda-chao-frontend.onrender.com` (incorrect)
-   - **Current:** `https://banda-chao.onrender.com`
-   - **Note:** Matches `FRONTEND_URL`
+   - **Production:** `https://bandachao.com` (Custom Domain)
+   - **Legacy:** `https://banda-chao-frontend.onrender.com` (still works as backup)
+   - **Note:** Matches `FRONTEND_URL` environment variable
    - **Location:** Render Dashboard → Environment Variables
 
 ### 3.3 Current Deployment Issue
