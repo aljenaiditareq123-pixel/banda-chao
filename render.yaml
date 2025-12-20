@@ -6,7 +6,7 @@ services:
     # Optimized build command for Render (uses standalone output)
     # Using npm install with --legacy-peer-deps to handle peer dependency conflicts
     # npm ci is faster but strict about peer deps, so we use npm install for compatibility
-    buildCommand: npm install --legacy-peer-deps && prisma generate && npm run build
+    buildCommand: npm install --legacy-peer-deps && npx prisma generate && npm run build
     # Start command uses standalone server for better performance and lower memory usage
     # Next.js standalone mode automatically copies public and static files during build
     startCommand: cd .next/standalone && node server.js
