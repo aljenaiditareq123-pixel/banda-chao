@@ -919,3 +919,20 @@ model ai_memories {
 
   @@index([created_at])
 }
+
+// ============================================
+// TRANSLATION CACHE - كاش الترجمة
+// ============================================
+
+model translation_cache {
+  id             String   @id @default(uuid())
+  original_text  String   @db.Text
+  target_language String
+  translated_text String  @db.Text
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  @@unique([original_text, target_language])
+  @@index([target_language])
+  @@index([created_at])
+}
