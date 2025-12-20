@@ -6,7 +6,7 @@
     "load-test": "tsx scripts/load-test.ts",
     "cleanup-check": "bash scripts/cleanup-console-logs.sh",
     "dev": "next dev",
-    "build": "next build --webpack",
+    "build": "prisma generate && next build --webpack",
     "start": "next start",
     "start:standalone": "node .next/standalone/server.js",
     "lint": "next lint",
