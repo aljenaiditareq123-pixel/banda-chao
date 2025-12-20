@@ -35,6 +35,8 @@ export default function AddProductForm({ locale, onSuccess, onCancel, product }:
   const [globalError, setGlobalError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [generatingDescription, setGeneratingDescription] = useState(false);
+  const [analyzingImage, setAnalyzingImage] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -82,6 +84,11 @@ export default function AddProductForm({ locale, onSuccess, onCancel, product }:
       priceInvalid: 'السعر يجب أن يكون رقماً صحيحاً',
       imageRequired: 'صورة المنتج مطلوبة',
       submitting: isEditing ? 'جاري الحفظ...' : 'جاري الإضافة...',
+      generateDescription: 'اكتب الوصف بالذكاء الاصطناعي',
+      generatingDescription: 'جاري الكتابة...',
+      nameRequiredForAI: 'يرجى كتابة اسم المنتج أولاً',
+      analyzeImage: '👁️ تحليل الصورة وتعبئة البيانات',
+      analyzingImage: 'جاري التحليل...',
     },
     en: {
       title: isEditing ? 'Edit Product' : 'Add New Product',
@@ -107,6 +114,11 @@ export default function AddProductForm({ locale, onSuccess, onCancel, product }:
       priceInvalid: 'Price must be a valid number',
       imageRequired: 'Product image is required',
       submitting: isEditing ? 'Saving...' : 'Adding...',
+      generateDescription: 'Write Description with AI',
+      generatingDescription: 'Generating...',
+      nameRequiredForAI: 'Please enter product name first',
+      analyzeImage: '👁️ Analyze Image & Fill Data',
+      analyzingImage: 'Analyzing...',
     },
     zh: {
       title: isEditing ? '编辑产品' : '添加新产品',
@@ -132,6 +144,11 @@ export default function AddProductForm({ locale, onSuccess, onCancel, product }:
       priceInvalid: '价格必须是有效数字',
       imageRequired: '产品图片是必需的',
       submitting: isEditing ? '保存中...' : '添加中...',
+      generateDescription: '使用AI编写描述',
+      generatingDescription: '生成中...',
+      nameRequiredForAI: '请先输入产品名称',
+      analyzeImage: '👁️ 分析图片并填充数据',
+      analyzingImage: '分析中...',
     },
   };
 
@@ -159,6 +176,121 @@ export default function AddProductForm({ locale, onSuccess, onCancel, product }:
         setImagePreview(reader.result as string);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleAnalyzeImage = async () => {
+    if (!imagePreview && !imageFile) {
+      setErrors({ ...errors, image: locale === 'ar' ? 'يرجى رفع صورة أولاً' : locale === 'zh' ? '请先上传图片' : 'Please upload an image first' });
+      return;
+    }
+
+    try {
+      setAnalyzingImage(true);
+      setErrors({ ...errors, image: '' });
+
+      // Convert image to base64
+      let imageBase64: string | null = null;
+
+      if (imageFile) {
+        // Convert file to base64
+        imageBase64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const result = reader.result as string;
+            resolve(result);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(imageFile);
+        });
+      } else if (imagePreview) {
+        // Use preview as base64 (it's already base64)
+        imageBase64 = imagePreview;
+      }
+
+      if (!imageBase64) {
+        throw new Error('Failed to convert image to base64');
+      }
+
+      // Send to API
+      const response = await fetch('/api/ai/analyze-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          imageBase64: imageBase64,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to analyze image');
+      }
+
+      const data = await response.json();
+
+      // Fill empty fields only (don't overwrite existing data)
+      if (data.name && !name.trim()) {
+        setName(data.name);
+      }
+      if (data.category && !category) {
+        setCategory(data.category);
+      }
+      if (data.description && !description.trim()) {
+        setDescription(data.description);
+      }
+
+      // Note: We're not storing the color in the form, but we could add it later if needed
+      console.log('Image analysis result:', data);
+    } catch (error: unknown) {
+      console.error('Error analyzing image:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to analyze image';
+      setErrors({ ...errors, image: errorMessage });
+    } finally {
+      setAnalyzingImage(false);
+    }
+  };
+
+  const handleGenerateDescription = async () => {
+    // Check if product name is filled
+    if (!name.trim()) {
+      setErrors({ ...errors, name: t.nameRequiredForAI });
+      return;
+    }
+
+    try {
+      setGeneratingDescription(true);
+      setErrors({ ...errors, description: '' });
+
+      const response = await fetch('/api/ai/generate-description', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          productName: name.trim(),
+          category: category || undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate description');
+      }
+
+      const data = await response.json();
+      if (data.description) {
+        setDescription(data.description);
+      } else {
+        throw new Error('No description received');
+      }
+    } catch (error: unknown) {
+      console.error('Error generating description:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to generate description';
+      setErrors({ ...errors, description: errorMessage });
+    } finally {
+      setGeneratingDescription(false);
     }
   };
 
@@ -275,9 +407,48 @@ export default function AddProductForm({ locale, onSuccess, onCancel, product }:
 
             {/* Description */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t.description} *
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  {t.description} *
+                </label>
+                <button
+                  type="button"
+                  onClick={handleGenerateDescription}
+                  disabled={generatingDescription || !name.trim()}
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-purple-600 bg-purple-50 hover:bg-purple-100 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed rounded-lg transition-colors duration-200 border border-purple-200 disabled:border-gray-200"
+                >
+                  {generatingDescription ? (
+                    <>
+                      <svg
+                        className="animate-spin h-4 w-4"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      <span>{t.generatingDescription}</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>✨</span>
+                      <span>{t.generateDescription}</span>
+                    </>
+                  )}
+                </button>
+              </div>
               <textarea
                 value={description}
                 onChange={(e) => {
@@ -385,19 +556,55 @@ export default function AddProductForm({ locale, onSuccess, onCancel, product }:
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setImageFile(null);
-                      setImagePreview(null);
-                      if (fileInputRef.current) {
-                        fileInputRef.current.value = '';
-                      }
-                    }}
-                    className="text-sm text-primary hover:underline"
-                  >
-                    {t.imageChange}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleAnalyzeImage}
+                      disabled={analyzingImage}
+                      className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed rounded-lg transition-colors duration-200 border border-blue-200 disabled:border-gray-200"
+                    >
+                      {analyzingImage ? (
+                        <>
+                          <svg
+                            className="animate-spin h-4 w-4"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
+                          </svg>
+                          <span>{t.analyzingImage}</span>
+                        </>
+                      ) : (
+                        <span>{t.analyzeImage}</span>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setImageFile(null);
+                        setImagePreview(null);
+                        if (fileInputRef.current) {
+                          fileInputRef.current.value = '';
+                        }
+                      }}
+                      className="text-sm text-primary hover:underline"
+                    >
+                      {t.imageChange}
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div>
