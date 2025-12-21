@@ -71,17 +71,86 @@ export interface Product {
  */
 export async function createProduct(data: CreateProductData) {
   try {
+    // Validate and sanitize input data
+    if (!data.name || typeof data.name !== 'string' || data.name.trim().length === 0) {
+      return {
+        success: false,
+        error: 'Product name is required',
+      };
+    }
+
+    if (!data.description || typeof data.description !== 'string' || data.description.trim().length === 0) {
+      return {
+        success: false,
+        error: 'Product description is required',
+      };
+    }
+
+    // Parse and validate price (handle string or number)
+    let priceValue: number | null = null;
+    if (data.price !== undefined && data.price !== null) {
+      if (typeof data.price === 'string') {
+        const parsed = parseFloat(data.price);
+        if (isNaN(parsed) || parsed < 0) {
+          return {
+            success: false,
+            error: 'Invalid price value. Price must be a valid positive number.',
+          };
+        }
+        priceValue = parsed;
+      } else if (typeof data.price === 'number') {
+        if (isNaN(data.price) || data.price < 0) {
+          return {
+            success: false,
+            error: 'Invalid price value. Price must be a valid positive number.',
+          };
+        }
+        priceValue = data.price;
+      }
+    }
+
+    // Parse and validate stock (handle string or number)
+    let stockValue: number = 0;
+    if (data.stock !== undefined && data.stock !== null) {
+      if (typeof data.stock === 'string') {
+        const parsed = parseInt(data.stock, 10);
+        if (isNaN(parsed) || parsed < 0) {
+          return {
+            success: false,
+            error: 'Invalid stock value. Stock must be a valid non-negative integer.',
+          };
+        }
+        stockValue = parsed;
+      } else if (typeof data.stock === 'number') {
+        if (isNaN(data.stock) || data.stock < 0 || !Number.isInteger(data.stock)) {
+          return {
+            success: false,
+            error: 'Invalid stock value. Stock must be a valid non-negative integer.',
+          };
+        }
+        stockValue = data.stock;
+      }
+    }
+
     // Get current user
     let user = await getCurrentUser();
     
     // If userId is passed from client, use it (for admin operations)
     if (!user && data.userId) {
-      const dbUser = await prisma.users.findUnique({
-        where: { id: data.userId },
-        select: { id: true, role: true },
-      });
-      if (dbUser) {
-        user = { id: dbUser.id, role: dbUser.role };
+      try {
+        const dbUser = await prisma.users.findUnique({
+          where: { id: data.userId },
+          select: { id: true, role: true },
+        });
+        if (dbUser) {
+          user = { id: dbUser.id, role: dbUser.role };
+        }
+      } catch (dbError) {
+        console.error('Error fetching user by ID:', dbError);
+        return {
+          success: false,
+          error: 'Failed to verify user permissions',
+        };
       }
     }
 
@@ -101,62 +170,109 @@ export async function createProduct(data: CreateProductData) {
     }
 
     // Use first external image as main image if no image_url provided
-    const mainImage = data.image_url || (data.external_images && data.external_images[0]) || null;
+    const mainImage = data.image_url || (data.external_images && Array.isArray(data.external_images) && data.external_images.length > 0 && data.external_images[0]) || null;
 
-    // Create product
-    const product = await prisma.products.create({
-      data: {
-        name: data.name,
-        name_ar: data.name_ar || null,
-        name_zh: data.name_zh || null,
-        description: data.description,
-        description_ar: data.description_ar || null,
-        description_zh: data.description_zh || null,
-        price: data.price,
-        original_price: data.price,
-        stock: data.stock,
-        image_url: mainImage,
-        user_id: user.id,
-        status: 'ACTIVE',
-        sold_count: 0,
-        views_count: 0,
-        rating: 0,
-        reviews_count: 0,
-      },
-    });
+    // Validate mainImage is a string if provided
+    if (mainImage && typeof mainImage !== 'string') {
+      return {
+        success: false,
+        error: 'Invalid image URL format',
+      };
+    }
+
+    // Create product with validated data
+    let product;
+    try {
+      product = await prisma.products.create({
+        data: {
+          name: data.name.trim(),
+          name_ar: (data.name_ar && typeof data.name_ar === 'string') ? data.name_ar.trim() : null,
+          name_zh: (data.name_zh && typeof data.name_zh === 'string') ? data.name_zh.trim() : null,
+          description: data.description.trim(),
+          description_ar: (data.description_ar && typeof data.description_ar === 'string') ? data.description_ar.trim() : null,
+          description_zh: (data.description_zh && typeof data.description_zh === 'string') ? data.description_zh.trim() : null,
+          price: priceValue,
+          original_price: priceValue,
+          stock: stockValue,
+          image_url: mainImage,
+          user_id: user.id,
+          status: 'ACTIVE',
+          sold_count: 0,
+          views_count: 0,
+          rating: 0,
+          reviews_count: 0,
+        },
+      });
+    } catch (prismaError: any) {
+      console.error('Prisma error creating product:', prismaError);
+      
+      // Handle specific Prisma errors
+      if (prismaError.code === 'P2002') {
+        return {
+          success: false,
+          error: 'A product with this name already exists',
+        };
+      }
+      
+      if (prismaError.code === 'P2003') {
+        return {
+          success: false,
+          error: 'Invalid user reference. Please try logging in again.',
+        };
+      }
+
+      return {
+        success: false,
+        error: `Database error: ${prismaError.message || 'Failed to create product'}`,
+      };
+    }
 
     // Note: Inventory sync to Redis is handled by the backend service
     // This is a server action, so we don't need to import server services here
     // The inventory will be synced when the backend processes the product creation
 
-    // Create product variants for colors and sizes
-    if (data.colors && data.colors.length > 0) {
-      for (const color of data.colors) {
-        await prisma.product_variants.create({
-          data: {
-            product_id: product.id,
-            name: `Color: ${color}`,
-            name_ar: `اللون: ${color}`,
-            price: data.price,
-            stock: data.stock,
-            created_by: user.id,
-          },
-        });
+    // Create product variants for colors and sizes (with error handling)
+    if (data.colors && Array.isArray(data.colors) && data.colors.length > 0) {
+      try {
+        for (const color of data.colors) {
+          if (color && typeof color === 'string') {
+            await prisma.product_variants.create({
+              data: {
+                product_id: product.id,
+                name: `Color: ${color.trim()}`,
+                name_ar: `اللون: ${color.trim()}`,
+                price: priceValue,
+                stock: stockValue,
+                created_by: user.id,
+              },
+            });
+          }
+        }
+      } catch (variantError) {
+        console.error('Error creating color variants:', variantError);
+        // Don't fail the whole operation if variants fail
       }
     }
 
-    if (data.sizes && data.sizes.length > 0) {
-      for (const size of data.sizes) {
-        await prisma.product_variants.create({
-          data: {
-            product_id: product.id,
-            name: `Size: ${size}`,
-            name_ar: `المقاس: ${size}`,
-            price: data.price,
-            stock: data.stock,
-            created_by: user.id,
-          },
-        });
+    if (data.sizes && Array.isArray(data.sizes) && data.sizes.length > 0) {
+      try {
+        for (const size of data.sizes) {
+          if (size && typeof size === 'string') {
+            await prisma.product_variants.create({
+              data: {
+                product_id: product.id,
+                name: `Size: ${size.trim()}`,
+                name_ar: `المقاس: ${size.trim()}`,
+                price: priceValue,
+                stock: stockValue,
+                created_by: user.id,
+              },
+            });
+          }
+        }
+      } catch (variantError) {
+        console.error('Error creating size variants:', variantError);
+        // Don't fail the whole operation if variants fail
       }
     }
 
@@ -175,11 +291,32 @@ export async function createProduct(data: CreateProductData) {
         stock: product.stock,
       },
     };
-  } catch (error) {
+  } catch (error: unknown) {
+    // Comprehensive error handling
     console.error('Error creating product:', error);
+    
+    let errorMessage = 'Failed to create product';
+    
+    if (error instanceof Error) {
+      errorMessage = error.message;
+      
+      // Handle specific error types
+      if (error.message.includes('DATABASE_URL')) {
+        errorMessage = 'Database connection error. Please check server configuration.';
+      } else if (error.message.includes('Unauthorized') || error.message.includes('permission')) {
+        errorMessage = 'You do not have permission to create products.';
+      } else if (error.message.includes('validation') || error.message.includes('invalid')) {
+        errorMessage = `Validation error: ${error.message}`;
+      }
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    } else {
+      errorMessage = 'An unexpected error occurred while creating the product.';
+    }
+    
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to create product',
+      error: errorMessage,
     };
   }
 }
