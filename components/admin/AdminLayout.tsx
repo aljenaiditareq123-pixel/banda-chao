@@ -10,7 +10,6 @@ import {
   ShoppingCart, 
   Users, 
   DollarSign,
-  Brain,
   Menu,
   X,
   LogOut
@@ -79,12 +78,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       label: 'المالية', 
       icon: DollarSign 
     },
-    { 
-      href: '/admin/ai', 
-      label: 'مجلس الذكاء الاصطناعي', 
-      icon: Brain,
-      badge: 'AI'
-    },
+    // AI Council moved to locale-based routes: /[locale]/admin/ai/{advisor,treasurer,marketer,coordinator}
   ];
 
   const isActive = (href: string, exact?: boolean) => {
