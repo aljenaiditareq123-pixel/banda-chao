@@ -529,11 +529,9 @@ export default function AddProductForm({ locale, onSuccess, onCancel, product }:
                   setErrors({ ...errors, description: '' });
                 }}
                 placeholder={t.descriptionPlaceholder}
+                lang={locale === 'ar' ? 'ar-SA' : locale === 'zh' ? 'zh-CN' : 'en-US'}
                 rows={4}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none ${
-                  errors.description ? 'border-red-300' : 'border-gray-300'
-                }`}
-                required
+                className={`${errors.description ? 'border-red-300' : ''}`}
               />
               {errors.description && (
                 <p className="mt-1 text-sm text-red-600">{errors.description}</p>
