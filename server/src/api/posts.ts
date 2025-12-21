@@ -155,14 +155,13 @@ router.get('/:id', async (req: Request, res: Response) => {
         post_products: {
           include: {
             products: {
-              select: {
-                id: true,
-                name: true,
-                description: true,
-                price: true,
-                currency: true,
-                image_url: true,
-              },
+                select: {
+                  id: true,
+                  name: true,
+                  description: true,
+                  price: true,
+                  image_url: true,
+                },
             },
           },
           orderBy: {
@@ -326,14 +325,13 @@ router.get('/me', authenticateToken, requireRole(['MAKER']), async (req: AuthReq
         post_products: {
           include: {
             products: {
-              select: {
-                id: true,
-                name: true,
-                description: true,
-                price: true,
-                currency: true,
-                image_url: true,
-              },
+                select: {
+                  id: true,
+                  name: true,
+                  description: true,
+                  price: true,
+                  image_url: true,
+                },
             },
           },
           orderBy: {
@@ -471,14 +469,13 @@ router.post('/', authenticateToken, postContentGuard, async (req: AuthRequest, r
         post_products: {
           include: {
             products: {
-              select: {
-                id: true,
-                name: true,
-                description: true,
-                price: true,
-                currency: true,
-                image_url: true,
-              },
+                select: {
+                  id: true,
+                  name: true,
+                  description: true,
+                  price: true,
+                  image_url: true,
+                },
             },
           },
           orderBy: {
