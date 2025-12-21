@@ -10,6 +10,7 @@ import {
   ShoppingCart, 
   Users, 
   DollarSign,
+  Brain,
   Menu,
   X,
   LogOut
@@ -77,6 +78,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       href: '/admin/finance', 
       label: 'المالية', 
       icon: DollarSign 
+    },
+    { 
+      href: '/admin/ai', 
+      label: 'مجلس الذكاء الاصطناعي', 
+      icon: Brain,
+      badge: 'AI'
     },
   ];
 
