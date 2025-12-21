@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { 
   Brain, 
@@ -28,6 +29,8 @@ interface AIAgent {
 
 export default function AICouncil() {
   const [hoveredAgent, setHoveredAgent] = useState<string | null>(null);
+  const params = useParams();
+  const locale = (params?.locale as string) || 'ar';
 
   const agents: AIAgent[] = [
     {
@@ -39,7 +42,7 @@ export default function AICouncil() {
       icon: Brain,
       color: 'text-blue-600',
       bgColor: 'bg-blue-50 hover:bg-blue-100',
-      href: '/admin/ai/advisor',
+      href: `/${locale}/admin/ai/advisor`,
       status: 'active',
       features: [
         'تحليل الاتجاهات السوقية',
@@ -57,7 +60,7 @@ export default function AICouncil() {
       icon: DollarSign,
       color: 'text-green-600',
       bgColor: 'bg-green-50 hover:bg-green-100',
-      href: '/admin/ai/treasurer',
+      href: `/${locale}/admin/ai/treasurer`,
       status: 'active',
       features: [
         'التسعير الديناميكي',
@@ -75,7 +78,7 @@ export default function AICouncil() {
       icon: TrendingUp,
       color: 'text-purple-600',
       bgColor: 'bg-purple-50 hover:bg-purple-100',
-      href: '/admin/ai/marketer',
+      href: `/${locale}/admin/ai/marketer`,
       status: 'beta',
       features: [
         'تحليل النمو',
@@ -93,7 +96,7 @@ export default function AICouncil() {
       icon: Package,
       color: 'text-orange-600',
       bgColor: 'bg-orange-50 hover:bg-orange-100',
-      href: '/admin/ai/coordinator',
+      href: `/${locale}/admin/ai/coordinator`,
       status: 'active',
       features: [
         'أتمتة الطلبات',
