@@ -151,14 +151,15 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
 
   // Skip CSRF for AI endpoints (they use JWT authentication which is sufficient)
   // AI endpoints are protected by authenticateToken middleware
-  const aiEndpoints = ['/api/v1/ai/assistant', '/api/v1/ai/founder', '/api/v1/ai/pricing-suggestion', '/api/v1/ai/content-helper'];
+  const aiEndpoints = ['/api/v1/ai/assistant', '/api/v1/ai/founder', '/api/v1/ai/pricing-suggestion', '/api/v1/ai/content-helper', '/api/v1/ai-content/analyze-product'];
   if (aiEndpoints.some(endpoint => fullPath.startsWith(endpoint) || originalUrl.startsWith(endpoint))) {
     console.log('[CSRF] ✅ Skipping CSRF check for AI endpoint:', fullPath, originalUrl);
     return next();
   }
   
-  // Also check if path matches /api/v1/ai/* pattern (more flexible)
-  if (fullPath.startsWith('/api/v1/ai/') || originalUrl.startsWith('/api/v1/ai/')) {
+  // Also check if path matches /api/v1/ai/* or /api/v1/ai-content/* pattern (more flexible)
+  if (fullPath.startsWith('/api/v1/ai/') || originalUrl.startsWith('/api/v1/ai/') ||
+      fullPath.startsWith('/api/v1/ai-content/') || originalUrl.startsWith('/api/v1/ai-content/')) {
     console.log('[CSRF] ✅ Skipping CSRF check for AI endpoint (pattern match):', fullPath, originalUrl);
     return next();
   }
