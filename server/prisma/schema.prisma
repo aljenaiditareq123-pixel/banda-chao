@@ -202,9 +202,9 @@ model product_likes {
 model products {
   id            String          @id
   name          String
-  description   String
-  image_url     String?
-  external_link String
+  description   String          @db.Text
+  image_url     String?         @db.Text
+  external_link String?         @db.Text
   user_id       String
   price         Float?
   category      String?
