@@ -82,6 +82,23 @@ router.get('/', async (req: Request, res: Response) => {
               profile_picture: true,
             },
           },
+          post_products: {
+            include: {
+              products: {
+                select: {
+                  id: true,
+                  name: true,
+                  description: true,
+                  price: true,
+                  currency: true,
+                  image_url: true,
+                },
+              },
+            },
+            orderBy: {
+              position: 'asc',
+            },
+          },
           _count: {
             select: {
               post_likes: true,
@@ -95,8 +112,14 @@ router.get('/', async (req: Request, res: Response) => {
       prisma.posts.count({ where }),
     ]);
 
+    // Parse images from JSON string to array
+    const postsWithParsedImages = posts.map((post: any) => ({
+      ...post,
+      images: post.images ? (typeof post.images === 'string' ? JSON.parse(post.images) : post.images) : [],
+    }));
+
     res.json({
-      posts,
+      posts: postsWithParsedImages,
       pagination: {
         page,
         limit,
@@ -130,6 +153,23 @@ router.get('/:id', async (req: Request, res: Response) => {
             bio: true,
           },
         },
+        post_products: {
+          include: {
+            products: {
+              select: {
+                id: true,
+                name: true,
+                description: true,
+                price: true,
+                currency: true,
+                image_url: true,
+              },
+            },
+          },
+          orderBy: {
+            position: 'asc',
+          },
+        },
         _count: {
           select: {
             post_likes: true,
@@ -142,7 +182,13 @@ router.get('/:id', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Post not found' });
     }
 
-    res.json({ post });
+    // Parse images from JSON string to array
+    const postWithParsedImages = {
+      ...post,
+      images: post.images ? (typeof post.images === 'string' ? JSON.parse(post.images) : post.images) : [],
+    };
+
+    res.json({ post: postWithParsedImages });
   } catch (error: any) {
     console.error('Get post error:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -278,6 +324,23 @@ router.get('/me', authenticateToken, requireRole(['MAKER']), async (req: AuthReq
         created_at: true,
         updated_at: true,
         user_id: true,
+        post_products: {
+          include: {
+            products: {
+              select: {
+                id: true,
+                name: true,
+                description: true,
+                price: true,
+                currency: true,
+                image_url: true,
+              },
+            },
+          },
+          orderBy: {
+            position: 'asc',
+          },
+        },
         _count: {
           select: {
             post_likes: true,
@@ -291,12 +354,13 @@ router.get('/me', authenticateToken, requireRole(['MAKER']), async (req: AuthReq
 
     res.json({
       success: true,
-      posts: posts.map(post => ({
+      posts: posts.map((post: any) => ({
         id: post.id,
         content: post.content,
-        images: post.images,
+        images: post.images ? (typeof post.images === 'string' ? JSON.parse(post.images) : post.images) : [],
         created_at: post.created_at,
         likes: post._count.post_likes,
+        post_products: post.post_products || [],
       })),
     });
   } catch (error: any) {
@@ -312,15 +376,16 @@ router.get('/me', authenticateToken, requireRole(['MAKER']), async (req: AuthReq
 // Create post (authenticated)
 router.post('/', authenticateToken, postContentGuard, async (req: AuthRequest, res: Response) => {
   try {
-    const { content, images } = req.body;
+    const { content, images, productIds } = req.body;
     const userId = req.userId!;
 
-    // Allow posts with only images (no content required)
+    // Allow posts with only images or products (no content required)
     if (!content || content.trim().length === 0) {
-      if (!images || !Array.isArray(images) || images.length === 0) {
+      if ((!images || !Array.isArray(images) || images.length === 0) && 
+          (!productIds || !Array.isArray(productIds) || productIds.length === 0)) {
         return res.status(400).json({ 
           success: false,
-          error: 'Content or at least one image is required' 
+          error: 'Content, at least one image, or at least one product is required' 
         });
       }
     }
@@ -341,13 +406,19 @@ router.post('/', authenticateToken, postContentGuard, async (req: AuthRequest, r
     const { randomUUID } = await import('crypto');
     const postId = randomUUID();
 
+    // Convert images array to JSON string if provided
+    const imagesJson = images && Array.isArray(images) && images.length > 0 
+      ? JSON.stringify(images) 
+      : null;
+
+    // Create post
     const post = await prisma.posts.create({
       data: {
         id: postId,
         user_id: userId,
         maker_id: makerId,
         content: content?.trim() || '',
-        images: images && Array.isArray(images) ? images : [],
+        images: imagesJson,
         updated_at: new Date(),
       },
       include: {
@@ -361,9 +432,72 @@ router.post('/', authenticateToken, postContentGuard, async (req: AuthRequest, r
       },
     });
 
+    // Link products to post if productIds provided
+    if (productIds && Array.isArray(productIds) && productIds.length > 0) {
+      // Validate that products exist and belong to the user
+      const products = await prisma.products.findMany({
+        where: {
+          id: { in: productIds },
+          user_id: userId, // Ensure user owns the products
+        },
+        select: { id: true },
+      });
+
+      // Create post_products entries
+      if (products.length > 0) {
+        const { randomUUID } = await import('crypto');
+        await prisma.post_products.createMany({
+          data: products.map((product, index) => ({
+            id: randomUUID(),
+            post_id: postId,
+            product_id: product.id,
+            position: index + 1,
+            is_featured: index === 0, // First product is featured
+          })),
+        });
+      }
+    }
+
+    // Fetch post with products for response
+    const postWithProducts = await prisma.posts.findUnique({
+      where: { id: postId },
+      include: {
+        users: {
+          select: {
+            id: true,
+            name: true,
+            profile_picture: true,
+          },
+        },
+        post_products: {
+          include: {
+            products: {
+              select: {
+                id: true,
+                name: true,
+                description: true,
+                price: true,
+                currency: true,
+                image_url: true,
+              },
+            },
+          },
+          orderBy: {
+            position: 'asc',
+          },
+        },
+      },
+    });
+
+    // Parse images from JSON string to array
+    const postResponse = postWithProducts ? {
+      ...postWithProducts,
+      images: postWithProducts.images ? (typeof postWithProducts.images === 'string' ? JSON.parse(postWithProducts.images) : postWithProducts.images) : [],
+    } : null;
+
     res.status(201).json({ 
       success: true,
-      post 
+      post: postResponse 
     });
   } catch (error: unknown) {
     console.error('Create post error:', error);
