@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { X, Sparkles, Loader2 } from 'lucide-react';
+import VoiceInput from '@/components/ui/VoiceInput';
+import VoiceTextarea from '@/components/ui/VoiceTextarea';
 
 interface ProductFormModalProps {
   product?: any;
@@ -203,25 +205,26 @@ export default function ProductFormModal({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    الاسم (الإنجليزية) *
+                    الاسم (الإنجليزية) * 🎤
                   </label>
-                  <input
-                    type="text"
-                    required
+                  <VoiceInput
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+                    onChange={(value) => setFormData({ ...formData, name: value })}
+                    placeholder="اسم المنتج بالإنجليزية..."
+                    lang="en-US"
+                    className="w-full"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    الاسم (العربية)
+                    الاسم (العربية) 🎤
                   </label>
-                  <input
-                    type="text"
+                  <VoiceInput
                     value={formData.name_ar}
-                    onChange={(e) => setFormData({ ...formData, name_ar: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+                    onChange={(value) => setFormData({ ...formData, name_ar: value })}
+                    placeholder="اسم المنتج بالعربية..."
+                    lang="ar-SA"
+                    className="w-full"
                   />
                 </div>
                 <div>
@@ -250,14 +253,15 @@ export default function ProductFormModal({
               </div>
               <div className="mt-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  الوصف *
+                  الوصف * 🎤
                 </label>
-                <textarea
-                  required
-                  rows={4}
+                <VoiceTextarea
                   value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 !text-black bg-white"
+                  onChange={(value) => setFormData({ ...formData, description: value })}
+                  placeholder="وصف المنتج بالعربية..."
+                  lang="ar-SA"
+                  rows={4}
+                  className="w-full"
                 />
               </div>
             </div>
