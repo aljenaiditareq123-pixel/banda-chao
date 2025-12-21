@@ -90,7 +90,6 @@ router.get('/', async (req: Request, res: Response) => {
                   name: true,
                   description: true,
                   price: true,
-                  currency: true,
                   image_url: true,
                 },
               },

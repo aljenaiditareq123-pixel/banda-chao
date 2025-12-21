@@ -69,18 +69,18 @@ model group_buys {
 }
 
 model makers {
-  id                  String              @id
-  user_id             String              @unique
-  slug                String              @unique
+  id                  String               @id
+  user_id             String               @unique
+  slug                String               @unique
   name                String
   bio                 String?
   story               String?
   profile_picture_url String?
   cover_picture_url   String?
-  country             String?             // Country for shipping origin
-  created_at          DateTime            @default(now())
+  country             String? // Country for shipping origin
+  created_at          DateTime             @default(now())
   updated_at          DateTime
-  users               users               @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  users               users                @relation(fields: [user_id], references: [id], onDelete: Cascade)
   services            services[]
   social_connections  social_connections[]
   social_links        social_links[]
@@ -170,20 +170,36 @@ model post_likes {
 }
 
 model posts {
-  id         String       @id
-  content    String       // Text updates/content
-  user_id    String
-  maker_id   String?      // Optional link to maker
-  images     String[]     @default([]) // Optional images (can be empty for text-only posts)
-  created_at DateTime     @default(now())
-  updated_at DateTime
-  post_likes post_likes[]
-  users      users        @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  makers     makers?      @relation(fields: [maker_id], references: [id], onDelete: SetNull)
+  id            String          @id
+  content       String // Text updates/content
+  user_id       String
+  maker_id      String? // Optional link to maker
+  images        String? // JSON array stored as string
+  created_at    DateTime        @default(now())
+  updated_at    DateTime
+  post_likes    post_likes[]
+  post_products post_products[]
+  users         users           @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  makers        makers?         @relation(fields: [maker_id], references: [id], onDelete: SetNull)
 
   @@index([user_id])
   @@index([maker_id])
   @@index([created_at])
+}
+
+model post_products {
+  id          String   @id
+  post_id     String
+  product_id  String
+  position    Int      @default(0)
+  is_featured Boolean  @default(false)
+  created_at  DateTime @default(now())
+  posts       posts    @relation(fields: [post_id], references: [id], onDelete: Cascade)
+  products    products @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@unique([post_id, product_id])
+  @@index([post_id])
+  @@index([product_id])
 }
 
 model product_likes {
@@ -214,6 +230,7 @@ model products {
   group_buys    group_buys[]
   order_items   order_items[]
   product_likes product_likes[]
+  post_products post_products[]
   users         users           @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([category])
@@ -277,25 +294,25 @@ model video_likes {
 }
 
 model videos {
-  id            String        @id
+  id            String         @id
   user_id       String
-  maker_id      String?       // Link to maker (optional for backward compatibility)
+  maker_id      String? // Link to maker (optional for backward compatibility)
   title         String
   description   String?
-  url           String?       // External URL from TikTok/YouTube API (replaces video_url) - nullable for migration
-  video_url     String?       // Legacy field - will be removed after migration
+  url           String? // External URL from TikTok/YouTube API (replaces video_url) - nullable for migration
+  video_url     String? // Legacy field - will be removed after migration
   thumbnail_url String?
   duration      Int?
   platform      VideoPlatform? // TIKTOK or YOUTUBE - nullable for migration
-  type          String        // Keep as String for now, will migrate to VideoType enum later
-  views         Int           @default(0)
-  likes         Int           @default(0)
-  created_at    DateTime      @default(now())
+  type          String // Keep as String for now, will migrate to VideoType enum later
+  views         Int            @default(0)
+  likes         Int            @default(0)
+  created_at    DateTime       @default(now())
   updated_at    DateTime
   comments      comments[]
   video_likes   video_likes[]
-  users         users         @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  makers        makers?       @relation(fields: [maker_id], references: [id], onDelete: SetNull)
+  users         users          @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  makers        makers?        @relation(fields: [maker_id], references: [id], onDelete: SetNull)
 
   @@index([created_at])
   @@index([type])
@@ -305,15 +322,15 @@ model videos {
 }
 
 model beta_applications {
-  id            Int      @id @default(autoincrement())
-  name          String
-  email         String
-  country       String
-  main_platform String?
-  what_you_sell String?
+  id             Int      @id @default(autoincrement())
+  name           String
+  email          String
+  country        String
+  main_platform  String?
+  what_you_sell  String?
   preferred_lang String?
-  why_join      String?
-  created_at    DateTime @default(now())
+  why_join       String?
+  created_at     DateTime @default(now())
 
   @@index([email])
   @@index([created_at])
@@ -349,16 +366,16 @@ model services {
 // Social Connections: OAuth tokens for external platforms
 // Allows posting on behalf of makers without them leaving the dashboard
 model social_connections {
-  id           String            @id
-  platform     SocialPlatform    // TIKTOK, YOUTUBE, INSTAGRAM
-  access_token String            // OAuth access token (encrypted in production)
-  refresh_token String?          // OAuth refresh token (encrypted in production)
-  expires_at   DateTime?         // Token expiration
-  scope        String?           // OAuth scopes granted
-  maker_id     String
-  created_at   DateTime          @default(now())
-  updated_at   DateTime
-  makers       makers            @relation(fields: [maker_id], references: [id], onDelete: Cascade)
+  id            String         @id
+  platform      SocialPlatform // TIKTOK, YOUTUBE, INSTAGRAM
+  access_token  String // OAuth access token (encrypted in production)
+  refresh_token String? // OAuth refresh token (encrypted in production)
+  expires_at    DateTime? // Token expiration
+  scope         String? // OAuth scopes granted
+  maker_id      String
+  created_at    DateTime       @default(now())
+  updated_at    DateTime
+  makers        makers         @relation(fields: [maker_id], references: [id], onDelete: Cascade)
 
   @@unique([maker_id, platform]) // One connection per platform per maker
   @@index([maker_id])
@@ -367,13 +384,13 @@ model social_connections {
 
 // Social Links: Simple profile display links (not OAuth)
 model social_links {
-  id        String   @id
-  platform  String   // Platform name (e.g., "TikTok", "YouTube", "Instagram")
-  url       String   // Profile URL
-  maker_id  String
+  id         String   @id
+  platform   String // Platform name (e.g., "TikTok", "YouTube", "Instagram")
+  url        String // Profile URL
+  maker_id   String
   created_at DateTime @default(now())
   updated_at DateTime
-  makers    makers   @relation(fields: [maker_id], references: [id], onDelete: Cascade)
+  makers     makers   @relation(fields: [maker_id], references: [id], onDelete: Cascade)
 
   @@index([maker_id])
 }
@@ -389,13 +406,13 @@ enum UserRole {
 }
 
 enum ServiceType {
-  DRIVER     // Delivery/transport service
-  AGENT      // Sales/representation service
-  ARTISAN    // Craft/creative service
-  TECH       // Technology/Programming services (Web developers, App developers, etc.)
-  MEDIA      // Media/Photography services (Photographers, Designers, Videographers, etc.)
-  EDUCATION  // Education/Training services (Translators, Tutors, Language teachers, etc.)
-  OTHER      // Other services (catch-all category)
+  DRIVER // Delivery/transport service
+  AGENT // Sales/representation service
+  ARTISAN // Craft/creative service
+  TECH // Technology/Programming services (Web developers, App developers, etc.)
+  MEDIA // Media/Photography services (Photographers, Designers, Videographers, etc.)
+  EDUCATION // Education/Training services (Translators, Tutors, Language teachers, etc.)
+  OTHER // Other services (catch-all category)
 }
 
 enum SocialPlatform {
@@ -410,9 +427,9 @@ enum VideoPlatform {
 }
 
 enum VideoType {
-  SHORT  // Short-form content (Reels, TikTok videos)
-  LONG   // Long-form content (Documentaries, full videos)
-  DEMO   // Product demonstrations
+  SHORT // Short-form content (Reels, TikTok videos)
+  LONG // Long-form content (Documentaries, full videos)
+  DEMO // Product demonstrations
 }
 
 // ============================================
@@ -420,11 +437,11 @@ enum VideoType {
 // ============================================
 
 model ai_memories {
-  id        String   @id @default(uuid())
-  content   String   @db.Text
-  embedding Unsupported("vector(1536)") // OpenAI embeddings dimension
-  metadata  Json?
-  created_at DateTime @default(now())
+  id         String                      @id @default(uuid())
+  content    String                      @db.Text
+  embedding  Unsupported("vector(1536)") // OpenAI embeddings dimension
+  metadata   Json?
+  created_at DateTime                    @default(now())
 
   @@index([created_at])
 }
