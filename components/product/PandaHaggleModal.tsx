@@ -131,7 +131,7 @@ export default function PandaHaggleModal({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const offer = parseFloat(userOffer);
     
     if (isNaN(offer) || offer <= 0) {
@@ -148,45 +148,111 @@ export default function PandaHaggleModal({
     };
     setMessages((prev) => [...prev, userMessage]);
 
-    // Simulate thinking delay
-    setTimeout(() => {
-      const percentage = (offer / originalPrice) * 100;
+    try {
+      // Build conversation history for context
+      const conversationHistory = messages
+        .filter(m => m.type === 'panda' || m.type === 'user')
+        .map(m => ({
+          role: m.type === 'user' ? 'user' : 'assistant',
+          content: m.text,
+        }));
+
+      // Call AI haggle API
+      const response = await fetch('/api/ai/haggle', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          productName,
+          originalPrice,
+          userOffer: offer,
+          conversationHistory,
+          locale,
+          currency,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get AI response');
+      }
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'AI negotiation failed');
+      }
+
+      // Build panda response based on AI action
       let pandaResponse: Message;
 
-      if (percentage < 70) {
-        // Reject - too low
+      if (data.action === 'accept') {
+        setAgreedPrice(offer);
         pandaResponse = {
+          id: (Date.now() + 1).toString(),
+          type: 'panda',
+          text: data.response || `${t.accept}\n\n${t.acceptMsg}`,
+          timestamp: new Date(),
+        };
+      } else if (data.action === 'counter' && data.counterPrice) {
+        pandaResponse = {
+          id: (Date.now() + 1).toString(),
+          type: 'panda',
+          text: `${data.response || t.counterOffer}\n\n${t.counterOfferMsg} ${formatPrice(data.counterPrice)}\n\n${t.askPrice}`,
+          timestamp: new Date(),
+        };
+      } else {
+        // Reject
+        const counterMsg = data.counterPrice 
+          ? `\n\n${t.counterOfferMsg} ${formatPrice(data.counterPrice)}`
+          : '';
+        pandaResponse = {
+          id: (Date.now() + 1).toString(),
+          type: 'panda',
+          text: `${data.response || t.tooLow}\n\n${t.askPrice}${counterMsg}`,
+          timestamp: new Date(),
+        };
+      }
+
+      setMessages((prev) => [...prev, pandaResponse]);
+      setUserOffer('');
+
+    } catch (error) {
+      console.error('Error in haggle:', error);
+      // Fallback to simple response
+      const percentage = (offer / originalPrice) * 100;
+      let fallbackResponse: Message;
+
+      if (percentage < 85) {
+        fallbackResponse = {
           id: (Date.now() + 1).toString(),
           type: 'panda',
           text: `${t.tooLow}\n\n${t.tooLowMsg}\n\n${t.askPrice}`,
           timestamp: new Date(),
         };
-        setIsNegotiating(false);
-      } else if (percentage >= 70 && percentage < 90) {
-        // Counter-offer
-        const counterPrice = Math.round(originalPrice * 0.85); // 85% counter
-        pandaResponse = {
+      } else if (percentage < 90) {
+        const counterPrice = Math.round(originalPrice * 0.875);
+        fallbackResponse = {
           id: (Date.now() + 1).toString(),
           type: 'panda',
           text: `${t.counterOffer}\n\n${t.counterOfferMsg} ${formatPrice(counterPrice)}\n\n${t.askPrice}`,
           timestamp: new Date(),
         };
-        setIsNegotiating(false);
       } else {
-        // Accept (>= 90%)
         setAgreedPrice(offer);
-        pandaResponse = {
+        fallbackResponse = {
           id: (Date.now() + 1).toString(),
           type: 'panda',
           text: `${t.accept}\n\n${t.acceptMsg}`,
           timestamp: new Date(),
         };
-        setIsNegotiating(false);
       }
 
-      setMessages((prev) => [...prev, pandaResponse]);
+      setMessages((prev) => [...prev, fallbackResponse]);
       setUserOffer('');
-    }, 1500);
+    } finally {
+      setIsNegotiating(false);
+    }
   };
 
   const handleAddToCart = () => {

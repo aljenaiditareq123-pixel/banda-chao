@@ -4,78 +4,17 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, X, Camera, Loader2, Mic } from 'lucide-react';
 import { motion } from 'framer-motion';
-import SimilarProductsModal from '@/components/search/SimilarProductsModal';
 
 interface SearchBarProps {
   locale: string;
 }
 
-// Mock similar products for demonstration
-const getMockSimilarProducts = () => [
-  {
-    id: '1',
-    name: 'Fashion T-Shirt',
-    price: 29.99,
-    currency: 'USD',
-    imageUrl: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400',
-    category: 'Fashion',
-    userId: 'user1',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '2',
-    name: 'Casual Shirt',
-    price: 39.99,
-    currency: 'USD',
-    imageUrl: 'https://images.unsplash.com/photo-1594938291221-94fa2b5b9943?w=400',
-    category: 'Fashion',
-    userId: 'user2',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '3',
-    name: 'Designer Jacket',
-    price: 89.99,
-    currency: 'USD',
-    imageUrl: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400',
-    category: 'Fashion',
-    userId: 'user3',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '4',
-    name: 'Summer Dress',
-    price: 49.99,
-    currency: 'USD',
-    imageUrl: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=400',
-    category: 'Fashion',
-    userId: 'user4',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '5',
-    name: 'Classic Jeans',
-    price: 59.99,
-    currency: 'USD',
-    imageUrl: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=400',
-    category: 'Fashion',
-    userId: 'user5',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-];
 
 export default function SearchBar({ locale }: SearchBarProps) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
-  const [showSimilarProducts, setShowSimilarProducts] = useState(false);
-  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [isSpeechSupported, setIsSpeechSupported] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -181,22 +120,40 @@ export default function SearchBar({ locale }: SearchBarProps) {
       return;
     }
 
-    // Create preview URL
-    const imageUrl = URL.createObjectURL(file);
-    setUploadedImageUrl(imageUrl);
-
     // Show scanning animation
     setIsScanning(true);
 
-    // Simulate AI analysis (mock - 2 seconds delay)
-    setTimeout(() => {
-      setIsScanning(false);
-      setShowSimilarProducts(true);
-    }, 2000);
+    try {
+      // Convert image to FormData
+      const formData = new FormData();
+      formData.append('image', file);
 
-    // Reset file input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      // Call visual search API
+      const response = await fetch('/api/search/visual', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to analyze image');
+      }
+
+      const data = await response.json();
+      const keywords = data.keywords || data.productName || 'منتج';
+
+      // Redirect to search page with keywords
+      setIsScanning(false);
+      router.push(`/${locale}/products?search=${encodeURIComponent(keywords)}`);
+
+    } catch (error) {
+      console.error('Error in visual search:', error);
+      setIsScanning(false);
+      alert(locale === 'ar' ? 'حدث خطأ أثناء تحليل الصورة' : locale === 'zh' ? '分析图片时出错' : 'Error analyzing image');
+    } finally {
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -320,20 +277,6 @@ export default function SearchBar({ locale }: SearchBarProps) {
         </motion.div>
       )}
 
-      {/* Similar Products Modal */}
-      <SimilarProductsModal
-        isOpen={showSimilarProducts}
-        onClose={() => {
-          setShowSimilarProducts(false);
-          if (uploadedImageUrl) {
-            URL.revokeObjectURL(uploadedImageUrl);
-            setUploadedImageUrl(null);
-          }
-        }}
-        products={getMockSimilarProducts()}
-        locale={locale}
-        uploadedImageUrl={uploadedImageUrl || undefined}
-      />
     </>
   );
 }
