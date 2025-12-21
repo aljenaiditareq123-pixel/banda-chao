@@ -4,6 +4,8 @@ import { useState, useRef } from 'react';
 import Button from '@/components/Button';
 import { productsAPI, CreateProductData, UpdateProductData } from '@/lib/api';
 import Card from '@/components/common/Card';
+import VoiceInput from '@/components/ui/VoiceInput';
+import VoiceTextarea from '@/components/ui/VoiceTextarea';
 
 interface AddProductFormProps {
   locale: string;
@@ -459,20 +461,17 @@ export default function AddProductForm({ locale, onSuccess, onCancel, product }:
             {/* Product Name */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t.name} *
+                {t.name} * 🎤
               </label>
-              <input
-                type="text"
+              <VoiceInput
                 value={name}
-                onChange={(e) => {
-                  setName(e.target.value);
+                onChange={(value) => {
+                  setName(value);
                   setErrors({ ...errors, name: '' });
                 }}
                 placeholder={t.namePlaceholder}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary ${
-                  errors.name ? 'border-red-300' : 'border-gray-300'
-                }`}
-                required
+                lang={locale === 'ar' ? 'ar-SA' : locale === 'zh' ? 'zh-CN' : 'en-US'}
+                className={`${errors.name ? 'border-red-300' : ''}`}
               />
               {errors.name && (
                 <p className="mt-1 text-sm text-red-600">{errors.name}</p>
@@ -523,10 +522,10 @@ export default function AddProductForm({ locale, onSuccess, onCancel, product }:
                   )}
                 </button>
               </div>
-              <textarea
+              <VoiceTextarea
                 value={description}
-                onChange={(e) => {
-                  setDescription(e.target.value);
+                onChange={(value) => {
+                  setDescription(value);
                   setErrors({ ...errors, description: '' });
                 }}
                 placeholder={t.descriptionPlaceholder}

@@ -1,0 +1,175 @@
+'use client';
+
+import { useState, useRef, useEffect } from 'react';
+import { Mic, MicOff } from 'lucide-react';
+
+interface VoiceTextareaProps {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  className?: string;
+  lang?: 'ar-SA' | 'en-US' | 'zh-CN';
+  disabled?: boolean;
+  rows?: number;
+  onTranscriptionStart?: () => void;
+  onTranscriptionEnd?: () => void;
+  onError?: (error: string) => void;
+}
+
+export default function VoiceTextarea({
+  value,
+  onChange,
+  placeholder = 'اضغط على الميكروفون للتحدث أو اكتب هنا...',
+  className = '',
+  lang = 'ar-SA',
+  disabled = false,
+  rows = 4,
+  onTranscriptionStart,
+  onTranscriptionEnd,
+  onError,
+}: VoiceTextareaProps) {
+  const [isListening, setIsListening] = useState(false);
+  const [isSupported, setIsSupported] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
+  // Check if Speech Recognition is supported
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const SpeechRecognition =
+        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      setIsSupported(!!SpeechRecognition);
+
+      if (SpeechRecognition) {
+        try {
+          const recognition = new SpeechRecognition();
+          recognition.continuous = false;
+          recognition.interimResults = false;
+          recognition.lang = lang;
+          recognition.maxAlternatives = 1;
+
+          recognition.onstart = () => {
+            setIsListening(true);
+            onTranscriptionStart?.();
+          };
+
+          recognition.onresult = (event: any) => {
+            const transcript = event.results[0][0].transcript;
+            if (transcript && transcript.trim()) {
+              // Append to existing text or replace if empty
+              const newValue = value.trim() ? `${value.trim()} ${transcript.trim()}` : transcript.trim();
+              onChange(newValue);
+            }
+          };
+
+          recognition.onerror = (event: any) => {
+            console.error('Speech recognition error:', event.error);
+            setIsListening(false);
+            onTranscriptionEnd?.();
+
+            let errorMessage = 'حدث خطأ في التعرف على الصوت';
+            switch (event.error) {
+              case 'no-speech':
+                errorMessage = 'لم يتم اكتشاف كلام. يرجى المحاولة مرة أخرى.';
+                break;
+              case 'audio-capture':
+                errorMessage = 'لم يتم العثور على الميكروفون.';
+                break;
+              case 'not-allowed':
+                errorMessage = 'تم رفض الوصول إلى الميكروفون.';
+                break;
+              case 'network':
+                errorMessage = 'خطأ في الشبكة. يرجى المحاولة مرة أخرى.';
+                break;
+              default:
+                errorMessage = `خطأ: ${event.error}`;
+            }
+            onError?.(errorMessage);
+          };
+
+          recognition.onend = () => {
+            setIsListening(false);
+            onTranscriptionEnd?.();
+          };
+
+          recognitionRef.current = recognition;
+        } catch (error) {
+          console.error('Failed to initialize speech recognition:', error);
+          setIsSupported(false);
+        }
+      }
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch (e) {
+          // Ignore errors when stopping
+        }
+      }
+    };
+  }, [lang, value, onChange, onTranscriptionStart, onTranscriptionEnd, onError]);
+
+  const toggleListening = () => {
+    if (!isSupported || disabled) return;
+
+    if (recognitionRef.current) {
+      try {
+        if (isListening) {
+          recognitionRef.current.stop();
+          setIsListening(false);
+        } else {
+          recognitionRef.current.start();
+        }
+      } catch (error: any) {
+        console.error('Failed to toggle recognition:', error);
+        onError?.('فشل في بدء التسجيل. يرجى المحاولة مرة أخرى.');
+      }
+    }
+  };
+
+  return (
+    <div className={`relative ${className}`}>
+      <div className="relative">
+        <textarea
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          disabled={disabled}
+          rows={rows}
+          className={`w-full px-4 py-2 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent !text-black bg-white placeholder:text-gray-400 disabled:bg-gray-100 disabled:cursor-not-allowed resize-y`}
+          dir={lang === 'ar-SA' ? 'rtl' : 'ltr'}
+        />
+        {isSupported && (
+          <button
+            type="button"
+            onClick={toggleListening}
+            disabled={disabled}
+            className={`
+              absolute top-2 ${lang === 'ar-SA' ? 'left-2' : 'right-2'}
+              flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200
+              ${isListening
+                ? 'bg-red-500 text-white animate-pulse'
+                : 'bg-primary-500 text-white hover:bg-primary-600'
+              }
+              disabled:bg-gray-300 disabled:cursor-not-allowed
+              focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
+            `}
+            title={isListening ? 'إيقاف التسجيل' : 'بدء التسجيل الصوتي'}
+          >
+            {isListening ? (
+              <MicOff className="w-4 h-4" />
+            ) : (
+              <Mic className="w-4 h-4" />
+            )}
+          </button>
+        )}
+      </div>
+      {isListening && (
+        <div className="absolute bottom-full left-0 mb-2 px-3 py-1 bg-red-500 text-white text-sm rounded-lg animate-pulse">
+          🎤 يستمع الآن...
+        </div>
+      )}
+    </div>
+  );
+}
