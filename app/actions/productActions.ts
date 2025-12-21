@@ -276,11 +276,17 @@ export async function createProduct(data: CreateProductData) {
       }
     }
 
-    // Revalidate paths
-    revalidatePath('/admin/products');
-    revalidatePath('/admin');
-    revalidatePath('/profile');
-    revalidatePath(`/[locale]/profile`);
+    // Revalidate paths (wrap in try/catch to prevent errors during render)
+    try {
+      revalidatePath('/admin/products');
+      revalidatePath('/admin');
+      revalidatePath('/profile');
+      // Only revalidate locale path if we have a valid locale format
+      // Skip dynamic locale paths to avoid potential errors
+    } catch (revalidateError) {
+      console.error('Error revalidating paths (non-critical):', revalidateError);
+      // Don't fail the operation if revalidation fails
+    }
 
     return {
       success: true,
