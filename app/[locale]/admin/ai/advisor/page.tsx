@@ -27,7 +27,13 @@ export default async function AdvisorAIPage({ params }: PageProps) {
   return <AdvisorAIPageClient locale={locale} />;
 }
 
+'use client';
+
+import { useState } from 'react';
+
 function AdvisorAIPageClient({ locale }: { locale: string }) {
+  const [inputValue, setInputValue] = useState('');
+
   return (
     <div dir="rtl" lang="ar" className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -53,11 +59,8 @@ function AdvisorAIPageClient({ locale }: { locale: string }) {
             <h2 className="text-xl font-semibold text-gray-900 mb-4">اسألني أي شيء 🎤</h2>
             <div className="space-y-4">
               <VoiceInput
-                value=""
-                onChange={(text) => {
-                  console.log('User input:', text);
-                  // TODO: Integrate with AI API
-                }}
+                value={inputValue}
+                onChange={setInputValue}
                 placeholder="اضغط على الميكروفون للتحدث أو اكتب سؤالك هنا..."
                 lang="ar-SA"
                 onTranscriptionStart={() => console.log('Started listening...')}
