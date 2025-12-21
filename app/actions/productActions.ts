@@ -170,7 +170,7 @@ export async function createProduct(data: CreateProductData) {
     }
 
     // Use first external image as main image if no image_url provided
-    const mainImage = data.image_url || (data.external_images && Array.isArray(data.external_images) && data.external_images.length > 0 && data.external_images[0]) || null;
+    let mainImage = data.image_url || (data.external_images && Array.isArray(data.external_images) && data.external_images.length > 0 && data.external_images[0]) || null;
 
     // Validate mainImage is a string if provided
     if (mainImage && typeof mainImage !== 'string') {
@@ -178,6 +178,21 @@ export async function createProduct(data: CreateProductData) {
         success: false,
         error: 'Invalid image URL format',
       };
+    }
+
+    // Truncate long strings as a safety measure (though DB now supports Text type)
+    const MAX_URL_LENGTH = 2048; // URLs can be very long (Amazon, etc.)
+    const MAX_DESCRIPTION_LENGTH = 10000; // Very long descriptions
+    
+    const truncateString = (str: string, maxLength: number): string => {
+      if (str.length <= maxLength) return str;
+      console.warn('[createProduct] String truncated from', str.length, 'to', maxLength, 'characters');
+      return str.substring(0, maxLength);
+    };
+
+    // Truncate long URLs if needed
+    if (mainImage && mainImage.length > MAX_URL_LENGTH) {
+      mainImage = truncateString(mainImage, MAX_URL_LENGTH);
     }
 
     // Create product with validated data
@@ -188,13 +203,17 @@ export async function createProduct(data: CreateProductData) {
           name: data.name.trim(),
           name_ar: (data.name_ar && typeof data.name_ar === 'string') ? data.name_ar.trim() : null,
           name_zh: (data.name_zh && typeof data.name_zh === 'string') ? data.name_zh.trim() : null,
-          description: data.description.trim(),
-          description_ar: (data.description_ar && typeof data.description_ar === 'string') ? data.description_ar.trim() : null,
-          description_zh: (data.description_zh && typeof data.description_zh === 'string') ? data.description_zh.trim() : null,
+          description: truncateString(data.description.trim(), MAX_DESCRIPTION_LENGTH),
+          description_ar: (data.description_ar && typeof data.description_ar === 'string') 
+            ? truncateString(data.description_ar.trim(), MAX_DESCRIPTION_LENGTH) 
+            : null,
+          description_zh: (data.description_zh && typeof data.description_zh === 'string') 
+            ? truncateString(data.description_zh.trim(), MAX_DESCRIPTION_LENGTH) 
+            : null,
           price: priceValue,
           original_price: priceValue,
           stock: stockValue,
-          image_url: mainImage,
+          image_url: mainImage || null,
           user_id: user.id,
           status: 'ACTIVE',
           sold_count: 0,

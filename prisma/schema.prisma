@@ -8,7 +8,7 @@ datasource db {
   extensions = [vector]
   // Note: In Prisma 7+, URL should be in prisma.config.ts or passed to PrismaClient
   // For now, we'll use the traditional approach compatible with Prisma 6
-  url = env("DATABASE_URL")
+  url        = env("DATABASE_URL")
 }
 
 // ============================================
@@ -101,12 +101,12 @@ model products {
   name_ar         String?
   name_zh         String?
   title           String?
-  description     String
-  description_ar  String?
-  description_zh  String?
-  image_url       String?
-  external_link   String?
-  video_url       String?
+  description     String      @db.Text
+  description_ar  String?     @db.Text
+  description_zh  String?     @db.Text
+  image_url       String?     @db.Text
+  external_link   String?     @db.Text
+  video_url       String?     @db.Text
   user_id         String
   category_id     String?
   category        categories? @relation(fields: [category_id], references: [id], onDelete: SetNull)
@@ -483,21 +483,21 @@ model product_likes {
 }
 
 model comments {
-  id            String          @id
-  user_id       String
-  video_id      String?
-  product_id    String?
-  post_id       String?
-  content       String
-  review_video_url String?      // URL to uploaded video review (15s max, 10MB)
-  review_rating   Float?        // Rating (1-5) for product reviews
-  likes         Int             @default(0)
-  created_at    DateTime        @default(now())
-  updated_at    DateTime
-  comment_likes comment_likes[]
-  products      products?       @relation(fields: [product_id], references: [id], onDelete: Cascade)
-  users         users           @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  videos        videos?         @relation(fields: [video_id], references: [id], onDelete: Cascade)
+  id               String          @id
+  user_id          String
+  video_id         String?
+  product_id       String?
+  post_id          String?
+  content          String
+  review_video_url String? // URL to uploaded video review (15s max, 10MB)
+  review_rating    Float? // Rating (1-5) for product reviews
+  likes            Int             @default(0)
+  created_at       DateTime        @default(now())
+  updated_at       DateTime
+  comment_likes    comment_likes[]
+  products         products?       @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  users            users           @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  videos           videos?         @relation(fields: [video_id], references: [id], onDelete: Cascade)
 
   @@index([created_at])
   @@index([product_id])
@@ -911,11 +911,11 @@ model beta_applications {
 // ============================================
 
 model ai_memories {
-  id        String   @id @default(uuid())
-  content   String   @db.Text
-  embedding Unsupported("vector(1536)") // OpenAI embeddings dimension
-  metadata  Json?
-  created_at DateTime @default(now())
+  id         String                      @id @default(uuid())
+  content    String                      @db.Text
+  embedding  Unsupported("vector(1536)") // OpenAI embeddings dimension
+  metadata   Json?
+  created_at DateTime                    @default(now())
 
   @@index([created_at])
 }
@@ -925,12 +925,12 @@ model ai_memories {
 // ============================================
 
 model translation_cache {
-  id             String   @id @default(uuid())
-  original_text  String   @db.Text
+  id              String   @id @default(uuid())
+  original_text   String   @db.Text
   target_language String
-  translated_text String  @db.Text
-  created_at     DateTime @default(now())
-  updated_at     DateTime @updatedAt
+  translated_text String   @db.Text
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
 
   @@unique([original_text, target_language])
   @@index([target_language])
