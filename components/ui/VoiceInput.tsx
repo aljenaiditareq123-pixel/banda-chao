@@ -126,14 +126,16 @@ export default function VoiceInput({
 
   return (
     <div className={`relative ${className}`}>
-      <div className="flex items-center gap-2">
+      <div className="relative">
         <input
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           disabled={disabled}
-          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent !text-black bg-white placeholder:text-gray-400 disabled:bg-gray-100 disabled:cursor-not-allowed"
+          className={`w-full py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent !text-black bg-white placeholder:text-gray-400 disabled:bg-gray-100 disabled:cursor-not-allowed ${
+            lang === 'ar-SA' ? 'px-4 pr-12' : 'px-4 pl-12'
+          }`}
           dir={lang === 'ar-SA' ? 'rtl' : 'ltr'}
         />
         {isSupported && (
@@ -142,7 +144,8 @@ export default function VoiceInput({
             onClick={toggleListening}
             disabled={disabled}
             className={`
-              flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-200
+              absolute top-1/2 -translate-y-1/2 ${lang === 'ar-SA' ? 'left-2' : 'right-2'}
+              z-50 flex items-center justify-center w-9 h-9 rounded-lg transition-all duration-200 cursor-pointer
               ${isListening
                 ? 'bg-red-500 text-white animate-pulse'
                 : 'bg-primary-500 text-white hover:bg-primary-600'
@@ -161,7 +164,7 @@ export default function VoiceInput({
         )}
       </div>
       {isListening && (
-        <div className="absolute bottom-full left-0 mb-2 px-3 py-1 bg-red-500 text-white text-sm rounded-lg animate-pulse">
+        <div className="absolute bottom-full left-0 mb-2 px-3 py-1 bg-red-500 text-white text-sm rounded-lg animate-pulse z-50">
           🎤 يستمع الآن...
         </div>
       )}
