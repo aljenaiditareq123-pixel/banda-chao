@@ -571,7 +571,7 @@ export const postsAPI = {
       return { success: false, error: errorMessage || 'Failed to fetch posts' };
     }
   },
-  create: async (data: { content?: string; images?: string[] }): Promise<{ success: boolean; post?: unknown; error?: string }> => {
+  create: async (data: { content?: string; images?: string[]; productIds?: string[] }): Promise<{ success: boolean; post?: unknown; error?: string }> => {
     try {
       const response = await apiClient.post('/posts', data);
       return response.data;

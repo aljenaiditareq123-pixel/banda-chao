@@ -2,10 +2,21 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import LikeButton from './LikeButton';
 import CommentList from './CommentList';
 import CommentForm from './CommentForm';
 import { useAuth } from '@/hooks/useAuth';
+import { useCart } from '@/contexts/CartContext';
+
+interface Product {
+  id: string;
+  name: string;
+  description?: string;
+  price?: number;
+  currency?: string;
+  image_url?: string;
+}
 
 interface PostCardProps {
   post: {
@@ -18,6 +29,12 @@ interface PostCardProps {
       name: string | null;
       profile_picture: string | null;
     };
+    post_products?: Array<{
+      id: string;
+      position?: number;
+      is_featured?: boolean;
+      products: Product;
+    }>;
     _count?: {
       post_likes: number;
     };
@@ -28,6 +45,8 @@ interface PostCardProps {
 
 export default function PostCard({ post, locale, initialLiked = false }: PostCardProps) {
   const { user } = useAuth();
+  const router = useRouter();
+  const { addItem } = useCart();
   const [showComments, setShowComments] = useState(false);
   const [commentsCount, setCommentsCount] = useState(0);
 
@@ -53,28 +72,69 @@ export default function PostCard({ post, locale, initialLiked = false }: PostCar
     }
   };
 
+  const handleProductClick = (productId: string) => {
+    router.push(`/${locale}/products/${productId}`);
+  };
+
+  const handleAddToCart = (e: React.MouseEvent, product: Product) => {
+    e.stopPropagation();
+    if (product.id && product.price !== undefined) {
+      addItem({
+        productId: product.id,
+        name: product.name,
+        price: product.price,
+        currency: product.currency || 'USD',
+        imageUrl: product.image_url,
+        quantity: 1,
+      }, locale);
+    }
+  };
+
   const texts = {
     ar: {
       showComments: 'عرض التعليقات',
       hideComments: 'إخفاء التعليقات',
       comments: 'تعليق',
       noComments: 'لا توجد تعليقات',
+      buyNow: 'اشتري الآن',
+      viewProduct: 'عرض المنتج',
+      addToCart: 'أضف للسلة',
+      products: 'المنتجات',
     },
     en: {
       showComments: 'Show comments',
       hideComments: 'Hide comments',
       comments: 'comment',
       noComments: 'No comments yet',
+      buyNow: 'Buy Now',
+      viewProduct: 'View Product',
+      addToCart: 'Add to Cart',
+      products: 'Products',
     },
     zh: {
       showComments: '显示评论',
       hideComments: '隐藏评论',
       comments: '评论',
       noComments: '暂无评论',
+      buyNow: '立即购买',
+      viewProduct: '查看产品',
+      addToCart: '添加到购物车',
+      products: '产品',
     },
   };
 
   const t = texts[locale as keyof typeof texts] || texts.en;
+
+  // Parse images if it's a JSON string
+  const postImages = typeof post.images === 'string' 
+    ? (() => {
+        try {
+          return JSON.parse(post.images);
+        } catch {
+          return [];
+        }
+      })()
+    : (Array.isArray(post.images) ? post.images : []);
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-4" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
@@ -110,9 +170,9 @@ export default function PostCard({ post, locale, initialLiked = false }: PostCar
       </div>
 
       {/* Post Images */}
-      {post.images && post.images.length > 0 && (
+      {postImages && postImages.length > 0 && (
         <div className="mb-4 grid grid-cols-2 gap-2">
-          {post.images.map((image, index) => (
+          {postImages.map((image: string, index: number) => (
             <div key={index} className="relative aspect-square rounded-lg overflow-hidden bg-gray-100">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -126,6 +186,67 @@ export default function PostCard({ post, locale, initialLiked = false }: PostCar
               />
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Post Products */}
+      {post.post_products && post.post_products.length > 0 && (
+        <div className="mb-4 space-y-3">
+          <h4 className="text-sm font-semibold text-gray-700">{t.products}</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {post.post_products.map((postProduct) => {
+              const product = postProduct.products;
+              if (!product) return null;
+              
+              return (
+                <div
+                  key={postProduct.id}
+                  className="border border-gray-200 rounded-lg p-3 bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
+                  onClick={() => handleProductClick(product.id)}
+                >
+                  <div className="flex gap-3">
+                    {product.image_url && (
+                      <div className="w-20 h-20 rounded-lg overflow-hidden bg-white flex-shrink-0">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={product.image_url}
+                          alt={product.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <h5 className="font-medium text-gray-900 truncate">{product.name}</h5>
+                      {product.description && (
+                        <p className="text-xs text-gray-600 line-clamp-2 mt-1">{product.description}</p>
+                      )}
+                      {product.price !== undefined && (
+                        <p className="text-sm font-semibold text-primary mt-2">
+                          {product.price} {product.currency || 'USD'}
+                        </p>
+                      )}
+                      <div className="flex gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          onClick={() => handleProductClick(product.id)}
+                          className="flex-1 px-3 py-1.5 bg-primary text-white text-xs font-medium rounded hover:bg-primary/90 transition-colors"
+                        >
+                          {t.viewProduct}
+                        </button>
+                        {product.price !== undefined && (
+                          <button
+                            onClick={(e) => handleAddToCart(e, product)}
+                            className="flex-1 px-3 py-1.5 border border-primary text-primary text-xs font-medium rounded hover:bg-primary/10 transition-colors"
+                          >
+                            {t.addToCart}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 

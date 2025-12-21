@@ -14,10 +14,10 @@ const countryToLocale: Record<string, string> = {
   // Default to English for others
 };
 
-// Get locale from IP geolocation (using Cloudflare headers or similar)
-function getLocaleFromIP(request: NextRequest): string {
-  // Try to get country from Cloudflare CF-IPCountry header
-  // Note: request.geo is deprecated in Next.js 16, using headers only
+// Get locale from IP geolocation
+// Uses external Geo-IP service for accurate country detection
+async function getLocaleFromIP(request: NextRequest): Promise<string> {
+  // Priority 1: Try Cloudflare/Vercel headers (if available)
   const country = request.headers.get('cf-ipcountry') || 
                   request.headers.get('x-vercel-ip-country') ||
                   null;
@@ -26,7 +26,42 @@ function getLocaleFromIP(request: NextRequest): string {
     return countryToLocale[country];
   }
 
-  // Fallback: try to detect from Accept-Language header
+  // Priority 2: Use internal Geo-IP API route (uses geoip-lite)
+  // Extract IP from request first
+  const clientIP = request.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+                   request.headers.get('x-real-ip') ||
+                   request.headers.get('cf-connecting-ip') ||
+                   null;
+  
+  if (clientIP) {
+    try {
+      // Build API URL - use same origin as request
+      const url = new URL('/api/geoip', request.url);
+      url.searchParams.set('ip', clientIP);
+      
+      const geoResponse = await fetch(url.toString(), {
+        method: 'GET',
+        headers: {
+          // Forward headers that contain IP information
+          'x-forwarded-for': request.headers.get('x-forwarded-for') || '',
+          'x-real-ip': request.headers.get('x-real-ip') || '',
+          'cf-connecting-ip': request.headers.get('cf-connecting-ip') || '',
+        },
+      });
+
+      if (geoResponse.ok) {
+        const geoData = await geoResponse.json();
+        if (geoData.country && countryToLocale[geoData.country]) {
+          return countryToLocale[geoData.country];
+        }
+      }
+    } catch (error) {
+      // Silently fail and fall back to Accept-Language
+      console.warn('[GeoIP Middleware] Failed to fetch Geo-IP:', error);
+    }
+  }
+
+  // Priority 3: Fallback to Accept-Language header
   const acceptLanguage = request.headers.get('accept-language');
   if (acceptLanguage) {
     // Check for Arabic
@@ -39,11 +74,12 @@ function getLocaleFromIP(request: NextRequest): string {
     }
   }
 
+  // Priority 4: Default locale
   return defaultLocale;
 }
 
 // Get locale from pathname
-function getLocale(pathname: string, request?: NextRequest): string {
+async function getLocale(pathname: string, request?: NextRequest): Promise<string> {
   const segments = pathname.split('/').filter(Boolean);
   const firstSegment = segments[0];
   
@@ -54,7 +90,7 @@ function getLocale(pathname: string, request?: NextRequest): string {
   
   // If no locale in path, try to detect from IP
   if (request) {
-    return getLocaleFromIP(request);
+    return await getLocaleFromIP(request);
   }
   
   return defaultLocale;
@@ -174,7 +210,7 @@ function isProtectedRoute(pathname: string): boolean {
   });
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
   // CRITICAL: Skip locale routing for excluded paths (check this FIRST)
@@ -218,7 +254,7 @@ export function middleware(request: NextRequest) {
   // Check authentication for protected routes
   if (isProtectedRoute(pathname)) {
     // Get locale for redirect
-    const locale = getLocale(pathname, request);
+    const locale = await getLocale(pathname, request);
     
     // Check for NextAuth session tokens
     const sessionToken = request.cookies.get('next-auth.session-token') || 
@@ -268,7 +304,7 @@ export function middleware(request: NextRequest) {
   
   // If pathname doesn't have a locale, detect from IP and redirect
   if (!pathnameHasLocale) {
-    const detectedLocale = getLocale(pathname, request);
+    const detectedLocale = await getLocale(pathname, request);
     const newUrl = new URL(`/${detectedLocale}${pathname === '/' ? '' : pathname}`, request.url);
     
     // Preserve query parameters
@@ -279,7 +315,7 @@ export function middleware(request: NextRequest) {
   }
   
   // If pathname has a locale, validate it and continue
-  const locale = getLocale(pathname);
+  const locale = await getLocale(pathname);
   if (!locales.includes(locale)) {
     // Invalid locale, redirect to default locale
     const newUrl = new URL(`/${defaultLocale}${pathname.replace(`/${locale}`, '')}`, request.url);
