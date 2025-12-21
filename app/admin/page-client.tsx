@@ -1,6 +1,7 @@
 'use client';
 
 import { Package, ShoppingCart, Users, DollarSign } from 'lucide-react';
+import AICouncil from '@/components/admin/AICouncil';
 
 /**
  * HARDCODE MODE: Force return static data immediately
@@ -70,6 +71,11 @@ export default function AdminDashboardClient() {
             </div>
           );
         })}
+      </div>
+
+      {/* AI Council Section */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <AICouncil />
       </div>
 
       {/* Quick Actions */}
