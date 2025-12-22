@@ -426,10 +426,11 @@ export default function ProductFormModal({
                         type="number"
                         required={formData.isPreOrder}
                         min="1"
+                        step="1"
                         value={formData.targetQuantity}
                         onChange={(e) => setFormData({ ...formData, targetQuantity: e.target.value })}
                         placeholder="مثال: 100"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white placeholder:text-gray-400"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white placeholder:text-gray-400"
                       />
                       <p className="text-xs text-gray-500 mt-1">
                         العدد المطلوب من الطلبات لبدء التصنيع
@@ -443,10 +444,11 @@ export default function ProductFormModal({
                         type="date"
                         value={formData.campaignEndDate}
                         onChange={(e) => setFormData({ ...formData, campaignEndDate: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+                        min={new Date().toISOString().split('T')[0]}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
                       />
                       <p className="text-xs text-gray-500 mt-1">
-                        تاريخ انتهاء فترة قبول الحجوزات
+                        تاريخ انتهاء فترة قبول الحجوزات (لا يمكن اختيار تاريخ في الماضي)
                       </p>
                     </div>
                   </div>
