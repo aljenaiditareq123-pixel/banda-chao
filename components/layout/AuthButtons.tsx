@@ -61,8 +61,26 @@ export default function AuthButtons({
 
   // Logged in state - show user dropdown menu
   const displayName = userName || user?.name || (locale === 'ar' ? 'مستخدم' : locale === 'zh' ? '用户' : 'User');
-  const userRole = user?.role;
-  const showAdminLink = userRole === 'ADMIN' || userRole === 'FOUNDER';
+  
+  // Get user role from multiple sources (user object, localStorage fallback)
+  const userRoleFromHook = user?.role;
+  const userRoleFromStorage = typeof window !== 'undefined' 
+    ? localStorage.getItem('bandaChao_userRole') 
+    : null;
+  const userRole = userRoleFromHook || userRoleFromStorage;
+  
+  // Debug: Log user role to console for troubleshooting
+  useEffect(() => {
+    console.log('[AuthButtons] User role debug:', {
+      fromHook: userRoleFromHook,
+      fromStorage: userRoleFromStorage,
+      final: userRole,
+      userObject: user
+    });
+  }, [userRoleFromHook, userRoleFromStorage, userRole, user]);
+  
+  // Show admin link for ADMIN, FOUNDER, and MERCHANT roles
+  const showAdminLink = userRole === 'ADMIN' || userRole === 'FOUNDER' || userRole === 'MERCHANT';
 
   return (
     <div className="relative z-[9999] pointer-events-auto" ref={dropdownRef}>
