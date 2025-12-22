@@ -56,7 +56,6 @@
   "devDependencies": {
     "@playwright/test": "^1.57.0",
     "@testing-library/jest-dom": "^6.1.5",
-    "@types/geoip-lite": "^1.4.4",
     "@testing-library/react": "^14.1.2",
     "@types/node": "^20.11.0",
     "@types/react": "^18.2.0",

@@ -224,6 +224,7 @@ model products {
   external_link String?         @db.Text
   user_id       String
   price         Float?
+  currency      String          @default("USD")
   category      String?
   created_at    DateTime        @default(now())
   updated_at    DateTime
