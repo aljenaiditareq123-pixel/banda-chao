@@ -106,21 +106,47 @@ export default function VoiceInput({
     };
   }, [lang, onChange, onTranscriptionStart, onTranscriptionEnd, onError]);
 
-  const toggleListening = () => {
+  const toggleListening = async () => {
     if (!isSupported || disabled) return;
 
-    if (recognitionRef.current) {
-      try {
-        if (isListening) {
+    if (isListening) {
+      // Stop listening
+      if (recognitionRef.current) {
+        try {
           recognitionRef.current.stop();
           setIsListening(false);
-        } else {
-          recognitionRef.current.start();
+        } catch (error: any) {
+          console.error('Failed to stop recognition:', error);
         }
-      } catch (error: any) {
-        console.error('Failed to toggle recognition:', error);
-        onError?.('فشل في بدء التسجيل. يرجى المحاولة مرة أخرى.');
       }
+      return;
+    }
+
+    // Request microphone permission before starting
+    try {
+      // Request permission using getUserMedia (more reliable)
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Stop the stream immediately - we just needed permission
+      stream.getTracks().forEach(track => track.stop());
+      
+      // Now start speech recognition
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.start();
+        } catch (error: any) {
+          console.error('Failed to start recognition:', error);
+          onError?.('فشل في بدء التسجيل. يرجى المحاولة مرة أخرى.');
+        }
+      }
+    } catch (error: any) {
+      console.error('Microphone permission denied:', error);
+      let errorMessage = 'تم رفض الوصول إلى الميكروفون. يرجى السماح بالوصول في إعدادات المتصفح.';
+      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+        errorMessage = 'تم رفض الوصول إلى الميكروفون. يرجى السماح بالوصول في إعدادات المتصفح.';
+      } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+        errorMessage = 'لم يتم العثور على ميكروفون. يرجى التأكد من وجود ميكروفون متصل.';
+      }
+      onError?.(errorMessage);
     }
   };
 
