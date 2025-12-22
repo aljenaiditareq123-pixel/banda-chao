@@ -39,12 +39,24 @@ export default function ProductFormModal({
     colors: [] as string[],
     sizes: [] as string[],
     category: '',
+    // C2M fields
+    isPreOrder: false,
+    targetQuantity: '',
+    campaignEndDate: '',
+    manufactureStatus: 'PENDING',
   });
 
   const [externalImageUrl, setExternalImageUrl] = useState('');
 
   useEffect(() => {
     if (product) {
+      // Format campaign_end_date for date input (YYYY-MM-DD)
+      let campaignEndDateFormatted = '';
+      if (product.campaign_end_date) {
+        const date = new Date(product.campaign_end_date);
+        campaignEndDateFormatted = date.toISOString().split('T')[0];
+      }
+      
       setFormData({
         name: product.name || '',
         name_ar: product.name_ar || '',
@@ -59,6 +71,11 @@ export default function ProductFormModal({
         external_images: [],
         colors: [],
         sizes: [],
+        // C2M fields
+        isPreOrder: product.is_pre_order || false,
+        targetQuantity: product.target_quantity?.toString() || '',
+        campaignEndDate: campaignEndDateFormatted,
+        manufactureStatus: product.manufacture_status || 'PENDING',
       });
       setVideoUrl(product.video_url || '');
     }
@@ -73,6 +90,11 @@ export default function ProductFormModal({
         video_url: videoUrl || formData.video_url,
         price: parseFloat(formData.price),
         stock: parseInt(formData.stock),
+        // C2M fields
+        isPreOrder: formData.isPreOrder,
+        targetQuantity: formData.targetQuantity ? parseInt(formData.targetQuantity) : null,
+        campaignEndDate: formData.campaignEndDate || null,
+        manufactureStatus: formData.manufactureStatus,
       });
     } catch (error) {
       console.error('Error submitting form:', error);
@@ -368,6 +390,87 @@ export default function ProductFormModal({
                   />
                 </div>
               </div>
+            </div>
+
+            {/* C2M (Copy to Manufacture) Settings */}
+            <div className="border-t border-gray-200 pt-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">إعدادات التصنيع (C2M)</h3>
+              
+              {/* Enable Pre-Order Toggle */}
+              <div className="mb-4">
+                <label className="flex items-center space-x-3 space-x-reverse cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.isPreOrder}
+                    onChange={(e) => setFormData({ ...formData, isPreOrder: e.target.checked })}
+                    className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-sm font-medium text-gray-700">
+                    تفعيل نظام الحجز المسبق (Pre-Order)
+                  </span>
+                </label>
+                <p className="text-xs text-gray-500 mt-1 mr-8">
+                  عند تفعيله، سيتم تجميع الطلبات قبل بدء التصنيع
+                </p>
+              </div>
+
+              {/* Conditional C2M Fields */}
+              {formData.isPreOrder && (
+                <div className="space-y-4 bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        الكمية المستهدفة للتصنيع *
+                      </label>
+                      <input
+                        type="number"
+                        required={formData.isPreOrder}
+                        min="1"
+                        value={formData.targetQuantity}
+                        onChange={(e) => setFormData({ ...formData, targetQuantity: e.target.value })}
+                        placeholder="مثال: 100"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white placeholder:text-gray-400"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        العدد المطلوب من الطلبات لبدء التصنيع
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        تاريخ انتهاء الحملة
+                      </label>
+                      <input
+                        type="date"
+                        value={formData.campaignEndDate}
+                        onChange={(e) => setFormData({ ...formData, campaignEndDate: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        تاريخ انتهاء فترة قبول الحجوزات
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      حالة التصنيع
+                    </label>
+                    <select
+                      value={formData.manufactureStatus}
+                      onChange={(e) => setFormData({ ...formData, manufactureStatus: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+                    >
+                      <option value="PENDING">في الانتظار (PENDING)</option>
+                      <option value="COLLECTING">جاري التجميع (COLLECTING)</option>
+                      <option value="IN_MANUFACTURE">دخل المصنع (IN_MANUFACTURE)</option>
+                      <option value="SHIPPED">تم الشحن (SHIPPED)</option>
+                    </select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      الحالة الحالية لعملية التصنيع
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Main Image URL */}

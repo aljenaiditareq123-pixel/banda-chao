@@ -19,6 +19,11 @@ export interface CreateProductData {
   colors?: string[];
   sizes?: string[];
   userId?: string; // Passed from client
+  // C2M fields
+  isPreOrder?: boolean;
+  targetQuantity?: number | null;
+  campaignEndDate?: string | null;
+  manufactureStatus?: string;
 }
 
 async function getCurrentUser(): Promise<{ id: string; role: string } | null> {
@@ -227,6 +232,12 @@ export async function createProduct(data: CreateProductData) {
           views_count: 0,
           rating: 0,
           reviews_count: 0,
+          // C2M fields
+          is_pre_order: data.isPreOrder || false,
+          target_quantity: data.targetQuantity || null,
+          current_orders: 0,
+          campaign_end_date: data.campaignEndDate ? new Date(data.campaignEndDate) : null,
+          manufacture_status: data.manufactureStatus || 'PENDING',
         },
       });
     } catch (prismaError: any) {

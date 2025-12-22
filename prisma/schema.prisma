@@ -123,6 +123,12 @@ model products {
   product_type    String      @default("REGULAR") // REGULAR, BLIND_BOX
   is_blind_box    Boolean     @default(false) // True if this is a mystery blind box
   blind_box_price Float? // Fixed price for blind box (if different from regular price)
+  // C2M (Copy to Manufacture) Fields - حقول الحجز الجماعي
+  is_pre_order       Boolean    @default(false) // True if this is a pre-order product (حجز مسبق)
+  target_quantity    Int? // Target number of orders to start manufacturing (العدد المطلوب لبدء التصنيع)
+  current_orders     Int         @default(0) // Current number of pre-orders (عداد الحاجزين)
+  campaign_end_date  DateTime? // Campaign end date (تاريخ انتهاء فترة الحجز)
+  manufacture_status String      @default("PENDING") // PENDING, COLLECTING, IN_MANUFACTURE, SHIPPED (حالة التصنيع)
   created_at      DateTime    @default(now())
   updated_at      DateTime    @updatedAt
 

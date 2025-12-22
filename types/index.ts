@@ -10,6 +10,12 @@ export interface Product {
   category?: string;
   createdAt: string;
   updatedAt: string;
+  // C2M (Copy to Manufacture) Fields
+  isPreOrder?: boolean; // True if this is a pre-order product
+  targetQuantity?: number; // Target number of orders to start manufacturing
+  currentOrders?: number; // Current number of pre-orders
+  campaignEndDate?: string | Date; // Campaign end date
+  manufactureStatus?: string; // PENDING, COLLECTING, IN_MANUFACTURE, SHIPPED
 }
 
 export interface Video {

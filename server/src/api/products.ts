@@ -134,13 +134,22 @@ router.get('/', async (req: Request, res: Response) => {
       SELECT 
         p.id,
         p.name,
+        p.name_ar,
+        p.name_zh,
         p.description,
         p.price,
+        p.stock,
+        p.status,
         p.category,
         p.image_url as "imageUrl",
         p.external_link as "externalLink",
         p.created_at as "createdAt",
         p.updated_at as "updatedAt",
+        p.is_pre_order as "isPreOrder",
+        p.target_quantity as "targetQuantity",
+        p.current_orders as "currentOrders",
+        p.campaign_end_date as "campaignEndDate",
+        p.manufacture_status as "manufactureStatus",
         u.id as "userId",
         u.name as "userName",
         u.profile_picture as "userProfilePicture"
@@ -270,7 +279,7 @@ router.post('/', authenticateToken, requireRole(['MAKER']), upload.single('image
     // Invalidate products cache
     invalidateCachePattern('products:');
 
-    const { name, description, price, currency, category, external_link, stock } = req.body;
+    const { name, description, price, currency, category, external_link, stock, isPreOrder, targetQuantity, campaignEndDate, manufactureStatus } = req.body;
 
     // Validation
     if (!name || !name.trim()) {
@@ -298,6 +307,12 @@ router.post('/', authenticateToken, requireRole(['MAKER']), upload.single('image
       }
     }
 
+    // Parse C2M fields
+    const isPreOrderBool = isPreOrder === 'true' || isPreOrder === true;
+    const targetQuantityNum = targetQuantity ? parseInt(targetQuantity as string) : null;
+    const campaignEndDateValue = campaignEndDate ? new Date(campaignEndDate as string) : null;
+    const manufactureStatusValue = manufactureStatus?.trim() || 'PENDING';
+
     // Create product
     const productId = randomUUID();
     const product = await prisma.products.create({
@@ -310,6 +325,12 @@ router.post('/', authenticateToken, requireRole(['MAKER']), upload.single('image
         image_url: imageUrl,
         external_link: external_link?.trim() || '',
         user_id: req.userId!,
+        // C2M fields
+        is_pre_order: isPreOrderBool,
+        target_quantity: targetQuantityNum,
+        current_orders: 0, // Initialize to 0
+        campaign_end_date: campaignEndDateValue,
+        manufacture_status: manufactureStatusValue,
         created_at: new Date(),
         updated_at: new Date(),
       },
@@ -344,7 +365,7 @@ router.put('/:id', authenticateToken, requireRole(['MAKER']), upload.single('ima
     // Invalidate products cache
     invalidateCachePattern('products:');
 
-    const { name, description, price, currency, category, external_link, stock } = req.body;
+    const { name, description, price, currency, category, external_link, stock, isPreOrder, targetQuantity, campaignEndDate, manufactureStatus } = req.body;
     const productId = req.params.id;
 
     // Check if product exists and belongs to the user
@@ -391,6 +412,22 @@ router.put('/:id', authenticateToken, requireRole(['MAKER']), upload.single('ima
       }
     }
 
+    // Parse C2M fields
+    let isPreOrderBool: boolean | undefined;
+    if (isPreOrder !== undefined) {
+      isPreOrderBool = isPreOrder === 'true' || isPreOrder === true;
+    }
+    
+    let targetQuantityNum: number | null | undefined;
+    if (targetQuantity !== undefined) {
+      targetQuantityNum = targetQuantity ? parseInt(targetQuantity as string) : null;
+    }
+
+    let campaignEndDateValue: Date | null | undefined;
+    if (campaignEndDate !== undefined) {
+      campaignEndDateValue = campaignEndDate ? new Date(campaignEndDate as string) : null;
+    }
+
     // Update product
     const updateData: {
       name?: string;
@@ -399,6 +436,10 @@ router.put('/:id', authenticateToken, requireRole(['MAKER']), upload.single('ima
       category?: string | null;
       external_link?: string;
       image_url?: string | null;
+      is_pre_order?: boolean;
+      target_quantity?: number | null;
+      campaign_end_date?: Date | null;
+      manufacture_status?: string;
       updated_at: Date;
     } = {
       updated_at: new Date(),
@@ -410,6 +451,11 @@ router.put('/:id', authenticateToken, requireRole(['MAKER']), upload.single('ima
     if (category !== undefined) updateData.category = category?.trim() || null;
     if (external_link !== undefined) updateData.external_link = external_link.trim();
     if (imageUrl !== undefined) updateData.image_url = imageUrl;
+    // C2M fields
+    if (isPreOrder !== undefined) updateData.is_pre_order = isPreOrderBool;
+    if (targetQuantity !== undefined) updateData.target_quantity = targetQuantityNum;
+    if (campaignEndDate !== undefined) updateData.campaign_end_date = campaignEndDateValue;
+    if (manufactureStatus !== undefined) updateData.manufacture_status = manufactureStatus.trim();
 
     const product = await prisma.products.update({
       where: { id: productId },
@@ -457,8 +503,8 @@ router.put('/:id', authenticateToken, requireRole(['MAKER']), upload.single('ima
   }
 });
 
-// Delete product (authenticated, MAKER role, owner only)
-router.delete('/:id', authenticateToken, requireRole(['MAKER']), async (req: AuthRequest, res: Response) => {
+// Delete product (authenticated, MAKER or ADMIN role, owner only for MAKER, all products for ADMIN)
+router.delete('/:id', authenticateToken, requireRole(['MAKER', 'ADMIN', 'FOUNDER']), async (req: AuthRequest, res: Response) => {
   try {
     // Invalidate products cache
     invalidateCachePattern('products:');
@@ -481,7 +527,8 @@ router.delete('/:id', authenticateToken, requireRole(['MAKER']), async (req: Aut
       });
     }
 
-    if (existingProduct.user_id !== req.userId) {
+    // ADMIN and FOUNDER can delete any product, MAKER can only delete their own products
+    if (req.user?.role !== 'ADMIN' && req.user?.role !== 'FOUNDER' && existingProduct.user_id !== req.userId) {
       return res.status(403).json({ 
         success: false,
         error: 'You do not have permission to delete this product' 
