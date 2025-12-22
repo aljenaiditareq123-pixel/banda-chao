@@ -220,6 +220,7 @@ model products {
   name          String
   description   String          @db.Text
   image_url     String?         @db.Text
+  video_url     String?         @db.Text
   external_link String?         @db.Text
   user_id       String
   price         Float?

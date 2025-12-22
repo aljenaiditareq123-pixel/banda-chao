@@ -665,6 +665,38 @@ export const videoUploadAPI = {
       return { success: false, error: errorMessage || 'Failed to upload video' };
     }
   },
+  /**
+   * Upload video file and get URL only (no database record)
+   * Used for product videos, etc.
+   */
+  uploadSimple: async (
+    videoFile: File,
+    onProgress?: (progress: number) => void
+  ): Promise<{ success: boolean; videoUrl?: string; error?: string }> => {
+    try {
+      const formData = new FormData();
+      formData.append('video', videoFile);
+
+      const response = await apiClient.post('/video-upload-simple', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        timeout: 300000, // 5 minutes for large videos
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total && onProgress) {
+            const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            onProgress(progress);
+          }
+        },
+      });
+      return response.data;
+    } catch (error: unknown) {
+      const errorMessage = error && typeof error === 'object' && 'response' in error
+        ? (error as { response?: { data?: { error?: string } } }).response?.data?.error
+        : 'Failed to upload video';
+      return { success: false, error: errorMessage || 'Failed to upload video' };
+    }
+  },
 };
 
 // ============================================

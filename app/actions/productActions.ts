@@ -14,6 +14,7 @@ export interface CreateProductData {
   price: number;
   stock: number;
   image_url?: string;
+  video_url?: string;
   external_images?: string[];
   colors?: string[];
   sizes?: string[];
@@ -198,6 +199,11 @@ export async function createProduct(data: CreateProductData) {
     // Create product with validated data
     let product;
     try {
+      // Truncate video_url if provided
+      const videoUrlValue = (data.video_url && typeof data.video_url === 'string' && data.video_url.trim()) 
+        ? truncateString(data.video_url.trim(), MAX_URL_LENGTH)
+        : null;
+
       product = await prisma.products.create({
         data: {
           name: data.name.trim(),
@@ -214,6 +220,7 @@ export async function createProduct(data: CreateProductData) {
           original_price: priceValue,
           stock: stockValue,
           image_url: mainImage || null,
+          video_url: videoUrlValue,
           user_id: user.id,
           status: 'ACTIVE',
           sold_count: 0,

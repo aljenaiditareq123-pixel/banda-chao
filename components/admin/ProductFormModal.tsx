@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { X, Sparkles, Loader2 } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { X, Sparkles, Loader2, Upload, Video, XCircle } from 'lucide-react';
 import VoiceInput from '@/components/ui/VoiceInput';
 import VoiceTextarea from '@/components/ui/VoiceTextarea';
+import { videoUploadAPI } from '@/lib/api';
 
 interface ProductFormModalProps {
   product?: any;
@@ -18,6 +19,11 @@ export default function ProductFormModal({
 }: ProductFormModalProps) {
   const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [videoUploadProgress, setVideoUploadProgress] = useState(0);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoUrl, setVideoUrl] = useState<string>('');
+  const videoInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     name: '',
     name_ar: '',
@@ -28,6 +34,7 @@ export default function ProductFormModal({
     price: '',
     stock: '',
     image_url: '',
+    video_url: '',
     external_images: [] as string[],
     colors: [] as string[],
     sizes: [] as string[],
@@ -48,10 +55,12 @@ export default function ProductFormModal({
         price: product.price?.toString() || '',
         stock: product.stock?.toString() || '',
         image_url: product.image_url || '',
+        video_url: product.video_url || '',
         external_images: [],
         colors: [],
         sizes: [],
       });
+      setVideoUrl(product.video_url || '');
     }
   }, [product]);
 
@@ -61,6 +70,7 @@ export default function ProductFormModal({
       setLoading(true);
       await onSubmit({
         ...formData,
+        video_url: videoUrl || formData.video_url,
         price: parseFloat(formData.price),
         stock: parseInt(formData.stock),
       });
@@ -177,6 +187,68 @@ export default function ProductFormModal({
       ...formData,
       sizes: formData.sizes.filter((_, i) => i !== index),
     });
+  };
+
+  const handleVideoFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      const validTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo'];
+      if (!validTypes.includes(file.type)) {
+        alert('نوع الملف غير مدعوم. يرجى اختيار فيديو بصيغة MP4, WebM, MOV أو AVI');
+        return;
+      }
+
+      // Validate file size (500MB max)
+      const maxSize = 500 * 1024 * 1024; // 500MB
+      if (file.size > maxSize) {
+        alert('حجم الملف كبير جداً. الحد الأقصى 500MB');
+        return;
+      }
+
+      setVideoFile(file);
+      handleVideoUpload(file);
+    }
+  };
+
+  const handleVideoUpload = async (file: File) => {
+    try {
+      setUploadingVideo(true);
+      setVideoUploadProgress(0);
+
+      const result = await videoUploadAPI.uploadSimple(file, (progress) => {
+        setVideoUploadProgress(progress);
+      });
+
+      if (result.success && result.videoUrl) {
+        setVideoUrl(result.videoUrl);
+        setFormData({ ...formData, video_url: result.videoUrl });
+        alert('✅ تم رفع الفيديو بنجاح!');
+      } else {
+        throw new Error(result.error || 'فشل رفع الفيديو');
+      }
+    } catch (error: any) {
+      console.error('Error uploading video:', error);
+      alert(`❌ فشل رفع الفيديو: ${error.message || 'حدث خطأ'}`);
+      setVideoFile(null);
+      setVideoUrl('');
+    } finally {
+      setUploadingVideo(false);
+      setVideoUploadProgress(0);
+      // Reset file input
+      if (videoInputRef.current) {
+        videoInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleRemoveVideo = () => {
+    setVideoFile(null);
+    setVideoUrl('');
+    setFormData({ ...formData, video_url: '' });
+    if (videoInputRef.current) {
+      videoInputRef.current.value = '';
+    }
   };
 
   return (
@@ -341,6 +413,99 @@ export default function ProductFormModal({
                     />
                   </div>
                 )}
+              </div>
+            </div>
+
+            {/* Video Upload */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">فيديو المنتج</h3>
+              <div className="space-y-4">
+                {/* Video Upload Area */}
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 transition-colors">
+                  <input
+                    ref={videoInputRef}
+                    type="file"
+                    accept="video/mp4,video/webm,video/quicktime,video/x-msvideo"
+                    onChange={handleVideoFileSelect}
+                    disabled={uploadingVideo}
+                    className="hidden"
+                    id="video-upload-input"
+                  />
+                  <label
+                    htmlFor="video-upload-input"
+                    className={`cursor-pointer flex flex-col items-center justify-center space-y-2 ${
+                      uploadingVideo ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                  >
+                    <Video className="w-12 h-12 text-gray-400" />
+                    <div>
+                      <span className="text-blue-600 font-medium">اضغط لرفع فيديو</span>
+                      <span className="text-gray-500"> أو اسحب الملف هنا</span>
+                    </div>
+                    <p className="text-sm text-gray-400">
+                      MP4, WebM, MOV أو AVI (حد أقصى 500MB)
+                    </p>
+                  </label>
+
+                  {/* Progress Bar */}
+                  {uploadingVideo && (
+                    <div className="mt-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-gray-600">جاري الرفع...</span>
+                        <span className="text-sm font-medium text-blue-600">{videoUploadProgress}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2.5">
+                        <div
+                          className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                          style={{ width: `${videoUploadProgress}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Video Preview */}
+                  {videoUrl && !uploadingVideo && (
+                    <div className="mt-4 relative">
+                      <video
+                        src={videoUrl}
+                        controls
+                        className="w-full max-w-md mx-auto rounded-lg"
+                      >
+                        متصفحك لا يدعم تشغيل الفيديو
+                      </video>
+                      <button
+                        type="button"
+                        onClick={handleRemoveVideo}
+                        className="absolute top-2 left-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors"
+                      >
+                        <XCircle className="w-5 h-5" />
+                      </button>
+                      <div className="mt-2 text-sm text-gray-600 text-center">
+                        ✅ تم رفع الفيديو بنجاح
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Selected File Name (before upload) */}
+                  {videoFile && !uploadingVideo && !videoUrl && (
+                    <div className="mt-4 flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                      <div className="flex items-center space-x-2 space-x-reverse">
+                        <Video className="w-5 h-5 text-blue-600" />
+                        <span className="text-sm text-gray-700">{videoFile.name}</span>
+                        <span className="text-xs text-gray-500">
+                          ({(videoFile.size / (1024 * 1024)).toFixed(2)} MB)
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleRemoveVideo}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
