@@ -59,27 +59,56 @@ export default function AuthButtons({
     );
   }
 
+  // Safety check: if isLoggedIn but user is null, show logged out state
+  if (isLoggedIn && !user && typeof window !== 'undefined') {
+    const storedUser = localStorage.getItem('bandaChao_user');
+    if (!storedUser) {
+      // User logged out, show logged out state
+      return (
+        <div className="flex items-center gap-2 relative z-[9999] pointer-events-auto">
+          <Link
+            href={`/${locale}/login`}
+            className="text-sm px-3 py-1 rounded-full border border-gray-300 hover:bg-gray-100 transition-colors text-gray-700 pointer-events-auto"
+          >
+            {locale === 'ar' ? 'تسجيل الدخول' : locale === 'zh' ? '登录' : 'Login'}
+          </Link>
+          <Link
+            href={`/${locale}/signup`}
+            className="text-sm px-3 py-1 rounded-full bg-primary text-white hover:bg-primary/90 transition-colors pointer-events-auto"
+          >
+            {locale === 'ar' ? 'إنشاء حساب' : locale === 'zh' ? '注册' : 'Sign up'}
+          </Link>
+        </div>
+      );
+    }
+  }
+
   // Logged in state - show user dropdown menu
-  const displayName = userName || user?.name || (locale === 'ar' ? 'مستخدم' : locale === 'zh' ? '用户' : 'User');
+  // Safe fallback for displayName with null protection
+  const displayName = userName || user?.name || (locale === 'ar' ? 'مستخدم' : locale === 'zh' ? '用户' : 'User') || 'U';
+  const safeInitial = displayName && displayName.length > 0 ? displayName.charAt(0).toUpperCase() : 'U';
   
   // Get user role from multiple sources (user object, localStorage fallback)
-  const userRoleFromHook = user?.role;
+  const userRoleFromHook = user?.role || null;
   const userRoleFromStorage = typeof window !== 'undefined' 
     ? localStorage.getItem('bandaChao_userRole') 
     : null;
-  const userRole = userRoleFromHook || userRoleFromStorage;
+  const userRole = userRoleFromHook || userRoleFromStorage || null;
   
-  // Debug: Log user role to console for troubleshooting
+  // Debug: Log user role to console for troubleshooting (only in dev, with null safety)
   useEffect(() => {
-    console.log('[AuthButtons] User role debug:', {
-      fromHook: userRoleFromHook,
-      fromStorage: userRoleFromStorage,
-      final: userRole,
-      userObject: user
-    });
-  }, [userRoleFromHook, userRoleFromStorage, userRole, user]);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[AuthButtons] User role debug:', {
+        fromHook: userRoleFromHook,
+        fromStorage: userRoleFromStorage,
+        final: userRole,
+        userExists: !!user,
+        userRoleFromObject: user?.role
+      });
+    }
+  }, [userRoleFromHook, userRoleFromStorage, userRole]); // Removed 'user' from deps to prevent infinite loops
   
-  // Show admin link for ADMIN, FOUNDER, and MERCHANT roles
+  // Show admin link for ADMIN, FOUNDER, and MERCHANT roles (with null safety)
   const showAdminLink = userRole === 'ADMIN' || userRole === 'FOUNDER' || userRole === 'MERCHANT';
 
   return (
@@ -91,7 +120,7 @@ export default function AuthButtons({
       >
         {/* User Avatar/Initial */}
         <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-semibold text-sm">
-          {displayName.charAt(0).toUpperCase()}
+          {safeInitial}
         </div>
         <span className="text-sm font-medium hidden sm:inline">{displayName}</span>
         <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
@@ -102,7 +131,7 @@ export default function AuthButtons({
         <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
           {/* User Info */}
           <div className="px-4 py-3 border-b border-gray-200">
-            <p className="text-sm font-semibold text-gray-900">{displayName}</p>
+            <p className="text-sm font-semibold text-gray-900">{displayName || 'User'}</p>
             {user?.email && (
               <p className="text-xs text-gray-500 mt-1">{user.email}</p>
             )}

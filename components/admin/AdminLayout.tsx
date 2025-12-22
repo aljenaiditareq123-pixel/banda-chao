@@ -32,8 +32,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   useEffect(() => {
     if (!loading && user) {
-      // التحقق من الصلاحيات
-      if (user.role !== 'ADMIN' && user.role !== 'FOUNDER') {
+      // التحقق من الصلاحيات (with null safety)
+      if (user?.role !== 'ADMIN' && user?.role !== 'FOUNDER') {
         router.push('/');
       }
     }
@@ -47,7 +47,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     );
   }
 
-  if (!user || (user.role !== 'ADMIN' && user.role !== 'FOUNDER')) {
+  if (!user || (user?.role !== 'ADMIN' && user?.role !== 'FOUNDER')) {
     return null; // سيتم إعادة التوجيه
   }
 
@@ -122,15 +122,15 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             <div className="flex items-center space-x-3 space-x-reverse">
               <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
                 <span className="text-blue-600 font-semibold">
-                  {user.name?.charAt(0) || user.email?.charAt(0) || 'A'}
+                  {user?.name?.charAt(0) || user?.email?.charAt(0) || 'A'}
                 </span>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">
-                  {user.name || user.email}
+                  {user?.name || user?.email || 'User'}
                 </p>
                 <p className="text-xs text-gray-500">
-                  {user.role === 'FOUNDER' ? 'مؤسس' : 'مدير'}
+                  {user?.role === 'FOUNDER' ? 'مؤسس' : 'مدير'}
                 </p>
               </div>
             </div>
