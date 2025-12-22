@@ -73,8 +73,8 @@ export default function ProductFormModal({
         sizes: [],
         // C2M fields
         isPreOrder: product.is_pre_order || false,
-        targetQuantity: product.target_quantity?.toString() || '',
-        campaignEndDate: campaignEndDateFormatted,
+        targetQuantity: product.target_quantity != null ? String(product.target_quantity) : '',
+        campaignEndDate: campaignEndDateFormatted || '',
         manufactureStatus: product.manufacture_status || 'PENDING',
       });
       setVideoUrl(product.video_url || '');
