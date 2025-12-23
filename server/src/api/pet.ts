@@ -248,12 +248,12 @@ router.post('/track-browse', authenticateToken, async (req: any, res: Response) 
 
     // Feed pet with BROWSE type - call the feed handler directly
     // Instead of making HTTP request, we'll call the feed logic directly
-    let petState = await petStatesModel.findUnique({
+    let petState = await prisma.pet_states.findUnique({
       where: { user_id: userId },
     });
 
     if (!petState) {
-      petState = await petStatesModel.create({
+      petState = await prisma.pet_states.create({
         data: {
           user_id: userId,
           hunger_level: MAX_HUNGER,
@@ -270,7 +270,7 @@ router.post('/track-browse', authenticateToken, async (req: any, res: Response) 
     const newHunger = Math.min(MAX_HUNGER, petState.hunger_level + feedAmount);
     const hungerIncrease = newHunger - petState.hunger_level;
 
-    const updatedPetState = await petStatesModel.update({
+    const updatedPetState = await prisma.pet_states.update({
       where: { id: petState.id },
       data: {
         hunger_level: newHunger,
@@ -281,7 +281,7 @@ router.post('/track-browse', authenticateToken, async (req: any, res: Response) 
       },
     });
 
-    await petFeedHistoryModel.create({
+    await prisma.pet_feed_history.create({
       data: {
         pet_state_id: petState.id,
         user_id: userId,
