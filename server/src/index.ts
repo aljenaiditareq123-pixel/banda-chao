@@ -1,4 +1,4 @@
-import express, { Express, Request, Response } from 'express';
+import express, { Express, Request, Response, NextFunction } from 'express';
 import { createServer } from 'http';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -14,6 +14,7 @@ import {
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 import { initializeSocket } from './realtime/socket';
 import authRoutes from './api/auth';
 import userRoutes from './api/users';
@@ -286,6 +287,24 @@ app.use(requestLogger);
 // Serve static files (avatars)
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
+// Serve Next.js static files and frontend
+// Determine the correct path based on where the server is running
+const serverDir = __dirname; // server/src
+const projectRoot = path.join(serverDir, '../..'); // Go up from server/src to project root
+const nextStaticPath = path.join(projectRoot, '.next', 'static');
+const publicPath = path.join(projectRoot, 'public');
+const standalonePath = path.join(projectRoot, '.next', 'standalone');
+
+// Serve Next.js static assets
+if (fs.existsSync(nextStaticPath)) {
+  app.use('/_next/static', express.static(nextStaticPath));
+}
+
+// Serve public files (images, fonts, etc.)
+if (fs.existsSync(publicPath)) {
+  app.use(express.static(publicPath));
+}
+
 // Temporary: Store last KPIs error in memory (shared with founder.ts)
 // This will be populated by founder.ts when an error occurs
 (global as any).lastKPIsError = null;
@@ -356,8 +375,48 @@ app.use('/api/v1/games', gamesRoutes);
 app.use('/api/v1/wallet', walletRoutes);
 app.use('/api/v1/tracking', trackingRoutes);
 
-// 404 handler
+// Catch-all route to serve Next.js frontend (must be after all API routes)
+// For non-API routes, try to serve the frontend
+app.get('*', (req: Request, res: Response, next: NextFunction) => {
+  // Skip API routes
+  if (req.path.startsWith('/api/')) {
+    return next();
+  }
+
+  // Try to serve index.html from Next.js standalone build
+  const standaloneIndexPath = path.join(standalonePath, '.next', 'server', 'app', 'index.html');
+  if (fs.existsSync(standaloneIndexPath)) {
+    return res.sendFile(path.resolve(standaloneIndexPath));
+  }
+
+  // Try to serve index.html from public directory
+  const publicIndexPath = path.join(publicPath, 'index.html');
+  if (fs.existsSync(publicIndexPath)) {
+    return res.sendFile(path.resolve(publicIndexPath));
+  }
+
+  // If no index.html found, continue to 404 handler
+  return next();
+});
+
+// 404 handler (for API routes that don't match)
 app.use((req: Request, res: Response) => {
+  // Only return JSON 404 for API routes
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({
+      success: false,
+      message: 'Route not found',
+      code: 'NOT_FOUND',
+    });
+  }
+
+  // For non-API routes, try to serve frontend
+  const indexPath = path.join(publicPath, 'index.html');
+  if (fs.existsSync(indexPath)) {
+    return res.sendFile(indexPath);
+  }
+
+  // Final fallback
   res.status(404).json({
     success: false,
     message: 'Route not found',
