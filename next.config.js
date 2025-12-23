@@ -107,6 +107,12 @@ const nextConfig = {
       };
     }
     
+    // Ensure path aliases work correctly with webpack
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': require('path').resolve(__dirname, './'),
+    };
+    
     // Ensure proper function binding
     config.optimization = {
       ...config.optimization,
