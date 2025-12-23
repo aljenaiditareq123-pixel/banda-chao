@@ -418,10 +418,15 @@ app.use((req: Request, res: Response) => {
     });
   }
 
-  // For non-API routes, try to serve frontend
-  const indexPath = path.join(publicPath, 'index.html');
-  if (fs.existsSync(indexPath)) {
-    return res.sendFile(indexPath);
+  // For non-API routes, try to serve frontend index.html
+  const standaloneIndexPath = path.join(standalonePath, '.next', 'server', 'app', 'index.html');
+  if (fs.existsSync(standaloneIndexPath)) {
+    return res.sendFile(path.resolve(standaloneIndexPath));
+  }
+
+  const publicIndexPath = path.join(publicPath, 'index.html');
+  if (fs.existsSync(publicIndexPath)) {
+    return res.sendFile(path.resolve(publicIndexPath));
   }
 
   // Final fallback
