@@ -288,29 +288,88 @@ app.use(requestLogger);
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Serve Next.js static files and frontend
-// Determine the correct path based on where the server is running
-const serverDir = __dirname; // server/src (compiled to server/dist)
-const projectRoot = path.resolve(serverDir, '../..'); // Go up from server/dist to project root
-const nextStaticPath = path.join(projectRoot, '.next', 'static');
-const publicPath = path.join(projectRoot, 'public');
-const standalonePath = path.join(projectRoot, '.next', 'standalone');
+// Use process.cwd() for Render deployment compatibility
+const PROJECT_ROOT = process.cwd();
+
+// Diagnostic logs for debugging on Render
+console.log('[DIAGNOSTIC] 🔍 Project root:', PROJECT_ROOT);
+console.log('[DIAGNOSTIC] 🔍 __dirname:', __dirname);
+
+try {
+  const rootContents = fs.readdirSync(PROJECT_ROOT);
+  console.log('[DIAGNOSTIC] 📁 PROJECT_ROOT contents:', rootContents.slice(0, 20).join(', '), '...');
+} catch (err) {
+  console.log('[DIAGNOSTIC] ❌ Cannot read PROJECT_ROOT:', err);
+}
+
+try {
+  const nextDir = path.join(PROJECT_ROOT, '.next');
+  if (fs.existsSync(nextDir)) {
+    const nextContents = fs.readdirSync(nextDir);
+    console.log('[DIAGNOSTIC] 📁 .next directory exists. Contents:', nextContents.join(', '));
+  } else {
+    console.log('[DIAGNOSTIC] ❌ .next directory does not exist');
+  }
+} catch (err) {
+  console.log('[DIAGNOSTIC] ❌ Cannot read .next directory:', err);
+}
+
+try {
+  const standaloneDir = path.join(PROJECT_ROOT, '.next', 'standalone');
+  if (fs.existsSync(standaloneDir)) {
+    const standaloneContents = fs.readdirSync(standaloneDir);
+    console.log('[DIAGNOSTIC] 📁 .next/standalone directory exists. Contents:', standaloneContents.join(', '));
+    
+    const standaloneNextDir = path.join(standaloneDir, '.next', 'static');
+    if (fs.existsSync(standaloneNextDir)) {
+      const standaloneStaticContents = fs.readdirSync(standaloneNextDir);
+      console.log('[DIAGNOSTIC] 📁 .next/standalone/.next/static exists. Contents:', standaloneStaticContents.slice(0, 10).join(', '), '...');
+    } else {
+      console.log('[DIAGNOSTIC] ❌ .next/standalone/.next/static does not exist');
+    }
+  } else {
+    console.log('[DIAGNOSTIC] ❌ .next/standalone directory does not exist');
+  }
+} catch (err) {
+  console.log('[DIAGNOSTIC] ❌ Cannot read .next/standalone directory:', err);
+}
+
+// Define all paths based on PROJECT_ROOT
+const nextStaticPath = path.join(PROJECT_ROOT, '.next', 'static');
+const publicPath = path.join(PROJECT_ROOT, 'public');
+const standalonePath = path.join(PROJECT_ROOT, '.next', 'standalone');
 const standalonePublicPath = path.join(standalonePath, 'public');
 const standaloneStaticPath = path.join(standalonePath, '.next', 'static');
 
+console.log('[DIAGNOSTIC] 📍 Paths:');
+console.log('[DIAGNOSTIC]   - publicPath:', publicPath, fs.existsSync(publicPath) ? '✅' : '❌');
+console.log('[DIAGNOSTIC]   - nextStaticPath:', nextStaticPath, fs.existsSync(nextStaticPath) ? '✅' : '❌');
+console.log('[DIAGNOSTIC]   - standalonePath:', standalonePath, fs.existsSync(standalonePath) ? '✅' : '❌');
+console.log('[DIAGNOSTIC]   - standalonePublicPath:', standalonePublicPath, fs.existsSync(standalonePublicPath) ? '✅' : '❌');
+console.log('[DIAGNOSTIC]   - standaloneStaticPath:', standaloneStaticPath, fs.existsSync(standaloneStaticPath) ? '✅' : '❌');
+
 // Priority 1: Serve Next.js static assets from standalone build (production)
 if (fs.existsSync(standaloneStaticPath)) {
+  console.log('[STATIC] ✅ Serving /_next/static from standalone build');
   app.use('/_next/static', express.static(standaloneStaticPath));
 } else if (fs.existsSync(nextStaticPath)) {
   // Fallback to development build location
+  console.log('[STATIC] ✅ Serving /_next/static from dev build');
   app.use('/_next/static', express.static(nextStaticPath));
+} else {
+  console.log('[STATIC] ⚠️ No /_next/static directory found');
 }
 
 // Priority 2: Serve public files from standalone build (production)
 if (fs.existsSync(standalonePublicPath)) {
+  console.log('[STATIC] ✅ Serving public files from standalone build');
   app.use(express.static(standalonePublicPath));
 } else if (fs.existsSync(publicPath)) {
   // Fallback to development build location
+  console.log('[STATIC] ✅ Serving public files from dev build');
   app.use(express.static(publicPath));
+} else {
+  console.log('[STATIC] ⚠️ No public directory found');
 }
 
 // Temporary: Store last KPIs error in memory (shared with founder.ts)
@@ -392,18 +451,21 @@ app.get('*', (req: Request, res: Response, next: NextFunction) => {
   }
 
   // Priority 1: Try Next.js standalone build index.html (production)
-  const standaloneIndexPath = path.join(standalonePath, '.next', 'server', 'app', 'index.html');
+  const standaloneIndexPath = path.join(PROJECT_ROOT, '.next', 'standalone', '.next', 'server', 'app', 'index.html');
   if (fs.existsSync(standaloneIndexPath)) {
+    console.log('[CATCH-ALL] ✅ Serving index.html from standalone:', standaloneIndexPath);
     return res.sendFile(path.resolve(standaloneIndexPath));
   }
 
   // Priority 2: Try public/index.html (fallback)
-  const publicIndexPath = path.join(publicPath, 'index.html');
+  const publicIndexPath = path.join(PROJECT_ROOT, 'public', 'index.html');
   if (fs.existsSync(publicIndexPath)) {
+    console.log('[CATCH-ALL] ✅ Serving index.html from public:', publicIndexPath);
     return res.sendFile(path.resolve(publicIndexPath));
   }
 
   // If no index.html found, continue to 404 handler
+  console.log('[CATCH-ALL] ❌ No index.html found. Tried:', standaloneIndexPath, 'and', publicIndexPath);
   return next();
 });
 
@@ -419,12 +481,12 @@ app.use((req: Request, res: Response) => {
   }
 
   // For non-API routes, try to serve frontend index.html
-  const standaloneIndexPath = path.join(standalonePath, '.next', 'server', 'app', 'index.html');
+  const standaloneIndexPath = path.join(PROJECT_ROOT, '.next', 'standalone', '.next', 'server', 'app', 'index.html');
   if (fs.existsSync(standaloneIndexPath)) {
     return res.sendFile(path.resolve(standaloneIndexPath));
   }
 
-  const publicIndexPath = path.join(publicPath, 'index.html');
+  const publicIndexPath = path.join(PROJECT_ROOT, 'public', 'index.html');
   if (fs.existsSync(publicIndexPath)) {
     return res.sendFile(path.resolve(publicIndexPath));
   }
