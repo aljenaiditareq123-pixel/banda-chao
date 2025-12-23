@@ -291,30 +291,26 @@ app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 // Determine the correct path based on where the server is running
 const serverDir = __dirname; // server/src (compiled to server/dist)
 const projectRoot = path.resolve(serverDir, '../..'); // Go up from server/dist to project root
-const clientDistPath = path.join(projectRoot, 'client', 'dist');
-const clientBuildPath = path.join(projectRoot, 'client', 'build');
 const nextStaticPath = path.join(projectRoot, '.next', 'static');
 const publicPath = path.join(projectRoot, 'public');
 const standalonePath = path.join(projectRoot, '.next', 'standalone');
+const standalonePublicPath = path.join(standalonePath, 'public');
+const standaloneStaticPath = path.join(standalonePath, '.next', 'static');
 
-// Serve Next.js static assets
-if (fs.existsSync(nextStaticPath)) {
+// Priority 1: Serve Next.js static assets from standalone build (production)
+if (fs.existsSync(standaloneStaticPath)) {
+  app.use('/_next/static', express.static(standaloneStaticPath));
+} else if (fs.existsSync(nextStaticPath)) {
+  // Fallback to development build location
   app.use('/_next/static', express.static(nextStaticPath));
 }
 
-// Serve public files (images, fonts, etc.) - highest priority
-if (fs.existsSync(publicPath)) {
+// Priority 2: Serve public files from standalone build (production)
+if (fs.existsSync(standalonePublicPath)) {
+  app.use(express.static(standalonePublicPath));
+} else if (fs.existsSync(publicPath)) {
+  // Fallback to development build location
   app.use(express.static(publicPath));
-}
-
-// Serve client/dist if it exists (React build output)
-if (fs.existsSync(clientDistPath)) {
-  app.use(express.static(clientDistPath));
-}
-
-// Serve client/build if it exists (alternative React build output)
-if (fs.existsSync(clientBuildPath)) {
-  app.use(express.static(clientBuildPath));
 }
 
 // Temporary: Store last KPIs error in memory (shared with founder.ts)
@@ -387,7 +383,7 @@ app.use('/api/v1/games', gamesRoutes);
 app.use('/api/v1/wallet', walletRoutes);
 app.use('/api/v1/tracking', trackingRoutes);
 
-// Catch-all route to serve frontend (must be after all API routes)
+// Catch-all route to serve Next.js frontend (must be after all API routes)
 // This serves index.html for all non-API routes to enable client-side routing
 app.get('*', (req: Request, res: Response, next: NextFunction) => {
   // Skip API routes - they should be handled above
@@ -395,25 +391,13 @@ app.get('*', (req: Request, res: Response, next: NextFunction) => {
     return next();
   }
 
-  // Priority 1: Try client/dist/index.html (React build output)
-  const clientDistIndex = path.join(clientDistPath, 'index.html');
-  if (fs.existsSync(clientDistIndex)) {
-    return res.sendFile(path.resolve(clientDistIndex));
-  }
-
-  // Priority 2: Try client/build/index.html (alternative React build)
-  const clientBuildIndex = path.join(clientBuildPath, 'index.html');
-  if (fs.existsSync(clientBuildIndex)) {
-    return res.sendFile(path.resolve(clientBuildIndex));
-  }
-
-  // Priority 3: Try Next.js standalone build index.html
+  // Priority 1: Try Next.js standalone build index.html (production)
   const standaloneIndexPath = path.join(standalonePath, '.next', 'server', 'app', 'index.html');
   if (fs.existsSync(standaloneIndexPath)) {
     return res.sendFile(path.resolve(standaloneIndexPath));
   }
 
-  // Priority 4: Try public/index.html
+  // Priority 2: Try public/index.html (fallback)
   const publicIndexPath = path.join(publicPath, 'index.html');
   if (fs.existsSync(publicIndexPath)) {
     return res.sendFile(path.resolve(publicIndexPath));
