@@ -66,6 +66,8 @@ export default function FameEngine() {
                       src={product.image} 
                       alt={product.name}
                       className="w-full h-full object-cover"
+                      crossOrigin="anonymous"
+                      loading="lazy"
                     />
                   </div>
                   <div className="p-4">
@@ -97,6 +99,8 @@ export default function FameEngine() {
                       src={short.thumbnail} 
                       alt={short.title}
                       className="w-full h-full object-cover"
+                      crossOrigin="anonymous"
+                      loading="lazy"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                     
