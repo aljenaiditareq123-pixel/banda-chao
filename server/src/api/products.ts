@@ -134,12 +134,8 @@ router.get('/', async (req: Request, res: Response) => {
       SELECT 
         p.id,
         p.name,
-        p.name_ar,
-        p.name_zh,
         p.description,
         p.price,
-        p.stock,
-        p.status,
         p.category,
         p.image_url as "imageUrl",
         p.external_link as "externalLink",
