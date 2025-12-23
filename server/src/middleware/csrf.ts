@@ -12,11 +12,17 @@ const csrfTokens = new Map<string, { token: string; expiresAt: number }>();
 
 // CSRF secret from environment (required in production)
 const CSRF_SECRET = process.env.CSRF_SECRET || process.env.JWT_SECRET;
-if (!CSRF_SECRET && process.env.NODE_ENV === 'production') {
-  throw new Error('CSRF_SECRET or JWT_SECRET must be set in production environment');
+const isCsrfConfigured = !!CSRF_SECRET;
+
+// Warn if CSRF is not configured in production
+if (!isCsrfConfigured && (process.env.NODE_ENV === 'production' || process.env.RENDER === 'true')) {
+  console.warn('⚠️ [WARNING] CSRF_SECRET or JWT_SECRET is not set. CSRF protection will use fallback secret.');
+  console.warn('⚠️ To enable proper CSRF protection, set CSRF_SECRET or JWT_SECRET in environment variables.');
 }
-// Fallback for development only
-const CSRF_SECRET_FINAL = CSRF_SECRET || 'dev-csrf-secret-only';
+
+// Fallback secret (less secure but allows server to start)
+// In production, this should be set via environment variables for security
+const CSRF_SECRET_FINAL = CSRF_SECRET || 'dev-csrf-secret-fallback-not-secure-in-production';
 
 // Token expiration time: 24 hours
 const TOKEN_EXPIRATION_MS = 24 * 60 * 60 * 1000;
