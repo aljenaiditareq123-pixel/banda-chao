@@ -108,7 +108,9 @@ router.get('/', async (req: Request, res: Response) => {
       SELECT 
         v.id,
         v.title,
+        v.title_ar,
         v.description,
+        v.description_ar,
         v.video_url as "videoUrl",
         v.thumbnail_url as "thumbnailUrl",
         v.duration,
@@ -169,7 +171,9 @@ router.get('/:id', async (req: Request, res: Response) => {
       SELECT 
         v.id,
         v.title,
+        v.title_ar,
         v.description,
+        v.description_ar,
         v.video_url as "videoUrl",
         v.thumbnail_url as "thumbnailUrl",
         v.duration,
@@ -234,7 +238,9 @@ router.get('/makers/:makerId', async (req: Request, res: Response) => {
       SELECT 
         v.id,
         v.title,
+        v.title_ar,
         v.description,
+        v.description_ar,
         v.video_url as "videoUrl",
         v.thumbnail_url as "thumbnailUrl",
         v.duration,
