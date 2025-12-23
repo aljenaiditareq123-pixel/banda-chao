@@ -226,8 +226,8 @@ router.post('/chat', authenticateToken, requireRole(['FOUNDER']), async (req: Au
   }
 });
 
-// Temporary: Endpoint to view last error (for debugging) - PUBLIC for debugging
-router.get('/last-error', async (req: Request, res: Response) => {
+// Endpoint to view last error (secured for production - FOUNDER role required)
+router.get('/last-error', authenticateToken, requireRole(['FOUNDER']), async (req: AuthRequest, res: Response) => {
   const lastError = getLastError();
   res.json({
     success: true,

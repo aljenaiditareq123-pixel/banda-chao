@@ -5,7 +5,7 @@ import fs from 'fs';
 import { prisma } from '../utils/prisma';
 import { getCache, setCache, invalidateCachePattern } from '../lib/cache';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
-import { uploadToGCS, isGCSConfigured } from '../lib/gcs';
+import { getStorageProvider, isStorageConfigured } from '../lib/storage';
 import { randomUUID } from 'crypto';
 
 const router = Router();
@@ -16,18 +16,9 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Use memory storage if GCS is configured, otherwise use disk storage
-const storage = isGCSConfigured()
-  ? multer.memoryStorage()
-  : multer.diskStorage({
-      destination: (req, file, cb) => {
-        cb(null, uploadDir);
-      },
-      filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-        cb(null, uniqueSuffix + path.extname(file.originalname));
-      },
-    });
+// Always use memory storage - we upload directly to cloud storage (Alibaba OSS or GCS)
+// Local storage is disabled for security and performance reasons
+const storage = multer.memoryStorage();
 
 const upload = multer({
   storage,
@@ -288,21 +279,39 @@ router.post('/', authenticateToken, upload.single('video'), async (req: AuthRequ
       return res.status(400).json({ error: 'Title and type (SHORT or LONG) are required' });
     }
 
-    // Upload video to GCS or save locally
+    // Upload video to cloud storage (Alibaba Cloud OSS or GCS)
+    // Local storage is disabled - must use cloud storage provider
+    if (!file.buffer) {
+      return res.status(400).json({ 
+        error: 'Video file buffer is required. Please ensure the file was uploaded correctly.' 
+      });
+    }
+
+    // Check if storage provider is configured
+    if (!isStorageConfigured()) {
+      return res.status(503).json({ 
+        error: 'Storage service is under maintenance. Please configure Alibaba Cloud OSS or contact support.' 
+      });
+    }
+
     let videoUrl: string;
     let thumbnailUrl: string | null = null;
 
-    if (isGCSConfigured()) {
-      // Upload to GCS
-      const fileBuffer = file.buffer;
-      videoUrl = await uploadToGCS(fileBuffer, file.originalname, 'videos');
+    try {
+      // Get storage provider (Alibaba OSS or GCS)
+      const storageProvider = getStorageProvider();
+      
+      // Upload video to cloud storage
+      videoUrl = await storageProvider.uploadFile(file.buffer, file.originalname, 'videos');
       
       // For now, use a placeholder thumbnail (in production, generate from video)
       thumbnailUrl = null; // TODO: Generate thumbnail from video
-    } else {
-      // Save locally
-      const baseUrl = process.env.BACKEND_URL || 'http://localhost:3001';
-      videoUrl = `${baseUrl}/uploads/videos/${file.filename}`;
+    } catch (storageError: any) {
+      console.error('[Videos API] Storage upload error:', storageError);
+      return res.status(503).json({ 
+        error: 'Failed to upload video to storage service. Please try again later or contact support.',
+        details: process.env.NODE_ENV === 'development' ? storageError.message : undefined
+      });
     }
 
     // Get user's maker profile

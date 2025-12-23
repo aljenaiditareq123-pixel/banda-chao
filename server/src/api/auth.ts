@@ -9,11 +9,25 @@ import { registerSchema, loginSchema } from '../validation/authSchemas';
 
 const router = Router();
 
-// JWT_SECRET is required in production
-if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
-  throw new Error('JWT_SECRET must be set in production environment');
+// JWT_SECRET validation - more defensive approach
+const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
+const JWT_SECRET_ENV = process.env.JWT_SECRET;
+
+if (!JWT_SECRET_ENV && isProduction) {
+  console.error('❌ [CRITICAL] JWT_SECRET is not set in production environment!');
+  console.error('❌ Authentication will fail. Please set JWT_SECRET in Render environment variables.');
+  console.error('❌ Server will start but authentication endpoints will return errors.');
 }
-const JWT_SECRET: string = process.env.JWT_SECRET || (process.env.NODE_ENV === 'production' ? '' : 'dev-secret-only');
+
+// Use environment variable if available, otherwise use dev fallback (only safe in development)
+const JWT_SECRET: string = JWT_SECRET_ENV || (isProduction ? '' : 'dev-secret-only');
+
+if (!JWT_SECRET && isProduction) {
+  // In production without JWT_SECRET, we can't safely start
+  // But instead of throwing immediately, log and allow graceful degradation
+  console.warn('⚠️ [WARNING] JWT_SECRET is empty in production. Authentication features will not work.');
+}
+
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
 // Register
@@ -74,6 +88,15 @@ router.post('/register', validate(registerSchema), async (req: Request, res: Res
     const user = createdUsers[0];
 
     // Generate token
+    // Safety check: Ensure JWT_SECRET is available before signing
+    if (!JWT_SECRET || JWT_SECRET.trim() === '') {
+      console.error('[AUTH_ERROR] JWT_SECRET is not set. Cannot generate token.');
+      return res.status(500).json({
+        success: false,
+        error: 'Server configuration error: JWT_SECRET is missing',
+      });
+    }
+
     const token = jwt.sign(
       { userId: user.id, email: user.email, name: user.name, role: user.role },
       JWT_SECRET,
@@ -276,6 +299,15 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response)
     // Generate JWT token
     let token: string;
     try {
+      // Safety check: Ensure JWT_SECRET is available before signing
+      if (!JWT_SECRET || JWT_SECRET.trim() === '') {
+        console.error('[LOGIN_ERROR] JWT_SECRET is not set. Cannot generate token.');
+        return res.status(500).json({
+          success: false,
+          error: 'Server configuration error: JWT_SECRET is missing',
+        });
+      }
+
       token = jwt.sign(
         { userId: user.id, email: user.email, name: user.name, role: user.role },
         JWT_SECRET,

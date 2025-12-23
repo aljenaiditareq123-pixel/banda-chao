@@ -31,54 +31,34 @@ export default function AdminProductsPageClient() {
   }, []);
 
   const fetchProducts = async () => {
-    // HARDCODE MODE - Return dummy data, no API calls
     try {
       setLoading(true);
       
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Fetch real products from API
+      const response = await productsAPI.getAll({
+        page: 1,
+        limit: 100, // Fetch more products for admin panel
+      });
       
-      // Return static dummy data
-      const dummyProducts: Product[] = [
-        {
-          id: 'prod-1',
-          name: 'منتج تجريبي 1',
-          name_ar: 'منتج تجريبي 1',
-          description: 'وصف المنتج التجريبي الأول',
-          price: 100,
-          stock: 50,
-          status: 'active',
-          image_url: 'https://via.placeholder.com/300',
-          created_at: new Date().toISOString(),
-        },
-        {
-          id: 'prod-2',
-          name: 'منتج تجريبي 2',
-          name_ar: 'منتج تجريبي 2',
-          description: 'وصف المنتج التجريبي الثاني',
-          price: 200,
-          stock: 30,
-          status: 'active',
-          image_url: 'https://via.placeholder.com/300',
-          created_at: new Date().toISOString(),
-        },
-        {
-          id: 'prod-3',
-          name: 'منتج تجريبي 3',
-          name_ar: 'منتج تجريبي 3',
-          description: 'وصف المنتج التجريبي الثالث',
-          price: 150,
-          stock: 25,
-          status: 'active',
-          image_url: 'https://via.placeholder.com/300',
-          created_at: new Date().toISOString(),
-        },
-      ];
+      // Map API response to Product interface
+      // Note: API returns products with fields from SQL query (may have different field names)
+      const productsList: Product[] = (response.products || []).map((product: any) => ({
+        id: product.id,
+        name: product.name || '',
+        name_ar: product.name_ar || undefined,
+        name_zh: product.name_zh || undefined,
+        description: product.description || '',
+        price: product.price || 0,
+        stock: product.stock ?? 0,
+        status: product.status || 'ACTIVE',
+        image_url: product.image_url || product.imageUrl || undefined,
+        created_at: product.created_at || product.createdAt || new Date().toISOString(),
+      }));
       
-      setProducts(dummyProducts);
+      setProducts(productsList);
     } catch (error) {
       console.error('Error fetching products:', error);
-      // Fallback to empty array
+      alert('حدث خطأ أثناء جلب المنتجات. يرجى المحاولة مرة أخرى.');
       setProducts([]);
     } finally {
       setLoading(false);
@@ -119,11 +99,33 @@ export default function AdminProductsPageClient() {
       }
 
       setShowModal(false);
-      fetchProducts();
+      // Refresh products list after creation
+      await fetchProducts();
     } catch (error: any) {
       console.error('Error creating product:', error);
       alert(error.message || 'حدث خطأ أثناء حفظ المنتج');
       throw error;
+    }
+  };
+
+  const handleDeleteProduct = async (productId: string) => {
+    if (!confirm('هل أنت متأكد من حذف هذا المنتج؟ هذا الإجراء لا يمكن التراجع عنه.')) {
+      return;
+    }
+
+    try {
+      const result = await productsAPI.delete(productId);
+      
+      if (!result.success) {
+        throw new Error(result.error || 'فشل حذف المنتج');
+      }
+
+      // Refresh products list after deletion
+      await fetchProducts();
+      alert('تم حذف المنتج بنجاح');
+    } catch (error: any) {
+      console.error('Error deleting product:', error);
+      alert(error.message || 'حدث خطأ أثناء حذف المنتج');
     }
   };
 
@@ -265,7 +267,11 @@ export default function AdminProductsPageClient() {
                         >
                           <Edit className="w-5 h-5" />
                         </button>
-                        <button className="text-red-600 hover:text-red-900">
+                        <button
+                          onClick={() => handleDeleteProduct(product.id)}
+                          className="text-red-600 hover:text-red-900"
+                          title="حذف المنتج"
+                        >
                           <Trash2 className="w-5 h-5" />
                         </button>
                       </div>
