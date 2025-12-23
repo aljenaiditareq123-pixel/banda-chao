@@ -1,10 +1,9 @@
 import { Router, Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { authenticateToken } from '../middleware/auth';
+import { prisma } from '../utils/prisma';
 import { randomBytes } from 'crypto';
 
 const router = Router();
-const prisma = new PrismaClient() as any;
 
 // Hunger decreases by 5 every hour
 const HUNGER_DECAY_PER_HOUR = 5;
@@ -249,12 +248,12 @@ router.post('/track-browse', authenticateToken, async (req: any, res: Response) 
 
     // Feed pet with BROWSE type - call the feed handler directly
     // Instead of making HTTP request, we'll call the feed logic directly
-    let petState = await prisma.pet_states.findUnique({
+    let petState = await petStatesModel.findUnique({
       where: { user_id: userId },
     });
 
     if (!petState) {
-      petState = await prisma.pet_states.create({
+      petState = await petStatesModel.create({
         data: {
           user_id: userId,
           hunger_level: MAX_HUNGER,
@@ -271,7 +270,7 @@ router.post('/track-browse', authenticateToken, async (req: any, res: Response) 
     const newHunger = Math.min(MAX_HUNGER, petState.hunger_level + feedAmount);
     const hungerIncrease = newHunger - petState.hunger_level;
 
-    const updatedPetState = await prisma.pet_states.update({
+    const updatedPetState = await petStatesModel.update({
       where: { id: petState.id },
       data: {
         hunger_level: newHunger,
@@ -282,7 +281,7 @@ router.post('/track-browse', authenticateToken, async (req: any, res: Response) 
       },
     });
 
-    await prisma.pet_feed_history.create({
+    await petFeedHistoryModel.create({
       data: {
         pet_state_id: petState.id,
         user_id: userId,

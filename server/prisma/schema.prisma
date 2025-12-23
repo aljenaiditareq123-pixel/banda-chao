@@ -291,6 +291,9 @@ model users {
   reports                              reports[]
   video_likes                          video_likes[]
   videos                               videos[]
+  pet_state                            pet_states?     @relation("user_pet_state")
+  pet_feed_history                     pet_feed_history[] @relation("user_pet_feed_history")
+  discount_codes                       discount_codes[] @relation("user_discount_codes")
 }
 
 model video_likes {
@@ -349,6 +352,67 @@ model beta_applications {
 
   @@index([email])
   @@index([created_at])
+}
+
+// ============================================
+// PET SYSTEM - نظام الرفيق الافتراضي
+// ============================================
+
+model pet_states {
+  id                String   @id @default(uuid())
+  user_id           String   @unique
+  hunger_level      Int      @default(100)
+  happiness_level   Int      @default(50)
+  last_fed_at       DateTime?
+  last_hunger_update DateTime @default(now())
+  total_feeds       Int      @default(0)
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+  users             users    @relation("user_pet_state", fields: [user_id], references: [id], onDelete: Cascade)
+  pet_feed_history  pet_feed_history[]
+
+  @@index([user_id])
+  @@index([last_hunger_update])
+}
+
+model pet_feed_history {
+  id           String     @id @default(uuid())
+  pet_state_id String
+  user_id      String
+  feed_type    String // BROWSE, SHARE, DIRECT_FEED
+  feed_amount  Int
+  metadata     String?    @db.Text // JSON stored as string
+  created_at   DateTime   @default(now())
+  pet_states   pet_states @relation(fields: [pet_state_id], references: [id], onDelete: Cascade)
+  users        users      @relation("user_pet_feed_history", fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([pet_state_id])
+  @@index([user_id])
+  @@index([created_at])
+}
+
+model discount_codes {
+  id             String    @id @default(uuid())
+  user_id        String
+  code           String    @unique
+  discount_type  String    // PERCENTAGE, FIXED
+  discount_value Float
+  min_purchase   Float     @default(0)
+  max_discount   Float?
+  valid_until    DateTime
+  max_uses       Int       @default(1)
+  used_count     Int       @default(0)
+  is_active      Boolean   @default(true)
+  source         String?   // PET_REWARD, MANUAL, etc.
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+  users          users     @relation("user_discount_codes", fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([code])
+  @@index([is_active])
+  @@index([valid_until])
+  @@index([source])
 }
 
 enum OrderStatus {
