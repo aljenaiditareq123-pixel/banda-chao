@@ -73,8 +73,11 @@ model makers {
   user_id             String               @unique
   slug                String               @unique
   name                String
+  name_ar             String?              @db.Text // Arabic name (optional for backward compatibility)
   bio                 String?
+  bio_ar              String?              @db.Text // Arabic bio (optional for backward compatibility)
   story               String?
+  story_ar            String?              @db.Text // Arabic story (optional for backward compatibility)
   profile_picture_url String?
   cover_picture_url   String?
   country             String? // Country for shipping origin
@@ -218,7 +221,9 @@ model product_likes {
 model products {
   id            String          @id
   name          String
+  name_ar       String?         @db.Text // Arabic name (optional for backward compatibility)
   description   String          @db.Text
+  description_ar String?        @db.Text // Arabic description (optional for backward compatibility)
   image_url     String?         @db.Text
   video_url     String?         @db.Text
   external_link String?         @db.Text
@@ -306,7 +311,9 @@ model videos {
   user_id       String
   maker_id      String? // Link to maker (optional for backward compatibility)
   title         String
+  title_ar      String?        @db.Text // Arabic title (optional for backward compatibility)
   description   String?
+  description_ar String?       @db.Text // Arabic description (optional for backward compatibility)
   url           String? // External URL from TikTok/YouTube API (replaces video_url) - nullable for migration
   video_url     String? // Legacy field - will be removed after migration
   thumbnail_url String?
@@ -358,7 +365,9 @@ enum OrderStatus {
 model services {
   id          String      @id
   title       String
+  title_ar    String?     @db.Text // Arabic title (optional for backward compatibility)
   description String
+  description_ar String?  @db.Text // Arabic description (optional for backward compatibility)
   price       Float
   type        ServiceType // DRIVER, AGENT, ARTISAN
   maker_id    String
