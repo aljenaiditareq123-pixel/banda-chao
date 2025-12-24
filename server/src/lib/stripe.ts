@@ -14,21 +14,32 @@ if (!isStripeConfigured && process.env.NODE_ENV !== 'test') {
 let stripeInstance: Stripe | null = null;
 
 if (isStripeConfigured) {
-  stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: '2023-10-16',
-  });
+  try {
+    stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+      apiVersion: '2023-10-16',
+    });
+    console.log('[Stripe] ✅ Stripe client initialized successfully');
+  } catch (error: any) {
+    console.error('[Stripe] ❌ Failed to initialize Stripe client:', error.message);
+    stripeInstance = null;
+  }
 }
 
-// Export a getter function to safely access Stripe
-export const stripe = stripeInstance || ({} as Stripe);
-
 // Helper to check if Stripe operations are available
-export function ensureStripeConfigured(): Stripe {
-  if (!stripeInstance) {
+function ensureStripeConfigured(): Stripe {
+  if (!stripeInstance || !isStripeConfigured) {
     throw new Error('Stripe is not configured. Please set STRIPE_SECRET_KEY in environment variables.');
   }
   return stripeInstance;
 }
+
+// Export stripe for backward compatibility (will throw if used without configuration check)
+export const stripe = new Proxy({} as Stripe, {
+  get(_target, prop) {
+    const client = ensureStripeConfigured();
+    return (client as any)[prop];
+  }
+});
 
 // Check if we're in test mode
 export const isTestMode = process.env.STRIPE_MODE === 'test' || process.env.STRIPE_SECRET_KEY?.startsWith('sk_test_');
