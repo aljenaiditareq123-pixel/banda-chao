@@ -1,4 +1,44 @@
 services:
+  # Backend Service (Express API Server)
+  - type: web
+    name: banda-chao-backend
+    env: node
+    # Root directory for backend (Render uses rootDir, but we'll specify in buildCommand)
+    # Build command for backend - must cd to server directory first
+    buildCommand: cd server && npm install --legacy-peer-deps && npm run build
+    # Start command for backend (uses compiled dist/index.js)
+    # Must cd to server directory first
+    startCommand: cd server && npm start
+    # Node version
+    nodeVersion: 20.x
+    # Plan settings
+    plan: starter
+    # Health check for backend - uses /api/health endpoint
+    healthCheckPath: /api/health
+    # Auto-deploy
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      # Database
+      - key: DATABASE_URL
+        fromDatabase:
+          name: banda-chao-db
+          property: connectionString
+      # JWT Secret (should be set manually in Render Dashboard)
+      - key: JWT_SECRET
+        generateValue: true
+      # Frontend URL for CORS
+      - key: FRONTEND_URL
+        value: https://banda-chao-frontend.onrender.com
+      # Stripe (optional - set manually if using)
+      # - key: STRIPE_SECRET_KEY
+      # - key: STRIPE_PUBLISHABLE_KEY
+      # - key: STRIPE_MODE
+      #   value: production
+
   # Frontend Service (Next.js Standalone)
   - type: web
     name: banda-chao-frontend
