@@ -376,13 +376,12 @@ if (fs.existsSync(standalonePublicPath)) {
 // This will be populated by founder.ts when an error occurs
 (global as any).lastKPIsError = null;
 
-// Health check endpoint
+// Health check endpoint - MUST respond instantly (< 5 seconds) for Render health checks
+// Placed here (before routes) to minimize middleware overhead
+// No auth, no rate limiting, no processing - just instant OK response
 app.get('/api/health', (req: Request, res: Response) => {
-  res.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-  });
+  // Return plain text "OK" for fastest possible response (no JSON parsing overhead)
+  res.status(200).type('text/plain').send('OK');
 });
 
 // CSRF token endpoint (for authenticated users to get fresh token)

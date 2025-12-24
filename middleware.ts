@@ -118,6 +118,7 @@ function shouldExcludePath(pathname: string): boolean {
     '/sitemap.xml',
     '/founder', // Founder pages don't use locale
     '/admin', // Admin pages don't use locale (like /founder)
+    '/health', // Health check endpoint - must bypass all middleware for fastest response
   ];
   
   // Check exact matches first (including favicon.ico and robots.txt)
