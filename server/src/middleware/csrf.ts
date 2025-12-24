@@ -144,8 +144,8 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
     return next();
   }
 
-  // Skip CSRF for public endpoints (login, register)
-  const publicEndpoints = ['/api/v1/auth/login', '/api/v1/auth/register'];
+  // Skip CSRF for public endpoints (login, register, health check)
+  const publicEndpoints = ['/api/v1/auth/login', '/api/v1/auth/register', '/api/health'];
   if (publicEndpoints.some(endpoint => fullPath.startsWith(endpoint) || originalUrl.startsWith(endpoint))) {
     return next();
   }

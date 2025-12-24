@@ -109,6 +109,14 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 // This prevents rate limiting bypass while still working with Render
 app.set('trust proxy', 1); // Trust only the first proxy (Render's load balancer)
 
+// CRITICAL: Register health check endpoint FIRST, before ALL middleware
+// This ensures it completely bypasses all middleware (CORS, CSRF, rate limiting, etc.)
+// and responds instantly (< 100ms) for Render health checks
+app.get('/api/health', (req: Request, res: Response) => {
+  // Return plain text "OK" instantly - no processing, no middleware overhead, no database calls
+  res.status(200).type('text/plain').send('OK');
+});
+
 // Initialize Socket.IO
 initializeSocket(server);
 
@@ -375,14 +383,6 @@ if (fs.existsSync(standalonePublicPath)) {
 // Temporary: Store last KPIs error in memory (shared with founder.ts)
 // This will be populated by founder.ts when an error occurs
 (global as any).lastKPIsError = null;
-
-// Health check endpoint - MUST respond instantly (< 5 seconds) for Render health checks
-// Placed here (before routes) to minimize middleware overhead
-// No auth, no rate limiting, no processing - just instant OK response
-app.get('/api/health', (req: Request, res: Response) => {
-  // Return plain text "OK" for fastest possible response (no JSON parsing overhead)
-  res.status(200).type('text/plain').send('OK');
-});
 
 // CSRF token endpoint (for authenticated users to get fresh token)
 app.get('/api/v1/csrf-token', authenticateToken, (req: Request, res: Response) => {
