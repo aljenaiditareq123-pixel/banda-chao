@@ -14,8 +14,8 @@ services:
     nodeVersion: 20.x
     # Plan settings (adjust based on your Render plan)
     plan: starter
-    # Health check
-    healthCheckPath: /
+    # Health check - use dedicated endpoint for faster response
+    healthCheckPath: /health
     # Auto-deploy
     autoDeploy: true
     envVars:
