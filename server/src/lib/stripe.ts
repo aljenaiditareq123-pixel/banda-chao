@@ -9,12 +9,26 @@ if (!isStripeConfigured && process.env.NODE_ENV !== 'test') {
   console.warn('⚠️ To enable payments, set STRIPE_SECRET_KEY in environment variables.');
 }
 
-// Initialize Stripe client (use dummy key if not configured, but won't work for real payments)
-// We create the instance to avoid type errors, but check isStripeConfigured before using it
-const stripeKey = process.env.STRIPE_SECRET_KEY || 'sk_test_dummy_key_for_testing';
-export const stripe = new Stripe(stripeKey, {
-  apiVersion: '2023-10-16',
-});
+// Initialize Stripe client conditionally
+// Only create instance if key is provided to avoid invalid API calls
+let stripeInstance: Stripe | null = null;
+
+if (isStripeConfigured) {
+  stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    apiVersion: '2023-10-16',
+  });
+}
+
+// Export a getter function to safely access Stripe
+export const stripe = stripeInstance || ({} as Stripe);
+
+// Helper to check if Stripe operations are available
+export function ensureStripeConfigured(): Stripe {
+  if (!stripeInstance) {
+    throw new Error('Stripe is not configured. Please set STRIPE_SECRET_KEY in environment variables.');
+  }
+  return stripeInstance;
+}
 
 // Check if we're in test mode
 export const isTestMode = process.env.STRIPE_MODE === 'test' || process.env.STRIPE_SECRET_KEY?.startsWith('sk_test_');
@@ -32,13 +46,11 @@ export async function createCheckoutSession(params: {
   cancelUrl: string;
   customerEmail?: string;
 }): Promise<Stripe.Checkout.Session> {
-  if (!isStripeConfigured) {
-    throw new Error('Stripe is not configured. Please set STRIPE_SECRET_KEY in environment variables.');
-  }
+  const stripeClient = ensureStripeConfigured();
 
   const { orderId, productName, amount, currency, quantity, successUrl, cancelUrl, customerEmail } = params;
 
-  const session = await stripe.checkout.sessions.create({
+  const session = await stripeClient.checkout.sessions.create({
     payment_method_types: ['card'],
     mode: 'payment',
     line_items: [
@@ -79,9 +91,7 @@ export function verifyWebhookSignature(
   signature: string,
   secret: string
 ): Stripe.Event {
-  if (!isStripeConfigured) {
-    throw new Error('Stripe is not configured. Please set STRIPE_SECRET_KEY in environment variables.');
-  }
-  return stripe.webhooks.constructEvent(payload, signature, secret);
+  const stripeClient = ensureStripeConfigured();
+  return stripeClient.webhooks.constructEvent(payload, signature, secret);
 }
 
