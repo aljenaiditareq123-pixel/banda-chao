@@ -20,8 +20,8 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 3001
+      # PORT is automatically set by Render - don't override it
+      # Render will provide PORT via environment variable (usually 10000)
       # Database
       - key: DATABASE_URL
         fromDatabase:
