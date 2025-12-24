@@ -100,7 +100,9 @@ if (process.env.NODE_ENV === 'development' || process.env.TEST_DB_ON_START === '
 
 const app: Express = express();
 const server = createServer(app);
-const PORT = process.env.PORT || 3001;
+// CRITICAL: Use PORT from environment or default to 10000 for Render compatibility
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 10000;
+const HOST = '0.0.0.0'; // CRITICAL: Bind to 0.0.0.0 (not localhost) for Render/cloud platforms
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
@@ -510,11 +512,14 @@ try {
 app.use(errorHandler);
 
 // Start server
-server.listen(PORT, async () => {
-  console.log(`🚀 Server is running on port ${PORT}`);
-  console.log(`📡 API: http://localhost:${PORT}/api/v1`);
-  console.log(`🔌 Socket.IO: http://localhost:${PORT}/socket.io`);
+// CRITICAL: Bind to 0.0.0.0 (not localhost) to make server accessible from outside (Render requirement)
+server.listen(PORT, HOST, async () => {
+  console.log(`> Ready on http://${HOST}:${PORT}`);
+  console.log(`🚀 Server is running on ${HOST}:${PORT}`);
+  console.log(`📡 API: http://${HOST}:${PORT}/api/v1`);
+  console.log(`🔌 Socket.IO: http://${HOST}:${PORT}/socket.io`);
   console.log(`🌍 Environment: ${NODE_ENV}`);
+  console.log(`🔍 Health Check: http://${HOST}:${PORT}/api/health`);
   
   // Verify Prisma connection (lightweight check)
   try {
