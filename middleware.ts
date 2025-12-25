@@ -214,6 +214,18 @@ function isProtectedRoute(pathname: string): boolean {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
+  // CRITICAL: Health check endpoint - respond immediately without any processing
+  // This MUST be the first check to ensure instant response for Render health checks
+  if (pathname === '/health' || pathname === '/health/') {
+    return new NextResponse('OK', {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/plain',
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+      },
+    });
+  }
+  
   // CRITICAL: Skip locale routing for excluded paths (check this FIRST)
   // This is the most important check - do it before anything else
   if (shouldExcludePath(pathname)) {
