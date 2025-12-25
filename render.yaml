@@ -50,7 +50,8 @@ services:
     # Start command uses standalone server for better performance and lower memory usage
     # CRITICAL: Explicitly copy public and static assets (Next.js sometimes fails to copy them)
     # This ensures all assets are available even if Next.js build misses them
-    startCommand: cd .next/standalone && cp -r ../../public ./public 2>/dev/null || true && cp -r ../../.next/static ./.next/static 2>/dev/null || true && node server.js
+    # Using test -d to check directories exist before copying to avoid errors
+    startCommand: cd .next/standalone && (test -d ../../public && cp -r ../../public ./public || true) && (test -d ../../.next/static && cp -r ../../.next/static ./.next/static || true) && node server.js
     # Node version
     nodeVersion: 20.x
     # Plan settings (adjust based on your Render plan)
