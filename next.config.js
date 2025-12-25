@@ -94,8 +94,8 @@ const nextConfig = {
   // We keep webpack config for compatibility but add empty turbopack to silence the warning
   turbopack: {},
   
-  // Webpack configuration to fix Function.prototype.apply errors
-  // This will be used if --webpack flag is passed, otherwise Turbopack is used
+  // Webpack configuration (for compatibility, but Turbopack is default in Next.js 16)
+  // Note: We removed --webpack flag from build script, so Turbopack is used by default
   webpack: (config, { isServer }) => {
     // Fix for Function.prototype.apply errors in production
     if (!isServer) {

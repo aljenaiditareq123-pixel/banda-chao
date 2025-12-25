@@ -216,12 +216,15 @@ export async function middleware(request: NextRequest) {
   
   // CRITICAL: Health check endpoint - respond immediately without any processing
   // This MUST be the first check to ensure instant response for Render health checks
-  if (pathname === '/health' || pathname === '/health/') {
+  // Check both with and without trailing slash, and handle any encoding
+  const normalizedPathname = pathname.toLowerCase().trim();
+  if (normalizedPathname === '/health' || normalizedPathname === '/health/') {
+    // Return response immediately - no async operations, no processing
     return new NextResponse('OK', {
       status: 200,
       headers: {
         'Content-Type': 'text/plain',
-        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
       },
     });
   }
