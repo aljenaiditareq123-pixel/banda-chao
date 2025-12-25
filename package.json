@@ -7,7 +7,7 @@
     "cleanup-check": "bash scripts/cleanup-console-logs.sh",
     "dev": "next dev",
     "build": "prisma generate && next build",
-    "start": "cd .next/standalone && cp -r ../../public ./public 2>/dev/null || true && cp -r ../../.next/static ./.next/static 2>/dev/null || true && node server.js",
+    "start": "cd .next/standalone && (test -d ../../public && cp -r ../../public ./public || true) && (test -d ../../.next/static && cp -r ../../.next/static ./.next/static || true) && node server.js",
     "start:next": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
