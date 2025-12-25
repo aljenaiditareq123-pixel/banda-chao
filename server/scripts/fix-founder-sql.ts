@@ -10,6 +10,7 @@
 
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { randomUUID } from 'crypto';
 
 const prisma = new PrismaClient();
 
@@ -41,7 +42,6 @@ async function fixFounderWithSQL() {
       console.log('📝 User not found. Creating new founder account...');
       
       const hashedPassword = await bcrypt.hash(FOUNDER_PASSWORD, 10);
-      const { randomUUID } = await import('crypto');
       const userId = randomUUID();
       
       await prisma.$executeRaw`
