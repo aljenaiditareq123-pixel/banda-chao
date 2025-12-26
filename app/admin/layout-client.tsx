@@ -16,6 +16,7 @@ import {
   Package, 
   ShoppingCart, 
   Users,
+  Building2,
   Menu,
   X,
   LogOut
@@ -47,6 +48,11 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
       href: '/admin/users', 
       label: 'المستخدمين', 
       icon: Users 
+    },
+    { 
+      href: '/admin/company-settings', 
+      label: 'إعدادات الشركة', 
+      icon: Building2 
     },
   ];
 

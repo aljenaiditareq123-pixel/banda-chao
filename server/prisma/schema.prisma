@@ -415,6 +415,24 @@ model discount_codes {
   @@index([source])
 }
 
+// ============================================
+// COMPANY PROFILE - معلومات الشركة الرسمية
+// ============================================
+
+model company_profile {
+  id                      String    @id @default(uuid())
+  company_name            String    @default("Banda Chao FZ-LLC")
+  trade_license_number    String?
+  tax_registration_number String?
+  license_expiry_date     DateTime?
+  license_file_url        String?   @db.Text
+  tax_cert_file_url       String?   @db.Text
+  created_at              DateTime  @default(now())
+  updated_at              DateTime  @updatedAt
+
+  @@unique([company_name])
+}
+
 enum OrderStatus {
   PENDING
   PROCESSING
