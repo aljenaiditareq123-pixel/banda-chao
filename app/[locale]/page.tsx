@@ -28,27 +28,38 @@ export default async function HomePage({ params }: PageProps) {
     locale = 'ar';
   }
 
-  // Fetch featured content from API with caching
+  // Fetch featured content from API with caching and better error handling
   let featuredMakers: any[] = [];
   let featuredProducts: any[] = [];
   let featuredVideos: any[] = [];
   let featuredServices: any[] = [];
 
   try {
-    const [makersResponse, productsResponse, videosResponse, servicesResponse] = await Promise.all([
-      makersAPI.getAll({ limit: 6 }).catch(() => ({ makers: [] })),
-      productsAPI.getAll({ limit: 8 }).catch(() => ({ products: [] })),
-      videosAPI.getAll({ limit: 6 }).catch(() => ({ videos: [] })),
-      servicesAPI.getPublicServices({ limit: 8 }).catch(() => ({ success: false, services: [] })),
+    // Use Promise.allSettled to ensure all requests complete even if some fail
+    const [makersResult, productsResult, videosResult, servicesResult] = await Promise.allSettled([
+      makersAPI.getAll({ limit: 6 }),
+      productsAPI.getAll({ limit: 8 }),
+      videosAPI.getAll({ limit: 6 }),
+      servicesAPI.getPublicServices({ limit: 8 }),
     ]);
 
-    featuredMakers = makersResponse?.makers || [];
-    featuredProducts = productsResponse?.products || [];
-    featuredVideos = videosResponse?.videos || [];
-    featuredServices = servicesResponse?.services || [];
+    // Extract data from settled promises, defaulting to empty arrays on failure
+    featuredMakers = makersResult.status === 'fulfilled' ? (makersResult.value?.makers || []) : [];
+    featuredProducts = productsResult.status === 'fulfilled' ? (productsResult.value?.products || []) : [];
+    featuredVideos = videosResult.status === 'fulfilled' ? (videosResult.value?.videos || []) : [];
+    featuredServices = servicesResult.status === 'fulfilled' ? (servicesResult.value?.services || []) : [];
+
+    // Log errors only in development or if critical
+    if (process.env.NODE_ENV === 'development') {
+      if (makersResult.status === 'rejected') console.warn('Failed to fetch makers:', makersResult.reason?.message);
+      if (productsResult.status === 'rejected') console.warn('Failed to fetch products:', productsResult.reason?.message);
+      if (videosResult.status === 'rejected') console.warn('Failed to fetch videos:', videosResult.reason?.message);
+      if (servicesResult.status === 'rejected') console.warn('Failed to fetch services:', servicesResult.reason?.message);
+    }
   } catch (error) {
-    console.error('Error fetching featured content:', error);
-    // Continue with empty arrays - don't throw error
+    // This catch should rarely trigger now with Promise.allSettled, but keep as safety net
+    console.error('Unexpected error in homepage data fetching:', error);
+    // Continue with empty arrays - don't throw error to prevent error page
   }
 
   // Use mock products as fallback if API fails or returns empty
