@@ -26,20 +26,22 @@
 - **Port:** `5432` (Standard PostgreSQL port)
 - **Database Name:** `banda_chao_db`
 - **Username:** `banda_chao_db_user` (Default credential)
-- **Password:** `wQXEUniIPTfxaIcdZ4cFxE9omxw1i7za`
+- **Password:** `****` ⚠️ **معلومات حساسة - مخزنة في Render Dashboard فقط**
 - **Credential Created:** 2 months ago
 
 ### URLs:
 - **Internal Database URL (للاتصال من داخل Render):**
   ```
-  postgresql://banda_chao_db_user:wQXEUniIPTfxaIcdZ4cFxE9omxw1i7za@dpg-d44d90hr0fns738a4m7g-a/banda_chao_db
+  postgresql://banda_chao_db_user:****@dpg-d44d90hr0fns738a4m7g-a/banda_chao_db
   ```
-  ✅ **يُنصح باستخدام هذا** - أسرع وأكثر أماناً
+  ✅ **يُنصح باستخدام هذا** - أسرع وأكثر أماناً  
+  ⚠️ **ملاحظة:** كلمة المرور مخزنة في Render Dashboard Environment Variables فقط
 
 - **External Database URL (للاتصال من خارج Render):**
   ```
-  postgresql://banda_chao_db_user:wQXEUniIPTfxaIcdZ4cFxE9omxw1i7za@dpg-d44d90hr0fns738a4m7g-a.oregon-postgres.render.com/banda_chao_db
+  postgresql://banda_chao_db_user:****@dpg-d44d90hr0fns738a4m7g-a.oregon-postgres.render.com/banda_chao_db
   ```
+  ⚠️ **ملاحظة:** كلمة المرور مخزنة في Render Dashboard Environment Variables فقط
 
 ---
 
