@@ -46,8 +46,8 @@ export function checkBackendEnv(): void {
     console.warn('[ENV CHECK] ⚠️ Missing optional environment variables:', warnings.join(', '));
   }
 
-  // Log success in development
-  if (process.env.NODE_ENV === 'development' && missing.length === 0) {
+  // Log success (both development and production)
+  if (missing.length === 0) {
     console.log('[ENV CHECK] ✅ All required environment variables are set');
     if (warnings.length === 0) {
       console.log('[ENV CHECK] ✅ All optional environment variables are set');
@@ -76,13 +76,12 @@ export function checkBackendEnv(): void {
     }
   }
   
-  if (process.env.NODE_ENV === 'development') {
-    console.log('[ENV CHECK] Environment variables status:');
-    console.log('  DATABASE_URL:', requiredVars.DATABASE_URL ? '✅ Set' : '❌ Missing');
-    console.log('  JWT_SECRET:', requiredVars.JWT_SECRET ? '✅ Set' : '❌ Missing');
-    console.log('  GEMINI_API_KEY:', requiredVars.GEMINI_API_KEY ? '✅ Set' : '⚠️ Missing');
-    console.log('  FRONTEND_URL:', requiredVars.FRONTEND_URL || '⚠️ Using default');
-  }
+  // Log environment variables status (both development and production)
+  console.log('[ENV CHECK] Environment variables status:');
+  console.log('  DATABASE_URL:', requiredVars.DATABASE_URL ? '✅ Set' : '❌ Missing');
+  console.log('  JWT_SECRET:', requiredVars.JWT_SECRET ? `✅ Set (length: ${requiredVars.JWT_SECRET?.length || 0})` : '❌ Missing');
+  console.log('  GEMINI_API_KEY:', requiredVars.GEMINI_API_KEY ? '✅ Set' : '⚠️ Missing');
+  console.log('  FRONTEND_URL:', requiredVars.FRONTEND_URL || '⚠️ Using default');
 }
 
 

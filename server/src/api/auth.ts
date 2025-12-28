@@ -13,6 +13,15 @@ const router = Router();
 const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
 const JWT_SECRET_ENV = process.env.JWT_SECRET;
 
+// Enhanced logging for debugging
+if (isProduction) {
+  console.log('[JWT_SECRET] Checking JWT_SECRET in production...');
+  console.log('[JWT_SECRET] JWT_SECRET_ENV type:', typeof JWT_SECRET_ENV);
+  console.log('[JWT_SECRET] JWT_SECRET_ENV length:', JWT_SECRET_ENV?.length || 0);
+  console.log('[JWT_SECRET] JWT_SECRET_ENV exists:', !!JWT_SECRET_ENV);
+  console.log('[JWT_SECRET] JWT_SECRET_ENV trimmed empty:', JWT_SECRET_ENV?.trim() === '');
+}
+
 if (!JWT_SECRET_ENV && isProduction) {
   console.error('❌ [CRITICAL] JWT_SECRET is not set in production environment!');
   console.error('❌ Authentication will fail. Please set JWT_SECRET in Render environment variables.');
@@ -20,12 +29,15 @@ if (!JWT_SECRET_ENV && isProduction) {
 }
 
 // Use environment variable if available, otherwise use dev fallback (only safe in development)
-const JWT_SECRET: string = JWT_SECRET_ENV || (isProduction ? '' : 'dev-secret-only');
+// Trim the secret to handle any whitespace issues
+const JWT_SECRET: string = (JWT_SECRET_ENV?.trim() || '') || (isProduction ? '' : 'dev-secret-only');
 
 if (!JWT_SECRET && isProduction) {
   // In production without JWT_SECRET, we can't safely start
   // But instead of throwing immediately, log and allow graceful degradation
   console.warn('⚠️ [WARNING] JWT_SECRET is empty in production. Authentication features will not work.');
+} else if (isProduction && JWT_SECRET) {
+  console.log('✅ [JWT_SECRET] JWT_SECRET is loaded successfully in production (length:', JWT_SECRET.length, ')');
 }
 
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
