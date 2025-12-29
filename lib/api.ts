@@ -2,6 +2,8 @@ import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'ax
 import { getApiUrl } from './api-utils';
 
 // Use centralized API URL utility to prevent double prefix
+// getApiUrl() automatically appends /api/v1 to the base URL
+// Example: https://banda-chao.onrender.com -> https://banda-chao.onrender.com/api/v1
 const API_URL = getApiUrl();
 
 // Retry configuration
@@ -48,6 +50,7 @@ async function retryRequest(
 }
 
 // Create axios instance
+// baseURL already includes /api/v1 prefix (e.g., https://banda-chao.onrender.com/api/v1)
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_URL,
   headers: {
@@ -58,6 +61,7 @@ const apiClient: AxiosInstance = axios.create({
 });
 
 // Special axios instance for AI endpoints with longer timeout
+// baseURL already includes /api/v1 prefix (e.g., https://banda-chao.onrender.com/api/v1)
 const aiApiClient: AxiosInstance = axios.create({
   baseURL: API_URL,
   headers: {
@@ -89,7 +93,8 @@ const addAuthInterceptor = (client: AxiosInstance) => {
             if (!isAIEndpoint) {
               try {
                 // Try to get CSRF token from API
-                const tokenResponse = await fetch(`${API_URL}/api/v1/csrf-token`, {
+                // Note: API_URL already includes /api/v1, so we don't need to append it again
+                const tokenResponse = await fetch(`${API_URL}/csrf-token`, {
                   method: 'GET',
                   headers: {
                     'Authorization': `Bearer ${token}`,
