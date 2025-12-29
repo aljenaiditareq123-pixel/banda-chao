@@ -129,18 +129,19 @@ app.use(helmet({
 }));
 
 // CORS Configuration
-// Support both string patterns and RegExp patterns for dynamic Vercel URLs
+// Explicitly allow required origins with credentials enabled
 const allowedOriginPatterns: (string | RegExp)[] = NODE_ENV === 'production'
   ? [
-      // Production URLs (exact matches)
+      // REQUIRED: Explicitly allowed origins (listed first for priority)
+      'http://localhost:3000',
+      'https://banda-chao-frontend.onrender.com',
+      // Additional production URLs
       FRONTEND_URL,
       'https://bandachao.com',
       'https://www.bandachao.com',
       'https://banda-chao.vercel.app',
-      'https://banda-chao-frontend.onrender.com',
       'https://banda-chao.onrender.com',
       // LOCAL DEVELOPMENT against production API (for testing)
-      'http://localhost:3000',
       'http://localhost:3001',
       'http://localhost:10000',
       /^http:\/\/localhost:\d+$/, // Allow any localhost port
@@ -150,12 +151,13 @@ const allowedOriginPatterns: (string | RegExp)[] = NODE_ENV === 'production'
       /^https:\/\/.*\.onrender\.com$/, // Matches all *.onrender.com subdomains
     ].filter(Boolean)
   : [
-      // Development URLs
-      FRONTEND_URL,
+      // REQUIRED: Explicitly allowed origins (listed first for priority)
       'http://localhost:3000',
+      'https://banda-chao-frontend.onrender.com',
+      // Additional development URLs
+      FRONTEND_URL,
       'http://localhost:10000',
       'https://banda-chao.vercel.app',
-      'https://banda-chao-frontend.onrender.com',
       'https://banda-chao.onrender.com',
       // Vercel Preview URLs (for development/testing)
       /^https:\/\/.*\.vercel\.app$/, // Matches all *.vercel.app subdomains
