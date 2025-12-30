@@ -13,7 +13,7 @@ export function getApiBaseUrl(): string {
 
   if (!envUrl) {
     // Fallback to production URL
-    return 'https://banda-chao-backend.onrender.com';
+    return 'https://banda-chao.onrender.com';
   }
 
   // Remove trailing slash

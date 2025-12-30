@@ -18,7 +18,7 @@ export function checkFrontendEnv(): void {
   if (!apiUrl) {
     if (process.env.NODE_ENV === 'development') {
       console.warn(
-        '[ENV CHECK] NEXT_PUBLIC_API_URL is not set. Using fallback: https://banda-chao-backend.onrender.com'
+        '[ENV CHECK] NEXT_PUBLIC_API_URL is not set. Using fallback: https://banda-chao.onrender.com'
       );
     }
     return;
