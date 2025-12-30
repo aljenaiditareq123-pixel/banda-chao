@@ -12,8 +12,14 @@ export function getApiBaseUrl(): string {
   const envUrl = process.env.NEXT_PUBLIC_API_URL;
 
   if (!envUrl) {
-    // Fallback to production URL
-    return 'https://banda-chao.onrender.com';
+    // Fallback to production backend URL (should be backend service, not frontend)
+    // CRITICAL: This should point to the backend service (banda-chao-backend.onrender.com)
+    // NOT the frontend service (banda-chao-frontend.onrender.com or banda-chao.onrender.com)
+    const fallbackUrl = 'https://banda-chao-backend.onrender.com';
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('[API] NEXT_PUBLIC_API_URL not set, using fallback:', fallbackUrl);
+    }
+    return fallbackUrl;
   }
 
   // Remove trailing slash
@@ -21,6 +27,11 @@ export function getApiBaseUrl(): string {
 
   // Remove /api/v1 if it exists at the end (prevent double prefix)
   baseUrl = baseUrl.replace(/\/api\/v1$/, '');
+
+  // Log the URL being used (development only)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[API] Using API base URL:', baseUrl);
+  }
 
   return baseUrl;
 }
@@ -31,7 +42,14 @@ export function getApiBaseUrl(): string {
  */
 export function getApiUrl(): string {
   const baseUrl = getApiBaseUrl();
-  return `${baseUrl}/api/v1`;
+  const fullUrl = `${baseUrl}/api/v1`;
+  
+  // Log in development for debugging
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[API] Full API URL:', fullUrl);
+  }
+  
+  return fullUrl;
 }
 
 /**
