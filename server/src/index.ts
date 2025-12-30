@@ -130,11 +130,12 @@ app.use(helmet({
 
 // CORS Configuration
 // Explicitly allow required origins with credentials enabled
+// CRITICAL: Frontend origin must be explicitly listed FIRST (not relying on wildcard/regex)
 const allowedOriginPatterns: (string | RegExp)[] = NODE_ENV === 'production'
   ? [
-      // REQUIRED: Explicitly allowed origins (listed first for priority)
+      // CRITICAL: Explicitly allowed origins (listed FIRST for priority - NO wildcards here)
+      'https://banda-chao-frontend.onrender.com', // Primary frontend - MUST be explicit
       'http://localhost:3000',
-      'https://banda-chao-frontend.onrender.com',
       // Additional production URLs
       FRONTEND_URL,
       'https://bandachao.com',
@@ -147,13 +148,13 @@ const allowedOriginPatterns: (string | RegExp)[] = NODE_ENV === 'production'
       /^http:\/\/localhost:\d+$/, // Allow any localhost port
       // Vercel Preview URLs (dynamic - using regex pattern)
       /^https:\/\/.*\.vercel\.app$/, // Matches all *.vercel.app subdomains
-      // Render URLs
+      // Render URLs (fallback pattern - explicit origin above takes priority)
       /^https:\/\/.*\.onrender\.com$/, // Matches all *.onrender.com subdomains
     ].filter(Boolean)
   : [
-      // REQUIRED: Explicitly allowed origins (listed first for priority)
+      // CRITICAL: Explicitly allowed origins (listed FIRST for priority)
+      'https://banda-chao-frontend.onrender.com', // Primary frontend - MUST be explicit
       'http://localhost:3000',
-      'https://banda-chao-frontend.onrender.com',
       // Additional development URLs
       FRONTEND_URL,
       'http://localhost:10000',
@@ -161,7 +162,7 @@ const allowedOriginPatterns: (string | RegExp)[] = NODE_ENV === 'production'
       'https://banda-chao.onrender.com',
       // Vercel Preview URLs (for development/testing)
       /^https:\/\/.*\.vercel\.app$/, // Matches all *.vercel.app subdomains
-      // Render URLs
+      // Render URLs (fallback pattern - explicit origin above takes priority)
       /^https:\/\/.*\.onrender\.com$/, // Matches all *.onrender.com subdomains
     ].filter(Boolean);
 

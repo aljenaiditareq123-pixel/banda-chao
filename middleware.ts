@@ -16,66 +16,87 @@ const countryToLocale: Record<string, string> = {
 
 // Get locale from IP geolocation
 // Uses external Geo-IP service for accurate country detection
+// CRITICAL: This function is wrapped in try/catch at call site to NEVER crash the middleware
 async function getLocaleFromIP(request: NextRequest): Promise<string> {
-  // Priority 1: Try Cloudflare/Vercel headers (if available)
-  const country = request.headers.get('cf-ipcountry') || 
-                  request.headers.get('x-vercel-ip-country') ||
-                  null;
+  try {
+    // Priority 1: Try Cloudflare/Vercel headers (if available)
+    const country = request.headers.get('cf-ipcountry') || 
+                    request.headers.get('x-vercel-ip-country') ||
+                    null;
 
-  if (country && countryToLocale[country]) {
-    return countryToLocale[country];
-  }
+    if (country && countryToLocale[country]) {
+      return countryToLocale[country];
+    }
 
-  // Priority 2: Use internal Geo-IP API route (uses geoip-lite)
-  // Extract IP from request first
-  const clientIP = request.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
-                   request.headers.get('x-real-ip') ||
-                   request.headers.get('cf-connecting-ip') ||
-                   null;
-  
-  if (clientIP) {
-    try {
-      // Build API URL - use same origin as request
-      const url = new URL('/api/geoip', request.url);
-      url.searchParams.set('ip', clientIP);
-      
-      const geoResponse = await fetch(url.toString(), {
-        method: 'GET',
-        headers: {
-          // Forward headers that contain IP information
-          'x-forwarded-for': request.headers.get('x-forwarded-for') || '',
-          'x-real-ip': request.headers.get('x-real-ip') || '',
-          'cf-connecting-ip': request.headers.get('cf-connecting-ip') || '',
-        },
-      });
+    // Priority 2: Use internal Geo-IP API route (uses geoip-lite)
+    // Extract IP from request first
+    const clientIP = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+                     request.headers.get('x-real-ip') ||
+                     request.headers.get('cf-connecting-ip') ||
+                     null;
+    
+    if (clientIP) {
+      try {
+        // Build API URL - use same origin as request
+        const url = new URL('/api/geoip', request.url);
+        url.searchParams.set('ip', clientIP);
+        
+        // Add timeout to prevent hanging requests
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 second timeout
+        
+        const geoResponse = await fetch(url.toString(), {
+          method: 'GET',
+          headers: {
+            // Forward headers that contain IP information
+            'x-forwarded-for': request.headers.get('x-forwarded-for') || '',
+            'x-real-ip': request.headers.get('x-real-ip') || '',
+            'cf-connecting-ip': request.headers.get('cf-connecting-ip') || '',
+          },
+          signal: controller.signal,
+        });
 
-      if (geoResponse.ok) {
-        const geoData = await geoResponse.json();
-        if (geoData.country && countryToLocale[geoData.country]) {
-          return countryToLocale[geoData.country];
+        clearTimeout(timeoutId);
+
+        if (geoResponse.ok) {
+          const geoData = await geoResponse.json();
+          if (geoData?.country && countryToLocale[geoData.country]) {
+            return countryToLocale[geoData.country];
+          }
+        }
+      } catch (error) {
+        // Silently fail and fall back to Accept-Language
+        // This is expected to fail sometimes (network issues, timeout, etc.)
+        // Do not log to avoid noise in production
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('[GeoIP Middleware] Failed to fetch Geo-IP (non-critical):', error instanceof Error ? error.message : String(error));
         }
       }
-    } catch (error) {
-      // Silently fail and fall back to Accept-Language
-      console.warn('[GeoIP Middleware] Failed to fetch Geo-IP:', error);
     }
-  }
 
-  // Priority 3: Fallback to Accept-Language header
-  const acceptLanguage = request.headers.get('accept-language');
-  if (acceptLanguage) {
-    // Check for Arabic
-    if (acceptLanguage.includes('ar')) {
-      return 'ar';
+    // Priority 3: Fallback to Accept-Language header
+    const acceptLanguage = request.headers.get('accept-language');
+    if (acceptLanguage) {
+      // Check for Arabic
+      if (acceptLanguage.includes('ar')) {
+        return 'ar';
+      }
+      // Check for Chinese
+      if (acceptLanguage.includes('zh') || acceptLanguage.includes('cn')) {
+        return 'zh';
+      }
     }
-    // Check for Chinese
-    if (acceptLanguage.includes('zh') || acceptLanguage.includes('cn')) {
-      return 'zh';
-    }
-  }
 
-  // Priority 4: Default locale
-  return defaultLocale;
+    // Priority 4: Default locale
+    return defaultLocale;
+  } catch (error) {
+    // CRITICAL: This catch ensures the function NEVER throws
+    // Always return a valid locale, even if everything fails
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('[GeoIP Middleware] Error in getLocaleFromIP (falling back to default):', error instanceof Error ? error.message : String(error));
+    }
+    return defaultLocale;
+  }
 }
 
 // Get locale from pathname
@@ -269,8 +290,17 @@ export async function middleware(request: NextRequest) {
 
   // Check authentication for protected routes
   if (isProtectedRoute(pathname)) {
-    // Get locale for redirect
-    const locale = await getLocale(pathname, request);
+    // Get locale for redirect (with fail-safe error handling)
+    let locale: string;
+    try {
+      locale = await getLocale(pathname, request);
+    } catch (error) {
+      // CRITICAL: Fail-safe fallback to default locale if getLocale throws
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('[Middleware] Error getting locale (using default):', error);
+      }
+      locale = defaultLocale;
+    }
     
     // Check for NextAuth session tokens
     const sessionToken = request.cookies.get('next-auth.session-token') || 
@@ -320,7 +350,16 @@ export async function middleware(request: NextRequest) {
   
   // If pathname doesn't have a locale, detect from IP and redirect
   if (!pathnameHasLocale) {
-    const detectedLocale = await getLocale(pathname, request);
+    let detectedLocale: string;
+    try {
+      detectedLocale = await getLocale(pathname, request);
+    } catch (error) {
+      // CRITICAL: Fail-safe fallback to default locale if getLocale throws
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('[Middleware] Error detecting locale (using default):', error);
+      }
+      detectedLocale = defaultLocale;
+    }
     const newUrl = new URL(`/${detectedLocale}${pathname === '/' ? '' : pathname}`, request.url);
     
     // Preserve query parameters
@@ -331,7 +370,16 @@ export async function middleware(request: NextRequest) {
   }
   
   // If pathname has a locale, validate it and continue
-  const locale = await getLocale(pathname);
+  let locale: string;
+  try {
+    locale = await getLocale(pathname);
+  } catch (error) {
+    // CRITICAL: Fail-safe fallback to default locale if getLocale throws
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('[Middleware] Error getting locale from pathname (using default):', error);
+    }
+    locale = defaultLocale;
+  }
   if (!locales.includes(locale)) {
     // Invalid locale, redirect to default locale
     const newUrl = new URL(`/${defaultLocale}${pathname.replace(`/${locale}`, '')}`, request.url);

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Button from '@/components/Button';
 import { authAPI } from '@/lib/api';
@@ -12,14 +12,28 @@ interface LoginPageClientProps {
 
 export default function LoginPageClient({ locale }: LoginPageClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
-  // ✅ تم تعطيل إعادة التوجيه التلقائية - الصفحة تظهر مباشرة وثابتة
-  // لا يوجد أي useEffect يقوم بالتحقق من localStorage أو إعادة التوجيه
-  // المستخدم يمكنه كتابة بياناته بثبات دون أي وميض أو إعادة توجيه
+  // Handle client-side mounting (prevents SSR/client mismatch errors)
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Get redirect parameter from URL (safely handle cases where searchParams might not be available)
+  const redirectTo = (() => {
+    try {
+      if (!mounted) return null; // Don't access searchParams until mounted
+      return searchParams?.get('redirect') || null;
+    } catch (e) {
+      // If searchParams is not available, return null
+      return null;
+    }
+  })();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,8 +78,12 @@ export default function LoginPageClient({ locale }: LoginPageClientProps) {
           // Trigger a custom event to notify other components (like Navbar) that auth state changed
           window.dispatchEvent(new Event('authStateChanged'));
           
-          // Redirect based on role
-          if (response.user.role === 'FOUNDER') {
+          // Redirect: prioritize redirect parameter, then role-based redirect
+          if (redirectTo) {
+            // Decode redirect parameter (e.g., %2Ffounder -> /founder)
+            const decodedRedirect = decodeURIComponent(redirectTo);
+            router.push(decodedRedirect);
+          } else if (response.user.role === 'FOUNDER') {
             router.push('/founder');
           } else {
             router.push(`/${locale}`);
@@ -126,6 +144,15 @@ export default function LoginPageClient({ locale }: LoginPageClientProps) {
   };
 
   const t = texts[locale as keyof typeof texts] || texts.en;
+
+  // Show loading state until component is mounted (prevents hydration errors)
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+        <div className="text-gray-600">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
