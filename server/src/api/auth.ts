@@ -11,6 +11,7 @@ const router = Router();
 
 // JWT_SECRET validation - more defensive approach
 const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
+// Read JWT_SECRET directly from process.env (ensuring correct variable name)
 const JWT_SECRET_ENV = process.env.JWT_SECRET;
 
 // Enhanced logging for debugging
@@ -20,6 +21,7 @@ if (isProduction) {
   console.log('[JWT_SECRET] JWT_SECRET_ENV length:', JWT_SECRET_ENV?.length || 0);
   console.log('[JWT_SECRET] JWT_SECRET_ENV exists:', !!JWT_SECRET_ENV);
   console.log('[JWT_SECRET] JWT_SECRET_ENV trimmed empty:', JWT_SECRET_ENV?.trim() === '');
+  console.log('[JWT_SECRET] process.env.JWT_SECRET value (first 10 chars):', JWT_SECRET_ENV ? JWT_SECRET_ENV.substring(0, 10) + '...' : 'undefined');
 }
 
 if (!JWT_SECRET_ENV && isProduction) {
@@ -30,7 +32,8 @@ if (!JWT_SECRET_ENV && isProduction) {
 
 // Use environment variable if available, otherwise use dev fallback (only safe in development)
 // Trim the secret to handle any whitespace issues
-const JWT_SECRET: string = (JWT_SECRET_ENV?.trim() || '') || (isProduction ? '' : 'dev-secret-only');
+// Fix: Simplified logic to correctly read from process.env.JWT_SECRET
+const JWT_SECRET: string = JWT_SECRET_ENV?.trim() || (isProduction ? '' : 'dev-secret-only');
 
 if (!JWT_SECRET && isProduction) {
   // In production without JWT_SECRET, we can't safely start
