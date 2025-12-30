@@ -49,16 +49,18 @@ export default function TreasurerDashboard() {
         throw new Error('No authentication token');
       }
 
+      // Import API URL utility
+      const { getApiUrl } = await import('@/lib/api-utils');
+      const apiUrl = getApiUrl();
+
       const [rulesRes, optimizationRes] = await Promise.all([
-        const { getApiUrl } = await import('@/lib/api-utils');
-        const apiUrl = getApiUrl();
         fetch(`${apiUrl}/treasurer/pricing-rules`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
         }),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://banda-chao-backend.onrender.com'}/api/v1/treasurer/revenue-optimization?timeRange=30d`, {
+        fetch(`${apiUrl}/treasurer/revenue-optimization?timeRange=30d`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',

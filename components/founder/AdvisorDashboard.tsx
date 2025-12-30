@@ -57,16 +57,18 @@ export default function AdvisorDashboard() {
         throw new Error('No authentication token');
       }
 
+      // Import API URL utility
+      const { getApiUrl } = await import('@/lib/api-utils');
+      const apiUrl = getApiUrl();
+
       const [analysesRes, usersRes, recommendationsRes] = await Promise.all([
-        const { getApiUrl } = await import('@/lib/api-utils');
-        const apiUrl = getApiUrl();
         fetch(`${apiUrl}/advisor/market-analyses?limit=5`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
         }),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://banda-chao-backend.onrender.com'}/api/v1/advisor/active-users?days=7`, {
+        fetch(`${apiUrl}/advisor/active-users?days=7`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -74,7 +76,7 @@ export default function AdvisorDashboard() {
         }),
         // Generate recommendations for different types
         Promise.all([
-          fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://banda-chao-backend.onrender.com'}/api/v1/advisor/recommendation`, {
+          fetch(`${apiUrl}/advisor/recommendation`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -82,7 +84,7 @@ export default function AdvisorDashboard() {
             },
             body: JSON.stringify({ type: 'STRATEGIC' }),
           }),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://banda-chao-backend.onrender.com'}/api/v1/advisor/recommendation`, {
+          fetch(`${apiUrl}/advisor/recommendation`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -90,7 +92,7 @@ export default function AdvisorDashboard() {
             },
             body: JSON.stringify({ type: 'PRICING' }),
           }),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://banda-chao-backend.onrender.com'}/api/v1/advisor/recommendation`, {
+          fetch(`${apiUrl}/advisor/recommendation`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
