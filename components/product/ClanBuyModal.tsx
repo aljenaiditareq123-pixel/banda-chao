@@ -182,7 +182,9 @@ export default function ClanBuyModal({
 
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://banda-chao.onrender.com'}/api/v1/clan-buy/create`, {
+      const { getApiUrl } = await import('@/lib/api-utils');
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/clan-buy/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -210,7 +212,9 @@ export default function ClanBuyModal({
 
   const fetchClanBuy = async (joinToken: string) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://banda-chao.onrender.com'}/api/v1/clan-buy/${joinToken}`);
+      const { getApiUrl } = await import('@/lib/api-utils');
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/clan-buy/${joinToken}`);
       const data = await response.json();
 
       if (!response.ok || !data.success) {
@@ -238,7 +242,9 @@ export default function ClanBuyModal({
 
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://banda-chao.onrender.com'}/api/v1/clan-buy/${clanBuy.joinToken}/join`, {
+      const { getApiUrl } = await import('@/lib/api-utils');
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/clan-buy/${clanBuy.joinToken}/join`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -194,7 +194,9 @@ export default function FlashDropPageClient({ locale }: FlashDropPageClientProps
 
   const fetchFlashDrop = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://banda-chao.onrender.com'}/api/v1/flash-drop/active`);
+      const { getApiUrl } = await import('@/lib/api-utils');
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/flash-drop/active`);
       const data = await response.json();
 
       if (data.success) {
@@ -226,7 +228,9 @@ export default function FlashDropPageClient({ locale }: FlashDropPageClientProps
 
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://banda-chao.onrender.com'}/api/v1/flash-drop/freeze`, {
+      const { getApiUrl } = await import('@/lib/api-utils');
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/flash-drop/freeze`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

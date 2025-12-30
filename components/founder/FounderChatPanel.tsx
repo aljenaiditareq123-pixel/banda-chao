@@ -182,8 +182,9 @@ export default function FounderChatPanel({ user, loading: authLoading }: Founder
         throw new Error('No authentication token');
       }
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://banda-chao.onrender.com';
-      const response = await fetch(`${apiUrl}/api/v1/speech/transcribe`, {
+      const { getApiUrl } = await import('@/lib/api-utils');
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/speech/transcribe`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

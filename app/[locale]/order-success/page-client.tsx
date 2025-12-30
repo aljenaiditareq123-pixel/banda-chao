@@ -39,7 +39,9 @@ export default function OrderSuccessClient({ locale, orderId }: OrderSuccessClie
     setLoading(true);
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://banda-chao.onrender.com'}/api/v1/orders/${orderId}`, {
+      const { getApiUrl } = await import('@/lib/api-utils');
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/orders/${orderId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },

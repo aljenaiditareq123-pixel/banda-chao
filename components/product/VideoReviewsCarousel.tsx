@@ -77,7 +77,10 @@ export default function VideoReviewsCarousel({ reviews, locale }: VideoReviewsCa
   const videoUrl = selectedReview?.review_video_url
     ? selectedReview.review_video_url.startsWith('http')
       ? selectedReview.review_video_url
-      : `${process.env.NEXT_PUBLIC_API_URL || 'https://banda-chao.onrender.com'}${selectedReview.review_video_url}`
+      : (() => {
+          const { getApiBaseUrl } = require('@/lib/api-utils');
+          return `${getApiBaseUrl()}${selectedReview.review_video_url}`;
+        })()
     : null;
 
   const translations = {

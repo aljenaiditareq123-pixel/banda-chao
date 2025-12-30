@@ -34,12 +34,14 @@ export default async function ChatPage({ params }: PageProps) {
   let currentUserId: string = '';
 
   try {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    // Use centralized API URL utility (imported dynamically to avoid SSR issues)
+    const { getApiUrl } = await import('@/lib/api-utils');
+    const API_URL = getApiUrl();
     // Note: In production, get token from server-side session
     // For now, this is a placeholder - client will handle auth
     const [conversationRes, messagesRes] = await Promise.all([
-      axios.get(`${API_URL}/api/v1/conversations/${conversationId}/messages`).catch(() => ({ data: { messages: [] } })),
-      axios.get(`${API_URL}/api/v1/conversations/${conversationId}/messages`).catch(() => ({ data: { messages: [] } })),
+      axios.get(`${API_URL}/conversations/${conversationId}/messages`).catch(() => ({ data: { messages: [] } })),
+      axios.get(`${API_URL}/conversations/${conversationId}/messages`).catch(() => ({ data: { messages: [] } })),
     ]);
 
     messages = messagesRes.data.messages || [];

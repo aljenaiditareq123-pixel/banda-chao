@@ -37,8 +37,10 @@ async function getCurrentUser(): Promise<{ id: string; role: string } | null> {
     }
 
     // Call API to verify user (simpler than JWT verification in server action)
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-    const response = await fetch(`${apiUrl}/api/v1/users/me`, {
+    // Use centralized API URL utility
+    const { getApiUrl } = await import('@/lib/api-utils');
+    const apiUrl = getApiUrl();
+    const response = await fetch(`${apiUrl}/users/me`, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',

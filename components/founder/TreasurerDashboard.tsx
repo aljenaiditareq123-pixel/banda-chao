@@ -50,7 +50,9 @@ export default function TreasurerDashboard() {
       }
 
       const [rulesRes, optimizationRes] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://banda-chao-backend.onrender.com'}/api/v1/treasurer/pricing-rules`, {
+        const { getApiUrl } = await import('@/lib/api-utils');
+        const apiUrl = getApiUrl();
+        fetch(`${apiUrl}/treasurer/pricing-rules`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',

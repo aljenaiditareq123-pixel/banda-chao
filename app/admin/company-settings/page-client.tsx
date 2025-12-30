@@ -46,8 +46,10 @@ export default function CompanySettingsClient() {
         throw new Error('Not authenticated');
       }
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const response = await fetch(`${apiUrl}/api/v1/company/profile`, {
+      // Use centralized API URL utility
+      const { getApiUrl } = await import('@/lib/api-utils');
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/company/profile`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -115,7 +117,9 @@ export default function CompanySettingsClient() {
         throw new Error('Not authenticated');
       }
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      // Use centralized API URL utility
+      const { getApiUrl } = await import('@/lib/api-utils');
+      const apiUrl = getApiUrl();
       
       // Create FormData for multipart/form-data
       const formDataToSend = new FormData();

@@ -62,8 +62,9 @@ export default function OperationsDashboardClient() {
       setError(null);
       
       // Log API call for debugging
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://banda-chao.onrender.com';
-      console.log('[Founder Dashboard] Fetching briefing from:', `${apiUrl}/api/v1/ops/briefing`);
+      const { getApiUrl } = await import('@/lib/api-utils');
+      const apiUrl = getApiUrl();
+      console.log('[Founder Dashboard] Fetching briefing from:', `${apiUrl}/ops/briefing`);
       
       const response = await opsAPI.getBriefing();
       

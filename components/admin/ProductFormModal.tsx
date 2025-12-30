@@ -116,9 +116,11 @@ export default function ProductFormModal({
       setAnalyzing(true);
       
       const token = localStorage.getItem('auth_token');
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      // Use centralized API URL utility
+      const { getApiUrl } = await import('@/lib/api-utils');
+      const apiUrl = getApiUrl();
       
-      const response = await fetch(`${apiUrl}/api/v1/ai-content/analyze-product`, {
+      const response = await fetch(`${apiUrl}/ai-content/analyze-product`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

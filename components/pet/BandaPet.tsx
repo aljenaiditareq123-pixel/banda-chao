@@ -53,7 +53,9 @@ export default function BandaPet({
 
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://banda-chao.onrender.com'}/api/v1/pet/state`, {
+      const { getApiUrl } = await import('@/lib/api-utils');
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/pet/state`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -75,7 +77,9 @@ export default function BandaPet({
 
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://banda-chao.onrender.com'}/api/v1/pet/feed`, {
+      const { getApiUrl } = await import('@/lib/api-utils');
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/pet/feed`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

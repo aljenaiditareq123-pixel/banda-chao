@@ -73,9 +73,10 @@ export default function AdminProductsPageClient() {
         throw new Error('Not authenticated');
       }
 
-      // Get user info
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-      const userResponse = await fetch(`${apiUrl}/api/v1/users/me`, {
+      // Get user info - use centralized API URL utility
+      const { getApiUrl } = await import('@/lib/api-utils');
+      const apiUrl = getApiUrl();
+      const userResponse = await fetch(`${apiUrl}/users/me`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
