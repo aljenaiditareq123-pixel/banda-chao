@@ -47,13 +47,25 @@ export function errorHandler(
 
   // Handle Prisma errors
   if (err instanceof PrismaClientKnownRequestError) {
-    // Don't expose database errors to client
+    // TEMPORARY: Expose database errors for debugging
     console.error('Database error:', err.code, err.meta);
     
     return res.status(500).json({
       success: false,
-      message: 'Database operation failed',
+      message: err.message || 'Database operation failed',
       code: 'DATABASE_ERROR',
+      // TEMPORARY: Include full Prisma error details for debugging
+      error: {
+        message: err.message,
+        code: err.code,
+        meta: err.meta,
+        stack: err.stack,
+      },
+      context: {
+        method: req.method,
+        path: req.path,
+        timestamp: new Date().toISOString(),
+      },
     });
   }
 
@@ -62,8 +74,18 @@ export function errorHandler(
     
     return res.status(400).json({
       success: false,
-      message: 'Invalid data provided',
+      message: err.message || 'Invalid data provided',
       code: 'VALIDATION_ERROR',
+      // TEMPORARY: Include full validation error details for debugging
+      error: {
+        message: err.message,
+        stack: err.stack,
+      },
+      context: {
+        method: req.method,
+        path: req.path,
+        timestamp: new Date().toISOString(),
+      },
     });
   }
 
@@ -87,15 +109,23 @@ export function errorHandler(
   }
 
   // Default error response
+  // TEMPORARY: Send full error details in production for debugging 500 errors
   res.status(500).json({
     success: false,
-    message: process.env.NODE_ENV === 'production' 
-      ? 'Internal server error' 
-      : err.message,
+    message: err.message || 'Internal server error',
     code: 'INTERNAL_ERROR',
-    ...(process.env.NODE_ENV === 'development' && { 
-      details: err.stack,
-    }),
+    // TEMPORARY: Include full error details for debugging
+    error: {
+      message: err.message,
+      stack: err.stack,
+      name: err.name,
+    },
+    // Include request context for debugging
+    context: {
+      method: req.method,
+      path: req.path,
+      timestamp: new Date().toISOString(),
+    },
   });
 }
 

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "prebuild": "npx prisma generate",
-    "build": "rm -rf dist && tsc",
+    "build": "npx prisma generate && rm -rf dist && tsc",
     "postbuild": "echo '🔧 Running Prisma migrations...' && (npx prisma migrate deploy --schema=./prisma/schema.prisma 2>&1 || (echo '⚠️ Migration deploy failed, trying db push...' && npx prisma db push --schema=./prisma/schema.prisma --accept-data-loss 2>&1 || echo '⚠️ Database migration/push failed, but continuing build...')) || true && echo '👑 Promoting founder user...' && (npx tsx scripts/promote-founder-auto.ts 2>&1 || echo '⚠️ Founder promotion skipped (user may not exist)')",
     "start": "node dist/index.js",
     "db:migrate": "npx prisma migrate dev --name phase3_stability",
