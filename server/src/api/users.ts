@@ -48,45 +48,78 @@ const upload = multer({
 // Get current user
 router.get('/me', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
-    // Use raw SQL to ensure consistent field names and avoid Prisma schema mismatches
-    const users = await prisma.$queryRaw<Array<{
-      id: string;
-      email: string;
-      name: string;
-      profilePicture: string | null;
-      bio: string | null;
-      role: string;
-      createdAt: Date;
-      updatedAt: Date;
-    }>>`
-      SELECT 
-        id, 
-        email, 
-        name, 
-        profile_picture as "profilePicture", 
-        bio, 
-        role, 
-        created_at as "createdAt", 
-        updated_at as "updatedAt"
-      FROM users
-      WHERE id = ${req.userId!}
-      LIMIT 1;
-    `;
-
-    if (!users || users.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
+    // Validate userId is present (should be set by authenticateToken middleware)
+    if (!req.userId) {
+      console.error('[GET /me] userId is missing from request:', {
+        path: req.path,
+        hasUser: !!req.user,
+        userEmail: req.user?.email,
+      });
+      return res.status(401).json({ 
+        error: 'Authentication required',
+        message: 'User ID not found in token'
+      });
     }
 
-    const user = users[0];
-    res.json({ user });
+    // Use Prisma query for better type safety and error handling
+    const user = await prisma.users.findUnique({
+      where: { id: req.userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        profile_picture: true,
+        bio: true,
+        role: true,
+        created_at: true,
+        updated_at: true,
+      },
+    });
+
+    if (!user) {
+      console.warn('[GET /me] User not found in database:', {
+        userId: req.userId,
+        email: req.user?.email,
+      });
+      return res.status(404).json({ 
+        error: 'User not found',
+        message: 'User account does not exist'
+      });
+    }
+
+    // Transform snake_case to camelCase for API response
+    const userResponse = {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      profilePicture: user.profile_picture,
+      bio: user.bio,
+      role: user.role,
+      createdAt: user.created_at,
+      updatedAt: user.updated_at,
+    };
+
+    res.json({ user: userResponse });
   } catch (error: any) {
-    console.error('Get user error:', {
+    console.error('[GET /me] Error fetching user:', {
       message: error?.message || 'Unknown error',
       stack: error?.stack || 'No stack trace',
       code: error?.code || 'No error code',
+      name: error?.name || 'Unknown error type',
       userId: req.userId,
+      email: req.user?.email,
+      path: req.path,
     });
-    res.status(500).json({ error: 'Internal server error' });
+    
+    // Return more specific error messages in development
+    const errorMessage = process.env.NODE_ENV === 'development' 
+      ? error?.message || 'Internal server error'
+      : 'Internal server error';
+    
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: errorMessage
+    });
   }
 });
 
