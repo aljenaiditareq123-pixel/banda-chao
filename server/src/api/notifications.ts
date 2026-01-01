@@ -10,11 +10,20 @@ const router = Router();
 // Get user notifications
 router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user?.id;
+    // Use req.userId (set by authenticateToken middleware) as primary source
+    // Fallback to req.user?.id for backward compatibility
+    const userId = req.userId || req.user?.id;
     if (!userId) {
+      console.error('[GET /notifications] userId is missing from request:', {
+        path: req.path,
+        hasUser: !!req.user,
+        hasUserId: !!req.userId,
+        userEmail: req.user?.email,
+      });
       return res.status(401).json({
         success: false,
         message: 'Unauthorized',
+        error: 'User ID not found in token',
       });
     }
 

@@ -32,10 +32,22 @@ function calculateCurrentHunger(petState: any): number {
  */
 router.get('/state', authenticateToken, async (req: any, res: Response) => {
   try {
-    const userId = req.user?.id;
+    // Use req.userId (set by authenticateToken middleware) as primary source
+    // Fallback to req.user?.id for backward compatibility
+    const userId = req.userId || req.user?.id;
 
     if (!userId) {
-      return res.status(401).json({ success: false, message: 'Unauthorized' });
+      console.error('[GET /pet/state] userId is missing from request:', {
+        path: req.path,
+        hasUser: !!req.user,
+        hasUserId: !!req.userId,
+        userEmail: req.user?.email,
+      });
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Unauthorized',
+        error: 'User ID not found in token'
+      });
     }
 
     // Get or create pet state

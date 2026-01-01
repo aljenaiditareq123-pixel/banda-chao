@@ -288,11 +288,20 @@ router.get('/me', authenticateToken, async (req: AuthRequest, res: Response) => 
 // Get current maker's products
 router.get('/me/products', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user?.id;
+    // Use req.userId (set by authenticateToken middleware) as primary source
+    // Fallback to req.user?.id for backward compatibility
+    const userId = req.userId || req.user?.id;
     if (!userId) {
+      console.error('[GET /makers/me/products] userId is missing from request:', {
+        path: req.path,
+        hasUser: !!req.user,
+        hasUserId: !!req.userId,
+        userEmail: req.user?.email,
+      });
       return res.status(401).json({
         success: false,
         message: 'Unauthorized',
+        error: 'User ID not found in token',
       });
     }
 
