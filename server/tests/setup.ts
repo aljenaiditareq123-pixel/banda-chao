@@ -8,14 +8,14 @@ beforeAll(async () => {
   process.env.JWT_SECRET = 'test-secret-key-for-testing-only';
   process.env.JWT_EXPIRES_IN = '1h';
   
-  // Set DATABASE_URL if not already set (use the same as development for now)
+  // Set DATABASE_URL if not already set (use dummy test value - NOT a real database)
   if (!process.env.DATABASE_URL) {
-    // Try to load from .env file or use a default test database URL
-    process.env.DATABASE_URL = process.env.DATABASE_URL || 'postgresql://user:password@localhost:5432/banda_chao_test';
+    // WARNING: This is a DUMMY test value only - never use real credentials here
+    process.env.DATABASE_URL = 'postgresql://test_user:test_password@localhost:5432/test_db_dummy';
   }
   
-  // Set optional environment variables for testing
-  process.env.STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || 'sk_test_dummy_key_for_testing';
+  // Set optional environment variables for testing (DUMMY values only)
+  process.env.STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || 'sk_test_dummy_key_for_testing_only_not_real';
   process.env.FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
   
   // You can set up a test database here if needed

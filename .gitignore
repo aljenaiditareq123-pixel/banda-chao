@@ -40,6 +40,11 @@ prisma/dev.db-journal
 .env.development.local
 .env.test.local
 .env.production.local
+.env*.local
+*.env
+*.env.*
+!*.env.example
+!*.env.template
 
 # ============================================
 # Logs & Debug
@@ -122,14 +127,34 @@ server/prisma/migrations/
 *.db-journal
 
 # ============================================
-# Security & Keys
+# Security & Keys (CRITICAL - Never commit!)
 # ============================================
 *.pem
 *.key
 *.cert
 *.crt
+*.p12
+*.pfx
 secrets/
 .secrets/
+**/secrets/
+**/.secrets/
+# Database connection strings
+*connection*.json
+*credentials*.json
+# API keys and tokens
+*api-key*
+*secret*
+*token*
+# Stripe keys
+*stripe*.key
+# Google Cloud credentials
+*gcp*.json
+*google*.json
+*gcs*.json
+# Alibaba Cloud credentials
+*alibaba*.json
+*oss*.json
 
 # ============================================
 # Archive/Backup folders
