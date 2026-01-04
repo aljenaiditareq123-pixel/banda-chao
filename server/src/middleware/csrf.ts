@@ -146,8 +146,26 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
   }
 
   // Skip CSRF for public endpoints (login, register, health check)
-  const publicEndpoints = ['/api/v1/auth/login', '/api/v1/auth/register', '/api/health'];
-  if (publicEndpoints.some(endpoint => fullPath.startsWith(endpoint) || originalUrl.startsWith(endpoint))) {
+  // Check multiple path variations to handle proxy rewrites
+  const publicEndpoints = [
+    '/api/v1/auth/login',
+    '/api/v1/auth/register',
+    '/api/health',
+    '/auth/login',  // Handle proxy paths
+    '/auth/register',  // Handle proxy paths
+  ];
+  
+  // Check if path matches any public endpoint (more flexible matching)
+  const isPublicEndpoint = publicEndpoints.some(endpoint => {
+    return fullPath.startsWith(endpoint) || 
+           originalUrl.startsWith(endpoint) ||
+           completePath.startsWith(endpoint) ||
+           fullPath.includes(endpoint) ||
+           originalUrl.includes(endpoint);
+  });
+  
+  if (isPublicEndpoint) {
+    console.log('[CSRF] ✅ Skipping CSRF check for public endpoint:', { fullPath, originalUrl, completePath });
     return next();
   }
 
