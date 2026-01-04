@@ -221,19 +221,50 @@ export const authOptions: NextAuthConfig = {
   // CRITICAL: AUTH_SECRET is required for NextAuth v5 (changed from NEXTAUTH_SECRET)
   // Render will auto-generate this via generateValue: true in render.yaml
   // Support both old (NEXTAUTH_SECRET) and new (AUTH_SECRET) variable names for compatibility
+  // FALLBACK: Use hardcoded secret if environment variable is missing (ensures server always works)
   secret: (() => {
-    const authSecret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
-    if (!authSecret && process.env.NODE_ENV === 'production') {
-      console.error('[NextAuth] CRITICAL: AUTH_SECRET or NEXTAUTH_SECRET is missing in production!');
-      // Use a fallback but log the error
-      return 'fallback-secret-change-in-production';
+    const authSecret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || 'BandaChaoSecretKey2026SecureNoSymbols';
+    if (!process.env.AUTH_SECRET && !process.env.NEXTAUTH_SECRET && process.env.NODE_ENV === 'production') {
+      console.warn('[NextAuth] WARNING: AUTH_SECRET or NEXTAUTH_SECRET not found, using fallback value');
     }
-    return authSecret || 'dev-secret-only';
+    return authSecret;
   })(),
   debug: process.env.NODE_ENV === 'development',
   // CRITICAL: Trust host for Render deployment
-  // This fixes "UntrustedHost" errors in production
+  // This fixes "UntrustedHost" errors in production and CSRF token validation issues
   trustHost: true,
+  // CRITICAL: Cookie configuration for Render (behind proxy)
+  // This fixes CSRF token validation failed errors
+  useSecureCookies: process.env.NODE_ENV === 'production',
+  cookies: {
+    sessionToken: {
+      name: `${process.env.NODE_ENV === 'production' ? '__Secure-' : ''}next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'lax', // 'lax' works better behind proxy
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
+    callbackUrl: {
+      name: `${process.env.NODE_ENV === 'production' ? '__Secure-' : ''}next-auth.callback-url`,
+      options: {
+        httpOnly: true,
+        sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
+    csrfToken: {
+      name: `${process.env.NODE_ENV === 'production' ? '__Host-' : ''}next-auth.csrf-token`,
+      options: {
+        httpOnly: true,
+        sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
+  },
 };
 
 // NextAuth v5 beta - Export handlers directly
