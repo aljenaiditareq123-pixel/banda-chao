@@ -323,11 +323,13 @@ export function getCsrfToken(req: Request, res: Response) {
   const token = generateCsrfToken(req);
 
   // Set cookie
+  // CRITICAL: Use 'lax' for SameSite to work behind proxy (Render)
   res.cookie('csrf-token', token, {
     httpOnly: false,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    sameSite: 'lax', // 'lax' works better behind proxy (changed from 'strict')
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    path: '/', // Ensure cookie is available for all paths
   });
 
   // Return token in response
