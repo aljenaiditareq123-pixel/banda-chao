@@ -4,11 +4,17 @@
  */
 
 /**
- * Get the API base URL, ensuring no double /api/v1 prefix
- * @returns The base URL for API calls (without /api/v1 suffix)
+ * Get the API base URL, ensuring no double /api prefix
+ * @returns The base URL for API calls (without /api suffix)
  */
 export function getApiBaseUrl(): string {
-  // Get base URL from environment variable
+  // Use Next.js proxy in development to bypass CORS
+  // The proxy rewrites /api/proxy/* to https://banda-chao-backend.onrender.com/api/*
+  if (process.env.NODE_ENV === 'development') {
+    return '/api/proxy';
+  }
+
+  // In production, use the environment variable or fallback
   const envUrl = process.env.NEXT_PUBLIC_API_URL;
 
   if (!envUrl) {
@@ -25,8 +31,8 @@ export function getApiBaseUrl(): string {
   // Remove trailing slash
   let baseUrl = envUrl.trim().replace(/\/$/, '');
 
-  // Remove /api/v1 if it exists at the end (prevent double prefix)
-  baseUrl = baseUrl.replace(/\/api\/v1$/, '');
+  // Remove /api if it exists at the end (prevent double prefix)
+  baseUrl = baseUrl.replace(/\/api$/, '');
 
   // Log the URL being used (development only)
   if (process.env.NODE_ENV === 'development') {
@@ -37,12 +43,17 @@ export function getApiBaseUrl(): string {
 }
 
 /**
- * Get the full API URL with /api/v1 prefix
- * @returns The full API URL including /api/v1
+ * Get the full API URL with /api prefix
+ * @returns The full API URL including /api
  */
 export function getApiUrl(): string {
   const baseUrl = getApiBaseUrl();
-  const fullUrl = `${baseUrl}/api/v1`;
+  
+  // In development, baseUrl is already '/api/proxy' (relative path for Next.js proxy)
+  // In production, we add '/api' to the base URL
+  const fullUrl = baseUrl.startsWith('/api/proxy') 
+    ? baseUrl  // Already correct, don't modify
+    : `${baseUrl}/api`;
   
   // Log in development for debugging
   if (process.env.NODE_ENV === 'development') {
@@ -55,7 +66,7 @@ export function getApiUrl(): string {
 /**
  * Build a full API endpoint URL
  * @param endpoint - The endpoint path (e.g., '/products' or 'products')
- * @returns The full URL including base URL and /api/v1
+ * @returns The full URL including base URL and /api
  */
 export function buildApiUrl(endpoint: string): string {
   const apiUrl = getApiUrl();

@@ -23,7 +23,9 @@ export function initializeSocket(server: HTTPServer) {
         return next(new Error('Authentication error: No token provided'));
       }
 
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as { id: string; email: string };
+      // FALLBACK: Use hardcoded secret if environment variable is missing (ensures server always works)
+      const jwtSecret = process.env.JWT_SECRET || 'BandaChaoSecretKey2026SecureNoSymbols';
+      const decoded = jwt.verify(token, jwtSecret) as { id: string; email: string };
       const user = await prisma.users.findUnique({
         where: { id: decoded.id },
         select: { id: true, email: true, name: true, role: true },

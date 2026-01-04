@@ -2,8 +2,8 @@ import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'ax
 import { getApiUrl } from './api-utils';
 
 // Use centralized API URL utility to prevent double prefix
-// getApiUrl() automatically appends /api/v1 to the base URL
-// Example: https://banda-chao.onrender.com -> https://banda-chao.onrender.com/api/v1
+// getApiUrl() automatically appends /api to the base URL
+// Example: https://banda-chao.onrender.com -> https://banda-chao.onrender.com/api
 const API_URL = getApiUrl();
 
 // Retry configuration
@@ -50,7 +50,7 @@ async function retryRequest(
 }
 
 // Create axios instance
-// baseURL already includes /api/v1 prefix (e.g., https://banda-chao.onrender.com/api/v1)
+// baseURL already includes /api prefix (e.g., https://banda-chao.onrender.com/api)
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_URL,
   headers: {
@@ -61,7 +61,7 @@ const apiClient: AxiosInstance = axios.create({
 });
 
 // Special axios instance for AI endpoints with longer timeout
-// baseURL already includes /api/v1 prefix (e.g., https://banda-chao.onrender.com/api/v1)
+// baseURL already includes /api prefix (e.g., https://banda-chao.onrender.com/api)
 const aiApiClient: AxiosInstance = axios.create({
   baseURL: API_URL,
   headers: {
@@ -90,10 +90,14 @@ const addAuthInterceptor = (client: AxiosInstance) => {
             // For AI endpoints, CSRF is not required (they're excluded)
             // But we still try to get token for other endpoints
             const isAIEndpoint = config.url?.startsWith('/ai/');
-            if (!isAIEndpoint) {
+            const isPublicEndpoint = config.url?.startsWith('/auth/login') || config.url?.startsWith('/auth/register');
+            
+            // Public endpoints (login/register) don't require CSRF token
+            // But we still try to get one for other endpoints
+            if (!isAIEndpoint && !isPublicEndpoint) {
               try {
                 // Try to get CSRF token from API
-                // Note: API_URL already includes /api/v1, so we don't need to append it again
+                // Note: API_URL already includes /api/proxy, so we don't need to append it again
                 const tokenResponse = await fetch(`${API_URL}/csrf-token`, {
                   method: 'GET',
                   headers: {
@@ -112,8 +116,9 @@ const addAuthInterceptor = (client: AxiosInstance) => {
             }
           }
           
-          // Add CSRF token to header (even if null, for AI endpoints it will be skipped)
-          if (csrfToken) {
+          // Add CSRF token to header (skip for public endpoints like login/register)
+          const isPublicEndpoint = config.url?.startsWith('/auth/login') || config.url?.startsWith('/auth/register');
+          if (csrfToken && !isPublicEndpoint) {
             config.headers['X-CSRF-Token'] = csrfToken;
           }
         } catch (error) {
@@ -125,6 +130,17 @@ const addAuthInterceptor = (client: AxiosInstance) => {
       if (config.data instanceof FormData) {
         delete config.headers['Content-Type'];
       }
+      
+      // Debug: Log the full URL being called
+      if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+        const fullUrl = config.baseURL 
+          ? (config.url?.startsWith('/') 
+              ? `${config.baseURL}${config.url}` 
+              : `${config.baseURL}/${config.url}`)
+          : config.url;
+        console.log('🔗 Attempting to connect to:', fullUrl);
+      }
+      
       return config;
     },
     (error) => {

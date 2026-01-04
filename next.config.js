@@ -124,7 +124,15 @@ const nextConfig = {
   },
   
   // Note: Middleware handles locale routing
-  // Rewrites removed - can conflict with middleware in App Router
+  // API Proxy Rewrite: Proxy API requests to Render backend to bypass CORS
+  async rewrites() {
+    return [
+      {
+        source: '/api/proxy/:path*',
+        destination: 'https://banda-chao-backend.onrender.com/api/v1/:path*',
+      },
+    ];
+  },
   
   // !! WARN !! 
   // Dangerously allow production builds to successfully complete even if

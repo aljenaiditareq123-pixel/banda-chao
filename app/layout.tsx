@@ -54,8 +54,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="ar">
-      <body>
+    <html lang="ar" suppressHydrationWarning>
+      <body suppressHydrationWarning={true}>
         <EnvCheckInit />
         <ErrorBoundary>
           <LanguageProvider defaultLanguage="ar">
