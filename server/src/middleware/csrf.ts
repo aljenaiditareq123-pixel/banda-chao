@@ -299,11 +299,13 @@ export function csrfTokenHandler(req: Request, res: Response, next: NextFunction
   const token = generateCsrfToken(req);
 
   // Set cookie (httpOnly: false so frontend can read it)
+  // CRITICAL: Use 'lax' for SameSite to work behind proxy (Render)
   res.cookie('csrf-token', token, {
     httpOnly: false, // Frontend needs to read it
     secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-    sameSite: 'strict', // CSRF protection
+    sameSite: 'lax', // 'lax' works better behind proxy (changed from 'strict')
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    path: '/', // Ensure cookie is available for all paths
   });
 
   // Send token in response header (for API clients)
