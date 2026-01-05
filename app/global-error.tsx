@@ -76,6 +76,26 @@ export default function GlobalError({
               {t.message}
             </p>
 
+            {/* ALWAYS show error details in RED for debugging */}
+            {error && (
+              <div className="mb-6 text-left">
+                <h2 className="text-lg font-semibold text-red-600 mb-3">Error Details:</h2>
+                <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4">
+                  <p className="text-red-800 font-mono text-sm mb-2 break-words">
+                    <strong>Message:</strong> {error.message || 'No error message'}
+                  </p>
+                  {error.stack && (
+                    <pre className="text-red-700 text-xs mt-3 overflow-auto max-h-96 bg-red-100 p-3 rounded border border-red-300">
+                      {error.stack}
+                    </pre>
+                  )}
+                  {!error.stack && (
+                    <p className="text-red-600 text-xs mt-2 italic">No stack trace available</p>
+                  )}
+                </div>
+              </div>
+            )}
+
             <p className="text-sm text-gray-500 mb-8">
               {t.contactSupport}
             </p>
@@ -86,19 +106,6 @@ export default function GlobalError({
             >
               {t.retryButton}
             </button>
-
-            {/* Only show error details in development */}
-            {process.env.NODE_ENV === 'development' && error && (
-              <details className="mt-8 text-left">
-                <summary className="cursor-pointer text-sm text-gray-500 mb-2">
-                  Development Error Details
-                </summary>
-                <pre className="mt-2 text-xs bg-gray-100 p-4 rounded overflow-auto max-h-64">
-                  {error.message}
-                  {error.stack && `\n\n${error.stack}`}
-                </pre>
-              </details>
-            )}
           </div>
         </div>
       </body>

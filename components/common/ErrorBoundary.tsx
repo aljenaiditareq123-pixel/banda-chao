@@ -136,35 +136,47 @@ export class ErrorBoundary extends Component<Props, State> {
         return this.props.fallback;
       }
 
-      // Default error UI
+      // Default error UI - ALWAYS show error details for debugging
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
-            <div className="text-6xl mb-4">🔧</div>
-            <h1 className="text-2xl font-bold text-gray-800 mb-2">
-              {this.props.children?.toString().includes('ar') ? 'حدث خطأ' : 'Something went wrong'}
-            </h1>
-            <p className="text-gray-600 mb-6">
-              {this.props.children?.toString().includes('ar')
-                ? 'فريق الصيانة يعمل على إصلاح المشكلة تلقائياً.'
-                : 'The Maintenance Team is working on fixing this automatically.'}
-            </p>
-            {this.state.retryCount < this.maxRetries && (
-              <button
-                onClick={this.handleRetry}
-                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                {this.props.children?.toString().includes('ar') ? 'إعادة المحاولة' : 'Retry'}
-              </button>
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+          <div className="max-w-4xl w-full bg-white rounded-lg shadow-lg p-8">
+            <div className="text-center mb-6">
+              <div className="text-6xl mb-4">🔧</div>
+              <h1 className="text-2xl font-bold text-gray-800 mb-2">
+                {this.props.children?.toString().includes('ar') ? 'حدث خطأ' : 'Something went wrong'}
+              </h1>
+            </div>
+            
+            {/* ALWAYS show error details in RED for debugging */}
+            {this.state.error && (
+              <div className="mb-6">
+                <h2 className="text-lg font-semibold text-red-600 mb-3">Error Details:</h2>
+                <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4">
+                  <p className="text-red-800 font-mono text-sm mb-2 break-words">
+                    <strong>Message:</strong> {this.state.error.message || 'No error message'}
+                  </p>
+                  {this.state.error.stack && (
+                    <pre className="text-red-700 text-xs mt-3 overflow-auto max-h-96 bg-red-100 p-3 rounded border border-red-300">
+                      {this.state.error.stack}
+                    </pre>
+                  )}
+                  {!this.state.error.stack && (
+                    <p className="text-red-600 text-xs mt-2 italic">No stack trace available</p>
+                  )}
+                </div>
+              </div>
             )}
-            {process.env.NODE_ENV === 'development' && this.state.error && (
-              <details className="mt-4 text-left">
-                <summary className="cursor-pointer text-sm text-gray-500">Error Details</summary>
-                <pre className="mt-2 text-xs bg-gray-100 p-2 rounded overflow-auto">
-                  {this.state.error.toString()}
-                </pre>
-              </details>
-            )}
+            
+            <div className="text-center">
+              {this.state.retryCount < this.maxRetries && (
+                <button
+                  onClick={this.handleRetry}
+                  className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  {this.props.children?.toString().includes('ar') ? 'إعادة المحاولة' : 'Retry'}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       );
