@@ -392,17 +392,18 @@ export async function middleware(request: NextRequest) {
 }
 
 // Configure which paths should be processed by middleware
+// CRITICAL: This matcher MUST exclude /api routes to prevent breaking NextAuth
 export const config = {
   matcher: [
     /*
      * Match all request paths except:
-     * - api routes
+     * - api routes (CRITICAL: /api/* must be excluded for NextAuth to work)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico, robots.txt, sitemap.xml, etc.
      * - static files (images, fonts, etc.)
      */
-    '/((?!api|_next/static|_next/image|favicon\\.ico|manifest\\.json|og-image\\.png|robots\\.txt|sitemap\\.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|woff|woff2|ttf|eot|json|xml|txt|woff|woff2)).*)',
+    '/((?!api|_next|.*\\..*).*)',
   ],
 };
 
