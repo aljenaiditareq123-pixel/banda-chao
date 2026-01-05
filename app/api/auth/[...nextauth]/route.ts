@@ -22,8 +22,17 @@ const CredentialsLoginProvider = CredentialsProvider({
 
     try {
       // Get API URL from environment or use fallback
+      // NOTE: Backend routes are mounted at /api/v1/* in server/src/index.ts
+      // But the main service 'banda-chao' may use /api/* directly
+      // Try /api/auth/login first, if it fails, try /api/v1/auth/login
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://banda-chao.onrender.com';
-      const fullApiUrl = `${apiUrl}/api/auth/login`;
+      let fullApiUrl = `${apiUrl}/api/auth/login`;
+      
+      // If NEXT_PUBLIC_API_URL points to backend service, use /api/v1
+      // Otherwise, use /api (for main service)
+      if (apiUrl.includes('backend') || apiUrl.includes('banda-chao-backend')) {
+        fullApiUrl = `${apiUrl}/api/v1/auth/login`;
+      }
 
       // Call Backend login API
       const response = await fetch(fullApiUrl, {
