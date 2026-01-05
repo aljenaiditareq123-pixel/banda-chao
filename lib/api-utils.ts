@@ -45,25 +45,28 @@ export function getApiBaseUrl(): string {
 /**
  * Get the full API URL with /api/v1 prefix
  * @returns The full API URL including /api/v1
+ * 
+ * CRITICAL: Backend routes are mounted at /api/v1/* (see server/src/index.ts)
+ * - Example: app.use('/api/v1/auth', authRoutes)
+ * - Login endpoint: /api/v1/auth/login
  */
 export function getApiUrl(): string {
   const baseUrl = getApiBaseUrl();
   
   // In development, baseUrl is already '/api/proxy' (relative path for Next.js proxy)
   // The proxy rewrites /api/proxy/* to https://banda-chao-backend.onrender.com/api/v1/*
-  // So we don't need to add anything
+  // So we don't need to add anything - proxy handles /v1 automatically
   if (baseUrl.startsWith('/api/proxy')) {
     return baseUrl; // Already correct, don't modify
   }
   
-  // In production, we add '/api/v1' to the base URL
-  // Backend expects /api/v1/* endpoints
+  // In production, we MUST add '/api/v1' to match Backend routes
+  // Backend routes are mounted at /api/v1/* (verified in server/src/index.ts)
+  // Example: app.use('/api/v1/auth', authRoutes) → /api/v1/auth/login
   const fullUrl = `${baseUrl}/api/v1`;
   
-  // Log in development for debugging
-  if (process.env.NODE_ENV === 'development') {
-    console.log('[API] Full API URL:', fullUrl);
-  }
+  // Log for debugging (both dev and prod to catch issues)
+  console.log('[API] Full API URL:', fullUrl);
   
   return fullUrl;
 }
