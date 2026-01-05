@@ -9,7 +9,7 @@
  */
 export function getApiBaseUrl(): string {
   // Use Next.js proxy in development to bypass CORS
-  // The proxy rewrites /api/proxy/* to https://banda-chao-backend.onrender.com/api/*
+  // The proxy rewrites /api/proxy/* to https://banda-chao.onrender.com/api/*
   if (process.env.NODE_ENV === 'development') {
     return '/api/proxy';
   }
@@ -18,10 +18,9 @@ export function getApiBaseUrl(): string {
   const envUrl = process.env.NEXT_PUBLIC_API_URL;
 
   if (!envUrl) {
-    // Fallback to production backend URL (should be backend service, not frontend)
-    // CRITICAL: This should point to the backend service (banda-chao-backend.onrender.com)
-    // NOT the frontend service (banda-chao-frontend.onrender.com or banda-chao.onrender.com)
-    const fallbackUrl = 'https://banda-chao-backend.onrender.com';
+    // Fallback to main service URL (banda-chao.onrender.com)
+    // The main service 'banda-chao' handles both frontend and backend
+    const fallbackUrl = 'https://banda-chao.onrender.com';
     if (process.env.NODE_ENV === 'development') {
       console.warn('[API] NEXT_PUBLIC_API_URL not set, using fallback:', fallbackUrl);
     }
@@ -43,30 +42,31 @@ export function getApiBaseUrl(): string {
 }
 
 /**
- * Get the full API URL with /api/v1 prefix
- * @returns The full API URL including /api/v1
+ * Get the full API URL with /api prefix
+ * @returns The full API URL including /api (NOT /api/v1)
  * 
- * CRITICAL: Backend routes are mounted at /api/v1/* (see server/src/index.ts)
- * - Example: app.use('/api/v1/auth', authRoutes)
- * - Login endpoint: /api/v1/auth/login
+ * NOTE: Backend routes are mounted at /api/v1/* in server/src/index.ts
+ * BUT the main service is 'banda-chao' which may not use /v1
+ * We use /api only to match the actual deployed service
  */
 export function getApiUrl(): string {
   const baseUrl = getApiBaseUrl();
   
   // In development, baseUrl is already '/api/proxy' (relative path for Next.js proxy)
-  // The proxy rewrites /api/proxy/* to https://banda-chao-backend.onrender.com/api/v1/*
-  // So we don't need to add anything - proxy handles /v1 automatically
+  // The proxy rewrites /api/proxy/* to https://banda-chao.onrender.com/api/*
+  // So we don't need to add anything
   if (baseUrl.startsWith('/api/proxy')) {
     return baseUrl; // Already correct, don't modify
   }
   
-  // In production, we MUST add '/api/v1' to match Backend routes
-  // Backend routes are mounted at /api/v1/* (verified in server/src/index.ts)
-  // Example: app.use('/api/v1/auth', authRoutes) → /api/v1/auth/login
-  const fullUrl = `${baseUrl}/api/v1`;
+  // In production, we add '/api' only (NOT /api/v1)
+  // The main service 'banda-chao' uses /api/* endpoints
+  const fullUrl = `${baseUrl}/api`;
   
-  // Log for debugging (both dev and prod to catch issues)
-  console.log('[API] Full API URL:', fullUrl);
+  // Log for debugging
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[API] Full API URL:', fullUrl);
+  }
   
   return fullUrl;
 }

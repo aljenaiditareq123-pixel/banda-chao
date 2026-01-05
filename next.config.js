@@ -124,14 +124,13 @@ const nextConfig = {
   },
   
   // Note: Middleware handles locale routing
-  // API Proxy Rewrite: Proxy API requests to Render backend to bypass CORS
-  // CRITICAL: Backend routes are mounted at /api/v1/* (see server/src/index.ts)
-  // Proxy rewrites /api/proxy/* to https://banda-chao-backend.onrender.com/api/v1/*
+  // API Proxy Rewrite: Proxy API requests to main service to bypass CORS
+  // The main service 'banda-chao' handles both frontend and backend at /api/*
   async rewrites() {
     return [
       {
         source: '/api/proxy/:path*',
-        destination: 'https://banda-chao-backend.onrender.com/api/v1/:path*',
+        destination: 'https://banda-chao.onrender.com/api/:path*',
       },
     ];
   },

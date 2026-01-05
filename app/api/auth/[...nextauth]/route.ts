@@ -7,23 +7,60 @@ import TwitterProvider from 'next-auth/providers/twitter';
 // import EmailProvider from 'next-auth/providers/email'; // DISABLED: Requires adapter
 import CredentialsProvider from 'next-auth/providers/credentials';
 
-// Guest Login Provider (Demo/Testing Mode)
-// Hardcoded demo user for instant login without password
-const GuestLoginProvider = CredentialsProvider({
+// Credentials Provider - Connects to Backend API
+const CredentialsLoginProvider = CredentialsProvider({
   id: 'credentials',
-  name: 'Guest',
+  name: 'Credentials',
   credentials: {
-    // No credentials needed - instant login
+    email: { label: 'Email', type: 'email' },
+    password: { label: 'Password', type: 'password' },
   },
-  async authorize() {
-    // Hardcoded demo user
-    return {
-      id: '1',
-      name: 'Ahmed Panda',
-      email: 'panda@bandachao.com',
-      image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Panda',
-      role: 'BUYER',
-    };
+  async authorize(credentials) {
+    if (!credentials?.email || !credentials?.password) {
+      return null;
+    }
+
+    try {
+      // Get API URL from environment or use fallback
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://banda-chao.onrender.com';
+      const fullApiUrl = `${apiUrl}/api/auth/login`;
+
+      // Call Backend login API
+      const response = await fetch(fullApiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: credentials.email,
+          password: credentials.password,
+        }),
+        credentials: 'include', // Include cookies for CSRF
+      });
+
+      if (!response.ok) {
+        console.error('[NextAuth] Login failed:', response.status, response.statusText);
+        return null;
+      }
+
+      const data = await response.json();
+
+      if (data.success && data.user && data.token) {
+        // Return user object for NextAuth
+        return {
+          id: data.user.id || data.user.email,
+          email: data.user.email,
+          name: data.user.name || data.user.email.split('@')[0],
+          image: data.user.profilePicture || null,
+          role: data.user.role || 'BUYER',
+        };
+      }
+
+      return null;
+    } catch (error) {
+      console.error('[NextAuth] Authorization error:', error);
+      return null;
+    }
   },
 });
 
@@ -86,8 +123,8 @@ const WeChatProvider = CredentialsProvider({
 
 export const authOptions: NextAuthConfig = {
   providers: [
-    // Guest Login - Demo/Testing Mode (Instant login without password)
-    GuestLoginProvider,
+    // Credentials Login - Connects to Backend API
+    CredentialsLoginProvider,
     
     // WeChat - Priority for Chinese market (جاهز للإضافة لاحقاً)
     ...(process.env.WECHAT_APP_ID && process.env.WECHAT_APP_SECRET
