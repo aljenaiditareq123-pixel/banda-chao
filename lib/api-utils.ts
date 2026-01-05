@@ -43,17 +43,22 @@ export function getApiBaseUrl(): string {
 }
 
 /**
- * Get the full API URL with /api prefix
- * @returns The full API URL including /api
+ * Get the full API URL with /api/v1 prefix
+ * @returns The full API URL including /api/v1
  */
 export function getApiUrl(): string {
   const baseUrl = getApiBaseUrl();
   
   // In development, baseUrl is already '/api/proxy' (relative path for Next.js proxy)
-  // In production, we add '/api' to the base URL
-  const fullUrl = baseUrl.startsWith('/api/proxy') 
-    ? baseUrl  // Already correct, don't modify
-    : `${baseUrl}/api`;
+  // The proxy rewrites /api/proxy/* to https://banda-chao-backend.onrender.com/api/v1/*
+  // So we don't need to add anything
+  if (baseUrl.startsWith('/api/proxy')) {
+    return baseUrl; // Already correct, don't modify
+  }
+  
+  // In production, we add '/api/v1' to the base URL
+  // Backend expects /api/v1/* endpoints
+  const fullUrl = `${baseUrl}/api/v1`;
   
   // Log in development for debugging
   if (process.env.NODE_ENV === 'development') {
