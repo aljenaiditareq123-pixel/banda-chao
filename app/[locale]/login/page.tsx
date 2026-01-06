@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { Suspense } from 'react';
 import LoginPageClient from './page-client';
 
 // Force dynamic rendering to prevent static generation issues
@@ -28,9 +29,19 @@ export default async function LoginPage({ params }: LoginPageProps) {
     notFound();
   }
 
-  // LoginPageClient already has Suspense boundary inside it
-  // No need for double Suspense - it handles useSearchParams internally
-  return <LoginPageClient locale={locale} />;
+  // Double Suspense boundary for extra safety - Next.js 15 requires Suspense for useSearchParams
+  // Even though LoginPageClient has internal Suspense, we add one here too for SSR safety
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+        <div className="text-gray-600">
+          {locale === 'ar' ? 'جاري التحميل...' : locale === 'zh' ? '加载中...' : 'Loading...'}
+        </div>
+      </div>
+    }>
+      <LoginPageClient locale={locale} />
+    </Suspense>
+  );
 }
 
 
