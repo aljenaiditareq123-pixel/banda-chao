@@ -32,16 +32,42 @@ export function authenticateToken(req: AuthRequest, res: Response, next: NextFun
     });
   }
 
-  // FALLBACK: Use hardcoded secret if environment variable is missing (ensures server always works)
-  const jwtSecret = process.env.JWT_SECRET || 'BandaChaoSecretKey2026SecureNoSymbols';
+  // SECURITY: Kill Switch - JWT_SECRET must be set (validated at startup)
+  // If we reach here without JWT_SECRET in production, something is wrong
+  const jwtSecret = process.env.JWT_SECRET;
   
-  // Log warning if using fallback (but don't block the request)
-  if (!process.env.JWT_SECRET) {
-    console.warn('[AUTH_MIDDLEWARE] JWT_SECRET not found in environment, using fallback value');
+  if (!jwtSecret) {
+    // This should never happen in production (server would have exited at startup)
+    // But we check here as a safety measure
+    if (process.env.NODE_ENV === 'production' || process.env.RENDER === 'true') {
+      console.error('[AUTH_MIDDLEWARE] FATAL: JWT_SECRET missing at runtime - this should be impossible!');
+      return res.status(500).json({
+        success: false,
+        message: 'Server configuration error - authentication unavailable',
+      });
+    }
+    // Development fallback (local testing only)
+    console.warn('[AUTH_MIDDLEWARE] JWT_SECRET not found, using development fallback (NOT SECURE)');
+    const devFallback = 'dev-secret-only-local-never-use-in-production';
+    // Use dev fallback but log warning
+    const decoded = jwt.verify(token, devFallback) as { 
+      userId: string; 
+      email: string; 
+      name?: string;
+      role: string;
+    };
+    req.userId = decoded.userId;
+    req.user = {
+      id: decoded.userId,
+      email: decoded.email,
+      name: decoded.name || decoded.email.split('@')[0],
+      role: decoded.role,
+    };
+    return next();
   }
 
   try {
-    const decoded = jwt.verify(token, jwtSecret) as { 
+    const decoded = jwt.verify(token, jwtSecret!) as { 
       userId: string; 
       email: string; 
       name?: string;

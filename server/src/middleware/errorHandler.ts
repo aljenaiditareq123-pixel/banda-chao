@@ -47,20 +47,23 @@ export function errorHandler(
 
   // Handle Prisma errors
   if (err instanceof PrismaClientKnownRequestError) {
-    // TEMPORARY: Expose database errors for debugging
     console.error('Database error:', err.code, err.meta);
+    
+    // SECURITY: Never expose stack traces or database structure in production
+    const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
     
     return res.status(500).json({
       success: false,
       message: err.message || 'Database operation failed',
       code: 'DATABASE_ERROR',
-      // TEMPORARY: Include full Prisma error details for debugging
-      error: {
-        message: err.message,
-        code: err.code,
-        meta: err.meta,
-        stack: err.stack,
-      },
+      // Only include error details in development
+      ...(isProduction ? {} : {
+        error: {
+          message: err.message,
+          code: err.code,
+          meta: err.meta,
+        },
+      }),
       context: {
         method: req.method,
         path: req.path,
@@ -72,15 +75,19 @@ export function errorHandler(
   if (err instanceof PrismaClientValidationError) {
     console.error('Validation error:', err.message);
     
+    // SECURITY: Never expose stack traces in production
+    const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
+    
     return res.status(400).json({
       success: false,
       message: err.message || 'Invalid data provided',
       code: 'VALIDATION_ERROR',
-      // TEMPORARY: Include full validation error details for debugging
-      error: {
-        message: err.message,
-        stack: err.stack,
-      },
+      // Only include error details in development
+      ...(isProduction ? {} : {
+        error: {
+          message: err.message,
+        },
+      }),
       context: {
         method: req.method,
         path: req.path,
@@ -109,18 +116,22 @@ export function errorHandler(
   }
 
   // Default error response
-  // TEMPORARY: Send full error details in production for debugging 500 errors
+  // SECURITY: Never expose stack traces or internal error details in production
+  const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
+  
   res.status(500).json({
     success: false,
-    message: err.message || 'Internal server error',
+    message: isProduction ? 'Internal server error' : err.message || 'Internal server error',
     code: 'INTERNAL_ERROR',
-    // TEMPORARY: Include full error details for debugging
-    error: {
-      message: err.message,
-      stack: err.stack,
-      name: err.name,
-    },
-    // Include request context for debugging
+    // Only include error details in development (never in production)
+    ...(isProduction ? {} : {
+      error: {
+        message: err.message,
+        stack: err.stack,
+        name: err.name,
+      },
+    }),
+    // Include minimal context (safe to expose)
     context: {
       method: req.method,
       path: req.path,

@@ -24,23 +24,29 @@ if (isProduction) {
   console.log('[JWT_SECRET] process.env.JWT_SECRET value (first 10 chars):', JWT_SECRET_ENV ? JWT_SECRET_ENV.substring(0, 10) + '...' : 'undefined');
 }
 
-if (!JWT_SECRET_ENV && isProduction) {
-  console.error('❌ [CRITICAL] JWT_SECRET is not set in production environment!');
-  console.error('❌ Authentication will fail. Please set JWT_SECRET in Render environment variables.');
-  console.error('❌ Server will start but authentication endpoints will return errors.');
+// SECURITY: Kill Switch - Fail fast in production if JWT_SECRET is missing
+// Never use hardcoded fallback in production - this is a critical security risk
+if (!JWT_SECRET_ENV || JWT_SECRET_ENV.trim() === '') {
+  if (isProduction) {
+    console.error('❌ [FATAL] JWT_SECRET is not defined in production environment!');
+    console.error('❌ Server refusing to start to prevent security vulnerability.');
+    console.error('❌ Please set JWT_SECRET in Render environment variables.');
+    process.exit(1); // Kill Switch: Exit immediately to prevent insecure operation
+  }
+  // Only allow fallback in development (local testing)
+  console.warn('⚠️ [WARNING] JWT_SECRET not set, using development fallback (NOT SECURE for production)');
 }
 
-// Use environment variable if available, otherwise use fallback (ensures server never crashes)
-// Trim the secret to handle any whitespace issues
-// Fix: Simplified logic to correctly read from process.env.JWT_SECRET
-// FALLBACK: Use hardcoded secret if environment variable is missing (ensures server always works)
-const JWT_SECRET: string = JWT_SECRET_ENV?.trim() || 'BandaChaoSecretKey2026SecureNoSymbols';
+// Use environment variable (trimmed) - no fallback in production
+const JWT_SECRET: string = JWT_SECRET_ENV?.trim() || 'dev-secret-only-local-never-use-in-production';
 
-if (!JWT_SECRET && isProduction) {
-  // In production without JWT_SECRET, we can't safely start
-  // But instead of throwing immediately, log and allow graceful degradation
-  console.warn('⚠️ [WARNING] JWT_SECRET is empty in production. Authentication features will not work.');
-} else if (isProduction && JWT_SECRET) {
+if (isProduction && JWT_SECRET === 'dev-secret-only-local-never-use-in-production') {
+  // Double check - this should never happen due to Kill Switch above
+  console.error('❌ [FATAL] Development fallback detected in production!');
+  process.exit(1);
+}
+
+if (isProduction) {
   console.log('✅ [JWT_SECRET] JWT_SECRET is loaded successfully in production (length:', JWT_SECRET.length, ')');
 }
 
@@ -104,9 +110,8 @@ router.post('/register', validate(registerSchema), async (req: Request, res: Res
     const user = createdUsers[0];
 
     // Generate token
-    // JWT_SECRET now has fallback value, so this check is no longer needed
-    // But we keep it for extra safety
-    const finalJwtSecret = JWT_SECRET || 'BandaChaoSecretKey2026SecureNoSymbols';
+    // JWT_SECRET is validated at startup (Kill Switch), so this is just for TypeScript
+    const finalJwtSecret = JWT_SECRET;
 
     const token = jwt.sign(
       { userId: user.id, email: user.email, name: user.name, role: user.role },
@@ -310,9 +315,8 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response)
     // Generate JWT token
     let token: string;
     try {
-      // JWT_SECRET now has fallback value, so this check is no longer needed
-      // But we keep it for extra safety
-      const finalJwtSecret = JWT_SECRET || 'BandaChaoSecretKey2026SecureNoSymbols';
+      // JWT_SECRET is validated at startup (Kill Switch), so this is just for TypeScript
+      const finalJwtSecret = JWT_SECRET;
 
       token = jwt.sign(
         { userId: user.id, email: user.email, name: user.name, role: user.role },

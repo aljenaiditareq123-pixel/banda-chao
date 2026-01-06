@@ -26,7 +26,10 @@ export default function ChatPageClient({ locale, conversationId, initialMessages
 
   const fetchMessages = async () => {
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      // Use dynamic API URL - handles both development and production
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 
+                     (typeof window !== 'undefined' ? window.location.origin : '') || 
+                     'https://banda-chao.onrender.com';
       const token = localStorage.getItem('auth_token');
       const response = await fetch(`${API_URL}/api/v1/conversations/${conversationId}/messages`, {
         headers: {

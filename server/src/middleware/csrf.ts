@@ -11,19 +11,28 @@ import { randomBytes, createHmac, timingSafeEqual } from 'crypto';
 const csrfTokens = new Map<string, { token: string; expiresAt: number }>();
 
 // CSRF secret from environment (required in production)
-// FALLBACK: Use hardcoded secret if environment variable is missing (ensures server always works)
-const CSRF_SECRET = process.env.CSRF_SECRET || process.env.JWT_SECRET || 'BandaChaoSecretKey2026SecureNoSymbols';
-const isCsrfConfigured = !!CSRF_SECRET;
+// SECURITY: Use JWT_SECRET if CSRF_SECRET is not set (they can share the same secret)
+// Kill Switch: Fail fast in production if no secret is available
+const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
+const CSRF_SECRET_ENV = process.env.CSRF_SECRET || process.env.JWT_SECRET;
 
-// Warn if CSRF is not configured in production
-if (!isCsrfConfigured && (process.env.NODE_ENV === 'production' || process.env.RENDER === 'true')) {
-  console.warn('⚠️ [WARNING] CSRF_SECRET or JWT_SECRET is not set. CSRF protection will use fallback secret.');
-  console.warn('⚠️ To enable proper CSRF protection, set CSRF_SECRET or JWT_SECRET in environment variables.');
+if (!CSRF_SECRET_ENV || CSRF_SECRET_ENV.trim() === '') {
+  if (isProduction) {
+    console.error('❌ [FATAL] CSRF_SECRET or JWT_SECRET is not defined in production!');
+    console.error('❌ Server refusing to start to prevent security vulnerability.');
+    process.exit(1); // Kill Switch
+  }
+  // Development fallback only
+  console.warn('⚠️ [WARNING] CSRF_SECRET/JWT_SECRET not set, using development fallback (NOT SECURE)');
 }
 
-// Fallback secret (less secure but allows server to start)
-// In production, this should be set via environment variables for security
-const CSRF_SECRET_FINAL = CSRF_SECRET || 'dev-csrf-secret-fallback-not-secure-in-production';
+const CSRF_SECRET_FINAL = CSRF_SECRET_ENV?.trim() || 'dev-csrf-secret-fallback-not-secure-in-production';
+
+// Double check in production
+if (isProduction && CSRF_SECRET_FINAL === 'dev-csrf-secret-fallback-not-secure-in-production') {
+  console.error('❌ [FATAL] Development CSRF fallback detected in production!');
+  process.exit(1);
+}
 
 // Token expiration time: 24 hours
 const TOKEN_EXPIRATION_MS = 24 * 60 * 60 * 1000;

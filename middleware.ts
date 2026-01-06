@@ -235,11 +235,27 @@ function isProtectedRoute(pathname: string): boolean {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
+  // SECURITY: Normalize path to prevent path traversal attacks (e.g., /api/../admin)
+  // Resolve any relative path segments and normalize slashes
+  let normalizedPath = pathname;
+  try {
+    // Decode URL encoding first
+    normalizedPath = decodeURIComponent(pathname);
+    // Resolve relative paths (e.g., /api/../admin becomes /admin)
+    // Use URL constructor to safely resolve path
+    const url = new URL(normalizedPath, request.url);
+    normalizedPath = url.pathname;
+    // Normalize to lowercase for consistent matching
+    normalizedPath = normalizedPath.toLowerCase().trim();
+  } catch (error) {
+    // If path parsing fails, use original pathname (malformed URL)
+    normalizedPath = pathname.toLowerCase().trim();
+  }
+  
   // CRITICAL: Health check endpoint - respond immediately without any processing
   // This MUST be the first check to ensure instant response for Render health checks
   // Check both with and without trailing slash, and handle any encoding
-  const normalizedPathname = pathname.toLowerCase().trim();
-  if (normalizedPathname === '/health' || normalizedPathname === '/health/') {
+  if (normalizedPath === '/health' || normalizedPath === '/health/') {
     // Return response immediately - no async operations, no processing
     return new NextResponse('OK', {
       status: 200,
@@ -250,24 +266,31 @@ export async function middleware(request: NextRequest) {
     });
   }
   
-  // CRITICAL: Skip locale routing for excluded paths (check this FIRST)
-  // This is the most important check - do it before anything else
-  if (shouldExcludePath(pathname)) {
+  // SECURITY: Check for API routes AFTER path normalization to prevent bypass
+  // This prevents path manipulation attacks like /api/../admin
+  if (normalizedPath.startsWith('/api/') || normalizedPath === '/api') {
+    // API routes bypass middleware (handled by Next.js API routes or backend)
+    return NextResponse.next();
+  }
+  
+  // CRITICAL: Skip locale routing for excluded paths (check this AFTER API check)
+  if (shouldExcludePath(normalizedPath)) {
     return NextResponse.next();
   }
   
   // Additional early check: if pathname looks like a static file, skip immediately
-  // This prevents favicon.ico and other static files from being processed as locales
-  if (pathname.includes('favicon.ico') || 
-      pathname.includes('robots.txt') || 
-      pathname.includes('manifest.json') ||
-      pathname.includes('og-image.png') ||
-      pathname.match(/\.(ico|png|jpg|jpeg|gif|webp|svg|css|js|woff|woff2|ttf|eot|json|xml|txt)$/i)) {
+  // Use normalizedPath for consistency
+  if (normalizedPath.includes('favicon.ico') || 
+      normalizedPath.includes('robots.txt') || 
+      normalizedPath.includes('manifest.json') ||
+      normalizedPath.includes('og-image.png') ||
+      normalizedPath.match(/\.(ico|png|jpg|jpeg|gif|webp|svg|css|js|woff|woff2|ttf|eot|json|xml|txt)$/i)) {
     return NextResponse.next();
   }
 
   // Protect /admin routes - require authentication
-  if (pathname.startsWith('/admin')) {
+  // Use normalizedPath to prevent path manipulation
+  if (normalizedPath.startsWith('/admin')) {
     // Check for NextAuth session tokens (primary auth method)
     const sessionToken = request.cookies.get('next-auth.session-token') || 
                          request.cookies.get('__Secure-next-auth.session-token') ||
@@ -279,7 +302,8 @@ export async function middleware(request: NextRequest) {
     // If no session token and no JWT token, redirect to sign-in
     if (!sessionToken && !jwtToken) {
       const signInUrl = new URL('/auth/signin', request.url);
-      signInUrl.searchParams.set('callbackUrl', pathname);
+      // Use normalizedPath for callback (safe after normalization)
+      signInUrl.searchParams.set('callbackUrl', normalizedPath);
       return NextResponse.redirect(signInUrl);
     }
     
@@ -288,12 +312,12 @@ export async function middleware(request: NextRequest) {
     // founder@banda-chao.com email check is handled in NextAuth session callback
   }
 
-  // Check authentication for protected routes
-  if (isProtectedRoute(pathname)) {
+  // Check authentication for protected routes (use normalizedPath)
+  if (isProtectedRoute(normalizedPath)) {
     // Get locale for redirect (with fail-safe error handling)
     let locale: string;
     try {
-      locale = await getLocale(pathname, request);
+      locale = await getLocale(normalizedPath, request);
     } catch (error) {
       // CRITICAL: Fail-safe fallback to default locale if getLocale throws
       if (process.env.NODE_ENV === 'development') {
@@ -313,14 +337,11 @@ export async function middleware(request: NextRequest) {
     // If no session token, redirect to sign-in
     if (!sessionToken && !jwtToken) {
       const signInUrl = new URL(`/${locale}/auth/signin`, request.url);
-      signInUrl.searchParams.set('callbackUrl', pathname);
+      // Use normalizedPath for callback (safe after normalization)
+      signInUrl.searchParams.set('callbackUrl', normalizedPath);
       return NextResponse.redirect(signInUrl);
     }
   }
-  
-  // Additional check: if pathname is a static file, skip locale routing
-  // This catches cases where static files might slip through
-  const normalizedPath = pathname.toLowerCase().trim();
   
   // Check for common static file patterns
   if (
@@ -345,14 +366,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
   
-  // Check if pathname already has a locale
-  const pathnameHasLocale = hasLocale(pathname);
+  // Check if normalizedPath already has a locale
+  const pathnameHasLocale = hasLocale(normalizedPath);
   
-  // If pathname doesn't have a locale, detect from IP and redirect
+  // If normalizedPath doesn't have a locale, detect from IP and redirect
   if (!pathnameHasLocale) {
     let detectedLocale: string;
     try {
-      detectedLocale = await getLocale(pathname, request);
+      detectedLocale = await getLocale(normalizedPath, request);
     } catch (error) {
       // CRITICAL: Fail-safe fallback to default locale if getLocale throws
       if (process.env.NODE_ENV === 'development') {
@@ -360,7 +381,7 @@ export async function middleware(request: NextRequest) {
       }
       detectedLocale = defaultLocale;
     }
-    const newUrl = new URL(`/${detectedLocale}${pathname === '/' ? '' : pathname}`, request.url);
+    const newUrl = new URL(`/${detectedLocale}${normalizedPath === '/' ? '' : normalizedPath}`, request.url);
     
     // Preserve query parameters
     newUrl.search = request.nextUrl.search;
@@ -369,20 +390,20 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(newUrl, 307);
   }
   
-  // If pathname has a locale, validate it and continue
+  // If normalizedPath has a locale, validate it and continue
   let locale: string;
   try {
-    locale = await getLocale(pathname);
+    locale = await getLocale(normalizedPath);
   } catch (error) {
     // CRITICAL: Fail-safe fallback to default locale if getLocale throws
     if (process.env.NODE_ENV === 'development') {
-      console.warn('[Middleware] Error getting locale from pathname (using default):', error);
+      console.warn('[Middleware] Error getting locale from normalizedPath (using default):', error);
     }
     locale = defaultLocale;
   }
   if (!locales.includes(locale)) {
     // Invalid locale, redirect to default locale
-    const newUrl = new URL(`/${defaultLocale}${pathname.replace(`/${locale}`, '')}`, request.url);
+    const newUrl = new URL(`/${defaultLocale}${normalizedPath.replace(`/${locale}`, '')}`, request.url);
     newUrl.search = request.nextUrl.search;
     return NextResponse.redirect(newUrl, 307);
   }

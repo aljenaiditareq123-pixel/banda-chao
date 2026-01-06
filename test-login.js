@@ -1,87 +1,151 @@
+#!/usr/bin/env node
+
 /**
- * Test Login Script
- * Run this in Node.js to test login API
- * 
- * Usage: node test-login.js
+ * Login Test Script
+ * Tests the login functionality with admin credentials
  */
 
 const https = require('https');
 
-const testLogin = () => {
-  const email = 'founder@bandachao.com';
-  const password = '123456';
-  // Backend API URL (not frontend)
-  const apiUrl = 'https://banda-chao-backend.onrender.com/api/v1/auth/login';
+const ADMIN_EMAIL = 'admin@bandachao.com';
+const ADMIN_PASSWORD = 'password123';
+const BACKEND_URL = 'https://banda-chao-backend.onrender.com';
+const FRONTEND_URL = 'https://banda-chao.onrender.com';
 
-  const postData = JSON.stringify({
-    email: email,
-    password: password
+console.log('🔍 Testing Banda Chao Login Functionality...\n');
+
+// Test 1: Backend Health Check
+console.log('1️⃣ Testing Backend Health...');
+https.get(`${BACKEND_URL}/api/health`, (res) => {
+  let data = '';
+  res.on('data', (chunk) => { data += chunk; });
+  res.on('end', () => {
+    if (res.statusCode === 200) {
+      console.log('   ✅ Backend is healthy\n');
+      testLogin();
+    } else {
+      console.log(`   ❌ Backend returned status ${res.statusCode}\n`);
+      console.log('   ⚠️  Backend might be sleeping. Wait 30 seconds and try again.\n');
+    }
+  });
+}).on('error', (err) => {
+  console.log(`   ❌ Backend connection failed: ${err.message}\n`);
+  console.log('   ⚠️  Backend might be sleeping or deploying. Wait 1-2 minutes.\n');
+});
+
+// Test 2: Login API
+function testLogin() {
+  console.log('2️⃣ Testing Login API...');
+  const loginData = JSON.stringify({
+    email: ADMIN_EMAIL,
+    password: ADMIN_PASSWORD,
   });
 
   const options = {
+    hostname: 'banda-chao-backend.onrender.com',
+    path: '/api/v1/auth/login',
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Content-Length': Buffer.byteLength(postData)
-    }
+      'Content-Length': loginData.length,
+    },
+    timeout: 15000,
   };
 
-  console.log('🧪 Testing Login...');
-  console.log('📧 Email:', email);
-  console.log('🔗 URL:', apiUrl);
-  console.log('⏳ Sending request...\n');
-
-  const req = https.request(apiUrl, options, (res) => {
+  const req = https.request(options, (res) => {
     let data = '';
-
-    res.on('data', (chunk) => {
-      data += chunk;
-    });
-
+    res.on('data', (chunk) => { data += chunk; });
     res.on('end', () => {
-      console.log('📊 Response Status:', res.statusCode);
-      console.log('📄 Response Headers:', res.headers);
-      console.log('\n📝 Response Body:');
-      
-      try {
-        const json = JSON.parse(data);
-        console.log(JSON.stringify(json, null, 2));
-        
-        if (json.success) {
-          console.log('\n✅ LOGIN SUCCESSFUL!');
-          console.log('🎉 Token received:', json.token ? 'Yes' : 'No');
-          console.log('👤 User:', json.user ? json.user.email : 'N/A');
-        } else {
-          console.log('\n❌ LOGIN FAILED');
-          if (json.error) {
-            console.log('🔴 Error:', json.error);
-            
-            if (json.error.includes('JWT_SECRET')) {
-              console.log('\n⚠️  SOLUTION: Restart Backend Service (banda-chao)');
-            }
+      if (res.statusCode === 200) {
+        try {
+          const response = JSON.parse(data);
+          if (response.token && response.user) {
+            console.log('   ✅ Login successful!');
+            console.log(`   📧 Email: ${response.user.email}`);
+            console.log(`   👤 Name: ${response.user.name}`);
+            console.log(`   🔑 Role: ${response.user.role}`);
+            console.log(`   🎫 Token: ${response.token.substring(0, 20)}...\n`);
+            console.log('✅ All tests passed! Login is working correctly.\n');
+            testUserEndpoint(response.token);
+          } else {
+            console.log('   ❌ Login failed: Invalid response format');
+            console.log('   Response:', data.substring(0, 200));
           }
-          if (json.message) {
-            console.log('📢 Message:', json.message);
-          }
+        } catch (e) {
+          console.log('   ❌ Failed to parse response:', e.message);
+          console.log('   Response:', data.substring(0, 200));
         }
-      } catch (e) {
-        console.log('⚠️  Response is not JSON:');
-        console.log(data);
+      } else if (res.statusCode === 401) {
+        console.log('   ❌ Login failed: Invalid credentials');
+        console.log('   ⚠️  Check if admin user exists in database\n');
+      } else if (res.statusCode === 500) {
+        console.log('   ❌ Login failed: Server error');
+        console.log('   Response:', data.substring(0, 200));
+        if (data.includes('JWT_SECRET')) {
+          console.log('   ⚠️  JWT_SECRET issue detected. Check backend environment variables.\n');
+        }
+      } else {
+        console.log(`   ❌ Login failed: Status ${res.statusCode}`);
+        console.log('   Response:', data.substring(0, 200));
       }
     });
   });
 
-  req.on('error', (error) => {
-    console.error('❌ Request Error:', error.message);
-    console.error('\n💡 Possible causes:');
-    console.error('  - Backend service is down');
-    console.error('  - Network connection issue');
-    console.error('  - Backend is in Sleep Mode (wait 30-60 seconds)');
+  req.on('error', (err) => {
+    console.log(`   ❌ Request failed: ${err.message}\n`);
   });
 
-  req.write(postData);
-  req.end();
-};
+  req.on('timeout', () => {
+    req.destroy();
+    console.log('   ❌ Request timeout (15 seconds)\n');
+  });
 
-// Run test
-testLogin();
+  req.write(loginData);
+  req.end();
+}
+
+// Test 3: User Endpoint (with token)
+function testUserEndpoint(token) {
+  console.log('3️⃣ Testing User Endpoint (with token)...');
+  const options = {
+    hostname: 'banda-chao-backend.onrender.com',
+    path: '/api/v1/users/me',
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    timeout: 15000,
+  };
+
+  const req = https.request(options, (res) => {
+    let data = '';
+    res.on('data', (chunk) => { data += chunk; });
+    res.on('end', () => {
+      if (res.statusCode === 200) {
+        console.log('   ✅ User endpoint working!');
+        try {
+          const user = JSON.parse(data);
+          console.log(`   📧 Email: ${user.email}`);
+          console.log(`   👤 Name: ${user.name}`);
+          console.log(`   🔑 Role: ${user.role}\n`);
+        } catch (e) {
+          console.log('   ⚠️  Response received but parsing failed\n');
+        }
+      } else {
+        console.log(`   ❌ User endpoint failed: Status ${res.statusCode}\n`);
+      }
+      console.log('🎉 Testing complete!\n');
+    });
+  });
+
+  req.on('error', (err) => {
+    console.log(`   ❌ Request failed: ${err.message}\n`);
+  });
+
+  req.on('timeout', () => {
+    req.destroy();
+    console.log('   ❌ Request timeout\n');
+  });
+
+  req.end();
+}

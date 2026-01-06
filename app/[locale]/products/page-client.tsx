@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Grid, GridItem } from '@/components/Grid';
 import ProductCard from '@/components/cards/ProductCard';
@@ -41,7 +41,8 @@ interface ProductsPageClientProps {
   onRetry?: () => void;
 }
 
-export default function ProductsPageClient({ 
+// Separate component that uses useSearchParams - must be inside Suspense
+function ProductsPageContent({ 
   locale, 
   products: initialProducts, 
   pagination: initialPagination,
@@ -512,5 +513,23 @@ export default function ProductsPageClient({
         </div>
       </div>
     </div>
+  );
+}
+
+// Main component that wraps ProductsPageContent in Suspense boundary
+// This is REQUIRED to prevent React hydration error #310 when using useSearchParams
+export default function ProductsPageClient(props: ProductsPageClientProps) {
+  return (
+    <Suspense 
+      fallback={
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir={props.locale === 'ar' ? 'rtl' : 'ltr'}>
+          <div className="text-gray-600">
+            {props.locale === 'ar' ? 'جاري التحميل...' : props.locale === 'zh' ? '加载中...' : 'Loading...'}
+          </div>
+        </div>
+      }
+    >
+      <ProductsPageContent {...props} />
+    </Suspense>
   );
 }

@@ -52,7 +52,12 @@ export async function POST(request: NextRequest) {
 
     // Get API URL
     const API_URL = getApiUrl();
-    const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000';
+    // Get frontend URL - use dynamic function to handle SSR correctly
+    const frontendUrl = typeof window !== 'undefined' 
+      ? window.location.origin 
+      : (process.env.NEXT_PUBLIC_FRONTEND_URL || 
+         process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 
+         'https://bandachao.com');
     
     // Get locale from request or default to 'ar'
     const locale = body.locale || 'ar';

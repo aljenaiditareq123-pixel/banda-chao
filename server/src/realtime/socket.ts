@@ -23,8 +23,14 @@ export function initializeSocket(server: HTTPServer) {
         return next(new Error('Authentication error: No token provided'));
       }
 
-      // FALLBACK: Use hardcoded secret if environment variable is missing (ensures server always works)
-      const jwtSecret = process.env.JWT_SECRET || 'BandaChaoSecretKey2026SecureNoSymbols';
+      // SECURITY: JWT_SECRET must be set (validated at startup with Kill Switch)
+      // If we reach here without JWT_SECRET, server would have crashed at startup
+      const jwtSecret = process.env.JWT_SECRET;
+      
+      if (!jwtSecret) {
+        // This should never happen (Kill Switch would have prevented server start)
+        return next(new Error('Authentication error: Server misconfiguration - JWT_SECRET missing'));
+      }
       const decoded = jwt.verify(token, jwtSecret) as { id: string; email: string };
       const user = await prisma.users.findUnique({
         where: { id: decoded.id },

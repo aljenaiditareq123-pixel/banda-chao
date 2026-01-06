@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Filter, X, SlidersHorizontal, Grid3x3, List } from 'lucide-react';
@@ -34,7 +34,8 @@ const categories = [
   { value: 'Books', label: { ar: 'كتب', en: 'Books', zh: '书籍' } },
 ];
 
-export default function SearchPageClient({
+// Separate component that uses useSearchParams - must be inside Suspense
+function SearchPageContent({
   locale,
   query,
   searchResults,
@@ -330,5 +331,23 @@ export default function SearchPageClient({
         )}
       </div>
     </div>
+  );
+}
+
+// Main component that wraps SearchPageContent in Suspense boundary
+// This is REQUIRED to prevent React hydration error #310 when using useSearchParams
+export default function SearchPageClient(props: SearchPageClientProps) {
+  return (
+    <Suspense 
+      fallback={
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir={props.locale === 'ar' ? 'rtl' : 'ltr'}>
+          <div className="text-gray-600">
+            {props.locale === 'ar' ? 'جاري التحميل...' : props.locale === 'zh' ? '加载中...' : 'Loading...'}
+          </div>
+        </div>
+      }
+    >
+      <SearchPageContent {...props} />
+    </Suspense>
   );
 }

@@ -259,15 +259,31 @@ export const authOptions: NextAuthConfig = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   // CRITICAL: AUTH_SECRET is required for NextAuth v5 (changed from NEXTAUTH_SECRET)
-  // Render will auto-generate this via generateValue: true in render.yaml
-  // Support both old (NEXTAUTH_SECRET) and new (AUTH_SECRET) variable names for compatibility
-  // FALLBACK: Use hardcoded secret if environment variable is missing (ensures server always works)
+  // SECURITY: Kill Switch - Fail fast in production if secret is missing
   secret: (() => {
-    const authSecret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || 'BandaChaoSecretKey2026SecureNoSymbols';
-    if (!process.env.AUTH_SECRET && !process.env.NEXTAUTH_SECRET && process.env.NODE_ENV === 'production') {
-      console.warn('[NextAuth] WARNING: AUTH_SECRET or NEXTAUTH_SECRET not found, using fallback value');
+    const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
+    const authSecret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
+    
+    if (!authSecret || authSecret.trim() === '') {
+      if (isProduction) {
+        console.error('❌ [FATAL] AUTH_SECRET or NEXTAUTH_SECRET is not defined in production!');
+        console.error('❌ NextAuth cannot operate securely without a secret.');
+        console.error('❌ Please set AUTH_SECRET or NEXTAUTH_SECRET in Render environment variables.');
+        // Note: In Next.js, we can't call process.exit() here as it would break the build
+        // Instead, we throw an error that will be caught by Next.js
+        throw new Error('AUTH_SECRET or NEXTAUTH_SECRET must be set in production environment');
+      }
+      // Development fallback only
+      console.warn('[NextAuth] WARNING: AUTH_SECRET/NEXTAUTH_SECRET not found, using development fallback (NOT SECURE)');
+      return 'dev-nextauth-secret-only-local-never-use-in-production';
     }
-    return authSecret;
+    
+    // Double check in production
+    if (isProduction && authSecret === 'dev-nextauth-secret-only-local-never-use-in-production') {
+      throw new Error('Development NextAuth fallback detected in production - this should be impossible!');
+    }
+    
+    return authSecret.trim();
   })(),
   debug: process.env.NODE_ENV === 'development',
   // CRITICAL: Trust host for Render deployment
