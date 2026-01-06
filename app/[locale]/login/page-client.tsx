@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Button from '@/components/Button';
@@ -10,7 +10,8 @@ interface LoginPageClientProps {
   locale: string;
 }
 
-// Separate component that uses useSearchParams - must be inside Suspense
+// Separate component that uses useSearchParams - MUST be inside Suspense boundary
+// This prevents React hydration error #310
 function LoginForm({ locale }: { locale: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -19,7 +20,7 @@ function LoginForm({ locale }: { locale: string }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Get redirect parameter from URL
+  // Get redirect parameter from URL safely
   const redirectTo = searchParams?.get('redirect') || null;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -200,14 +201,19 @@ function LoginForm({ locale }: { locale: string }) {
   );
 }
 
-// Main component that wraps LoginForm in Suspense
+// Main component that wraps LoginForm in Suspense boundary
+// This is REQUIRED to prevent React hydration error #310 when using useSearchParams
 export default function LoginPageClient({ locale }: LoginPageClientProps) {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
-        <div className="text-gray-600">Loading...</div>
-      </div>
-    }>
+    <Suspense 
+      fallback={
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+          <div className="text-gray-600">
+            {locale === 'ar' ? 'جاري التحميل...' : locale === 'zh' ? '加载中...' : 'Loading...'}
+          </div>
+        </div>
+      }
+    >
       <LoginForm locale={locale} />
     </Suspense>
   );

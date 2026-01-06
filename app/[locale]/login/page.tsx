@@ -1,5 +1,4 @@
 import { notFound } from 'next/navigation';
-import { Suspense } from 'react';
 import LoginPageClient from './page-client';
 
 // Force dynamic rendering to prevent static generation issues
@@ -13,14 +12,6 @@ interface LoginPageProps {
 }
 
 const validLocales = ['zh', 'en', 'ar'];
-
-function LoginPageFallback() {
-  return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="text-gray-600">Loading...</div>
-    </div>
-  );
-}
 
 export default async function LoginPage({ params }: LoginPageProps) {
   let locale: string;
@@ -37,12 +28,9 @@ export default async function LoginPage({ params }: LoginPageProps) {
     notFound();
   }
 
-  // Wrap LoginPageClient in Suspense to prevent hydration errors with useSearchParams
-  return (
-    <Suspense fallback={<LoginPageFallback />}>
-      <LoginPageClient locale={locale} />
-    </Suspense>
-  );
+  // LoginPageClient already has Suspense boundary inside it
+  // No need for double Suspense - it handles useSearchParams internally
+  return <LoginPageClient locale={locale} />;
 }
 
 
