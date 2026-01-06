@@ -28,7 +28,8 @@ export default function LoginPageClient({ locale }: LoginPageClientProps) {
   const redirectTo = (() => {
     try {
       if (!mounted) return null; // Don't access searchParams until mounted
-      return searchParams?.get('redirect') || null;
+      if (!searchParams) return null;
+      return searchParams.get('redirect') || null;
     } catch (e) {
       // If searchParams is not available, return null
       return null;
