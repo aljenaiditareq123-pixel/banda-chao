@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Button from '@/components/Button';
@@ -10,31 +10,17 @@ interface LoginPageClientProps {
   locale: string;
 }
 
-export default function LoginPageClient({ locale }: LoginPageClientProps) {
+// Separate component that uses useSearchParams - must be inside Suspense
+function LoginForm({ locale }: { locale: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
 
-  // Handle client-side mounting (prevents SSR/client mismatch errors)
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Get redirect parameter from URL (safely handle cases where searchParams might not be available)
-  const redirectTo = (() => {
-    try {
-      if (!mounted) return null; // Don't access searchParams until mounted
-      if (!searchParams) return null;
-      return searchParams.get('redirect') || null;
-    } catch (e) {
-      // If searchParams is not available, return null
-      return null;
-    }
-  })();
+  // Get redirect parameter from URL
+  const redirectTo = searchParams?.get('redirect') || null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -146,15 +132,6 @@ export default function LoginPageClient({ locale }: LoginPageClientProps) {
 
   const t = texts[locale as keyof typeof texts] || texts.en;
 
-  // Show loading state until component is mounted (prevents hydration errors)
-  if (!mounted) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
-        <div className="text-gray-600">Loading...</div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
       <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8">
@@ -220,5 +197,18 @@ export default function LoginPageClient({ locale }: LoginPageClientProps) {
         </div>
       </div>
     </div>
+  );
+}
+
+// Main component that wraps LoginForm in Suspense
+export default function LoginPageClient({ locale }: LoginPageClientProps) {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+        <div className="text-gray-600">Loading...</div>
+      </div>
+    }>
+      <LoginForm locale={locale} />
+    </Suspense>
   );
 }
