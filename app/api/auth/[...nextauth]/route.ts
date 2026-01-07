@@ -1,187 +1,14 @@
 import NextAuth from 'next-auth';
-import type { NextRequest } from 'next/server';
 import type { NextAuthConfig } from 'next-auth';
-import GoogleProvider from 'next-auth/providers/google';
-import FacebookProvider from 'next-auth/providers/facebook';
-import TwitterProvider from 'next-auth/providers/twitter';
-// import EmailProvider from 'next-auth/providers/email'; // DISABLED: Requires adapter
-import CredentialsProvider from 'next-auth/providers/credentials';
+import { createProviders } from '@/lib/auth/providers';
 
-// Credentials Provider - Connects to Backend API
-const CredentialsLoginProvider = CredentialsProvider({
-  id: 'credentials',
-  name: 'Credentials',
-  credentials: {
-    email: { label: 'Email', type: 'email' },
-    password: { label: 'Password', type: 'password' },
-  },
-  async authorize(credentials) {
-    if (!credentials?.email || !credentials?.password) {
-      return null;
-    }
-
-    try {
-      // Get API URL from environment or use fallback
-      // CRITICAL: Backend routes are mounted at /api/v1/* (see server/src/index.ts line 410)
-      // app.use('/api/v1/auth', authRoutes) → /api/v1/auth/login
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://banda-chao.onrender.com';
-      // Use /api/v1/auth/login to match Backend routes
-      const fullApiUrl = `${apiUrl}/api/v1/auth/login`;
-
-      // Call Backend login API
-      const response = await fetch(fullApiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: credentials.email,
-          password: credentials.password,
-        }),
-        credentials: 'include', // Include cookies for CSRF
-      });
-
-      if (!response.ok) {
-        console.error('[NextAuth] Login failed:', response.status, response.statusText);
-        return null;
-      }
-
-      const data = await response.json();
-
-      if (data.success && data.user && data.token) {
-        // Return user object for NextAuth
-        return {
-          id: data.user.id || data.user.email,
-          email: data.user.email,
-          name: data.user.name || data.user.email.split('@')[0],
-          image: data.user.profilePicture || null,
-          role: data.user.role || 'BUYER',
-        };
-      }
-
-      return null;
-    } catch (error) {
-      console.error('[NextAuth] Authorization error:', error);
-      return null;
-    }
-  },
-});
-
-// Custom WeChat Provider (using Credentials flow)
-// WeChat OAuth requires server-side token exchange
-const WeChatProvider = CredentialsProvider({
-  id: 'wechat',
-  name: 'WeChat',
-  credentials: {
-    code: { label: 'Code', type: 'text' },
-  },
-  async authorize(credentials) {
-    if (!credentials?.code) {
-      return null;
-    }
-
-    try {
-      // Exchange code for WeChat access token
-      const tokenResponse = await fetch(
-        `https://api.weixin.qq.com/sns/oauth2/access_token?appid=${process.env.WECHAT_APP_ID}&secret=${process.env.WECHAT_APP_SECRET}&code=${credentials.code}&grant_type=authorization_code`
-      );
-      
-      const tokenData = await tokenResponse.json();
-      
-      if (tokenData.errcode) {
-        console.error('WeChat token error:', tokenData);
-        return null;
-      }
-
-      const { access_token, openid } = tokenData;
-
-      // Get user info from WeChat
-      const userResponse = await fetch(
-        `https://api.weixin.qq.com/sns/userinfo?access_token=${access_token}&openid=${openid}&lang=zh_CN`
-      );
-      
-      const userData = await userResponse.json();
-      
-      if (userData.errcode) {
-        console.error('WeChat user info error:', userData);
-        return null;
-      }
-
-      return {
-        id: openid,
-        name: userData.nickname || 'WeChat User',
-        email: `${openid}@wechat.banda-chao.com`, // WeChat doesn't provide email
-        image: userData.headimgurl,
-        provider: 'wechat',
-      };
-    } catch (error) {
-      console.error('WeChat authorization error:', error);
-      return null;
-    }
-  },
-});
-
-// Note: We can add PrismaAdapter later if needed
-// For now, we'll use JWT strategy which works without a database
+// OWNER-EXTENSIBLE: Providers are auto-registered from lib/auth/providers.ts
+// To add a 9th provider, edit PROVIDERS array in that file only
 
 export const authOptions: NextAuthConfig = {
-  providers: [
-    // Credentials Login - Connects to Backend API
-    CredentialsLoginProvider,
-    
-    // WeChat - Priority for Chinese market (جاهز للإضافة لاحقاً)
-    ...(process.env.WECHAT_APP_ID && process.env.WECHAT_APP_SECRET
-      ? [WeChatProvider]
-      : []),
-    // Google - Universal default (جاهز للإضافة لاحقاً)
-    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
-      ? [
-          GoogleProvider({
-            clientId: process.env.GOOGLE_CLIENT_ID,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-            allowDangerousEmailAccountLinking: true,
-          }),
-        ]
-      : []),
-    // Facebook
-    ...(process.env.FACEBOOK_CLIENT_ID && process.env.FACEBOOK_CLIENT_SECRET
-      ? [
-          FacebookProvider({
-            clientId: process.env.FACEBOOK_CLIENT_ID,
-            clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
-            allowDangerousEmailAccountLinking: true,
-          }),
-        ]
-      : []),
-    // Twitter
-    ...(process.env.TWITTER_CLIENT_ID && process.env.TWITTER_CLIENT_SECRET
-      ? [
-          TwitterProvider({
-            clientId: process.env.TWITTER_CLIENT_ID,
-            clientSecret: process.env.TWITTER_CLIENT_SECRET,
-            allowDangerousEmailAccountLinking: true,
-          }),
-        ]
-      : []),
-    // Email (Magic Link) - DISABLED: Requires adapter in NextAuth v5
-    // TODO: Re-enable when PrismaAdapter is added
-    // EmailProvider({
-    //   server: {
-    //     host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    //     port: parseInt(process.env.SMTP_PORT || '587'),
-    //     auth: {
-    //       user: process.env.SMTP_USER || '',
-    //       pass: process.env.SMTP_PASSWORD || '',
-    //     },
-    //   },
-    //   from: process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@banda-chao.com',
-    //   sendVerificationRequest({ identifier, url, provider }) {
-    //     console.log(`Sending magic link to ${identifier}: ${url}`);
-    //   },
-    // }),
-  ],
+  providers: createProviders(),
   pages: {
-    signIn: '/auth/signin', // Custom sign-in page
+    signIn: '/login', // Social-only login page
     error: '/auth/error', // Error page (optional)
   },
   callbacks: {
@@ -199,29 +26,50 @@ export const authOptions: NextAuthConfig = {
         token.id = user.id;
         token.role = (user as any).role || 'BUYER';
         
-        // CRITICAL: Override role for founder@banda-chao.com to ADMIN
-        if (user.email === 'founder@banda-chao.com') {
-          token.role = 'ADMIN';
+        // OWNER PRIVILEGE: Force OWNER role if email matches
+        const ownerEmail = process.env.OWNER_EMAIL?.toLowerCase().trim();
+        if (ownerEmail && user.email?.toLowerCase().trim() === ownerEmail) {
+          token.role = 'OWNER';
         }
         
         // Sync user with database (find existing user by email)
         if (user.email) {
           try {
             const { prisma } = await import('@/lib/prisma');
-            const dbUser = await prisma.users.findUnique({
+            let dbUser = await prisma.users.findUnique({
               where: { email: user.email },
             });
             
-            if (dbUser) {
-              // Use database user ID for consistency
-              token.id = dbUser.id;
-              token.email = dbUser.email;
-              // Override role for founder@banda-chao.com even if DB has different role
-              if (dbUser.email === 'founder@banda-chao.com') {
-                token.role = 'ADMIN';
-              } else {
-                token.role = dbUser.role || token.role;
-              }
+            if (!dbUser) {
+              // Create user if doesn't exist (social-only, no password)
+              dbUser = await prisma.users.create({
+                data: {
+                  email: user.email,
+                  name: user.name || user.email.split('@')[0],
+                  profile_picture: user.image || null,
+                  role: ownerEmail && user.email.toLowerCase().trim() === ownerEmail ? 'OWNER' : 'BUYER',
+                },
+              });
+            } else {
+              // Update user info if exists
+              dbUser = await prisma.users.update({
+                where: { email: user.email },
+                data: {
+                  name: user.name || dbUser.name,
+                  profile_picture: user.image || dbUser.profile_picture,
+                },
+              });
+            }
+            
+            // Use database user ID for consistency
+            token.id = dbUser.id;
+            token.email = dbUser.email;
+            
+            // OWNER PRIVILEGE: Always override role for owner email
+            if (ownerEmail && dbUser.email.toLowerCase().trim() === ownerEmail) {
+              token.role = 'OWNER';
+            } else {
+              token.role = dbUser.role || token.role;
             }
           } catch (e) {
             // Ignore errors - use token ID
@@ -230,9 +78,10 @@ export const authOptions: NextAuthConfig = {
         }
       }
       
-      // Also check token.email in case it's already set (for subsequent calls)
-      if (token.email === 'founder@banda-chao.com') {
-        token.role = 'ADMIN';
+      // OWNER PRIVILEGE: Check token.email in case it's already set
+      const ownerEmail = process.env.OWNER_EMAIL?.toLowerCase().trim();
+      if (ownerEmail && token.email?.toLowerCase().trim() === ownerEmail) {
+        token.role = 'OWNER';
       }
       
       return token;
@@ -242,9 +91,10 @@ export const authOptions: NextAuthConfig = {
       if (session?.user) {
         (session.user as any).id = token.id as string;
         
-        // CRITICAL: Override role for founder@banda-chao.com to ADMIN
-        if (session.user.email === 'founder@banda-chao.com') {
-          (session.user as any).role = 'ADMIN';
+        // OWNER PRIVILEGE: Force OWNER role if email matches
+        const ownerEmail = process.env.OWNER_EMAIL?.toLowerCase().trim();
+        if (ownerEmail && session.user.email?.toLowerCase().trim() === ownerEmail) {
+          (session.user as any).role = 'OWNER';
         } else {
           (session.user as any).role = token.role || 'BUYER';
         }

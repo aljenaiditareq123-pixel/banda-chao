@@ -26,7 +26,7 @@ model users {
   points          Int      @default(0)
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
-  role            String   @default("USER")
+  role            String   @default("BUYER") // BUYER, MAKER, ADMIN, OWNER
 
   // Social Profile Stats (cached for performance)
   followers_count Int @default(0)
@@ -546,7 +546,7 @@ model follows {
 model social_accounts {
   id               String    @id @default(uuid())
   user_id          String
-  platform         String // TIKTOK, YOUTUBE, INSTAGRAM, FACEBOOK, TWITTER
+  platform         String // GOOGLE, APPLE, HUAWEI, WECHAT, ALIPAY, QQ, DOUYIN, WEIBO
   platform_user_id String? // User ID on the external platform
   access_token     String // Encrypted access token
   refresh_token    String? // Encrypted refresh token
