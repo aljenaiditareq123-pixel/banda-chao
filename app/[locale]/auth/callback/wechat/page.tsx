@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter, useParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { Loader2 } from 'lucide-react';
 
-export default function WeChatCallbackPage() {
+function WeChatCallbackContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -49,5 +49,20 @@ export default function WeChatCallbackPage() {
         <p className="text-gray-600">Processing WeChat authentication...</p>
       </div>
     </div>
+  );
+}
+
+export default function WeChatCallbackPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="text-center">
+          <Loader2 className="animate-spin mx-auto mb-4" size={48} />
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <WeChatCallbackContent />
+    </Suspense>
   );
 }

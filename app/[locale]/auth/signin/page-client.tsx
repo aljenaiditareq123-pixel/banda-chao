@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { signIn, getSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -11,7 +11,7 @@ interface SignInPageClientProps {
   locale: string;
 }
 
-export default function SignInPageClient({ locale }: SignInPageClientProps) {
+function SignInPageContent({ locale }: SignInPageClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState<string | null>(null);
@@ -354,5 +354,19 @@ export default function SignInPageClient({ locale }: SignInPageClientProps) {
         </motion.div>
       </div>
     </div>
+  );
+}
+
+export default function SignInPageClient(props: SignInPageClientProps) {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir={props.locale === 'ar' ? 'rtl' : 'ltr'}>
+        <div className="text-gray-600">
+          {props.locale === 'ar' ? 'جاري التحميل...' : props.locale === 'zh' ? '加载中...' : 'Loading...'}
+        </div>
+      </div>
+    }>
+      <SignInPageContent {...props} />
+    </Suspense>
   );
 }

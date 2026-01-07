@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Grid, GridItem } from '@/components/Grid';
@@ -46,7 +46,7 @@ interface MakersPageClientProps {
   onRetry?: () => void;
 }
 
-export default function MakersPageClient({ 
+function MakersPageContent({ 
   locale, 
   makers: initialMakers, 
   pagination: initialPagination,
@@ -387,5 +387,19 @@ export default function MakersPageClient({
         )}
       </div>
     </div>
+  );
+}
+
+export default function MakersPageClient(props: MakersPageClientProps) {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir={props.locale === 'ar' ? 'rtl' : 'ltr'}>
+        <div className="text-gray-600">
+          {props.locale === 'ar' ? 'جاري التحميل...' : props.locale === 'zh' ? '加载中...' : 'Loading...'}
+        </div>
+      </div>
+    }>
+      <MakersPageContent {...props} />
+    </Suspense>
   );
 }
