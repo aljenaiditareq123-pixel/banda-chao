@@ -17,10 +17,10 @@ export const fetchCache = 'force-no-store';
 
 export async function GET() {
   // Return minimal instant response - no processing, no checks, just OK
-  return new NextResponse('OK', {
+  return NextResponse.json({ status: 'ok' }, {
     status: 200,
     headers: {
-      'Content-Type': 'text/plain',
+      'Content-Type': 'application/json',
       'Cache-Control': 'no-store, no-cache, must-revalidate',
     },
   });

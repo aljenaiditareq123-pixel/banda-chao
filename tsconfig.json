@@ -38,6 +38,7 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
+    "src/**/*",
     ".next/dev/types/**/*.ts"
   ]
 }
