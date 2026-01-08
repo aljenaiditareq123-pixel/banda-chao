@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
+import { useMounted } from '@/hooks/useMounted';
 import { ChevronDown, User, LayoutDashboard, LogOut } from 'lucide-react';
 
 interface AuthButtonsProps {
@@ -19,14 +20,9 @@ export default function AuthButtons({
   onLogout,
 }: AuthButtonsProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useMounted();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { user, loading: authLoading } = useAuth();
-
-  // Prevent hydration mismatch by only rendering after mount
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -85,9 +81,9 @@ export default function AuthButtons({
     );
   }
 
-  // Safety check: if isLoggedIn but user is null, show logged out state
-  if (isLoggedIn && !user && typeof window !== 'undefined') {
-    const storedUser = localStorage.getItem('bandaChao_user');
+  // Safety check: if isLoggedIn but user is null, check localStorage only after mount
+  if (isLoggedIn && !user && mounted) {
+    const storedUser = typeof window !== 'undefined' ? localStorage.getItem('bandaChao_user') : null;
     if (!storedUser) {
       // User logged out, show logged out state
       return (
@@ -114,12 +110,12 @@ export default function AuthButtons({
   const displayName = userName || user?.name || (locale === 'ar' ? 'مستخدم' : locale === 'zh' ? '用户' : 'User') || 'U';
   const safeInitial = displayName && displayName.length > 0 ? displayName.charAt(0).toUpperCase() : 'U';
   
-  // Get user image from user object or localStorage
-  const userImage = user?.image || (typeof window !== 'undefined' ? localStorage.getItem('bandaChao_userImage') : null);
+  // Get user image from user object or localStorage (only after mount to prevent hydration mismatch)
+  const userImage = user?.image || (mounted && typeof window !== 'undefined' ? localStorage.getItem('bandaChao_userImage') : null);
   
-  // Get user role from multiple sources (user object, localStorage fallback)
+  // Get user role from multiple sources (user object, localStorage fallback - only after mount)
   const userRoleFromHook = user?.role || null;
-  const userRoleFromStorage = typeof window !== 'undefined' 
+  const userRoleFromStorage = mounted && typeof window !== 'undefined' 
     ? localStorage.getItem('bandaChao_userRole') 
     : null;
   const userRole = userRoleFromHook || userRoleFromStorage || null;
