@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useNightMarket } from '@/hooks/useNightMarket';
+import { useMounted } from '@/hooks/useMounted';
 
 interface NightMarketContextType {
   isNightMarket: boolean;
@@ -13,11 +14,14 @@ interface NightMarketContextType {
 const NightMarketContext = createContext<NightMarketContextType | undefined>(undefined);
 
 export function NightMarketProvider({ children }: { children: ReactNode }) {
+  const mounted = useMounted();
   const { isNightMarket, currentHour, timeUntilNextChange } = useNightMarket();
   const [manualOverride, setManualOverride] = useState<boolean | null>(null);
 
-  // Apply theme class to document
+  // Apply theme class to document (only after mount to prevent hydration mismatch)
   useEffect(() => {
+    if (!mounted) return;
+
     const isActive = manualOverride !== null ? manualOverride : isNightMarket;
     
     if (isActive) {
@@ -33,7 +37,7 @@ export function NightMarketProvider({ children }: { children: ReactNode }) {
       document.documentElement.classList.remove('night-market');
       document.body.classList.remove('night-market');
     };
-  }, [isNightMarket, manualOverride]);
+  }, [mounted, isNightMarket, manualOverride]);
 
   const toggleNightMarket = () => {
     setManualOverride((prev) => {
