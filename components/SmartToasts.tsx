@@ -143,11 +143,20 @@ const generateToastMessage = (language: 'ar' | 'zh' | 'en' = 'en'): { message: s
 export default function SmartToasts() {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [isRTL, setIsRTL] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { language } = useLanguage();
 
-  // Detect RTL from document direction
+  // Prevent hydration mismatch - only run after mount
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Detect RTL from document direction (only after mount)
+  useEffect(() => {
+    if (!mounted) return;
+
     const checkRTL = () => {
+      if (typeof document === 'undefined') return;
       const dir = document.documentElement.dir || document.documentElement.getAttribute('dir');
       setIsRTL(dir === 'rtl');
     };
@@ -161,10 +170,12 @@ export default function SmartToasts() {
     });
 
     return () => observer.disconnect();
-  }, []);
+  }, [mounted]);
 
-  // Generate new toasts at frequent intervals (showing high Chinese market traffic)
+  // Generate new toasts at frequent intervals (showing high Chinese market traffic) - only after mount
   useEffect(() => {
+    if (!mounted) return;
+
     const interval = setInterval(() => {
       const { message, icon } = generateToastMessage(language as 'ar' | 'zh' | 'en');
       const newToast: Toast = {
@@ -182,21 +193,28 @@ export default function SmartToasts() {
     }, 3000 + Math.random() * 2000); // Random interval between 3-5 seconds (simulates bustling Chinese marketplace traffic)
 
     return () => clearInterval(interval);
-  }, [language]);
+  }, [mounted, language]);
 
-  // Auto-remove toasts after 5 seconds (shorter duration = higher turnover = more activity)
+  // Auto-remove toasts after 5 seconds (shorter duration = higher turnover = more activity) - only after mount
   useEffect(() => {
+    if (!mounted) return;
+
     const cleanupInterval = setInterval(() => {
       const now = Date.now();
       setToasts((prev) => prev.filter((toast) => now - toast.timestamp < 5000));
     }, 1000);
 
     return () => clearInterval(cleanupInterval);
-  }, []);
+  }, [mounted]);
 
   const removeToast = (id: string) => {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
   };
+
+  // Don't render until mounted to prevent hydration mismatch
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <div

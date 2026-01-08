@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronUp, Sparkles } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useMounted } from '@/hooks/useMounted';
 
 // Persona types
 interface Persona {
@@ -173,6 +174,7 @@ const TechParticle = ({ delay, angle }: { delay: number; angle: number }) => {
 
 export default function VirtualHost() {
   const { language } = useLanguage();
+  const mounted = useMounted();
   const [isOpen, setIsOpen] = useState(false);
   const [currentPersona, setCurrentPersona] = useState<Persona>(PERSONAS[0]);
   const [showBubble, setShowBubble] = useState(true);
@@ -184,9 +186,9 @@ export default function VirtualHost() {
 
   const locale = language as 'ar' | 'en' | 'zh';
 
-  // Trigger special effects
+  // Trigger special effects (only after mount to prevent hydration mismatch)
   const triggerEffect = useCallback((effect: string | undefined) => {
-    if (!effect) return;
+    if (!effect || !mounted) return;
     
     setShowEffect(true);
     
@@ -240,7 +242,7 @@ export default function VirtualHost() {
         setShowEffect(false);
       }, 2000);
     }
-  }, []);
+  }, [mounted]);
 
   // Handle persona change
   const handlePersonaChange = (persona: Persona) => {
@@ -253,11 +255,12 @@ export default function VirtualHost() {
     setTimeout(() => setShowBubble(false), 5000);
   };
 
-  // Show bubble on mount
+  // Show bubble on mount (only after component is mounted)
   useEffect(() => {
+    if (!mounted) return;
     const timer = setTimeout(() => setShowBubble(false), 5000);
     return () => clearTimeout(timer);
-  }, []);
+  }, [mounted]);
 
   const texts = {
     ar: {
@@ -275,6 +278,11 @@ export default function VirtualHost() {
   };
 
   const t = texts[locale] || texts.en;
+
+  // Don't render until mounted to prevent hydration mismatch
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <>
