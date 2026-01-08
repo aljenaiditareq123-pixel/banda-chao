@@ -8,11 +8,41 @@
  * @returns The base URL for API calls (without /api suffix)
  */
 export function getApiBaseUrl(): string {
-  // CRITICAL: In SSR (server-side rendering), use localhost
-  // SSR runs on the same server as the backend, so we use internal localhost URL
+  // Get environment variable (available in both SSR and client-side)
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+
+  // CRITICAL: In Render, Frontend and Backend are separate services
+  // So we MUST use the external URL even in SSR
   if (typeof window === 'undefined') {
-    // Server-side: use localhost with PORT (same server, internal call)
-    // This prevents SSR from making external HTTP requests to itself
+    // Server-side (SSR): Use environment variable or fallback
+    // In Render, Frontend and Backend are separate, so we use external URL
+    if (envUrl) {
+      let baseUrl = envUrl.trim().replace(/\/$/, '');
+      // Remove /api if it exists at the end (prevent double prefix)
+      baseUrl = baseUrl.replace(/\/api$/, '');
+      return baseUrl;
+    }
+    
+    // Fallback: Detect if we're on Render or in production
+    // Check multiple ways to detect Render environment
+    const isRender = 
+      process.env.RENDER === 'true' || 
+      !!process.env.RENDER_SERVICE_ID || 
+      !!process.env.RENDER_SERVICE_NAME ||
+      !!process.env.RENDER_EXTERNAL_URL ||
+      (typeof process.env.HOSTNAME === 'string' && process.env.HOSTNAME.includes('render'));
+    
+    const isProduction = process.env.NODE_ENV === 'production';
+    
+    // If we're in production OR on Render, use external backend URL
+    // This is safer because in Render, Frontend and Backend are always separate
+    if (isProduction || isRender) {
+      // On Render production, always use external backend URL
+      // Default Render backend URL
+      return 'https://banda-chao-backend.onrender.com';
+    }
+    
+    // Development: Use localhost (only works if backend runs locally)
     const port = process.env.PORT || '10000';
     return `http://localhost:${port}`;
   }
@@ -24,7 +54,6 @@ export function getApiBaseUrl(): string {
   }
 
   // In production (client-side), use the environment variable or fallback
-  const envUrl = process.env.NEXT_PUBLIC_API_URL;
 
   if (!envUrl) {
     // Fallback to main service URL (banda-chao.onrender.com)
