@@ -58,6 +58,10 @@ export default function PostsFeed({ locale, makerId }: PostsFeedProps) {
         page,
         limit: 20,
         makerId,
+      }).catch((err) => {
+        console.error('[PostsFeed] API call failed:', err);
+        const errorMessage = err.response?.data?.message || err.message || 'Failed to load posts';
+        throw new Error(errorMessage);
       });
       
       console.log('[PostsFeed] Response received:', { 

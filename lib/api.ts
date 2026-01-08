@@ -311,8 +311,20 @@ export const authAPI = {
 
 export const makersAPI = {
   getAll: async (params?: { page?: number; limit?: number; country?: string; language?: string; search?: string }) => {
-    const response = await apiClient.get('/makers', { params });
-    return response.data;
+    try {
+      const response = await apiClient.get('/makers', { params });
+      return response.data;
+    } catch (error: any) {
+      console.error('[makersAPI.getAll] Error:', {
+        error,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        url: error.config?.url,
+        baseURL: error.config?.baseURL,
+        fullURL: error.config ? `${error.config.baseURL}${error.config.url}` : 'unknown',
+      });
+      throw error;
+    }
   },
   getById: async (id: string) => {
     const response = await apiClient.get(`/makers/${id}`);
@@ -574,8 +586,20 @@ export const postsAPI = {
     type?: 'TEXT' | 'IMAGE' | 'VIDEO';
     makerId?: string;
   }) => {
-    const response = await apiClient.get('/posts', { params });
-    return response.data;
+    try {
+      const response = await apiClient.get('/posts', { params });
+      return response.data;
+    } catch (error: any) {
+      console.error('[postsAPI.getAll] Error:', {
+        error,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        url: error.config?.url,
+        baseURL: error.config?.baseURL,
+        fullURL: error.config ? `${error.config.baseURL}${error.config.url}` : 'unknown',
+      });
+      throw error;
+    }
   },
   getById: async (id: string) => {
     const response = await apiClient.get(`/posts/${id}`);

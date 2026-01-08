@@ -88,6 +88,9 @@ export default function AuthButtons({
   const displayName = userName || user?.name || (locale === 'ar' ? 'مستخدم' : locale === 'zh' ? '用户' : 'User') || 'U';
   const safeInitial = displayName && displayName.length > 0 ? displayName.charAt(0).toUpperCase() : 'U';
   
+  // Get user image from user object or localStorage
+  const userImage = user?.image || (typeof window !== 'undefined' ? localStorage.getItem('bandaChao_userImage') : null);
+  
   // Get user role from multiple sources (user object, localStorage fallback)
   const userRoleFromHook = user?.role || null;
   const userRoleFromStorage = typeof window !== 'undefined' 
@@ -118,10 +121,30 @@ export default function AuthButtons({
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-700"
       >
-        {/* User Avatar/Initial */}
-        <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-semibold text-sm">
-          {safeInitial}
-        </div>
+        {/* User Avatar/Image or Initial */}
+        {userImage ? (
+          <img 
+            src={userImage} 
+            alt={displayName}
+            className="w-8 h-8 rounded-full object-cover border-2 border-primary"
+            onError={(e) => {
+              // Fallback to initial if image fails to load
+              const target = e.target as HTMLImageElement;
+              target.style.display = 'none';
+              const parent = target.parentElement;
+              if (parent) {
+                const fallback = document.createElement('div');
+                fallback.className = 'w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-semibold text-sm';
+                fallback.textContent = safeInitial;
+                parent.appendChild(fallback);
+              }
+            }}
+          />
+        ) : (
+          <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-semibold text-sm">
+            {safeInitial}
+          </div>
+        )}
         <span className="text-sm font-medium hidden sm:inline">{displayName}</span>
         <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>

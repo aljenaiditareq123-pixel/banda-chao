@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import { usersAPI } from '@/lib/api';
 
 interface User {
   id: string;
   email: string;
   name: string;
+  image?: string;
   role: 'FOUNDER' | 'MAKER' | 'BUYER' | 'ADMIN' | 'USER';
 }
 
@@ -19,6 +21,7 @@ interface UseAuthReturn {
 /**
  * Custom hook to get current authenticated user
  * Uses centralized API client with retry logic
+ * Also syncs with NextAuth session for Google OAuth
  * 
  * CRITICAL: This hook ALWAYS returns a valid object structure.
  * Never returns undefined, even in error cases or during SSR.
@@ -28,6 +31,7 @@ export function useAuth(): UseAuthReturn {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const { data: session, status: sessionStatus } = useSession();
 
   const fetchUser = async () => {
     try {
@@ -70,6 +74,9 @@ export function useAuth(): UseAuthReturn {
           localStorage.setItem('bandaChao_userRole', userData.role || 'BUYER');
           localStorage.setItem('bandaChao_userEmail', userData.email || '');
           localStorage.setItem('bandaChao_userName', userData.name || '');
+          if (userData.image) {
+            localStorage.setItem('bandaChao_userImage', userData.image);
+          }
         }
       } catch (apiErr: unknown) {
         // If API call fails but we have stored user, keep using it
@@ -108,6 +115,48 @@ export function useAuth(): UseAuthReturn {
     }
   };
 
+  // Sync with NextAuth session (for Google OAuth)
+  useEffect(() => {
+    if (sessionStatus === 'loading') {
+      setLoading(true);
+      return;
+    }
+
+    if (sessionStatus === 'authenticated' && session?.user) {
+      // User is authenticated via NextAuth (e.g., Google OAuth)
+      const nextAuthUser: User = {
+        id: (session.user as any).id || session.user.email || '',
+        email: session.user.email || '',
+        name: session.user.name || '',
+        image: session.user.image || undefined,
+        role: (session.user as any).role || 'BUYER',
+      };
+
+      setUser(nextAuthUser);
+      setLoading(false);
+
+      // Store in localStorage for compatibility
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('bandaChao_user', JSON.stringify(nextAuthUser));
+        localStorage.setItem('bandaChao_userRole', nextAuthUser.role);
+        localStorage.setItem('bandaChao_userEmail', nextAuthUser.email);
+        localStorage.setItem('bandaChao_userName', nextAuthUser.name);
+        localStorage.setItem('bandaChao_isLoggedIn', 'true');
+        
+        // Store token if available
+        if ((session as any).accessToken) {
+          localStorage.setItem('auth_token', (session as any).accessToken);
+        }
+
+        // Trigger custom event for other components
+        window.dispatchEvent(new Event('authStateChanged'));
+      }
+    } else if (sessionStatus === 'unauthenticated') {
+      // Not authenticated via NextAuth, try regular auth
+      fetchUser();
+    }
+  }, [session, sessionStatus]);
+
   useEffect(() => {
     // Only fetch in browser (not during SSR/build)
     if (typeof window === 'undefined') {
@@ -115,11 +164,16 @@ export function useAuth(): UseAuthReturn {
       return;
     }
 
-    fetchUser();
+    // Only fetch if not authenticated via NextAuth
+    if (sessionStatus !== 'authenticated') {
+      fetchUser();
+    }
 
     // Listen for auth state changes (e.g., after login)
     const handleAuthStateChange = () => {
-      fetchUser();
+      if (sessionStatus !== 'authenticated') {
+        fetchUser();
+      }
     };
 
     window.addEventListener('authStateChanged', handleAuthStateChange);
@@ -129,7 +183,7 @@ export function useAuth(): UseAuthReturn {
       window.removeEventListener('authStateChanged', handleAuthStateChange);
       window.removeEventListener('storage', handleAuthStateChange);
     };
-  }, []);
+  }, [sessionStatus]);
 
   // CRITICAL: Always return a valid object structure, never undefined
   // This prevents "Cannot destructure property" errors

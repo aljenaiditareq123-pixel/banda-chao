@@ -55,8 +55,17 @@ export default async function MakersPage({ params, searchParams }: PageProps) {
       };
     }
   } catch (err: any) {
-    console.error('Error fetching makers:', err);
+    console.error('Error fetching makers:', {
+      error: err,
+      status: err.response?.status,
+      statusText: err.response?.statusText,
+      data: err.response?.data,
+      message: err.message,
+    });
     error = err.response?.data?.message || err.message || 'Failed to load makers';
+    if (err.response?.status === 404) {
+      error = 'Makers API endpoint not found. Please check backend configuration.';
+    }
   }
 
   return (

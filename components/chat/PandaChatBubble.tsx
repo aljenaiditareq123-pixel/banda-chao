@@ -6,6 +6,7 @@ import { MessageCircle, X, Send, Minimize2, Loader2 } from 'lucide-react';
 import { chatAPI } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter, usePathname } from 'next/navigation';
+import VoiceInput from './VoiceInput';
 
 interface ChatMessage {
   id: string;
