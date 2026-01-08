@@ -31,7 +31,11 @@ export function useAuth(): UseAuthReturn {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const { data: session, status: sessionStatus } = useSession();
+  
+  // Safely handle useSession - it can be undefined during static build
+  const sessionResult = useSession();
+  const session = sessionResult?.data;
+  const sessionStatus = sessionResult?.status || 'unauthenticated';
 
   const fetchUser = async () => {
     try {
