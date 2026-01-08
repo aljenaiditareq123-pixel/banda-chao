@@ -138,8 +138,8 @@ export default function FlashSale({ locale }: FlashSaleProps) {
                 price: product.price,
                 currency: product.currency,
                 category: product.category,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
+                createdAt: product.createdAt || new Date().toISOString(),
+                updatedAt: product.updatedAt || new Date().toISOString(),
               }}
               href={`/${locale}/products/${product.id}`}
             />

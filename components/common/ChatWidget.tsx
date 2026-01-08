@@ -12,19 +12,27 @@ interface Message {
 
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      text: 'Hello! I\'m The Guardian, your customer support assistant. How can I help you today? / مرحباً! أنا الحارس، مساعد خدمة العملاء. كيف يمكنني مساعدتك اليوم؟',
-      sender: 'guardian',
-      timestamp: new Date(),
-    },
-  ]);
+  const [mounted, setMounted] = useState(false);
+  // Prevent hydration mismatch - initialize messages after mount
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [language, setLanguage] = useState<'en' | 'ar'>('en');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Initialize messages after mount to prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+    setMessages([
+      {
+        id: '1',
+        text: 'Hello! I\'m The Guardian, your customer support assistant. How can I help you today? / مرحباً! أنا الحارس، مساعد خدمة العملاء. كيف يمكنني مساعدتك اليوم؟',
+        sender: 'guardian',
+        timestamp: new Date(),
+      },
+    ]);
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -82,6 +90,11 @@ export default function ChatWidget() {
   const toggleLanguage = () => {
     setLanguage((prev) => (prev === 'en' ? 'ar' : 'en'));
   };
+
+  // Don't render until mounted to prevent hydration mismatch
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <>

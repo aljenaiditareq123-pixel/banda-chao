@@ -130,8 +130,16 @@ const fengShuiData: FengShuiData[] = [
 export default function DailyFengShui({ locale = 'en', onColorChange }: DailyFengShuiProps) {
   const [sessionData, setSessionData] = useState<FengShuiData | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    // Only run after mount to prevent hydration mismatch
+    if (!mounted) return;
+
     // Session-based: Get or create random luck for this session
     const sessionKey = 'feng_shui_session_luck';
     let selected: FengShuiData;
@@ -158,9 +166,10 @@ export default function DailyFengShui({ locale = 'en', onColorChange }: DailyFen
     if (onColorChange) {
       onColorChange(selected.color, selected.element);
     }
-  }, [onColorChange]);
+  }, [mounted, onColorChange]);
 
-  if (!sessionData) return null;
+  // Don't render until mounted to prevent hydration mismatch
+  if (!mounted || !sessionData) return null;
 
   const t = {
     ar: {
