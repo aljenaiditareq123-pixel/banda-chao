@@ -18,6 +18,7 @@ export default function AdminOrdersPageClient() {
   
   // Fetch stats for summary cards (separate from OrdersTable to show stats immediately)
   // OrdersTable will fetch its own data for the table
+  // Hook is now SSR-safe, can be called before mount
   const ordersResult = useOrders('all');
   
   useEffect(() => {
@@ -27,7 +28,7 @@ export default function AdminOrdersPageClient() {
   // Safety check - ensure stats is always defined
   const safeStats = ordersResult?.stats || { total: 0, paid: 0 };
   
-  // Don't render until mounted (prevents SSR issues)
+  // Show loading state until mounted (prevents hydration mismatch)
   if (!mounted) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center" dir="rtl">

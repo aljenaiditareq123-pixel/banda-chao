@@ -53,10 +53,15 @@ export default function OrdersTable({ statusFilter }: OrdersTableProps) {
     );
   };
 
-  // Format date
+  // Format date - SSR-safe: returns consistent format during SSR and client
   const formatDate = (dateString: string) => {
     try {
+      // Only format if we have a valid date string
+      if (!dateString) return '';
       const date = new Date(dateString);
+      // Check if date is valid
+      if (isNaN(date.getTime())) return dateString;
+      // Format date - this will be consistent across server and client
       return date.toLocaleDateString('ar-EG', {
         year: 'numeric',
         month: 'long',
@@ -67,7 +72,7 @@ export default function OrdersTable({ statusFilter }: OrdersTableProps) {
     }
   };
 
-  // Format currency (default to AED)
+  // Format currency (default to AED) - SSR-safe: returns consistent format
   const formatCurrency = (amount: number, currency: string = 'AED') => {
     const symbols: Record<string, string> = {
       AED: 'د.إ',
@@ -75,7 +80,10 @@ export default function OrdersTable({ statusFilter }: OrdersTableProps) {
       EUR: '€',
       SAR: 'ر.س',
     };
-    return `${symbols[currency] || currency} ${amount.toLocaleString('ar-EG')}`;
+    // Ensure amount is a valid number
+    const numAmount = typeof amount === 'number' && !isNaN(amount) ? amount : 0;
+    // Use consistent locale formatting
+    return `${symbols[currency] || currency} ${numAmount.toLocaleString('ar-EG')}`;
   };
 
   // Get customer name from order

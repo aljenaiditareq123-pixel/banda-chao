@@ -1,7 +1,7 @@
 'use client';
 
-// TEMPORARY HARDCODE MODE - Force return dummy data to fix UI crash
-// TODO: Restore API fetching after confirming UI works
+import { useState, useEffect, useCallback } from 'react';
+import { ordersAPI } from '@/lib/api';
 
 export interface Order {
   id: string;
@@ -38,94 +38,22 @@ interface UseOrdersReturn {
 }
 
 /**
- * HARDCODE MODE: Returns dummy data to force UI to render
- * This fixes the crash while we debug the API fetching issue
+ * Hook to fetch and manage orders from the API
+ * Now restored to fetch real data from the database
+ * SSR-safe: Returns consistent initial state to prevent hydration mismatches
  */
 export function useOrders(statusFilter?: string): UseOrdersReturn {
-  // FORCE RETURN DUMMY DATA - NO FETCHING
-  const dummyOrders: Order[] = [
-    {
-      id: "ORDER-001",
-      status: "PAID",
-      totalAmount: 5000,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      users: {
-        id: "user-1",
-        name: "الساحر العظيم",
-        email: "founder@bandachao.com"
-      },
-      order_items: [
-        {
-          id: "item-1",
-          quantity: 3,
-          price: 1666.67,
-          products: {
-            id: "prod-1",
-            name: "منتج تجريبي 1",
-            price: 1666.67
-          }
-        }
-      ]
-    },
-    {
-      id: "ORDER-002",
-      status: "PENDING",
-      totalAmount: 120,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      users: {
-        id: "user-2",
-        name: "Test Client",
-        email: "client@test.com"
-      },
-      order_items: [
-        {
-          id: "item-2",
-          quantity: 1,
-          price: 120,
-          products: {
-            id: "prod-2",
-            name: "منتج تجريبي 2",
-            price: 120
-          }
-        }
-      ]
-    }
-  ];
-
-  // Filter by status if needed
-  let filteredOrders = dummyOrders;
-  if (statusFilter && statusFilter !== 'all') {
-    filteredOrders = dummyOrders.filter((order) => order.status === statusFilter.toUpperCase());
-  }
-
-  return {
-    orders: filteredOrders,
-    loading: false,
-    error: null,
-    stats: {
-      total: dummyOrders.length,
-      paid: dummyOrders.filter(o => o.status === 'PAID').length
-    },
-    refetch: async () => {
-      console.log('[useOrders] Refetch called (hardcode mode - no action)');
-    }
-  };
-}
-
-/* ORIGINAL CODE - COMMENTED OUT FOR HARDCODE MODE
-import { useState, useEffect } from 'react';
-import { ordersAPI } from '@/lib/api';
-
-export function useOrders(statusFilter?: string): UseOrdersReturn {
-  // Initialize with safe defaults
+  // Initialize with SSR-safe defaults (loading: false during SSR to match initial client render)
+  const [mounted, setMounted] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false); // Start as false to match SSR
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState({ total: 0, paid: 0 });
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
+    // Don't fetch if not mounted (SSR safety)
+    if (!mounted) return;
+
     try {
       setLoading(true);
       setError(null);
@@ -184,17 +112,22 @@ export function useOrders(statusFilter?: string): UseOrdersReturn {
     } finally {
       setLoading(false);
     }
-  };
+  }, [statusFilter, mounted]);
 
+  // Set mounted flag and fetch orders only after client-side mount
   useEffect(() => {
-    // Only fetch in browser (not during SSR/build)
-    if (typeof window === 'undefined') {
-      // Set loading to false for SSR, but still return valid object below
-      setLoading(false);
-      return;
+    // Only run on client
+    if (typeof window === 'undefined') return;
+    
+    setMounted(true);
+  }, []);
+
+  // Fetch orders after mount
+  useEffect(() => {
+    if (mounted) {
+      fetchOrders();
     }
-    fetchOrders();
-  }, [statusFilter]);
+  }, [mounted, fetchOrders]);
 
   // CRITICAL: Always return a valid object structure, never undefined
   // This prevents "Cannot destructure property" errors
@@ -202,7 +135,7 @@ export function useOrders(statusFilter?: string): UseOrdersReturn {
   
   // Safety layer 1: Ensure all values are defined
   const safeOrders = Array.isArray(orders) ? orders : [];
-  const safeLoading = typeof loading === 'boolean' ? loading : true;
+  const safeLoading = typeof loading === 'boolean' ? loading : false; // SSR-safe: default to false
   const safeError = error || null;
   const safeStats = stats && typeof stats === 'object' && 'total' in stats && 'paid' in stats 
     ? stats 
@@ -235,5 +168,4 @@ export function useOrders(statusFilter?: string): UseOrdersReturn {
     };
   }
 }
-*/
 
