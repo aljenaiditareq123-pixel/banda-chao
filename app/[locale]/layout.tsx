@@ -189,8 +189,8 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
   const fontClassName = validLocale === 'ar' ? almarai.className : inter.className;
 
   return (
-    <html lang={lang} dir={dir} className={fontClassName}>
-      <body className={fontClassName}>
+    <html lang={lang} dir={dir} className={fontClassName} suppressHydrationWarning>
+      <body className={fontClassName} suppressHydrationWarning>
         {/* Baidu-specific meta tags for Chinese pages */}
         {validLocale === 'zh' && (
           <Script

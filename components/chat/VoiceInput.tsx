@@ -22,11 +22,17 @@ export default function VoiceInput({
 }: VoiceInputProps) {
   const [isListening, setIsListening] = useState(false);
   const [isSupported, setIsSupported] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const recognitionRef = useRef<any>(null);
 
+  // Ensure component only renders client-side to prevent hydration mismatch
   useEffect(() => {
-    // Check if browser supports Web Speech API
-    if (typeof window !== 'undefined') {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    // Check if browser supports Web Speech API (only on client)
+    if (!mounted || typeof window === 'undefined') return;
       const SpeechRecognition = 
         (window as any).SpeechRecognition || 
         (window as any).webkitSpeechRecognition;
@@ -81,7 +87,7 @@ export default function VoiceInput({
         }
       }
     };
-  }, [lang, value, onChange]);
+  }, [mounted, lang, value, onChange]);
 
   const startListening = () => {
     if (!isSupported || disabled || isListening) return;
@@ -114,6 +120,22 @@ export default function VoiceInput({
       startListening();
     }
   };
+
+  // During SSR, render input only (no microphone button)
+  if (!mounted) {
+    return (
+      <div className={`flex items-center gap-2 ${className}`}>
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          disabled={disabled}
+          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+        />
+      </div>
+    );
+  }
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>

@@ -19,8 +19,14 @@ export default function AuthButtons({
   onLogout,
 }: AuthButtonsProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+
+  // Prevent hydration mismatch by only rendering after mount
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -38,6 +44,26 @@ export default function AuthButtons({
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isOpen]);
+
+  // During SSR or before mount, show logged out state to match server output
+  if (!mounted || authLoading) {
+    return (
+      <div className="flex items-center gap-2 relative z-[9999] pointer-events-auto">
+        <Link
+          href={`/${locale}/login`}
+          className="text-sm px-3 py-1 rounded-full border border-gray-300 hover:bg-gray-100 transition-colors text-gray-700 pointer-events-auto"
+        >
+          {locale === 'ar' ? 'تسجيل الدخول' : locale === 'zh' ? '登录' : 'Login'}
+        </Link>
+        <Link
+          href={`/${locale}/signup`}
+          className="text-sm px-3 py-1 rounded-full bg-primary text-white hover:bg-primary/90 transition-colors pointer-events-auto"
+        >
+          {locale === 'ar' ? 'إنشاء حساب' : locale === 'zh' ? '注册' : 'Sign up'}
+        </Link>
+      </div>
+    );
+  }
 
   // Simple logged out state - pure Link navigation
   if (!isLoggedIn) {
