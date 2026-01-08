@@ -10,14 +10,20 @@ interface NightMarketBannerProps {
 export default function NightMarketBanner({ locale = 'en' }: NightMarketBannerProps) {
   const { isNightMarket, timeUntilNextChange } = useNightMarketContext();
   const [isHidden, setIsHidden] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
+  // Prevent hydration mismatch by only checking sessionStorage after mount
   useEffect(() => {
+    setMounted(true);
     // Check if user hid the banner in this session
     if (typeof window !== 'undefined') {
       const hidden = sessionStorage.getItem('night_market_banner_hidden') === 'true';
       setIsHidden(hidden);
     }
   }, []);
+
+  // Don't render until mounted to prevent hydration mismatch
+  if (!mounted) return null;
 
   if (!isNightMarket || isHidden) return null;
 

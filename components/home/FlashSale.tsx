@@ -17,8 +17,17 @@ export default function FlashSale({ locale }: FlashSaleProps) {
     minutes: 30,
     seconds: 45,
   });
+  const [mounted, setMounted] = useState(false);
+
+  // Prevent hydration mismatch by only running timer after mount
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
+    // Only run timer on client after mount
+    if (!mounted) return;
+
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         let { hours, minutes, seconds } = prev;
@@ -44,7 +53,7 @@ export default function FlashSale({ locale }: FlashSaleProps) {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [mounted]);
 
   // Get flash sale products (first 4 products with discounts, or all if none have discounts)
   const allProducts = getAllMockProducts();
