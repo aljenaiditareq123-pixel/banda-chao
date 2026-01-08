@@ -12,13 +12,22 @@ if [ -z "$DATABASE_URL" ]; then
   exit 1
 fi
 
-EMAIL="aljenaiditareq123@gmail.com"
-PASSWORD="T123q123"
-NAME="Tareq"
+# SECURITY: Use environment variables, never hardcode passwords
+EMAIL="${USER_EMAIL:-aljenaiditareq123@gmail.com}"
+PASSWORD="${USER_PASSWORD:-}"
+NAME="${USER_NAME:-Tareq}"
+
+# Validate password is provided
+if [ -z "$PASSWORD" ]; then
+  echo "❌ ERROR: USER_PASSWORD environment variable must be set"
+  echo "❌ Never hardcode passwords in source code"
+  exit 1
+fi
 
 echo "📋 User Details:"
 echo "   Email: $EMAIL"
 echo "   Name: $NAME"
+echo "   Password: [HIDDEN]"
 echo ""
 
 # Hash password using Node.js (if available) or use bcrypt

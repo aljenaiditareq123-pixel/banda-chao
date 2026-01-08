@@ -16,16 +16,23 @@ import { randomUUID } from 'crypto';
 
 const prisma = new PrismaClient();
 
-// Known credentials for founder account
-const FOUNDER_EMAIL = 'founder@bandachao.com';
-const FOUNDER_PASSWORD = 'founder123';
+// SECURITY: Use environment variables for credentials, never hardcode
+const FOUNDER_EMAIL = process.env.FOUNDER_EMAIL || 'founder@bandachao.com';
+const FOUNDER_PASSWORD = process.env.FOUNDER_RESET_PASSWORD || process.env.DEFAULT_PASSWORD || '';
 const FOUNDER_NAME = 'Founder';
 
 async function fixFounderCredentials() {
   try {
+    // SECURITY: Validate password is provided
+    if (!FOUNDER_PASSWORD || FOUNDER_PASSWORD.trim() === '') {
+      console.error('❌ ERROR: FOUNDER_RESET_PASSWORD or DEFAULT_PASSWORD environment variable must be set');
+      console.error('❌ Never hardcode passwords in source code');
+      process.exit(1);
+    }
+
     console.log('\n🔐 Fixing Founder Credentials...');
     console.log(`📧 Email: ${FOUNDER_EMAIL}`);
-    console.log(`🔑 Password: ${FOUNDER_PASSWORD}`);
+    console.log(`🔑 Password: [HIDDEN]`);
     console.log('');
 
     // Check if user exists
@@ -58,7 +65,7 @@ async function fixFounderCredentials() {
 
       console.log('✅ User updated successfully!');
       console.log(`   Email: ${FOUNDER_EMAIL}`);
-      console.log(`   Password: ${FOUNDER_PASSWORD}`);
+      console.log(`   Password: [Set via FOUNDER_RESET_PASSWORD env var]`);
       console.log(`   Role: FOUNDER`);
     } else {
       // User doesn't exist - create it
@@ -81,7 +88,7 @@ async function fixFounderCredentials() {
       console.log('✅ Founder account created successfully!');
       console.log(`   ID: ${newUser.id}`);
       console.log(`   Email: ${newUser.email}`);
-      console.log(`   Password: ${FOUNDER_PASSWORD}`);
+      console.log(`   Password: [Set via FOUNDER_RESET_PASSWORD env var]`);
       console.log(`   Role: ${newUser.role}`);
     }
 
@@ -102,11 +109,11 @@ async function fixFounderCredentials() {
       console.log(`   Email: ${verifiedUser.email}`);
       console.log(`   Name: ${verifiedUser.name}`);
       console.log(`   Role: ${verifiedUser.role}`);
-      console.log(`   Password: ${FOUNDER_PASSWORD}`);
+      console.log(`   Password: [Set via FOUNDER_RESET_PASSWORD env var]`);
       
       console.log('\n🎉 You can now login with:');
       console.log(`   Email: ${FOUNDER_EMAIL}`);
-      console.log(`   Password: ${FOUNDER_PASSWORD}`);
+      console.log(`   Password: [Set via FOUNDER_RESET_PASSWORD env var]`);
       console.log('\n🌐 Login URL: https://banda-chao.onrender.com/ar/login');
     }
 

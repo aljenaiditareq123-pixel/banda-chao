@@ -52,13 +52,22 @@ echo "📋 Step 2: Creating User"
 echo "======================="
 echo ""
 
-EMAIL="aljenaiditareq123@gmail.com"
-PASSWORD="T123q123"
-NAME="Tareq"
+# SECURITY: Use environment variables, never hardcode passwords
+EMAIL="${USER_EMAIL:-aljenaiditareq123@gmail.com}"
+PASSWORD="${USER_PASSWORD:-}"
+NAME="${USER_NAME:-Tareq}"
+
+# Validate password is provided
+if [ -z "$PASSWORD" ]; then
+  echo "❌ ERROR: USER_PASSWORD environment variable must be set"
+  echo "❌ Never hardcode passwords in source code"
+  exit 1
+fi
 
 echo "User Details:"
 echo "  Email: $EMAIL"
 echo "  Name: $NAME"
+echo "  Password: [HIDDEN]"
 echo ""
 
 # Check if we can use Node.js
@@ -117,7 +126,7 @@ if PGSSLMODE=require psql "$DATABASE_URL" -c "SELECT id, email, name, role FROM 
   echo ""
   echo "📝 Login Credentials:"
   echo "   Email: $EMAIL"
-  echo "   Password: $PASSWORD"
+  echo "   Password: [Set via USER_PASSWORD env var]"
 else
   echo "⚠️  Could not verify user, but creation may have succeeded"
 fi

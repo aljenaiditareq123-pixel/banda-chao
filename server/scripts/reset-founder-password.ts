@@ -11,13 +11,21 @@ import bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 const FOUNDER_EMAIL = 'founder@bandachao.com';
-const NEW_PASSWORD = '123456';
+// SECURITY: Use environment variable for password, never hardcode
+const NEW_PASSWORD = process.env.FOUNDER_RESET_PASSWORD || process.env.DEFAULT_PASSWORD || '';
 
 async function resetFounderPassword() {
   try {
+    // SECURITY: Validate password is provided
+    if (!NEW_PASSWORD || NEW_PASSWORD.trim() === '') {
+      console.error('❌ ERROR: FOUNDER_RESET_PASSWORD or DEFAULT_PASSWORD environment variable must be set');
+      console.error('❌ Never hardcode passwords in source code');
+      process.exit(1);
+    }
+
     console.log('\n🔐 Resetting Founder Password...');
     console.log(`📧 Email: ${FOUNDER_EMAIL}`);
-    console.log(`🔑 New Password: ${NEW_PASSWORD}`);
+    console.log(`🔑 New Password: [HIDDEN]`);
     console.log('');
 
     // Find user by email
@@ -59,7 +67,7 @@ async function resetFounderPassword() {
     console.log('');
     console.log('📋 Login Credentials:');
     console.log(`   Email: ${FOUNDER_EMAIL}`);
-    console.log(`   Password: ${NEW_PASSWORD}`);
+    console.log(`   Password: [Set via FOUNDER_RESET_PASSWORD env var]`);
     console.log('');
     console.log('🌐 Login URL: https://banda-chao.onrender.com/ar/login');
     console.log('');

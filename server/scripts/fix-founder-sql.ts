@@ -15,13 +15,22 @@ import { randomUUID } from 'crypto';
 const prisma = new PrismaClient();
 
 const FOUNDER_EMAIL = 'founder@bandachao.com';
-const FOUNDER_PASSWORD = 'founder123';
+// SECURITY: Use environment variable for password, never hardcode
+const FOUNDER_PASSWORD = process.env.FOUNDER_RESET_PASSWORD || process.env.DEFAULT_PASSWORD || '';
 const FOUNDER_NAME = 'Founder';
 
 async function fixFounderWithSQL() {
   try {
+    // SECURITY: Validate password is provided
+    if (!FOUNDER_PASSWORD || FOUNDER_PASSWORD.trim() === '') {
+      console.error('❌ ERROR: FOUNDER_RESET_PASSWORD or DEFAULT_PASSWORD environment variable must be set');
+      console.error('❌ Never hardcode passwords in source code');
+      process.exit(1);
+    }
+
     console.log('\n🔐 Fixing Founder Account using Raw SQL...');
     console.log(`📧 Email: ${FOUNDER_EMAIL}`);
+    console.log(`🔑 Password: [HIDDEN]`);
     console.log('');
 
     // Step 1: Check if user exists using raw SQL
@@ -100,11 +109,11 @@ async function fixFounderWithSQL() {
       console.log(`   Email: ${user.email}`);
       console.log(`   Name: ${user.name || 'N/A'}`);
       console.log(`   Role: ${user.role}`);
-      console.log(`   Password: ${FOUNDER_PASSWORD}`);
+      console.log(`   Password: [Set via FOUNDER_RESET_PASSWORD env var]`);
       
       console.log('\n🎉 You can now login with:');
       console.log(`   Email: ${FOUNDER_EMAIL}`);
-      console.log(`   Password: ${FOUNDER_PASSWORD}`);
+      console.log(`   Password: [Set via FOUNDER_RESET_PASSWORD env var]`);
       console.log('\n🌐 Login URL: https://banda-chao.onrender.com/ar/login');
     } else {
       console.error('\n❌ Verification failed - user not found after update');
