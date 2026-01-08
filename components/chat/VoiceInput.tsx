@@ -32,50 +32,52 @@ export default function VoiceInput({
 
   useEffect(() => {
     // Check if browser supports Web Speech API (only on client)
-    if (!mounted || typeof window === 'undefined') return;
-      const SpeechRecognition = 
-        (window as any).SpeechRecognition || 
-        (window as any).webkitSpeechRecognition;
-      
-      setIsSupported(!!SpeechRecognition);
-      
-      if (SpeechRecognition) {
-        const recognition = new SpeechRecognition();
-        recognition.continuous = false;
-        recognition.interimResults = false;
-        recognition.lang = lang;
+    if (!mounted || typeof window === 'undefined') {
+      return;
+    }
 
-        recognition.onstart = () => {
-          setIsListening(true);
-        };
+    const SpeechRecognition = 
+      (window as any).SpeechRecognition || 
+      (window as any).webkitSpeechRecognition;
+    
+    setIsSupported(!!SpeechRecognition);
+    
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = lang;
 
-        recognition.onresult = (event: any) => {
-          const transcript = event.results[0][0].transcript;
-          onChange(value ? `${value} ${transcript}` : transcript);
+      recognition.onstart = () => {
+        setIsListening(true);
+      };
+
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        onChange(value ? `${value} ${transcript}` : transcript);
+        setIsListening(false);
+      };
+
+      recognition.onerror = (event: any) => {
+        console.error('Speech recognition error:', event.error);
+        setIsListening(false);
+        
+        // Handle specific errors
+        if (event.error === 'no-speech') {
+          // User didn't speak, just stop listening
           setIsListening(false);
-        };
+        } else if (event.error === 'not-allowed') {
+          alert('Microphone permission denied. Please enable microphone access in your browser settings.');
+        } else {
+          console.warn('Speech recognition error:', event.error);
+        }
+      };
 
-        recognition.onerror = (event: any) => {
-          console.error('Speech recognition error:', event.error);
-          setIsListening(false);
-          
-          // Handle specific errors
-          if (event.error === 'no-speech') {
-            // User didn't speak, just stop listening
-            setIsListening(false);
-          } else if (event.error === 'not-allowed') {
-            alert('Microphone permission denied. Please enable microphone access in your browser settings.');
-          } else {
-            console.warn('Speech recognition error:', event.error);
-          }
-        };
+      recognition.onend = () => {
+        setIsListening(false);
+      };
 
-        recognition.onend = () => {
-          setIsListening(false);
-        };
-
-        recognitionRef.current = recognition;
-      }
+      recognitionRef.current = recognition;
     }
 
     return () => {
