@@ -300,7 +300,7 @@ router.get('/me', authenticateToken, requireRole(['MAKER']), async (req: AuthReq
     // Find maker by user_id
     const maker = await prisma.makers.findUnique({
       where: { user_id: userId },
-      select: { id: true },
+      select: { id: true, user_id: true },
     });
 
     if (!maker) {
@@ -310,10 +310,10 @@ router.get('/me', authenticateToken, requireRole(['MAKER']), async (req: AuthReq
       });
     }
 
-    // Get all posts for this maker
+    // Get all posts for this maker (maker.user_id matches posts.user_id)
     const posts = await prisma.posts.findMany({
       where: {
-        maker_id: maker.id,
+        user_id: maker.user_id,
       },
       select: {
         id: true,
@@ -412,8 +412,7 @@ router.post('/', authenticateToken, postContentGuard, async (req: AuthRequest, r
     const post = await prisma.posts.create({
       data: {
         id: postId,
-        user_id: userId,
-        maker_id: makerId,
+        user_id: userId, // userId is the maker's user_id
         content: content?.trim() || '',
         images: imagesJson,
         updated_at: new Date(),
@@ -543,8 +542,8 @@ router.delete('/:id', authenticateToken, requireRole(['MAKER']), async (req: Aut
       });
     }
 
-    // Check ownership: either user_id matches or maker_id matches
-    if (existingPost.user_id !== userId && existingPost.maker_id !== maker.id) {
+    // Check ownership: user_id must match
+    if (existingPost.user_id !== userId) {
       return res.status(403).json({
         success: false,
         message: 'You do not have permission to delete this post',

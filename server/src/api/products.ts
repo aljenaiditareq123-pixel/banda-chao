@@ -74,7 +74,7 @@ router.get('/', async (req: Request, res: Response) => {
     // Filter by category (support both category and category_id)
     const categoryFilter = category_id || category;
     if (categoryFilter) {
-      whereClause += ` AND p.category = $${paramIndex}`;
+      whereClause += ` AND p.category_string = $${paramIndex}`;
       params.push(categoryFilter);
       paramIndex++;
     }
@@ -138,7 +138,7 @@ router.get('/', async (req: Request, res: Response) => {
         p.description,
         p.description_ar,
         p.price,
-        p.category,
+        p.category_string as category,
         p.image_url as "imageUrl",
         p.external_link as "externalLink",
         p.created_at as "createdAt",
@@ -200,7 +200,7 @@ router.get('/:id', async (req: Request, res: Response) => {
         p.description,
         p.description_ar,
         p.price,
-        p.category,
+        p.category_string as category,
         p.image_url as "imageUrl",
         p.external_link as "externalLink",
         p.created_at as "createdAt",
@@ -258,7 +258,7 @@ router.get('/makers/:makerId', async (req: Request, res: Response) => {
         p.description,
         p.description_ar,
         p.price,
-        p.category,
+        p.category_string as category,
         p.image_url as "imageUrl",
         p.external_link as "externalLink",
         p.created_at as "createdAt",
@@ -333,7 +333,7 @@ router.post('/', authenticateToken, requireRole(['MAKER']), upload.single('image
         name: name.trim(),
         description: description.trim(),
         price: priceNum,
-        category: category?.trim() || null,
+        category_string: category?.trim() || null,
         image_url: imageUrl,
         external_link: external_link?.trim() || '',
         user_id: req.userId!,
@@ -445,7 +445,7 @@ router.put('/:id', authenticateToken, requireRole(['MAKER']), upload.single('ima
       name?: string;
       description?: string;
       price?: number | null;
-      category?: string | null;
+      category_string?: string | null;
       external_link?: string;
       image_url?: string | null;
       is_pre_order?: boolean;
@@ -460,7 +460,7 @@ router.put('/:id', authenticateToken, requireRole(['MAKER']), upload.single('ima
     if (name !== undefined) updateData.name = name.trim();
     if (description !== undefined) updateData.description = description.trim();
     if (priceNum !== undefined) updateData.price = priceNum;
-    if (category !== undefined) updateData.category = category?.trim() || null;
+    if (category !== undefined) updateData.category_string = category?.trim() || null;
     if (external_link !== undefined) updateData.external_link = external_link.trim();
     if (imageUrl !== undefined) updateData.image_url = imageUrl;
     // C2M fields

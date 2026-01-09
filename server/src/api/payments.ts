@@ -31,11 +31,11 @@ async function notifyMakerOrderPlaced(orderId: string, makerId: string, productN
           type: 'order-placed',
           title: 'طلب جديد',
           body: `تم طلب منتجك "${productName}" من ${buyerName}`,
-          data: {
+          data: JSON.stringify({
             orderId,
             productName,
             buyerName,
-          },
+          }),
           is_read: false,
           created_at: new Date(),
         },
@@ -90,11 +90,11 @@ async function notifyOrderStatusChange(orderId: string, userId: string, status: 
           type: 'order-update',
           title: message.title,
           body: message.body,
-          data: {
+          data: JSON.stringify({
             orderId,
             status,
             productName,
-          },
+          }),
           is_read: false,
           created_at: new Date(),
         },
@@ -269,6 +269,7 @@ router.post(
           user_id: userId,
           status: 'PENDING',
           totalAmount: totalPrice,
+          subtotal: totalPrice, // Required field in schema
           created_at: new Date(),
           updated_at: new Date(),
         },

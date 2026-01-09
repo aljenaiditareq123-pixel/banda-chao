@@ -109,6 +109,7 @@ model products {
   video_url       String?     @db.Text
   user_id         String
   category_id     String?
+  category_string String?     // Legacy string field for backward compatibility with SQL queries
   category        categories? @relation(fields: [category_id], references: [id], onDelete: SetNull)
   price           Float?
   original_price  Float?
@@ -678,9 +679,11 @@ model makers {
   story               String?
   profile_picture_url String?
   cover_picture_url   String?
+  country             String? // Added for services relation
   created_at          DateTime @default(now())
   updated_at          DateTime
   users               users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  services            services[]
 
   @@index([user_id])
 }
@@ -940,5 +943,45 @@ model translation_cache {
 
   @@unique([original_text, target_language])
   @@index([target_language])
+  @@index([created_at])
+}
+
+// ============================================
+// COMPANY PROFILE - ملف الشركة
+// ============================================
+
+model company_profile {
+  id                     String    @id @default(uuid())
+  company_name           String
+  trade_license_number   String?
+  tax_registration_number String?
+  license_expiry_date    DateTime?
+  license_file_url       String?
+  tax_cert_file_url      String?
+  created_at             DateTime  @default(now())
+  updated_at             DateTime  @updatedAt
+
+  @@index([created_at])
+}
+
+// ============================================
+// SERVICES - الخدمات
+// ============================================
+
+model services {
+  id          String   @id @default(uuid())
+  title       String
+  description String   @db.Text
+  price       Float
+  type        String   // DRIVER, AGENT, ARTISAN, TECH, MEDIA, EDUCATION, OTHER
+  maker_id    String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  // Relations
+  makers makers @relation(fields: [maker_id], references: [id], onDelete: Cascade)
+
+  @@index([maker_id])
+  @@index([type])
   @@index([created_at])
 }

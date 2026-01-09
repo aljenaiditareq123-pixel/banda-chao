@@ -31,7 +31,7 @@ export async function createNotification(params: CreateNotificationParams) {
         type: params.type,
         title: params.title,
         body: params.body,
-        data: params.metadata || {},
+        data: params.metadata ? JSON.stringify(params.metadata) : null,
         is_read: false,
         created_at: new Date(),
       },

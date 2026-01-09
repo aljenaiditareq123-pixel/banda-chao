@@ -281,7 +281,7 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
         const makerCountries = products
           .map(p => {
             // makers is a one-to-one relation, so it's a single object or null
-            const maker = Array.isArray(p.users?.makers) ? p.users.makers[0] : p.users?.makers;
+            const maker = p.users?.makers || null;
             return maker?.country;
           })
           .filter((country): country is string => Boolean(country))

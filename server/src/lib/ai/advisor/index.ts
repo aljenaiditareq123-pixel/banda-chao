@@ -169,17 +169,21 @@ export async function generateMarketAnalysis(
   try {
     // Get relevant data from database
     const products = await prisma.products.findMany({
-      where: category ? { category } : undefined,
+      where: category ? { category_string: category } : undefined,
       include: {
-        order_items: true,
-        product_likes: true,
+        order_items: {
+          select: { id: true },
+        },
+        product_likes: {
+          select: { id: true },
+        },
       },
     });
 
     // Calculate basic metrics
     const totalProducts = products.length;
-    const totalOrders = products.reduce((sum, p) => sum + p.order_items.length, 0);
-    const totalLikes = products.reduce((sum, p) => sum + p.product_likes.length, 0);
+    const totalOrders = products.reduce((sum, p) => sum + (p.order_items?.length || 0), 0);
+    const totalLikes = products.reduce((sum, p) => sum + (p.product_likes?.length || 0), 0);
     const avgPrice = products.length > 0
       ? products.reduce((sum, p) => sum + (p.price || 0), 0) / products.length
       : 0;
