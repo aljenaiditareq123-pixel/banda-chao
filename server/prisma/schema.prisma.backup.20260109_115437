@@ -1,0 +1,546 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  extensions = [vector]
+  url        = env("DATABASE_URL")
+}
+
+model comment_likes {
+  id         String   @id
+  user_id    String
+  comment_id String
+  created_at DateTime @default(now())
+  comments   comments @relation(fields: [comment_id], references: [id], onDelete: Cascade)
+  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, comment_id])
+  @@index([comment_id])
+  @@index([user_id])
+}
+
+model comments {
+  id            String          @id
+  user_id       String
+  video_id      String?
+  product_id    String?
+  content       String
+  likes         Int             @default(0)
+  created_at    DateTime        @default(now())
+  updated_at    DateTime
+  comment_likes comment_likes[]
+  products      products?       @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  users         users           @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  videos        videos?         @relation(fields: [video_id], references: [id], onDelete: Cascade)
+
+  @@index([created_at])
+  @@index([product_id])
+  @@index([user_id])
+  @@index([video_id])
+}
+
+model follows {
+  id                                String   @id
+  follower_id                       String
+  following_id                      String
+  created_at                        DateTime @default(now())
+  users_follows_follower_idTousers  users    @relation("follows_follower_idTousers", fields: [follower_id], references: [id], onDelete: Cascade)
+  users_follows_following_idTousers users    @relation("follows_following_idTousers", fields: [following_id], references: [id], onDelete: Cascade)
+
+  @@unique([follower_id, following_id])
+  @@index([follower_id])
+  @@index([following_id])
+}
+
+model group_buys {
+  id        String   @id
+  productId String
+  status    String   @default("OPEN")
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  products  products @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+  @@index([productId])
+  @@index([status])
+}
+
+model makers {
+  id                  String               @id
+  user_id             String               @unique
+  slug                String               @unique
+  name                String
+  name_ar             String?              @db.Text // Arabic name (optional for backward compatibility)
+  bio                 String?
+  bio_ar              String?              @db.Text // Arabic bio (optional for backward compatibility)
+  story               String?
+  story_ar            String?              @db.Text // Arabic story (optional for backward compatibility)
+  profile_picture_url String?
+  cover_picture_url   String?
+  country             String? // Country for shipping origin
+  created_at          DateTime             @default(now())
+  updated_at          DateTime
+  users               users                @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  services            services[]
+  social_connections  social_connections[]
+  social_links        social_links[]
+  videos              videos[]
+  posts               posts[]
+
+  @@index([user_id])
+  @@index([country])
+}
+
+model messages {
+  id                                String   @id
+  content                           String
+  sender_id                         String
+  receiver_id                       String
+  timestamp                         DateTime @default(now())
+  read                              Boolean  @default(false)
+  users_messages_receiver_idTousers users    @relation("messages_receiver_idTousers", fields: [receiver_id], references: [id], onDelete: Cascade)
+  users_messages_sender_idTousers   users    @relation("messages_sender_idTousers", fields: [sender_id], references: [id], onDelete: Cascade)
+
+  @@index([sender_id, receiver_id])
+}
+
+model notifications {
+  id         String   @id
+  user_id    String
+  type       String
+  title      String
+  body       String?
+  data       Json?
+  is_read    Boolean  @default(false)
+  created_at DateTime @default(now())
+  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([is_read])
+  @@index([user_id])
+  @@index([user_id, is_read, created_at])
+}
+
+model order_items {
+  id         String   @id
+  order_id   String
+  product_id String
+  quantity   Int      @default(1)
+  price      Float
+  created_at DateTime @default(now())
+  orders     orders   @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  products   products @relation(fields: [product_id], references: [id])
+
+  @@index([order_id])
+  @@index([product_id])
+}
+
+model orders {
+  id               String        @id
+  user_id          String
+  status           OrderStatus   @default(PENDING)
+  totalAmount      Float
+  shipping_address String?
+  shipping_city    String?
+  shipping_country String?
+  shipping_phone   String?
+  shipping_name    String?
+  created_at       DateTime      @default(now())
+  updated_at       DateTime
+  stripe_id        String?
+  order_items      order_items[]
+  users            users         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([created_at])
+  @@index([status])
+  @@index([stripe_id])
+  @@index([user_id])
+}
+
+model post_likes {
+  id         String   @id
+  user_id    String
+  post_id    String
+  created_at DateTime @default(now())
+  posts      posts    @relation(fields: [post_id], references: [id], onDelete: Cascade)
+  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, post_id])
+  @@index([post_id])
+  @@index([user_id])
+}
+
+model posts {
+  id            String          @id
+  content       String // Text updates/content
+  user_id       String
+  maker_id      String? // Optional link to maker
+  images        String? // JSON array stored as string
+  created_at    DateTime        @default(now())
+  updated_at    DateTime
+  post_likes    post_likes[]
+  post_products post_products[]
+  users         users           @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  makers        makers?         @relation(fields: [maker_id], references: [id], onDelete: SetNull)
+
+  @@index([user_id])
+  @@index([maker_id])
+  @@index([created_at])
+}
+
+model post_products {
+  id          String   @id
+  post_id     String
+  product_id  String
+  position    Int      @default(0)
+  is_featured Boolean  @default(false)
+  created_at  DateTime @default(now())
+  posts       posts    @relation(fields: [post_id], references: [id], onDelete: Cascade)
+  products    products @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@unique([post_id, product_id])
+  @@index([post_id])
+  @@index([product_id])
+}
+
+model product_likes {
+  id         String   @id
+  user_id    String
+  product_id String
+  created_at DateTime @default(now())
+  products   products @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, product_id])
+  @@index([product_id])
+  @@index([user_id])
+}
+
+model products {
+  id                 String          @id
+  name               String
+  name_ar            String?         @db.Text // Arabic name (optional for backward compatibility)
+  description        String          @db.Text
+  description_ar     String?         @db.Text // Arabic description (optional for backward compatibility)
+  image_url          String?         @db.Text
+  video_url          String?         @db.Text
+  external_link      String?         @db.Text
+  user_id            String
+  price              Float?
+  currency           String          @default("USD")
+  category           String?
+  // C2M (Copy to Manufacture) Fields - حقول الحجز الجماعي
+  is_pre_order       Boolean         @default(false) // True if this is a pre-order product (حجز مسبق)
+  target_quantity    Int? // Target number of orders to start manufacturing (العدد المطلوب لبدء التصنيع)
+  current_orders     Int             @default(0) // Current number of pre-orders (عداد الحاجزين)
+  campaign_end_date  DateTime? // Campaign end date (تاريخ انتهاء فترة الحجز)
+  manufacture_status String          @default("PENDING") // PENDING, COLLECTING, IN_MANUFACTURE, SHIPPED (حالة التصنيع)
+  created_at         DateTime        @default(now())
+  updated_at         DateTime
+  comments           comments[]
+  group_buys         group_buys[]
+  order_items        order_items[]
+  product_likes      product_likes[]
+  post_products      post_products[]
+  users              users           @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([category])
+  @@index([user_id])
+}
+
+model reports {
+  id          String   @id
+  user_id     String
+  target_id   String
+  target_type String
+  reason      String
+  resolved    Boolean  @default(false)
+  created_at  DateTime @default(now())
+  users       users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([resolved])
+  @@index([target_id, target_type])
+  @@index([user_id])
+}
+
+model users {
+  id                                   String             @id
+  email                                String             @unique
+  password                             String
+  name                                 String?
+  profile_picture                      String?
+  bio                                  String?
+  created_at                           DateTime           @default(now())
+  updated_at                           DateTime
+  role                                 UserRole           @default(USER)
+  comment_likes                        comment_likes[]
+  comments                             comments[]
+  follows_follows_follower_idTousers   follows[]          @relation("follows_follower_idTousers")
+  follows_follows_following_idTousers  follows[]          @relation("follows_following_idTousers")
+  makers                               makers?
+  messages_messages_receiver_idTousers messages[]         @relation("messages_receiver_idTousers")
+  messages_messages_sender_idTousers   messages[]         @relation("messages_sender_idTousers")
+  notifications                        notifications[]
+  orders                               orders[]
+  post_likes                           post_likes[]
+  posts                                posts[]
+  product_likes                        product_likes[]
+  products                             products[]
+  reports                              reports[]
+  video_likes                          video_likes[]
+  videos                               videos[]
+  pet_state                            pet_states?        @relation("user_pet_state")
+  pet_feed_history                     pet_feed_history[] @relation("user_pet_feed_history")
+  discount_codes                       discount_codes[]   @relation("user_discount_codes")
+}
+
+model video_likes {
+  id         String   @id
+  user_id    String
+  video_id   String
+  created_at DateTime @default(now())
+  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  videos     videos   @relation(fields: [video_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, video_id])
+  @@index([user_id])
+  @@index([video_id])
+}
+
+model videos {
+  id             String         @id
+  user_id        String
+  maker_id       String? // Link to maker (optional for backward compatibility)
+  title          String
+  title_ar       String?        @db.Text // Arabic title (optional for backward compatibility)
+  description    String?
+  description_ar String?        @db.Text // Arabic description (optional for backward compatibility)
+  url            String? // External URL from TikTok/YouTube API (replaces video_url) - nullable for migration
+  video_url      String? // Legacy field - will be removed after migration
+  thumbnail_url  String?
+  duration       Int?
+  platform       VideoPlatform? // TIKTOK or YOUTUBE - nullable for migration
+  type           String // Keep as String for now, will migrate to VideoType enum later
+  views          Int            @default(0)
+  likes          Int            @default(0)
+  created_at     DateTime       @default(now())
+  updated_at     DateTime
+  comments       comments[]
+  video_likes    video_likes[]
+  users          users          @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  makers         makers?        @relation(fields: [maker_id], references: [id], onDelete: SetNull)
+
+  @@index([created_at])
+  @@index([type])
+  @@index([platform])
+  @@index([user_id])
+  @@index([maker_id])
+}
+
+model beta_applications {
+  id             Int      @id @default(autoincrement())
+  name           String
+  email          String
+  country        String
+  main_platform  String?
+  what_you_sell  String?
+  preferred_lang String?
+  why_join       String?
+  created_at     DateTime @default(now())
+
+  @@index([email])
+  @@index([created_at])
+}
+
+// ============================================
+// PET SYSTEM - نظام الرفيق الافتراضي
+// ============================================
+
+model pet_states {
+  id                 String             @id @default(uuid())
+  user_id            String             @unique
+  hunger_level       Int                @default(100)
+  happiness_level    Int                @default(50)
+  last_fed_at        DateTime?
+  last_hunger_update DateTime           @default(now())
+  total_feeds        Int                @default(0)
+  created_at         DateTime           @default(now())
+  updated_at         DateTime           @updatedAt
+  users              users              @relation("user_pet_state", fields: [user_id], references: [id], onDelete: Cascade)
+  pet_feed_history   pet_feed_history[]
+
+  @@index([user_id])
+  @@index([last_hunger_update])
+}
+
+model pet_feed_history {
+  id           String     @id @default(uuid())
+  pet_state_id String
+  user_id      String
+  feed_type    String // BROWSE, SHARE, DIRECT_FEED
+  feed_amount  Int
+  metadata     String?    @db.Text // JSON stored as string
+  created_at   DateTime   @default(now())
+  pet_states   pet_states @relation(fields: [pet_state_id], references: [id], onDelete: Cascade)
+  users        users      @relation("user_pet_feed_history", fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([pet_state_id])
+  @@index([user_id])
+  @@index([created_at])
+}
+
+model discount_codes {
+  id             String   @id @default(uuid())
+  user_id        String
+  code           String   @unique
+  discount_type  String // PERCENTAGE, FIXED
+  discount_value Float
+  min_purchase   Float    @default(0)
+  max_discount   Float?
+  valid_until    DateTime
+  max_uses       Int      @default(1)
+  used_count     Int      @default(0)
+  is_active      Boolean  @default(true)
+  source         String? // PET_REWARD, MANUAL, etc.
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+  users          users    @relation("user_discount_codes", fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([code])
+  @@index([is_active])
+  @@index([valid_until])
+  @@index([source])
+}
+
+// ============================================
+// COMPANY PROFILE - معلومات الشركة الرسمية
+// ============================================
+
+model company_profile {
+  id                      String    @id @default(uuid())
+  company_name            String    @default("Banda Chao FZ-LLC")
+  trade_license_number    String?
+  tax_registration_number String?
+  license_expiry_date     DateTime?
+  license_file_url        String?   @db.Text
+  tax_cert_file_url       String?   @db.Text
+  created_at              DateTime  @default(now())
+  updated_at              DateTime  @updatedAt
+
+  @@unique([company_name])
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  PAID
+  FAILED
+}
+
+// Services: Intangible products (DRIVER, AGENT, ARTISAN)
+model services {
+  id             String      @id
+  title          String
+  title_ar       String?     @db.Text // Arabic title (optional for backward compatibility)
+  description    String
+  description_ar String?     @db.Text // Arabic description (optional for backward compatibility)
+  price          Float
+  type           ServiceType // DRIVER, AGENT, ARTISAN
+  maker_id       String
+  created_at     DateTime    @default(now())
+  updated_at     DateTime
+  makers         makers      @relation(fields: [maker_id], references: [id], onDelete: Cascade)
+
+  @@index([maker_id])
+  @@index([type])
+  @@index([created_at])
+}
+
+// Social Connections: OAuth tokens for external platforms
+// Allows posting on behalf of makers without them leaving the dashboard
+model social_connections {
+  id            String         @id
+  platform      SocialPlatform // TIKTOK, YOUTUBE, INSTAGRAM
+  access_token  String // OAuth access token (encrypted in production)
+  refresh_token String? // OAuth refresh token (encrypted in production)
+  expires_at    DateTime? // Token expiration
+  scope         String? // OAuth scopes granted
+  maker_id      String
+  created_at    DateTime       @default(now())
+  updated_at    DateTime
+  makers        makers         @relation(fields: [maker_id], references: [id], onDelete: Cascade)
+
+  @@unique([maker_id, platform]) // One connection per platform per maker
+  @@index([maker_id])
+  @@index([platform])
+}
+
+// Social Links: Simple profile display links (not OAuth)
+model social_links {
+  id         String   @id
+  platform   String // Platform name (e.g., "TikTok", "YouTube", "Instagram")
+  url        String // Profile URL
+  maker_id   String
+  created_at DateTime @default(now())
+  updated_at DateTime
+  makers     makers   @relation(fields: [maker_id], references: [id], onDelete: Cascade)
+
+  @@index([maker_id])
+}
+
+enum UserRole {
+  USER
+  FOUNDER
+  JUNDI
+  MECHANIC
+  MAKER
+  ADMIN
+  BUYER
+}
+
+enum ServiceType {
+  DRIVER // Delivery/transport service
+  AGENT // Sales/representation service
+  ARTISAN // Craft/creative service
+  TECH // Technology/Programming services (Web developers, App developers, etc.)
+  MEDIA // Media/Photography services (Photographers, Designers, Videographers, etc.)
+  EDUCATION // Education/Training services (Translators, Tutors, Language teachers, etc.)
+  OTHER // Other services (catch-all category)
+}
+
+enum SocialPlatform {
+  TIKTOK
+  YOUTUBE
+  INSTAGRAM
+}
+
+enum VideoPlatform {
+  TIKTOK
+  YOUTUBE
+}
+
+enum VideoType {
+  SHORT // Short-form content (Reels, TikTok videos)
+  LONG // Long-form content (Documentaries, full videos)
+  DEMO // Product demonstrations
+}
+
+// ============================================
+// AI NEURO-GENESIS - نظام الذاكرة المتجهة
+// ============================================
+
+model ai_memories {
+  id         String                      @id @default(uuid())
+  content    String                      @db.Text
+  embedding  Unsupported("vector(1536)") // OpenAI embeddings dimension
+  metadata   Json?
+  created_at DateTime                    @default(now())
+
+  @@index([created_at])
+}
