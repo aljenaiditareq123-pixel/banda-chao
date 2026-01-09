@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Script from 'next/script';
+import { Suspense } from 'react';
 import { Almarai, Inter } from 'next/font/google';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { CartProvider } from '@/contexts/CartContext';
@@ -199,11 +200,9 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
             dangerouslySetInnerHTML={{
               __html: `
                 (function() {
+                  if (typeof window === 'undefined' || typeof document === 'undefined') return;
                   try {
-                    if (typeof document === 'undefined' || typeof window === 'undefined') return;
-                    const headElements = document.getElementsByTagName('head');
-                    if (!headElements || headElements.length === 0) return;
-                    const head = headElements[0];
+                    const head = document.head || document.getElementsByTagName('head')[0];
                     if (!head) return;
                     
                     if (document.querySelector('meta[name="renderer"]') === null) {
@@ -244,6 +243,7 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
                     }
                   } catch (e) {
                     // Silently fail - these are optional meta tags
+                    console.warn('Failed to inject meta tags:', e);
                   }
                 })();
               `,
@@ -265,7 +265,9 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
                 {/* Cart Toast Notifications */}
                 <CartToast />
                 <main className="flex-grow">
-                  {children}
+                  <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div></div>}>
+                    {children}
+                  </Suspense>
                 </main>
                 <Footer locale={validLocale} />
                 <CartDrawer locale={validLocale} />

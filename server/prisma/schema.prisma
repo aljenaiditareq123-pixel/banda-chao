@@ -200,7 +200,7 @@ model orders {
   user_id              String
   status               String             @default("PENDING")
   totalAmount          Float
-  subtotal             Float
+  subtotal             Float              @default(0)
   shipping_cost        Float              @default(0)
   tax                  Float              @default(0)
   currency             String             @default("USD")
