@@ -66,16 +66,20 @@ export function LanguageProvider({ children, defaultLanguage = 'ar' }: LanguageP
   const [language, setLanguageState] = useState<Language>(defaultLanguage);
 
   useEffect(() => {
-    // Try to get language from localStorage
-    const savedLanguage = localStorage.getItem('language') as Language;
-    if (savedLanguage && ['zh', 'en', 'ar'].includes(savedLanguage)) {
-      setLanguageState(savedLanguage);
+    // Try to get language from localStorage (only on client to prevent hydration mismatch)
+    if (typeof window !== 'undefined') {
+      const savedLanguage = localStorage.getItem('language') as Language;
+      if (savedLanguage && ['zh', 'en', 'ar'].includes(savedLanguage)) {
+        setLanguageState(savedLanguage);
+      }
     }
   }, []);
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
-    localStorage.setItem('language', lang);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('language', lang);
+    }
   };
 
   const t = (key: string): string => {
