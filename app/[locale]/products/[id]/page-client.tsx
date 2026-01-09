@@ -73,7 +73,7 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
   const [isClanBuyModalOpen, setIsClanBuyModalOpen] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [lowStockCount] = useState(Math.floor(Math.random() * 9) + 1); // Random number 1-9
+  const [lowStockCount, setLowStockCount] = useState<number | null>(null); // Initialize as null to prevent hydration mismatch
   const [isTryOnOpen, setIsTryOnOpen] = useState(false);
   const [translatedDescription, setTranslatedDescription] = useState<string | null>(null);
   const [isTranslating, setIsTranslating] = useState(false);
@@ -107,6 +107,13 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
       }
     }
   }, []);
+
+  // Set random low stock count on client side only to prevent hydration mismatch
+  useEffect(() => {
+    if (lowStockCount === null) {
+      setLowStockCount(Math.floor(Math.random() * 9) + 1); // Random number 1-9
+    }
+  }, [lowStockCount]);
 
   // Fetch AI-powered recommendations
   useEffect(() => {
@@ -363,10 +370,10 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
                     </div>
                     <p className="text-sm font-bold text-red-700 whitespace-nowrap">
                       {locale === 'ar'
-                        ? `بقي ${lowStockCount} فقط!`
+                        ? `بقي ${lowStockCount ?? 5} فقط!`
                         : locale === 'zh'
-                        ? `仅剩 ${lowStockCount} 件！`
-                        : `Only ${lowStockCount} left!`}
+                        ? `仅剩 ${lowStockCount ?? 5} 件！`
+                        : `Only ${lowStockCount ?? 5} left!`}
                     </p>
                   </div>
                 )}

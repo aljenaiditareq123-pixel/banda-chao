@@ -167,19 +167,11 @@ const allowedOriginPatterns: (string | RegExp)[] = NODE_ENV === 'production'
     ].filter(Boolean);
 
 // CORS middleware with full support for OPTIONS requests
-// TEMPORARY FIX: Allow all origins (*) to rule out CORS errors during deployment
-// TODO: Restrict to specific origins once deployment is stable
+// Production-ready CORS configuration with proper origin validation
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) {
-      callback(null, true);
-      return;
-    }
-    
-    // TEMPORARY: Allow all origins to rule out CORS errors
-    // TODO: Restrict to allowedOriginPatterns once deployment is stable
-    if (true) { // Temporarily always allow
       callback(null, true);
       return;
     }
@@ -205,6 +197,7 @@ app.use(cors({
     });
     
     if (isAllowed) {
+      console.log(`[CORS] ✅ Allowed origin: ${origin}`);
       callback(null, true);
     } else {
       console.error(`[CORS] ❌ Blocked origin: ${origin}`);
@@ -241,11 +234,6 @@ app.options('*', cors({
       callback(null, true);
       return;
     }
-    
-    // TEMPORARY: Allow all origins to rule out CORS errors
-    // TODO: Restrict to allowedOriginPatterns once deployment is stable
-    callback(null, true);
-    return;
     
     // In development, allow all origins
     if (NODE_ENV === 'development') {

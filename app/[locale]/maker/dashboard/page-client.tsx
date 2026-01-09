@@ -32,8 +32,15 @@ export default function MakerDashboardClient({ locale }: MakerDashboardClientPro
     productsSold: 142,
     shopRating: 4.9,
   });
-  const [salesData] = useState(generateSalesData());
+  const [salesData, setSalesData] = useState<ReturnType<typeof generateSalesData> | null>(null); // Initialize as null to prevent hydration mismatch
   const [showCreateModal, setShowCreateModal] = useState(false);
+
+  // Generate sales data on client side only to prevent hydration mismatch
+  useEffect(() => {
+    if (salesData === null) {
+      setSalesData(generateSalesData());
+    }
+  }, [salesData]);
 
   useEffect(() => {
     if (!authLoading) {
@@ -113,7 +120,7 @@ export default function MakerDashboardClient({ locale }: MakerDashboardClientPro
           </div>
           
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={salesData}>
+            <LineChart data={salesData || []}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis 
                 dataKey="month" 

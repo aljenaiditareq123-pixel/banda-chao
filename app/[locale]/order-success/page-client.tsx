@@ -27,6 +27,14 @@ export default function OrderSuccessClient({ locale, orderId }: OrderSuccessClie
   const [showConfetti, setShowConfetti] = useState(true);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [estimatedDays, setEstimatedDays] = useState<number | null>(null); // Initialize as null to prevent hydration mismatch
+
+  // Set random estimated days on client side only to prevent hydration mismatch
+  useEffect(() => {
+    if (estimatedDays === null) {
+      setEstimatedDays(Math.floor(Math.random() * 5) + 3); // 3-7 days
+    }
+  }, [estimatedDays]);
 
   // Fetch order items if orderId is provided
   useEffect(() => {
@@ -151,8 +159,6 @@ export default function OrderSuccessClient({ locale, orderId }: OrderSuccessClie
 
   const t = texts[locale as keyof typeof texts] || texts.en;
 
-  const estimatedDays = Math.floor(Math.random() * 5) + 3; // 3-7 days
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center px-4 py-12" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
       <motion.div
@@ -220,7 +226,7 @@ export default function OrderSuccessClient({ locale, orderId }: OrderSuccessClie
           >
             <Package className="w-5 h-5" />
             <span className="font-semibold">
-              {t.estimatedDelivery}: <span className="text-primary-600 dark:text-primary-400">{estimatedDays} {t.days}</span>
+              {t.estimatedDelivery}: <span className="text-primary-600 dark:text-primary-400">{estimatedDays ?? 5} {t.days}</span>
             </span>
           </motion.div>
 

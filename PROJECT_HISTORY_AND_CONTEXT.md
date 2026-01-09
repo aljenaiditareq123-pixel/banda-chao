@@ -65,13 +65,137 @@
 ### Latest Critical Issue: Hydration Mismatch Error #310
 
 **Recent Commits**:
+- `d1814c7`: FIX: Use external backend URL in SSR for Render - detect Render environment automatically
+- `0fd6a85`: FIX: Restore real API fetching for Orders - remove dummy data and fix hook dependencies
 - `771c0e2`: FIX: Critical hydration fixes (Added useMounted to SmartToasts, CartToast, VirtualHost)
 - `07aa841`: SECURITY: Removed hardcoded passwords; moved to Environment Variables
 - `57cdcff`: FIX: Attempt to resolve Hydration Mismatch by delaying rendering of client-only components
 
 **Deployment Status**:
-- Backend: Failed (Deploy process error due to security commit)
-- Frontend: Failed (Build exited with status 1)
+- Backend: Operational
+- Frontend: Building with latest fixes (awaiting deployment completion)
+
+---
+
+## 4. أحداث اليوم (Today's Session - Jan 8, 2026)
+
+### 1️⃣ إصلاحات الأمان (Security Fixes) - ✅ مكتمل
+
+**المشكلة**: 
+- اكتشاف تسريب كلمات مرور (Email & Database) في الكود المصدري
+- وجود أسرار hardcoded في الملفات
+
+**الإجراء**:
+- نقل جميع الأسرار إلى ملف `.env`
+- تحديث `.gitignore` لضمان عدم رفع ملفات `.env`
+- تنظيف الكود من جميع الأسرار المخزنة
+
+**النتيجة**: 
+- الكود الآن نظيف وآمن (Secret-free)
+- Commit: `07aa841`
+
+---
+
+### 2️⃣ معركة أخطاء Hydration (Hydration Error #310) - ✅ تم المعالجة
+
+**المشكلة**: 
+- ظهور React Error #310 (Hydration Mismatch)
+- اختلاف في النصوص/المحتوى بين السيرفر (SSR) والعميل (Client)
+- السبب: استخدام `new Date()`, `window`, `localStorage` في الـ render الأولي
+
+**المحاولات الأولى** (فشلت):
+- محاولة إصلاح مكونات فردية
+- الخطأ استمر لأن المشكلة في الـ Layout الرئيسي
+
+**الحل الجذري** (نجح):
+- استخدام `useMounted` pattern في جميع المكونات التي تحتاج Browser APIs
+- المكونات التي تم إصلاحها:
+  - ✅ `components/SmartToasts.tsx` - كان يستخدم `Date.now()` فوراً
+  - ✅ `components/cart/CartToast.tsx` - كان يستخدم `window`
+  - ✅ `components/avatar/VirtualHost.tsx` - المساعد الذكي
+  - ✅ `hooks/useNightMarket.ts` - Night Market hook
+  - ✅ `contexts/NightMarketContext.tsx` - Night Market context
+  - ✅ `components/home/FlashSale.tsx` - Flash Sale component
+  - ✅ `components/common/ChatWidget.tsx` - Chat widget
+  - ✅ `components/home/DailyFengShui.tsx` - Daily Feng Shui
+  - ✅ `components/nightmarket/NightMarketBanner.tsx` - Night Market banner
+  - ✅ `app/admin/orders/page-client.tsx` - Admin orders page
+  - ✅ `hooks/useOrders.ts` - Orders hook (SSR-safe)
+
+**الحالة**: 
+- تم رفع التعديلات (Commit: `771c0e2`)
+- جميع المكونات الآن تنتظر `mounted === true` قبل استخدام Browser APIs
+
+---
+
+### 3️⃣ إصلاح صفحة الطلبات (Admin Orders Page) - ✅ مكتمل
+
+**المشكلة**: 
+- صفحة `/admin/orders` كانت تعرض بيانات وهمية فقط (Dummy Data)
+- الطلبات الحقيقية من قاعدة البيانات لا تظهر
+- المستخدمون يضيفون طلبات جديدة لكنها لا تظهر
+
+**السبب**: 
+- Hook `useOrders` كان يعيد بيانات hardcoded بدلاً من جلب البيانات من API
+- الكود كان في "HARDCODE MODE" للاختبار
+
+**الحل**:
+- استعادة جلب البيانات الحقيقية من API في `hooks/useOrders.ts`
+- إصلاح مشكلة Hydration Mismatch في نفس الـ hook
+- تغيير initial loading state من `true` إلى `false` (SSR-safe)
+- إضافة `mounted` state للتحقق من أن الكود يعمل في المتصفح
+- تحسين معالجة الأخطاء مع رسائل عربية واضحة
+
+**التحسينات الإضافية**:
+- تحسين تنسيق التاريخ والعملة في `components/admin/OrdersTable.tsx`
+- إضافة validation للتواريخ والأرقام قبل التنسيق
+
+**النتيجة**: 
+- الطلبات الحقيقية تظهر الآن بشكل صحيح
+- Commit: `0fd6a85`
+
+---
+
+### 4️⃣ إصلاحات الرفع والاتصال (Deployment & API Issues) - ⚠️ قيد التنفيذ
+
+**المشكلة الأولى (Render Stuck)**:
+- واجهنا تعليقاً في عملية البناء على Render صباحاً
+- **الحل**: إرسال Empty Commit لتحريك عملية البناء
+
+**المشكلة الثانية (404 Errors بعد النشر)**:
+- بعد النشر، ظهرت أخطاء 404 عند محاولة جلب البيانات
+- الخطأ: `Request failed with status code 404` على `/api/v1/makers`, `/api/v1/products`, etc.
+- **السبب**: الكود في SSR كان يحاول الاتصال بـ `localhost:10000` بدلاً من Backend URL الخارجي
+
+**السبب الجذري**:
+- في Render، Frontend و Backend هما خدمتان منفصلتان
+- Frontend يعمل على `https://banda-chao-frontend.onrender.com`
+- Backend يعمل على `https://banda-chao-backend.onrender.com`
+- الكود كان يفترض أنهما على نفس الخادم
+
+**الحل المطبق**:
+- تعديل `lib/api-utils.ts` لاستخدام URL خارجي في SSR
+- إضافة كشف تلقائي عن بيئة Render عبر:
+  - `process.env.RENDER`
+  - `process.env.RENDER_SERVICE_ID`
+  - `process.env.RENDER_SERVICE_NAME`
+  - `process.env.RENDER_EXTERNAL_URL`
+  - `process.env.HOSTNAME` (contains "render")
+- استخدام `NEXT_PUBLIC_API_URL` إذا كان موجوداً
+- Fallback إلى `https://banda-chao-backend.onrender.com` في الإنتاج أو Render
+
+**التوثيق**:
+- إنشاء ملف `PROJECT_HISTORY_AND_CONTEXT.md` لتوثيق كل ما سبق
+
+**الحالة**: 
+- تم رفع التعديلات (Commit: `d1814c7`)
+- في انتظار اكتمال البناء والاختبار
+
+**ملاحظة مهمة**:
+- يمكن إضافة `NEXT_PUBLIC_API_URL=https://banda-chao-backend.onrender.com` في Render Dashboard كـ Environment Variable (اختياري)
+- الكود الآن يكتشف Render تلقائياً ويستخدم URL الصحيح
+
+---
 
 ### Recent Fixes (Jan 2026)
 

@@ -64,14 +64,29 @@ async function createPrismaClientWithRetry(): Promise<PrismaClient> {
 }
 
 // Validate and prepare DATABASE_URL
+// CRITICAL: Strict environment variable check - fail fast with clear error if missing
 const dbUrl = process.env.DATABASE_URL;
-if (!dbUrl) {
-  console.error('[PRISMA] ❌ DATABASE_URL is not set in environment variables');
-  throw new Error('DATABASE_URL environment variable is required');
+if (!dbUrl || typeof dbUrl !== 'string' || dbUrl.trim() === '') {
+  const errorMessage = '[PRISMA] ❌ FATAL: DATABASE_URL environment variable is required but not set or empty.';
+  console.error(errorMessage);
+  console.error('[PRISMA] Please set DATABASE_URL in your environment variables (e.g., Render Dashboard → Environment)');
+  console.error('[PRISMA] Format: postgresql://user:password@host:port/database');
+  throw new Error('DATABASE_URL environment variable is required. Please check your environment configuration.');
+}
+
+// Validate DATABASE_URL format before using it
+let dbUrlInfo: URL;
+try {
+  dbUrlInfo = new URL(dbUrl);
+} catch (error) {
+  const errorMessage = `[PRISMA] ❌ FATAL: DATABASE_URL is malformed: ${error instanceof Error ? error.message : 'Invalid URL format'}`;
+  console.error(errorMessage);
+  console.error(`[PRISMA] Received value: ${dbUrl.replace(/:[^:@]+@/, ':****@')}`);
+  console.error('[PRISMA] Expected format: postgresql://user:password@host:port/database');
+  throw new Error(`Invalid DATABASE_URL format: ${error instanceof Error ? error.message : 'Invalid URL'}`);
 }
 
 // Log DATABASE_URL info (masked for security)
-const dbUrlInfo = new URL(dbUrl);
 console.log('[PRISMA] 📋 Database Connection Info:');
 console.log(`  Host: ${dbUrlInfo.hostname}`);
 console.log(`  Port: ${dbUrlInfo.port || '5432 (default)'}`);
@@ -81,14 +96,14 @@ console.log(`  SSL: ${dbUrl.includes('ssl=') ? 'configured' : 'not configured'}`
 console.log(`  Contains 'render.com': ${dbUrl.includes('render.com') ? '✅ Yes' : '❌ No'}`);
 
 // Auto-add SSL for Render PostgreSQL if needed
-let finalDbUrl = dbUrl;
-if (dbUrl.includes('render.com') && !dbUrl.includes('ssl=')) {
-  finalDbUrl = dbUrl.includes('?') ? `${dbUrl}&ssl=true` : `${dbUrl}?ssl=true`;
+let finalDbUrl = dbUrl.trim();
+if (finalDbUrl.includes('render.com') && !finalDbUrl.includes('ssl=')) {
+  finalDbUrl = finalDbUrl.includes('?') ? `${finalDbUrl}&ssl=true` : `${finalDbUrl}?ssl=true`;
   console.log('[PRISMA] ✅ Added ssl=true to DATABASE_URL for Render PostgreSQL');
   console.log(`[PRISMA] 📝 Updated URL: ${finalDbUrl.replace(/:[^:@]+@/, ':****@')}`); // Mask password
-} else if (dbUrl.includes('render.com') && dbUrl.includes('ssl=')) {
+} else if (finalDbUrl.includes('render.com') && finalDbUrl.includes('ssl=')) {
   console.log('[PRISMA] ✅ SSL already configured in DATABASE_URL');
-} else if (!dbUrl.includes('render.com')) {
+} else if (!finalDbUrl.includes('render.com')) {
   console.log('[PRISMA] ℹ️ Not a Render PostgreSQL URL, using DATABASE_URL as-is');
 }
 
