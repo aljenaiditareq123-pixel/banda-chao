@@ -5,9 +5,11 @@
 
 /**
  * Check backend environment variables
- * Logs warnings if critical variables are missing
+ * CRITICAL: In production, exits immediately if required variables are missing
+ * This prevents the app from starting with invalid configuration
  */
 export function checkBackendEnv(): void {
+  const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
   const requiredVars = {
     DATABASE_URL: process.env.DATABASE_URL,
     JWT_SECRET: process.env.JWT_SECRET,
@@ -18,12 +20,12 @@ export function checkBackendEnv(): void {
   const missing: string[] = [];
   const warnings: string[] = [];
 
-  // Check required variables
-  if (!requiredVars.DATABASE_URL) {
+  // Check required variables with strict validation
+  if (!requiredVars.DATABASE_URL || typeof requiredVars.DATABASE_URL !== 'string' || requiredVars.DATABASE_URL.trim() === '') {
     missing.push('DATABASE_URL');
   }
 
-  if (!requiredVars.JWT_SECRET) {
+  if (!requiredVars.JWT_SECRET || typeof requiredVars.JWT_SECRET !== 'string' || requiredVars.JWT_SECRET.trim() === '') {
     missing.push('JWT_SECRET');
   }
 
@@ -32,16 +34,31 @@ export function checkBackendEnv(): void {
   }
 
   if (!requiredVars.FRONTEND_URL) {
-    warnings.push('FRONTEND_URL (CORS may not work correctly)');
+    warnings.push('FRONTEND_URL (CORS may not work correctly - using default)');
   }
 
-  // Log missing critical variables
+  // CRITICAL: In production, fail fast if required variables are missing
   if (missing.length > 0) {
-    console.error('[ENV CHECK] ❌ Missing required environment variables:', missing.join(', '));
-    console.error('[ENV CHECK] Server may not function correctly without these variables.');
+    const errorMessage = `[ENV CHECK] ❌ FATAL: Missing required environment variables: ${missing.join(', ')}`;
+    console.error(errorMessage);
+    console.error('[ENV CHECK] Server cannot start without these variables.');
+    console.error('[ENV CHECK] Please set them in Render Dashboard → Environment → Environment Variables');
+    console.error('[ENV CHECK] Required variables:');
+    missing.forEach((varName) => {
+      console.error(`  - ${varName}`);
+    });
+    
+    // In production, exit immediately to prevent running with invalid config
+    if (isProduction) {
+      console.error('[ENV CHECK] ❌ Server exiting to prevent insecure/invalid operation.');
+      process.exit(1); // Kill Switch - fail fast in production
+    } else {
+      // In development, warn but allow startup (for local testing)
+      console.warn('[ENV CHECK] ⚠️ Development mode: Allowing startup despite missing variables (NOT RECOMMENDED)');
+    }
   }
 
-  // Log warnings
+  // Log warnings for optional variables
   if (warnings.length > 0) {
     console.warn('[ENV CHECK] ⚠️ Missing optional environment variables:', warnings.join(', '));
   }

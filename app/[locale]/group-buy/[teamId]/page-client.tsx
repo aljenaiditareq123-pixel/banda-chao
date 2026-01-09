@@ -41,12 +41,17 @@ export default function GroupBuyLobbyClient({
   teamData,
 }: GroupBuyLobbyClientProps) {
   const router = useRouter();
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState<number | null>(null); // Initialize as null to prevent hydration mismatch
   const [isExpired, setIsExpired] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
-  // Update time every second for countdown
+  // Update time every second for countdown - client side only to prevent hydration mismatch
   useEffect(() => {
+    // Initialize on client side only
+    if (now === null) {
+      setNow(Date.now());
+    }
+    
     const interval = setInterval(() => {
       const currentTime = Date.now();
       setNow(currentTime);
@@ -55,7 +60,7 @@ export default function GroupBuyLobbyClient({
       }
     }, 1000);
     return () => clearInterval(interval);
-  }, [teamData.expiresAt]);
+  }, [teamData.expiresAt, now]);
 
   const formatPrice = (price: number) => {
     const symbols: Record<string, string> = {
@@ -70,6 +75,7 @@ export default function GroupBuyLobbyClient({
 
   const formatTimeRemaining = (): string => {
     if (isExpired) return '00:00';
+    if (now === null) return '--:--'; // Return placeholder until client-side time is set
     const remaining = Math.max(0, teamData.expiresAt - now);
     const minutes = Math.floor(remaining / 60000);
     const seconds = Math.floor((remaining % 60000) / 1000);
