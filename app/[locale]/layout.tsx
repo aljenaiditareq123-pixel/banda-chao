@@ -190,8 +190,7 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
   const fontClassName = validLocale === 'ar' ? almarai.className : inter.className;
 
   return (
-    <html lang={lang} dir={dir} className={fontClassName} suppressHydrationWarning>
-      <body className={fontClassName} suppressHydrationWarning>
+    <>
         {/* Baidu-specific meta tags for Chinese pages */}
         {validLocale === 'zh' && (
           <Script
@@ -282,7 +281,6 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
         </SessionProviderWrapper>
         {/* Language sync - update root LanguageProvider with locale from URL */}
         <LanguageSync locale={validLocale} />
-      </body>
-    </html>
+    </>
   );
 }
