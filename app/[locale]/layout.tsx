@@ -2,21 +2,25 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Script from 'next/script';
 import { Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import { Almarai, Inter } from 'next/font/google';
 import { CartProvider } from '@/contexts/CartContext';
 import { NightMarketProvider } from '@/contexts/NightMarketContext';
 import SessionProviderWrapper from '@/components/providers/SessionProviderWrapper';
 import LanguageSync from '@/components/providers/LanguageSync';
-import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import CartDrawer from '@/components/CartDrawer';
-import FlashSale from '@/components/FlashSale';
-import NightMarketBanner from '@/components/nightmarket/NightMarketBanner';
-import BottomNav from '@/components/BottomNav';
-import BandaPet from '@/components/pet/BandaPet';
-import SmartToasts from '@/components/SmartToasts';
-import CartToast from '@/components/cart/CartToast';
-import PandaChatBubble from '@/components/chat/PandaChatBubble';
+
+// Disable SSR for interactive components to prevent React Error #310
+const Navbar = dynamic(() => import('@/components/layout/Navbar'), { ssr: false });
+const CartDrawer = dynamic(() => import('@/components/CartDrawer'), { ssr: false });
+const FlashSale = dynamic(() => import('@/components/FlashSale'), { ssr: false });
+const NightMarketBanner = dynamic(() => import('@/components/nightmarket/NightMarketBanner'), { ssr: false });
+const BottomNav = dynamic(() => import('@/components/BottomNav'), { ssr: false });
+const BandaPet = dynamic(() => import('@/components/pet/BandaPet'), { ssr: false });
+const SmartToasts = dynamic(() => import('@/components/SmartToasts'), { ssr: false });
+const CartToast = dynamic(() => import('@/components/cart/CartToast'), { ssr: false });
+const PandaChatBubble = dynamic(() => import('@/components/chat/PandaChatBubble'), { ssr: false });
+
 import '../globals.css';
 
 // Premium Arabic font
