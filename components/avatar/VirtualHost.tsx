@@ -173,11 +173,12 @@ const TechParticle = ({ delay, angle }: { delay: number; angle: number }) => {
 };
 
 export default function VirtualHost() {
+  // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP
   const { language } = useLanguage();
   const mounted = useMounted();
   const [isOpen, setIsOpen] = useState(false);
   const [currentPersona, setCurrentPersona] = useState<Persona>(PERSONAS[0]);
-  const [showBubble, setShowBubble] = useState(true);
+  const [showBubble, setShowBubble] = useState(false); // Start false to prevent hydration mismatch
   const [showEffect, setShowEffect] = useState(false);
   const [coins, setCoins] = useState<{ id: number; x: number; delay: number }[]>([]);
   const [sparkles, setSparkles] = useState<{ id: number; x: number; y: number; delay: number }[]>([]);
@@ -258,6 +259,7 @@ export default function VirtualHost() {
   // Show bubble on mount (only after component is mounted)
   useEffect(() => {
     if (!mounted) return;
+    setShowBubble(true);
     const timer = setTimeout(() => setShowBubble(false), 5000);
     return () => clearTimeout(timer);
   }, [mounted]);
@@ -279,9 +281,10 @@ export default function VirtualHost() {
 
   const t = texts[locale] || texts.en;
 
-  // Don't render until mounted to prevent hydration mismatch
+  // Render conditionally inside JSX, not via early return
+  // This ensures hooks are always called in the same order
   if (!mounted) {
-    return null;
+    return null; // Safe early return AFTER all hooks have been called
   }
 
   return (

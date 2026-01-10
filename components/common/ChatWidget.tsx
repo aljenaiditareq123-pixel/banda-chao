@@ -21,6 +21,7 @@ export default function ChatWidget() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP
   // Initialize messages after mount to prevent hydration mismatch
   useEffect(() => {
     setMounted(true);
@@ -39,14 +40,16 @@ export default function ChatWidget() {
   };
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (mounted) {
+      scrollToBottom();
+    }
+  }, [messages, mounted]);
 
   useEffect(() => {
-    if (isOpen && inputRef.current) {
+    if (isOpen && inputRef.current && mounted) {
       inputRef.current.focus();
     }
-  }, [isOpen]);
+  }, [isOpen, mounted]);
 
   const handleSendMessage = () => {
     if (!inputText.trim()) return;
@@ -91,9 +94,10 @@ export default function ChatWidget() {
     setLanguage((prev) => (prev === 'en' ? 'ar' : 'en'));
   };
 
-  // Don't render until mounted to prevent hydration mismatch
+  // Render conditionally inside JSX, not via early return
+  // This ensures hooks are always called in the same order
   if (!mounted) {
-    return null;
+    return null; // Safe early return AFTER all hooks have been called
   }
 
   return (

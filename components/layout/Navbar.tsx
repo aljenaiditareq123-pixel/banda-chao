@@ -16,13 +16,9 @@ interface NavbarProps {
 }
 
 export default function Navbar({ locale }: NavbarProps) {
+  // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const handleLogout = async () => {
     try {
@@ -48,42 +44,8 @@ export default function Navbar({ locale }: NavbarProps) {
     }
   };
 
-  // Prevent hydration mismatch by rendering minimal shell until mounted
-  if (!mounted) {
-    return (
-      <nav className="bg-white border-b border-gray-200 sticky top-0 relative z-[9999] pointer-events-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center">
-              <Link href={`/${locale}`} className="text-xl font-bold text-primary">
-                Banda Chao
-              </Link>
-            </div>
-            <div className="flex items-center gap-4 relative z-[9999] pointer-events-auto">
-              <Link href={`/${locale}/makers`} className="text-gray-600 hover:text-gray-900">
-                {locale === 'ar' ? 'الحرفيون' : locale === 'zh' ? '手工艺人' : 'Makers'}
-              </Link>
-              <Link href={`/${locale}/products`} className="text-gray-600 hover:text-gray-900">
-                {locale === 'ar' ? 'المنتجات' : locale === 'zh' ? '产品' : 'Products'}
-              </Link>
-              <Link href={`/${locale}/videos`} className="text-gray-600 hover:text-gray-900">
-                {locale === 'ar' ? 'الفيديوهات' : locale === 'zh' ? '视频' : 'Videos'}
-              </Link>
-              <Link href={`/${locale}/chat`} className="text-purple-600 hover:text-purple-700 font-semibold">
-                🧠 {locale === 'ar' ? 'مساعد باندا' : locale === 'zh' ? 'AI助手' : 'AI Assistant'}
-              </Link>
-              <Link href={`/${locale}/about`} className="text-gray-600 hover:text-gray-900">
-                {locale === 'ar' ? 'عن' : locale === 'zh' ? '关于' : 'About'}
-              </Link>
-              <AuthButtons locale={locale} isLoggedIn={false} />
-              <UploadButton locale={locale} isLoggedIn={false} />
-            </div>
-          </div>
-        </div>
-      </nav>
-    );
-  }
-
+  // Render conditionally inside JSX, not via early return
+  // This ensures hooks are always called in the same order
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 relative z-[9999] pointer-events-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -98,7 +60,6 @@ export default function Navbar({ locale }: NavbarProps) {
           <SearchBar locale={locale} />
           
           <div className="flex items-center gap-4 relative z-[9999] pointer-events-auto">
-            <NotificationBell locale={locale} />
             <Link 
               href={`/${locale}/makers`} 
               className="text-gray-600 hover:text-gray-900 transition-colors"
@@ -170,15 +131,15 @@ export default function Navbar({ locale }: NavbarProps) {
             {/* Auth Buttons */}
             <AuthButtons 
               locale={locale} 
-              isLoggedIn={!!user && !authLoading}
-              userName={user?.name || null}
+              isLoggedIn={typeof window !== 'undefined' && !!user && !authLoading}
+              userName={typeof window !== 'undefined' ? user?.name || null : null}
               onLogout={handleLogout}
             />
             {/* Upload Button */}
             <UploadButton 
               locale={locale}
-              isLoggedIn={!!user && !authLoading}
-              userRole={user?.role || undefined}
+              isLoggedIn={typeof window !== 'undefined' && !!user && !authLoading}
+              userRole={typeof window !== 'undefined' ? user?.role || undefined : undefined}
             />
             {/* Language Switcher */}
             <div className="flex items-center gap-2 relative z-[9999] pointer-events-auto">
@@ -234,38 +195,11 @@ export default function Navbar({ locale }: NavbarProps) {
 
 // Cart Icon Component
 function CartIcon({ locale }: { locale: string }) {
+  // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP
   const { itemCount, toggleDrawer } = useCart();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return (
-      <button
-        type="button"
-        className="relative p-2 text-gray-600 hover:text-gray-900 transition-colors"
-        aria-label={locale === 'ar' ? 'سلة التسوق' : locale === 'zh' ? '购物车' : 'Shopping Cart'}
-      >
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-          />
-        </svg>
-      </button>
-    );
-  }
-
+  
+  // Render conditionally inside JSX, not via early return
+  // This ensures hooks are always called in the same order
   return (
     <button
       type="button"
@@ -287,7 +221,7 @@ function CartIcon({ locale }: { locale: string }) {
           d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
         />
       </svg>
-      {itemCount > 0 && (
+      {typeof window !== 'undefined' && itemCount > 0 && (
         <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
           {itemCount > 9 ? '9+' : itemCount}
         </span>
