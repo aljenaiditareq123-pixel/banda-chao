@@ -2,25 +2,13 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Script from 'next/script';
 import { Suspense } from 'react';
-import dynamic from 'next/dynamic';
 import { Almarai, Inter } from 'next/font/google';
 import { CartProvider } from '@/contexts/CartContext';
 import { NightMarketProvider } from '@/contexts/NightMarketContext';
 import SessionProviderWrapper from '@/components/providers/SessionProviderWrapper';
 import LanguageSync from '@/components/providers/LanguageSync';
 import Footer from '@/components/layout/Footer';
-
-// Disable SSR for interactive components to prevent React Error #310
-const Navbar = dynamic(() => import('@/components/layout/Navbar'), { ssr: false });
-const CartDrawer = dynamic(() => import('@/components/CartDrawer'), { ssr: false });
-const FlashSale = dynamic(() => import('@/components/FlashSale'), { ssr: false });
-const NightMarketBanner = dynamic(() => import('@/components/nightmarket/NightMarketBanner'), { ssr: false });
-const BottomNav = dynamic(() => import('@/components/BottomNav'), { ssr: false });
-const BandaPet = dynamic(() => import('@/components/pet/BandaPet'), { ssr: false });
-const SmartToasts = dynamic(() => import('@/components/SmartToasts'), { ssr: false });
-const CartToast = dynamic(() => import('@/components/cart/CartToast'), { ssr: false });
-const PandaChatBubble = dynamic(() => import('@/components/chat/PandaChatBubble'), { ssr: false });
-
+import ClientLayoutWrapper from '@/components/layout/ClientLayoutWrapper';
 import '../globals.css';
 
 // Premium Arabic font
@@ -256,31 +244,20 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
         <SessionProviderWrapper>
           <CartProvider>
             <NightMarketProvider>
-                <div className="flex flex-col min-h-screen pb-20 lg:pb-0">
-                  {/* Night Market Banner - Shows during 8 PM - 6 AM */}
-                  <NightMarketBanner locale={validLocale} />
-                  {/* Flash Sale Countdown Banner - Top of Page */}
-                  <FlashSale />
-                  <Navbar locale={validLocale} />
-                {/* Smart Social Proof Toasts - Premium Live Activity Notifications */}
-                <SmartToasts />
-                {/* Cart Toast Notifications */}
-                <CartToast />
+              <div className="flex flex-col min-h-screen pb-20 lg:pb-0">
+                {/* Client-only interactive components (Navbar, CartDrawer, etc.) */}
+                <ClientLayoutWrapper locale={validLocale} />
+                
                 <main className="flex-grow">
                   <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div></div>}>
                     {children}
                   </Suspense>
                 </main>
+                
+                {/* Footer - Server Component */}
                 <Footer locale={validLocale} />
-                <CartDrawer locale={validLocale} />
-                {/* Bottom Navigation Bar - Mobile Only */}
-                <BottomNav />
-                {/* Banda Pet - Floating */}
-                <BandaPet locale={validLocale} position="floating" size="medium" />
-                {/* Panda Chat Bubble - AI Butler */}
-                <PandaChatBubble locale={validLocale} />
               </div>
-              </NightMarketProvider>
+            </NightMarketProvider>
           </CartProvider>
         </SessionProviderWrapper>
         {/* Language sync - update root LanguageProvider with locale from URL */}

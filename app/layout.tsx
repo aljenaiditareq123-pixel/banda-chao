@@ -1,14 +1,10 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { Suspense } from 'react'
-import dynamic from 'next/dynamic'
 import { LanguageProvider } from '@/contexts/LanguageContext'
 import EnvCheckInit from '@/components/common/EnvCheckInit'
 import { ErrorBoundary } from '@/components/common/ErrorBoundary'
-
-// Disable SSR for interactive components to prevent React Error #310
-const ChatWidget = dynamic(() => import('@/components/common/ChatWidget'), { ssr: false });
-const VirtualHost = dynamic(() => import('@/components/avatar/VirtualHost'), { ssr: false });
+import ClientRootWrapper from '@/components/layout/ClientRootWrapper'
 
 // Get base URL for metadataBase
 const metadataBaseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 
@@ -66,8 +62,8 @@ export default function RootLayout({
             <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
               {children}
             </Suspense>
-            <ChatWidget />
-            <VirtualHost />
+            {/* Client-only interactive components (ChatWidget, VirtualHost) */}
+            <ClientRootWrapper />
           </LanguageProvider>
         </ErrorBoundary>
       </body>
