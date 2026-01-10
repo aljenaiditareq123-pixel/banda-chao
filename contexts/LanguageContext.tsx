@@ -63,10 +63,11 @@ interface LanguageProviderProps {
 }
 
 export function LanguageProvider({ children, defaultLanguage = 'ar' }: LanguageProviderProps) {
+  // Initialize with defaultLanguage to ensure consistent SSR/client render
   const [language, setLanguageState] = useState<Language>(defaultLanguage);
 
+  // Only read from localStorage after mount to prevent hydration mismatch
   useEffect(() => {
-    // Try to get language from localStorage (only on client to prevent hydration mismatch)
     if (typeof window !== 'undefined') {
       const savedLanguage = localStorage.getItem('language') as Language;
       if (savedLanguage && ['zh', 'en', 'ar'].includes(savedLanguage)) {
