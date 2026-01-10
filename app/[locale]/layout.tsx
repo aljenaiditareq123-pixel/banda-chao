@@ -3,10 +3,10 @@ import type { Metadata } from 'next';
 import Script from 'next/script';
 import { Suspense } from 'react';
 import { Almarai, Inter } from 'next/font/google';
-import { LanguageProvider } from '@/contexts/LanguageContext';
 import { CartProvider } from '@/contexts/CartContext';
 import { NightMarketProvider } from '@/contexts/NightMarketContext';
 import SessionProviderWrapper from '@/components/providers/SessionProviderWrapper';
+import LanguageSync from '@/components/providers/LanguageSync';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import CartDrawer from '@/components/CartDrawer';
@@ -250,10 +250,9 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
             }}
           />
         )}
-        <LanguageProvider defaultLanguage={validLocale as 'zh' | 'en' | 'ar'}>
-          <SessionProviderWrapper>
-            <CartProvider>
-              <NightMarketProvider>
+        <SessionProviderWrapper>
+          <CartProvider>
+            <NightMarketProvider>
                 <div className="flex flex-col min-h-screen pb-20 lg:pb-0">
                   {/* Night Market Banner - Shows during 8 PM - 6 AM */}
                   <NightMarketBanner locale={validLocale} />
@@ -279,9 +278,10 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
                 <PandaChatBubble locale={validLocale} />
               </div>
               </NightMarketProvider>
-            </CartProvider>
-          </SessionProviderWrapper>
-        </LanguageProvider>
+          </CartProvider>
+        </SessionProviderWrapper>
+        {/* Language sync - update root LanguageProvider with locale from URL */}
+        <LanguageSync locale={validLocale} />
       </body>
     </html>
   );
