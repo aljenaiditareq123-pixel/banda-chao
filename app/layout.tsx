@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { Suspense } from 'react'
-import { LanguageProvider } from '@/contexts/LanguageContext'
 import { ErrorBoundary } from '@/components/common/ErrorBoundary'
 import ClientRootWrapper from '@/components/layout/ClientRootWrapper'
+import ClientLanguageProvider from '@/components/providers/ClientLanguageProvider'
 
 // Get base URL for metadataBase
 const metadataBaseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 
@@ -56,13 +56,14 @@ export default function RootLayout({
       <html lang="ar" suppressHydrationWarning={true}>
       <body suppressHydrationWarning={true}>
         <ErrorBoundary>
-          <LanguageProvider defaultLanguage="ar">
+          {/* LanguageProvider is now client-only to prevent hydration mismatches */}
+          <ClientLanguageProvider defaultLanguage="ar">
             <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
               {children}
             </Suspense>
             {/* Client-only interactive components (ChatWidget, VirtualHost) */}
             <ClientRootWrapper />
-          </LanguageProvider>
+          </ClientLanguageProvider>
         </ErrorBoundary>
       </body>
     </html>
