@@ -6,7 +6,6 @@ import { Almarai, Inter } from 'next/font/google';
 import { CartProvider } from '@/contexts/CartContext';
 import { NightMarketProvider } from '@/contexts/NightMarketContext';
 import SessionProviderWrapper from '@/components/providers/SessionProviderWrapper';
-import LanguageSync from '@/components/providers/LanguageSync';
 import Footer from '@/components/layout/Footer';
 import ClientLayoutWrapper from '@/components/layout/ClientLayoutWrapper';
 import '../globals.css';
@@ -260,8 +259,6 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
             </NightMarketProvider>
           </CartProvider>
         </SessionProviderWrapper>
-        {/* Language sync - update root LanguageProvider with locale from URL */}
-        <LanguageSync locale={validLocale} />
     </>
   );
 }

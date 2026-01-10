@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { Suspense } from 'react'
 import { LanguageProvider } from '@/contexts/LanguageContext'
-import EnvCheckInit from '@/components/common/EnvCheckInit'
 import { ErrorBoundary } from '@/components/common/ErrorBoundary'
 import ClientRootWrapper from '@/components/layout/ClientRootWrapper'
 
@@ -54,9 +53,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="ar" suppressHydrationWarning={true}>
+      <html lang="ar" suppressHydrationWarning={true}>
       <body suppressHydrationWarning={true}>
-        <EnvCheckInit />
         <ErrorBoundary>
           <LanguageProvider defaultLanguage="ar">
             <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>

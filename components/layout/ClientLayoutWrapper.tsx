@@ -14,6 +14,7 @@ const BandaPet = dynamic(() => import('@/components/pet/BandaPet'), { ssr: false
 const SmartToasts = dynamic(() => import('@/components/SmartToasts'), { ssr: false });
 const CartToast = dynamic(() => import('@/components/cart/CartToast'), { ssr: false });
 const PandaChatBubble = dynamic(() => import('@/components/chat/PandaChatBubble'), { ssr: false });
+const LanguageSync = dynamic(() => import('@/components/providers/LanguageSync'), { ssr: false });
 
 interface ClientLayoutWrapperProps {
   locale: string;
@@ -67,6 +68,11 @@ export default function ClientLayoutWrapper({ locale }: ClientLayoutWrapperProps
       {/* Panda Chat Bubble - AI Butler */}
       <Suspense fallback={null}>
         <PandaChatBubble locale={locale} />
+      </Suspense>
+      
+      {/* Language Sync - Client-only to prevent hydration mismatches */}
+      <Suspense fallback={null}>
+        <LanguageSync locale={locale as 'zh' | 'en' | 'ar'} />
       </Suspense>
     </>
   );
