@@ -85,27 +85,6 @@ export default function FlashSale({ locale }: FlashSaleProps) {
 
   const formatTime = (value: number) => String(value).padStart(2, '0');
 
-  // Prevent hydration mismatch - don't render timer until mounted
-  if (!mounted) {
-    return (
-      <div className="mb-12">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center shadow-lg">
-              <Flame className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h2 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white">
-                {t.title}
-              </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400">{t.subtitle}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="mb-12">
       {/* Header */}
