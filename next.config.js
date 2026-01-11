@@ -146,3 +146,4 @@ const nextConfig = {
 
 module.exports = nextConfig
 
+// Force rebuild: 2026-01-11T06:50:00Z
