@@ -557,18 +557,19 @@ export default function HomePageClient({
               </Link>
             </div>
             <Grid columns={{ base: 1, sm: 2, md: 3, lg: 4 }} gap="gap-6">
-              {featuredProducts.slice(0, 4).map((product) => {
-                // Add discount simulation for Chinese market
-                const discount = Math.floor(Math.random() * 30) + 10;
+              {featuredProducts.slice(0, 4).map((product, index) => {
+                // Add discount simulation for Chinese market - use stable discount based on product ID
+                // Use product ID to generate consistent discount (prevents hydration mismatch)
+                const stableDiscount = ((product.id.charCodeAt(0) || index * 7) % 30) + 10;
                 const originalPrice = product.price;
-                const discountedPrice = originalPrice * (1 - discount / 100);
+                const discountedPrice = originalPrice * (1 - stableDiscount / 100);
 
                 return (
                   <GridItem key={product.id}>
                     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
                       <div className="relative">
                         <div className="absolute top-2 left-2 z-10 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
-                          -{discount}% 折扣
+                          -{stableDiscount}% 折扣
                         </div>
                         <Link href={`/${locale}/products/${product.id}`}>
                           {product.imageUrl || product.images?.[0]?.url ? (
