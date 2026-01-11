@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
-import HomePageClientWrapper from '@/components/home/HomePageClientWrapper';
+import ClientOnly from '@/components/ClientOnly';
+import HomePageClient from '@/components/home/HomePageClient';
 import { makersAPI, productsAPI, videosAPI, servicesAPI } from '@/lib/api';
 
 interface PageProps {
@@ -70,12 +71,14 @@ export default async function HomePage({ params }: PageProps) {
   }
 
   return (
-    <HomePageClientWrapper
-      locale={locale}
-      featuredMakers={featuredMakers}
-      featuredProducts={featuredProducts}
-      featuredVideos={featuredVideos}
-      featuredServices={featuredServices}
-    />
+    <ClientOnly>
+      <HomePageClient
+        locale={locale}
+        featuredMakers={featuredMakers}
+        featuredProducts={featuredProducts}
+        featuredVideos={featuredVideos}
+        featuredServices={featuredServices}
+      />
+    </ClientOnly>
   );
 }
