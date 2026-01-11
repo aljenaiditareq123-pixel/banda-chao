@@ -148,4 +148,3 @@ module.exports = nextConfig
 
 // Force rebuild: 2026-01-11T08:10:00Z - Trigger new build with HomePageClientWrapper fix
 // Force deploy refresh - 2026-01-11
-// Force deploy refresh - 2026-01-11
