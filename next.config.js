@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
+  reactStrictMode: false,
   
   // Optimize for Render: Use standalone output to reduce build size and memory usage
   // This creates a minimal server build that only includes necessary files
