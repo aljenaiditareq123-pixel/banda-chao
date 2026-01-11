@@ -392,6 +392,16 @@ if (fs.existsSync(standalonePublicPath)) {
 // This will be populated by founder.ts when an error occurs
 (global as any).lastKPIsError = null;
 
+// Root route - Welcome endpoint
+app.get('/', (req: Request, res: Response) => {
+  res.json({
+    message: 'Welcome to Banda Chao API',
+    version: '1.0.0',
+    status: 'running',
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // CSRF token endpoint (for authenticated users to get fresh token)
 app.get('/api/v1/csrf-token', authenticateToken, (req: Request, res: Response) => {
   getCsrfToken(req, res);
