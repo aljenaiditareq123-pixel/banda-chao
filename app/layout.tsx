@@ -53,7 +53,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-      <html lang="ar" suppressHydrationWarning={true}>
+    <html lang="ar" suppressHydrationWarning={true}>
       <body suppressHydrationWarning={true}>
         <ErrorBoundary>
           {/* LanguageProvider is now client-only to prevent hydration mismatches */}
