@@ -24,6 +24,7 @@ import CategoryCircles from '@/components/home/CategoryCircles';
 import FlashSale from '@/components/home/FlashSale';
 import ProductGrid from '@/components/home/ProductGrid';
 import DailyFengShui from '@/components/home/DailyFengShui';
+import { useMounted } from '@/hooks/useMounted';
 import { servicesAPI } from '@/lib/api';
 import { getAllMockProducts, mockProductToApiFormat } from '@/lib/mock-products';
 
@@ -71,6 +72,7 @@ export default function HomePageClient({
   featuredServices = [],
 }: HomePageClientProps) {
   const { setLanguage, t } = useLanguage();
+  const mounted = useMounted(); // Client-side only flag to prevent hydration mismatch
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [activeTab, setActiveTab] = useState<'products' | 'services'>('products');
   const [services, setServices] = useState<any[]>(featuredServices);
@@ -203,14 +205,14 @@ export default function HomePageClient({
 
       {/* Main Storefront Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Hero Slider */}
-        <HeroSlider locale={locale} />
+        {/* Hero Slider - Client-side only to prevent hydration mismatch */}
+        {mounted && <HeroSlider locale={locale} />}
 
         {/* Category Circles */}
         <CategoryCircles locale={locale} />
 
-        {/* Flash Sale */}
-        <FlashSale locale={locale} />
+        {/* Flash Sale - Client-side only to prevent hydration mismatch (timer/date differences) */}
+        {mounted && <FlashSale locale={locale} />}
 
         {/* Lucky Products Section - Show 3 matching products */}
         {luckyColor && (() => {
