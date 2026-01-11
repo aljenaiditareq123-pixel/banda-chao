@@ -146,4 +146,4 @@ const nextConfig = {
 
 module.exports = nextConfig
 
-// Force rebuild: 2026-01-11T06:50:00Z
+// Force rebuild: 2026-01-11T08:10:00Z - Trigger new build with HomePageClientWrapper fix
