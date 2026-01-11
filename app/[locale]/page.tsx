@@ -1,6 +1,12 @@
 import { notFound } from 'next/navigation';
-import HomePageClient from '@/components/home/HomePageClient';
+import dynamic from 'next/dynamic';
 import { makersAPI, productsAPI, videosAPI, servicesAPI } from '@/lib/api';
+
+// Disable SSR for HomePageClient to prevent hydration mismatch (Error #310)
+const HomePageClient = dynamic(
+  () => import('@/components/home/HomePageClient'),
+  { ssr: false }
+);
 
 interface PageProps {
   params: Promise<{
