@@ -1,7 +1,12 @@
 import { notFound } from 'next/navigation';
-import ClientOnly from '@/components/ClientOnly';
-import HomePageClient from '@/components/home/HomePageClient';
+import dynamic from 'next/dynamic';
 import { makersAPI, productsAPI, videosAPI, servicesAPI } from '@/lib/api';
+
+// Disable SSR for HomePageClient to prevent React Error #310 (hydration mismatch)
+const HomePageClient = dynamic(
+  () => import('@/components/home/HomePageClient'),
+  { ssr: false }
+);
 
 interface PageProps {
   params: Promise<{
@@ -71,14 +76,12 @@ export default async function HomePage({ params }: PageProps) {
   }
 
   return (
-    <ClientOnly>
-      <HomePageClient
-        locale={locale}
-        featuredMakers={featuredMakers}
-        featuredProducts={featuredProducts}
-        featuredVideos={featuredVideos}
-        featuredServices={featuredServices}
-      />
-    </ClientOnly>
+    <HomePageClient
+      locale={locale}
+      featuredMakers={featuredMakers}
+      featuredProducts={featuredProducts}
+      featuredVideos={featuredVideos}
+      featuredServices={featuredServices}
+    />
   );
 }
