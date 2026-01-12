@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Banda Chao Icons</title>
+</head>
+<body>
+    <h1>Banda Chao Icon Generator</h1>
+    
+    <!-- Canvas for 192x192 icon -->
+    <canvas id="icon192" width="192" height="192" style="border: 1px solid #ccc; margin: 10px;"></canvas>
+    <br>
+    <button onclick="downloadIcon192()">Download 192x192 Icon</button>
+    
+    <br><br>
+    
+    <!-- Canvas for 512x512 icon -->
+    <canvas id="icon512" width="512" height="512" style="border: 1px solid #ccc; margin: 10px;"></canvas>
+    <br>
+    <button onclick="downloadIcon512()">Download 512x512 Icon</button>
+
+    <script>
+        // Create 192x192 icon
+        function createIcon192() {
+            const canvas = document.getElementById('icon192');
+            const ctx = canvas.getContext('2d');
+            
+            // Background gradient
+            const gradient = ctx.createLinearGradient(0, 0, 192, 192);
+            gradient.addColorStop(0, '#dc2626'); // Red
+            gradient.addColorStop(1, '#991b1b'); // Dark red
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 192, 192);
+            
+            // Add rounded corners
+            ctx.globalCompositeOperation = 'destination-in';
+            ctx.beginPath();
+            ctx.roundRect(0, 0, 192, 192, 24);
+            ctx.fill();
+            ctx.globalCompositeOperation = 'source-over';
+            
+            // Add "BC" text (Banda Chao)
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 80px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('BC', 96, 96);
+            
+            // Add small panda emoji if supported
+            ctx.font = '40px Arial';
+            ctx.fillText('🐼', 96, 140);
+        }
+        
+        // Create 512x512 icon
+        function createIcon512() {
+            const canvas = document.getElementById('icon512');
+            const ctx = canvas.getContext('2d');
+            
+            // Background gradient
+            const gradient = ctx.createLinearGradient(0, 0, 512, 512);
+            gradient.addColorStop(0, '#dc2626'); // Red
+            gradient.addColorStop(1, '#991b1b'); // Dark red
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 512, 512);
+            
+            // Add rounded corners
+            ctx.globalCompositeOperation = 'destination-in';
+            ctx.beginPath();
+            ctx.roundRect(0, 0, 512, 512, 64);
+            ctx.fill();
+            ctx.globalCompositeOperation = 'source-over';
+            
+            // Add "BC" text (Banda Chao)
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 200px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('BC', 256, 256);
+            
+            // Add small panda emoji if supported
+            ctx.font = '100px Arial';
+            ctx.fillText('🐼', 256, 370);
+        }
+        
+        function downloadIcon192() {
+            const canvas = document.getElementById('icon192');
+            const link = document.createElement('a');
+            link.download = 'icon-192.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+        
+        function downloadIcon512() {
+            const canvas = document.getElementById('icon512');
+            const link = document.createElement('a');
+            link.download = 'icon-512.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+        
+        // Create icons on page load
+        window.onload = function() {
+            createIcon192();
+            createIcon512();
+        };
+    </script>
+</body>
+</html>

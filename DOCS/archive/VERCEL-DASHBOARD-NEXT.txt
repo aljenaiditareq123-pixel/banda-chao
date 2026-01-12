@@ -1,0 +1,81 @@
+═══════════════════════════════════════════════════════
+   ✅ أنت في Vercel Dashboard - الخطوات التالية
+═══════════════════════════════════════════════════════
+
+🎯 الآن في صفحة Vercel Dashboard!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 الخطوة 1: ابحث عن زر "Add New..."
+
+   → في أعلى الصفحة أو بجانب "Search Projects..."
+   → اضغط "Add New..." أو "New Project"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 الخطوة 2: اختر طريقة الرفع
+
+   بعد الضغط على "Add New..." سترى:
+   
+   □ "Import Git Repository" (يتطلب GitHub - تخطّاه)
+   □ "Deploy" أو "Upload" أو "Deploy from local folder"
+   
+   → ابحث عن خيار الرفع المباشر
+   → أو اسحب المجلد مباشرة إلى الصفحة
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 الخطوة 3: ارفع المجلد
+
+   المجلد المطلوب:
+   /Users/tarqahmdaljnydy/Desktop/banda-chao
+   
+   → اسحب المجلد من Finder إلى نافذة Vercel
+   → أو اضغط "Browse" واختر المجلد
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 الخطوة 4: إعداد المشروع
+
+   Project Name: banda-chao
+   Framework: Next.js (سيختاره تلقائياً)
+   Root Directory: ./
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 الخطوة 5: أضف Environment Variables
+
+   اضغط "Environment Variables" أو "Env Vars"
+   
+   المتغير 1:
+   Key: NEXT_PUBLIC_SUPABASE_URL
+   Value: https://gtnyspavjsoolvnphihs.supabase.co
+   ✅ Production, Preview, Development
+
+   المتغير 2:
+   Key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+   Value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0bnlzcGF2anNvb2x2bnBoaWhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE3MjcxNDAsImV4cCI6MjA3NzMwMzE0MH0.kKpUYPuRdJOBd39S9w_bvb-Zc7w5qyYj07UtLy-V5BU
+   ✅ Production, Preview, Development
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 الخطوة 6: انشر!
+
+   اضغط "Deploy"
+   انتظر 2-5 دقائق
+   ✅ احصل على رابط!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 إذا لم تجد خيار "Upload":
+
+   → جرب استخدام Terminal (كما شرحنا سابقاً)
+   → أو ارفع المشروع على GitHub أولاً
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 ابدأ الآن: اضغط "Add New..." في Vercel Dashboard!
+
+═══════════════════════════════════════════════════════
+
+

@@ -1,0 +1,71 @@
+═══════════════════════════════════════════════════════
+   🚀 خطوات النشر على Vercel - الآن!
+═══════════════════════════════════════════════════════
+
+أنت الآن في موقع Vercel - اتبع هذه الخطوات:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1️⃣ إذا لم تسجل بعد:
+   - اضغط "Sign Up"
+   - اختر "Continue with GitHub" (أسهل)
+   - أو سجّل بالبريد: aljenaiditareq123@gmail.com
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+2️⃣ بعد تسجيل الدخول:
+   - اضغط "Add New..." أو "New Project"
+   - اختر "Browse" أو اسحب المجلد
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+3️⃣ ارفع المجلد:
+   - اسحب هذا المجلد إلى Vercel:
+     /Users/tarqahmdaljnydy/Desktop/banda-chao
+   
+   - أو اضغط "Browse" واختر المجلد
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+4️⃣ إعداد المشروع:
+   - Project Name: banda-chao
+   - Framework: Next.js (تلقائي)
+   - Root Directory: ./
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+5️⃣ أضف متغيرات البيئة (Environment Variables):
+
+   اضغط "Environment Variables" أو "Env Vars"
+   
+   ثم أضف:
+
+   ✅ المتغير 1:
+      Key: NEXT_PUBLIC_SUPABASE_URL
+      Value: https://gtnyspavjsoolvnphihs.supabase.co
+      ✅ Production, Preview, Development
+
+   ✅ المتغير 2:
+      Key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+      Value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0bnlzcGF2anNvb2x2bnBoaWhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE3MjcxNDAsImV4cCI6MjA3NzMwMzE0MH0.kKpUYPuRdJOBd39S9w_bvb-Zc7w5qyYj07UtLy-V5BU
+      ✅ Production, Preview, Development
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+6️⃣ انشر:
+   - اضغط "Deploy"
+   - انتظر 2-5 دقائق
+   - ✅ ستحصل على رابط!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ بعد النشر ستحصل على:
+   https://banda-chao.vercel.app
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 إذا واجهت مشكلة، أخبرني وأنا سأساعدك!
+
+═══════════════════════════════════════════════════════
+
+

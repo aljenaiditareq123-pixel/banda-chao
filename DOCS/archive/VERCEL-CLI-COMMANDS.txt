@@ -1,0 +1,53 @@
+═══════════════════════════════════════════════════════
+   🚀 النشر مباشرة من Terminal - Vercel CLI
+═══════════════════════════════════════════════════════
+
+✅ هذه هي أسهل طريقة! (بدون GitHub)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 الأوامر (انسخ والصق):
+
+   cd /Users/tarqahmdaljnydy/Desktop/banda-chao
+   vercel
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 ماذا سيحدث:
+
+1. سيطلب منك تسجيل الدخول:
+   → سيظهر رابط في Terminal
+   → افتح الرابط في المتصفح
+   → اضغط "Authorize" أو "Approve"
+   → ✅ سيرجع تلقائياً
+
+2. سيسألك عن إعدادات المشروع:
+   → "Set up and deploy?" → اضغط Enter (نعم)
+   → "Which scope?" → اضغط Enter
+   → "Link to existing project?" → اضغط n (لا)
+   → "What's your project's name?" → اضغط Enter (banda-chao)
+   → "In which directory is your code located?" → اضغط Enter (./)
+
+3. سيسألك عن Environment Variables:
+   → سيسألك عن كل متغير
+   → أضف المتغيرات:
+
+   NEXT_PUBLIC_SUPABASE_URL
+   = https://gtnyspavjsoolvnphihs.supabase.co
+
+   NEXT_PUBLIC_SUPABASE_ANON_KEY
+   = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0bnlzcGF2anNvb2x2bnBoaWhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE3MjcxNDAsImV4cCI6MjA3NzMwMzE0MH0.kKpUYPuRdJOBd39S9w_bvb-Zc7w5qyYj07UtLy-V5BU
+
+4. ✅ سينشر مباشرة!
+   → ستحصل على رابط مثل: https://banda-chao.vercel.app
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 ابدأ الآن:
+
+   cd /Users/tarqahmdaljnydy/Desktop/banda-chao
+   vercel
+
+═══════════════════════════════════════════════════════
+
+

@@ -1,0 +1,63 @@
+═══════════════════════════════════════════════════════
+   🚀 نشر سريع - Quick Deploy
+═══════════════════════════════════════════════════════
+
+📧 بريدك: aljenaiditareq123@gmail.com
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 الخطوات (5 دقائق):
+
+1. اذهب: https://vercel.com
+
+2. اضغط "Sign Up"
+   - أدخل: aljenaiditareq123@gmail.com
+   - اختر كلمة مرور
+
+3. اضغط "New Project"
+
+4. اسحب المجلد:
+   /Users/tarqahmdaljnydy/Desktop/banda-chao
+
+5. أضف متغيرات البيئة:
+
+   المتغير 1:
+   NEXT_PUBLIC_SUPABASE_URL
+   = https://gtnyspavjsoolvnphihs.supabase.co
+
+   المتغير 2:
+   NEXT_PUBLIC_SUPABASE_ANON_KEY
+   = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0bnlzcGF2anNvb2x2bnBoaWhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE3MjcxNDAsImV4cCI6MjA3NzMwMzE0MH0.kKpUYPuRdJOBd39S9w_bvb-Zc7w5qyYj07UtLy-V5BU
+
+6. اضغط "Deploy"
+
+7. ✅ احصل على رابط!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ بعد النشر:
+   https://banda-chao.vercel.app
+   أو
+   https://banda-chao-aljenaiditareq123.vercel.app
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔗 الروابط:
+   - /showcase
+   - /ai/chat
+   - /
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ للتعديلات:
+   - عدّل الكود
+   - ارفع على GitHub
+   - ✅ نشر تلقائي!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 ابدأ الآن: https://vercel.com
+
+═══════════════════════════════════════════════════════
+
+

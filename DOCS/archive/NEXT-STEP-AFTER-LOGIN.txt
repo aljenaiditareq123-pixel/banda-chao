@@ -1,0 +1,58 @@
+═══════════════════════════════════════════════════════
+   ✅ الخطوة التالية بعد تسجيل الدخول
+═══════════════════════════════════════════════════════
+
+✅ تم تسجيل الدخول بنجاح!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 الخطوة 1: افتح الرابط في المتصفح
+
+   الرابط:
+   https://vercel.com/oauth/device?user_code=DVZT-XXXT
+
+   → انسخ الرابط من Terminal
+   → افتحه في المتصفح
+   → اضغط "Authorize" أو "Approve"
+   → ✅ سيرجع تلقائياً لـ Terminal
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 الخطوة 2: بعد المصادقة، نفّذ:
+
+   npx vercel
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 الخطوة 3: اتبع التعليمات:
+
+   → "Set up and deploy?" → اضغط Enter
+   → "Which scope?" → اضغط Enter
+   → "Link to existing project?" → اكتب: n
+   → "What's your project's name?" → اضغط Enter (banda-chao)
+   → "In which directory?" → اضغط Enter (./)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 الخطوة 4: أضف Environment Variables
+
+   عندما يسأل عن NEXT_PUBLIC_SUPABASE_URL:
+   → https://gtnyspavjsoolvnphihs.supabase.co
+
+   عندما يسأل عن NEXT_PUBLIC_SUPABASE_ANON_KEY:
+   → eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0bnlzcGF2anNvb2x2bnBoaWhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE3MjcxNDAsImV4cCI6MjA3NzMwMzE0MH0.kKpUYPuRdJOBd39S9w_bvb-Zc7w5qyYj07UtLy-V5BU
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ بعد دقائق قليلة:
+
+   ستحصل على رابط مثل:
+   https://banda-chao.vercel.app
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 ابدأ الآن: افتح الرابط في المتصفح!
+
+═══════════════════════════════════════════════════════
+
+

@@ -1,0 +1,62 @@
+═══════════════════════════════════════════════════════
+   🚀 نشر سريع - Quick Deploy
+═══════════════════════════════════════════════════════
+
+✅ Git جاهز! (تم إعداده تلقائياً)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 الخطوات البسيطة:
+
+1️⃣ أنشئ مستودع على GitHub:
+   https://github.com/new
+   
+   - اسم المستودع: banda-chao
+   - Visibility: Public (أو Private)
+   - ❌ لا تضع علامة على أي شيء
+   - اضغط "Create repository"
+
+2️⃣ انسخ رابط المستودع:
+   سيظهر لك رابط مثل:
+   https://github.com/YOUR_USERNAME/banda-chao.git
+
+3️⃣ نفّذ في Terminal:
+   
+   cd /Users/tarqahmdaljnydy/Desktop/banda-chao
+   git remote add origin [الصق الرابط هنا]
+   git branch -M main
+   git push -u origin main
+
+   أو شغّل السكريبت:
+   ./scripts/push-to-github.sh
+
+4️⃣ ربط GitHub بـ Vercel:
+   https://vercel.com
+   - سجّل بحساب GitHub
+   - Import Git Repository
+   - اختر banda-chao
+   - أضف متغيرات البيئة
+   - ✅ انشر!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ بعد النشر:
+   https://banda-chao.vercel.app
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 متغيرات البيئة لـ Vercel:
+
+NEXT_PUBLIC_SUPABASE_URL
+= https://gtnyspavjsoolvnphihs.supabase.co
+
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+= eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0bnlzcGF2anNvb2x2bnBoaWhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE3MjcxNDAsImV4cCI6MjA3NzMwMzE0MH0.kKpUYPuRdJOBd39S9w_bvb-Zc7w5qyYj07UtLy-V5BU
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 ابدأ الآن: https://github.com/new
+
+═══════════════════════════════════════════════════════
+
+

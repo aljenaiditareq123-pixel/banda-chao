@@ -1,0 +1,43 @@
+═══════════════════════════════════════════════════════
+   🔗 الرابط المباشر للنشر - Direct Deploy Link
+═══════════════════════════════════════════════════════
+
+📌 الرابط المباشر:
+
+https://vercel.com/new
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 ماذا ستفعل بعد فتح الرابط:
+
+1. إذا لم تكن مسجلاً:
+   - اضغط "Sign Up"
+   - اختر "Continue with GitHub" (أسهل)
+   - أو سجّل بالبريد: aljenaiditareq123@gmail.com
+
+2. إذا كنت مسجلاً:
+   - سيظهر لك خيارات رفع المشروع
+   - اختر "Browse" أو اسحب المجلد
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📁 المجلد المطلوب:
+   /Users/tarqahmdaljnydy/Desktop/banda-chao
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ متغيرات البيئة المطلوبة:
+
+NEXT_PUBLIC_SUPABASE_URL
+= https://gtnyspavjsoolvnphihs.supabase.co
+
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+= eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0bnlzcGF2anNvb2x2bnBoaWhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE3MjcxNDAsImV4cCI6MjA3NzMwMzE0MH0.kKpUYPuRdJOBd39S9w_bvb-Zc7w5qyYj07UtLy-V5BU
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 ابدأ الآن: https://vercel.com/new
+
+═══════════════════════════════════════════════════════
+
+

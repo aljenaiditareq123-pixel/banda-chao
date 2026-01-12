@@ -1,0 +1,73 @@
+═══════════════════════════════════════════════════════
+   📋 الأوامر خطوة بخطوة - Step by Step Commands
+═══════════════════════════════════════════════════════
+
+✅ انسخ كل أمر على حدة وألصقه في Terminal!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📌 الخطوة 1: إصلاح PATH (إذا لم تكن نفذتها)
+
+   export PATH="$HOME/.nvm/versions/node/v24.11.0/bin:$PATH"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📌 الخطوة 2: تأكد أنك في المجلد الصحيح
+
+   cd /Users/tarqahmdaljnydy/Desktop/banda-chao
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📌 الخطوة 3: سجّل دخول Vercel
+
+   npx vercel login
+
+   → بعد تشغيل هذا الأمر:
+   → سيظهر رابط في Terminal
+   → انسخ الرابط وافتحه في المتصفح
+   → اضغط "Authorize"
+   → ✅ سيرجع تلقائياً
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📌 الخطوة 4: بعد المصادقة، انشر المشروع
+
+   npx vercel
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📌 الخطوة 5: عندما يسألك، اضغط Enter أو اكتب:
+
+   → "Set up and deploy?" → اضغط Enter
+   → "Which scope?" → اضغط Enter  
+   → "Link to existing project?" → اكتب: n
+   → ثم اضغط Enter
+   → "What's your project's name?" → اضغط Enter
+   → "In which directory is your code located?" → اضغط Enter
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📌 الخطوة 6: عندما يسأل عن Environment Variables:
+
+   → "Environment variable NEXT_PUBLIC_SUPABASE_URL?" 
+   → الصق: https://gtnyspavjsoolvnphihs.supabase.co
+   → اضغط Enter
+
+   → "Environment variable NEXT_PUBLIC_SUPABASE_ANON_KEY?"
+   → الصق: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0bnlzcGF2anNvb2x2bnBoaWhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE3MjcxNDAsImV4cCI6MjA3NzMwMzE0MH0.kKpUYPuRdJOBd39S9w_bvb-Zc7w5qyYj07UtLy-V5BU
+   → اضغط Enter
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ بعد دقائق قليلة:
+
+   ستحصل على رابط مثل:
+   https://banda-chao.vercel.app
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 ابدأ من الخطوة 1!
+
+═══════════════════════════════════════════════════════
+
+

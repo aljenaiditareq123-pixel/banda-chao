@@ -1475,4 +1475,109 @@ export const usersAPI = {
   },
 };
 
+// ============================================
+// Messages API
+// ============================================
+
+export const messagesAPI = {
+  sendMessage: async (data: { receiverId: string; content: string }) => {
+    try {
+      const response = await apiClient.post('/messages', data);
+      return response.data;
+    } catch (error: any) {
+      console.error('[messagesAPI.sendMessage] Error:', error);
+      throw error;
+    }
+  },
+  getChatHistory: async (userId1: string, userId2: string) => {
+    try {
+      const response = await apiClient.get(`/messages/${userId1}/${userId2}`);
+      return { data: response.data };
+    } catch (error: any) {
+      console.error('[messagesAPI.getChatHistory] Error:', error);
+      throw error;
+    }
+  },
+  getConversations: async () => {
+    try {
+      const response = await apiClient.get('/messages/conversations');
+      return { data: response.data };
+    } catch (error: any) {
+      console.error('[messagesAPI.getConversations] Error:', error);
+      throw error;
+    }
+  },
+};
+
+// ============================================
+// Moderation API
+// ============================================
+
+export const moderationAPI = {
+  getReports: async (params?: { resolved?: boolean; targetType?: string; limit?: number; offset?: number }) => {
+    try {
+      const response = await apiClient.get('/moderation/reports', { params });
+      return response.data;
+    } catch (error: any) {
+      console.error('[moderationAPI.getReports] Error:', error);
+      throw error;
+    }
+  },
+  resolveReport: async (reportId: string, resolved: boolean = true) => {
+    try {
+      const response = await apiClient.post('/moderation/resolve', { reportId, resolved });
+      return response.data;
+    } catch (error: any) {
+      console.error('[moderationAPI.resolveReport] Error:', error);
+      throw error;
+    }
+  },
+};
+
+// ============================================
+// Posts Likes API
+// ============================================
+
+export const postsLikesAPI = {
+  like: async (postId: string) => {
+    try {
+      const response = await apiClient.post('/likes/toggle', {
+        targetType: 'POST',
+        targetId: postId,
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('[postsLikesAPI.like] Error:', error);
+      throw error;
+    }
+  },
+  unlike: async (postId: string) => {
+    try {
+      // Unlike is the same as toggle - if already liked, it unlikes
+      const response = await apiClient.post('/likes/toggle', {
+        targetType: 'POST',
+        targetId: postId,
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('[postsLikesAPI.unlike] Error:', error);
+      throw error;
+    }
+  },
+  getLikeStatus: async (postId: string) => {
+    try {
+      const response = await apiClient.get('/likes/status', {
+        params: {
+          targetType: 'POST',
+          targetId: postId,
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('[postsLikesAPI.getLikeStatus] Error:', error);
+      throw error;
+    }
+  },
+};
+
 export default apiClient;

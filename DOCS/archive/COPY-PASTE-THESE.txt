@@ -1,0 +1,56 @@
+═══════════════════════════════════════════════════════
+   ✅ انسخ هذه الأوامر بالضبط - Copy These Exactly
+═══════════════════════════════════════════════════════
+
+📋 افتح Terminal وانسخ الأوامر واحدة تلو الأخرى:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1️⃣ الأمر الأول:
+
+cd /Users/tarqahmdaljnydy/Desktop/banda-chao
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+2️⃣ الأمر الثاني:
+
+vercel login
+
+   → بعد تشغيل هذا الأمر:
+   → سيظهر رابط في Terminal
+   → انسخ الرابط
+   → افتحه في المتصفح
+   → اضغط "Authorize"
+   → ✅ سيرجع تلقائياً لـ Terminal
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+3️⃣ الأمر الثالث:
+
+vercel
+
+   → سيطلب منك إعدادات:
+   → اضغط Enter لكل سؤال (القيم الافتراضية)
+   
+   → عندما يسأل عن Environment Variables:
+   
+   NEXT_PUBLIC_SUPABASE_URL
+   → الصق: https://gtnyspavjsoolvnphihs.supabase.co
+   
+   NEXT_PUBLIC_SUPABASE_ANON_KEY
+   → الصق: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0bnlzcGF2anNvb2x2bnBoaWhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE3MjcxNDAsImV4cCI6MjA3NzMwMzE0MH0.kKpUYPuRdJOBd39S9w_bvb-Zc7w5qyYj07UtLy-V5BU
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ بعد دقائق قليلة:
+
+   ستحصل على رابط مثل:
+   https://banda-chao.vercel.app
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 ابدأ الآن!
+
+═══════════════════════════════════════════════════════
+
+

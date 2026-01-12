@@ -11,7 +11,7 @@ interface LanguageContextType {
   t: (key: string) => string;
 }
 
-const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+export const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 // Legacy translations for backward compatibility
 // These are gradually being migrated to lib/messages.ts
