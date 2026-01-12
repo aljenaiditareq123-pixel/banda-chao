@@ -21,7 +21,7 @@
  * - Never commit actual passwords to version control
  */
 
-import { PrismaClient, UserRole } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
 
@@ -50,11 +50,11 @@ async function main() {
   // Upsert founder user (idempotent operation)
   // - If user exists: update role to 'FOUNDER' (in case it was changed)
   // - If user doesn't exist: create new user with role='FOUNDER'
-  const founderUser = await prisma.user.upsert({
-    where: { email: founderEmail },
-    update: {
-      // If user already exists, ensure role is set to FOUNDER
-      role: UserRole.FOUNDER,
+    const founderUser = await prisma.users.upsert({
+      where: { email: founderEmail },
+      update: {
+        // If user already exists, ensure role is set to FOUNDER
+        role: 'FOUNDER',
       // Optionally update password if FOUNDER_PASSWORD is provided
       // This allows password rotation without deleting user
       ...(process.env.FOUNDER_PASSWORD ? { password: passwordHash } : {}),
@@ -63,7 +63,7 @@ async function main() {
       email: founderEmail,
       password: passwordHash,
       name: founderName,
-      role: UserRole.FOUNDER,
+      role: 'FOUNDER',
     },
   });
 

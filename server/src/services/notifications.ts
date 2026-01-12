@@ -1,5 +1,6 @@
 import { prisma } from '../utils/prisma';
-import { io } from '../index';
+import { getIO } from '../realtime/socket';
+import { randomUUID } from 'crypto';
 
 export interface CreateNotificationParams {
   userId: string;
@@ -18,19 +19,25 @@ export async function createNotification(params: CreateNotificationParams) {
     const { userId, type, title, body, data } = params;
 
     // Create notification in database
-    const notification = await prisma.notification.create({
+    const notification = await prisma.notifications.create({
       data: {
-        userId,
+        id: randomUUID(),
+        user_id: userId,
         type,
         title,
         body,
-        data: data ? JSON.parse(JSON.stringify(data)) : null, // Ensure JSON serialization
+        data: data ? JSON.stringify(data) : null, // Store as JSON string
+        is_read: false,
+        created_at: new Date(),
       },
     });
 
     // Send real-time notification via WebSocket if user is connected
     // Users can join their notification room: `notifications:${userId}`
-    io.to(`notifications:${userId}`).emit('new_notification', notification);
+    const io = getIO();
+    if (io) {
+      io.to(`notifications:${userId}`).emit('new_notification', notification);
+    }
 
     return notification;
   } catch (error: any) {
@@ -45,10 +52,10 @@ export async function createNotification(params: CreateNotificationParams) {
  */
 export async function getUnreadCount(userId: string): Promise<number> {
   try {
-    return await prisma.notification.count({
+    return await prisma.notifications.count({
       where: {
-        userId,
-        isRead: false,
+        user_id: userId,
+        is_read: false,
       },
     });
   } catch (error: any) {
@@ -56,8 +63,3 @@ export async function getUnreadCount(userId: string): Promise<number> {
     return 0;
   }
 }
-
-
-
-
-

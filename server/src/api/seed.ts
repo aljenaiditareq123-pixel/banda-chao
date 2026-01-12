@@ -39,12 +39,12 @@ router.post('/seed', async (req: Request, res: Response) => {
 
     // Clear existing data
     console.log('🧹 Clearing existing data...');
-    await prisma.message.deleteMany();
-    await prisma.post.deleteMany();
-    await prisma.video.deleteMany();
-    await prisma.product.deleteMany();
-    await prisma.maker.deleteMany();
-    await prisma.user.deleteMany();
+    await prisma.messages.deleteMany();
+    await prisma.posts.deleteMany();
+    await prisma.videos.deleteMany();
+    await prisma.products.deleteMany();
+    await prisma.makers.deleteMany();
+    await prisma.users.deleteMany();
 
     // Create 5 users
     console.log('👥 Creating users...');
@@ -59,12 +59,12 @@ router.post('/seed', async (req: Request, res: Response) => {
 
     for (const user of userData) {
       const hashedPassword = await bcrypt.hash(user.password, 10);
-      const createdUser = await prisma.user.create({
+      const createdUser = await prisma.users.create({
         data: {
           email: user.email,
           name: user.name,
           password: hashedPassword,
-          profilePicture: `https://i.pravatar.cc/150?u=${user.email}`,
+          profile_picture: `https://i.pravatar.cc/150?u=${user.email}`,
         },
       });
       users.push(createdUser);
@@ -110,15 +110,16 @@ router.post('/seed', async (req: Request, res: Response) => {
     // Create short videos
     for (let i = 0; i < 5; i++) {
       const user = users[i % users.length];
-      await prisma.video.create({
+      await prisma.videos.create({
         data: {
-          userId: user.id,
+          id: `${user.id}-video-short-${i}`,
+          user_id: user.id,
           title: videoTitles.short[i],
           description: videoDescriptions.short[i],
-          videoUrl: `https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4`,
-          thumbnailUrl: `https://picsum.photos/640/360?random=${i + 1}`,
+          video_url: `https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4`,
+          thumbnail_url: `https://picsum.photos/640/360?random=${i + 1}`,
           duration: 30 + Math.floor(Math.random() * 60),
-          type: 'short',
+          type: 'SHORT',
           views: Math.floor(Math.random() * 10000),
           likes: Math.floor(Math.random() * 500),
         },
@@ -129,15 +130,16 @@ router.post('/seed', async (req: Request, res: Response) => {
     // Create long videos
     for (let i = 0; i < 5; i++) {
       const user = users[i % users.length];
-      await prisma.video.create({
+      await prisma.videos.create({
         data: {
-          userId: user.id,
+          id: `${user.id}-video-long-${i}`,
+          user_id: user.id,
           title: videoTitles.long[i],
           description: videoDescriptions.long[i],
-          videoUrl: `https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4`,
-          thumbnailUrl: `https://picsum.photos/1280/720?random=${i + 10}`,
+          video_url: `https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4`,
+          thumbnail_url: `https://picsum.photos/1280/720?random=${i + 10}`,
           duration: 600 + Math.floor(Math.random() * 1800),
-          type: 'long',
+          type: 'LONG',
           views: Math.floor(Math.random() * 50000),
           likes: Math.floor(Math.random() * 2000),
         },
@@ -302,15 +304,18 @@ router.post('/seed', async (req: Request, res: Response) => {
       const user = users[i];
       const slug = makerInfo.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
       
-      const maker = await prisma.maker.create({
+      const maker = await prisma.makers.create({
         data: {
-          userId: user.id,
+          id: `maker-${user.id}`,
+          user_id: user.id,
           name: makerInfo.name,
           slug: `${slug}-${user.id}`,
           bio: makerInfo.bio,
           story: makerInfo.story,
-          profilePictureUrl: makerInfo.profilePictureUrl,
-          coverPictureUrl: makerInfo.coverPictureUrl,
+          profile_picture_url: makerInfo.profilePictureUrl,
+          cover_picture_url: makerInfo.coverPictureUrl,
+          created_at: new Date(),
+          updated_at: new Date(),
         },
       });
       makers.push(maker);
@@ -321,15 +326,15 @@ router.post('/seed', async (req: Request, res: Response) => {
       const product = productData[i];
       // Assign products to makers if available, otherwise to users
       const owner = makers[i % makers.length] || users[i % users.length];
-      await prisma.product.create({
+      await prisma.products.create({
         data: {
-          userId: owner.userId || owner.id,
+          user_id: 'userId' in owner ? owner.userId : owner.id,
           name: product.name,
           description: product.description,
           price: product.price,
-          category: product.category,
-          imageUrl: product.imageUrl,
-          externalLink: product.externalLink,
+          category_string: product.category,
+          image_url: product.imageUrl,
+          external_link: product.externalLink,
         },
       });
       console.log(`✅ Created product: ${product.name}`);
@@ -347,11 +352,12 @@ router.post('/seed', async (req: Request, res: Response) => {
 
     for (let i = 0; i < postContents.length; i++) {
       const user = users[i % users.length];
-      await prisma.post.create({
+      await prisma.posts.create({
         data: {
-          userId: user.id,
+          id: `post-${user.id}-${i}`,
+          user_id: user.id,
           content: postContents[i],
-          images: [`https://picsum.photos/800/600?random=${i + 200}`],
+          images: JSON.stringify([`https://picsum.photos/800/600?random=${i + 200}`]),
         },
       });
       console.log(`✅ Created post by ${user.name}`);

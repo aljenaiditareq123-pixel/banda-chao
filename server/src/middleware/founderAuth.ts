@@ -73,7 +73,7 @@ export const requireFounder = async (
     }
 
     // Otherwise, verify against database (more secure, ensures role is up-to-date)
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id: req.userId },
       select: { role: true, email: true, id: true },
     });

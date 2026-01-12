@@ -1,8 +1,9 @@
 import { Router, Request, Response } from 'express';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { prisma } from '../utils/prisma';
-import { io } from '../index';
+import { getIO } from '../realtime/socket';
 import { createNotification } from '../services/notifications';
+import { randomUUID } from 'crypto';
 
 const router = Router();
 
@@ -16,37 +17,43 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
     }
 
     // Create message
-    const message = await prisma.message.create({
+    const message = await prisma.messages.create({
       data: {
-        senderId: req.userId!,
-        receiverId,
-        content
+        id: randomUUID(),
+        sender_id: req.userId!,
+        receiver_id: receiverId,
+        content,
+        timestamp: new Date(),
+        read: false,
       },
       include: {
-        sender: {
+        users_messages_sender_idTousers: {
           select: {
             id: true,
             name: true,
-            profilePicture: true
+            profile_picture: true
           }
         },
-        receiver: {
+        users_messages_receiver_idTousers: {
           select: {
             id: true,
             name: true,
-            profilePicture: true
+            profile_picture: true
           }
         }
       }
     });
 
     // Emit message via WebSocket
+    const io = getIO();
     const roomId = [req.userId, receiverId].sort().join('_');
-    io.to(roomId).emit('new_message', message);
+    if (io) {
+      io.to(roomId).emit('new_message', message);
+    }
 
     // Create notification for message receiver (if not the same user)
     if (req.userId !== receiverId) {
-      const sender = await prisma.user.findUnique({
+      const sender = await prisma.users.findUnique({
         where: { id: req.userId! },
         select: { name: true },
       });
@@ -84,26 +91,26 @@ router.get('/:userId1/:userId2', authenticateToken, async (req: AuthRequest, res
       return res.status(403).json({ error: 'Unauthorized access to this conversation' });
     }
 
-    const messages = await prisma.message.findMany({
+    const messages = await prisma.messages.findMany({
       where: {
         OR: [
-          { senderId: userId1, receiverId: userId2 },
-          { senderId: userId2, receiverId: userId1 }
+          { sender_id: userId1, receiver_id: userId2 },
+          { sender_id: userId2, receiver_id: userId1 }
         ]
       },
       include: {
-        sender: {
+        users_messages_sender_idTousers: {
           select: {
             id: true,
             name: true,
-            profilePicture: true
+            profile_picture: true
           }
         },
-        receiver: {
+        users_messages_receiver_idTousers: {
           select: {
             id: true,
             name: true,
-            profilePicture: true
+            profile_picture: true
           }
         }
       },
@@ -124,35 +131,46 @@ router.get('/conversations', authenticateToken, async (req: AuthRequest, res: Re
   try {
     const userId = req.userId!;
 
-    // Get distinct conversations
-    const conversations = await prisma.message.findMany({
+    // Get distinct conversations - Note: Prisma doesn't support distinct on multiple fields directly
+    // We'll fetch all messages and group them in memory
+    const messages = await prisma.messages.findMany({
       where: {
         OR: [
-          { senderId: userId },
-          { receiverId: userId }
+          { sender_id: userId },
+          { receiver_id: userId }
         ]
       },
       include: {
-        sender: {
+        users_messages_sender_idTousers: {
           select: {
             id: true,
             name: true,
-            profilePicture: true
+            profile_picture: true
           }
         },
-        receiver: {
+        users_messages_receiver_idTousers: {
           select: {
             id: true,
             name: true,
-            profilePicture: true
+            profile_picture: true
           }
         }
       },
       orderBy: {
         timestamp: 'desc'
-      },
-      distinct: ['senderId', 'receiverId']
+      }
     });
+
+    // Group by conversation partner
+    const conversationMap = new Map<string, typeof messages[0]>();
+    messages.forEach(msg => {
+      const partnerId = msg.sender_id === userId ? msg.receiver_id : msg.sender_id;
+      if (!conversationMap.has(partnerId)) {
+        conversationMap.set(partnerId, msg);
+      }
+    });
+
+    const conversations = Array.from(conversationMap.values());
 
     res.json(conversations);
   } catch (error: any) {
@@ -162,5 +180,3 @@ router.get('/conversations', authenticateToken, async (req: AuthRequest, res: Re
 });
 
 export default router;
-
-

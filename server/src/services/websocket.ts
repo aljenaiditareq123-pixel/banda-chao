@@ -1,6 +1,7 @@
 import { Server, Socket } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../utils/prisma';
+import { randomUUID } from 'crypto';
 
 interface AuthenticatedSocket extends Socket {
   userId?: string;
@@ -74,36 +75,38 @@ export const setupWebSocketHandlers = (io: Server) => {
       if (!socket.userId) return;
 
       try {
-        const message = await prisma.message.create({
+        const message = await prisma.messages.create({
           data: {
-            senderId: socket.userId,
-            receiverId: data.receiverId,
-            content: data.content
+            id: randomUUID(),
+            sender_id: socket.userId,
+            receiver_id: data.receiverId,
+            content: data.content,
+            timestamp: new Date(),
+            read: false,
           },
-          include: {
-            sender: {
-              select: {
-                id: true,
-                name: true,
-                profilePicture: true
-              }
-            },
-            receiver: {
-              select: {
-                id: true,
-                name: true,
-                profilePicture: true
-              }
-            }
-          }
         });
+
+        // Get sender info
+        const sender = await prisma.users.findUnique({
+          where: { id: socket.userId },
+          select: {
+            id: true,
+            name: true,
+            profile_picture: true,
+          },
+        });
+
+        const messageWithSender = {
+          ...message,
+          sender: sender,
+        };
 
         // Emit to both users in the chat room
         const roomId = [socket.userId, data.receiverId].sort().join('_');
-        io.to(`chat_${roomId}`).emit('new_message', message);
+        io.to(`chat_${roomId}`).emit('new_message', messageWithSender);
 
         // Also emit to individual user rooms for notifications
-        io.to(`user_${data.receiverId}`).emit('message_notification', message);
+        io.to(`user_${data.receiverId}`).emit('message_notification', messageWithSender);
       } catch (error) {
         socket.emit('error', { message: 'Failed to send message' });
       }
@@ -126,5 +129,3 @@ export const setupWebSocketHandlers = (io: Server) => {
     });
   });
 };
-
-

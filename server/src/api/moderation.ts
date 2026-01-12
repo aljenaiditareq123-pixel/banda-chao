@@ -21,25 +21,25 @@ router.get('/reports', authenticateFounder, async (req: AuthRequest, res: Respon
     }
 
     const [reports, total] = await Promise.all([
-      prisma.report.findMany({
+      prisma.reports.findMany({
         where,
         include: {
-          user: {
+          users: {
             select: {
               id: true,
               name: true,
               email: true,
-              profilePicture: true,
+              profile_picture: true,
             },
           },
         },
         orderBy: {
-          createdAt: 'desc',
+          created_at: 'desc',
         },
         take: parseInt(limit as string, 10),
         skip: parseInt(offset as string, 10),
       }),
-      prisma.report.count({ where }),
+      prisma.reports.count({ where }),
     ]);
 
     res.json({
@@ -75,11 +75,11 @@ router.post('/resolve', authenticateFounder, async (req: AuthRequest, res: Respo
       });
     }
 
-    const report = await prisma.report.update({
+    const report = await prisma.reports.update({
       where: { id: reportId },
       data: { resolved: !!resolved },
       include: {
-        user: {
+        users: {
           select: {
             id: true,
             name: true,
@@ -123,25 +123,25 @@ router.post('/hide', authenticateFounder, async (req: AuthRequest, res: Response
     
     switch (targetType) {
       case 'PRODUCT':
-        result = await prisma.product.update({
+        result = await prisma.products.update({
           where: { id: targetId },
           data: { /* Add hidden field if needed */ },
         });
         break;
       case 'POST':
-        result = await prisma.post.update({
+        result = await prisma.posts.update({
           where: { id: targetId },
           data: { /* Add hidden field if needed */ },
         });
         break;
       case 'VIDEO':
-        result = await prisma.video.update({
+        result = await prisma.videos.update({
           where: { id: targetId },
           data: { /* Add hidden field if needed */ },
         });
         break;
       case 'MAKER':
-        result = await prisma.maker.update({
+        result = await prisma.makers.update({
           where: { id: targetId },
           data: { /* Add hidden field if needed */ },
         });
