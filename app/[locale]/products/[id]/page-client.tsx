@@ -6,7 +6,7 @@ import ProductCard from '@/components/cards/ProductCard';
 import Link from 'next/link';
 import Button from '@/components/Button';
 import EmptyState from '@/components/common/EmptyState';
-import { paymentsAPI, reviewsAPI } from '@/lib/api';
+import { paymentsAPI, reviewsAPI, chatAPI } from '@/lib/api';
 import { trackCheckoutStarted } from '@/lib/analytics';
 import LoadingState from '@/components/common/LoadingState';
 import ErrorState from '@/components/common/ErrorState';
@@ -21,6 +21,7 @@ import CommentForm from '@/components/social/CommentForm';
 import CommentsSection from '@/components/shared/CommentsSection';
 import VideoReviewsCarousel from '@/components/product/VideoReviewsCarousel';
 import { useAuth } from '@/hooks/useAuth';
+import { useRouter } from 'next/navigation';
 import AutoTranslator from '@/components/AutoTranslator';
 import UserNameWithBadge from '@/components/common/UserNameWithBadge';
 import { MessageCircle, Factory, Shield, Lock, Plane, Star } from 'lucide-react';
@@ -954,12 +955,33 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
               <div className="flex items-center gap-2">
                 {/* Chat Button */}
                 {product.makerId && (
-                  <Link
-                    href={`/${locale}/messages/${product.makerId}`}
+                  <button
+                    onClick={async () => {
+                      if (!user) {
+                        router.push(`/${locale}/login`);
+                        return;
+                      }
+
+                      try {
+                        const response = await chatAPI.startConversation({
+                          sellerId: product.makerId || product.userId || '',
+                          productId: product.id,
+                        });
+
+                        if (response.success && response.conversation) {
+                          router.push(`/${locale}/messages?conversation=${response.conversation.id}`);
+                        } else {
+                          alert(response.error || (locale === 'ar' ? 'فشل بدء المحادثة' : 'Failed to start conversation'));
+                        }
+                      } catch (error) {
+                        console.error('Error starting conversation:', error);
+                        alert(locale === 'ar' ? 'حدث خطأ' : 'An error occurred');
+                      }
+                    }}
                     className="flex-shrink-0 w-12 h-12 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200"
                   >
                     <MessageCircle className="w-5 h-5" />
-                  </Link>
+                  </button>
                 )}
                 
                 {/* Add to Cart Button */}

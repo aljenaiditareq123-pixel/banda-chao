@@ -69,6 +69,9 @@ model users {
   flash_drops_frozen                   flash_drops[]             @relation("FlashDropFrozenBy")
   payout_requests                      payout_requests[]
   reviews                              reviews[]
+  conversations_as_participant1        conversations[]           @relation("ConversationParticipant1")
+  conversations_as_participant2        conversations[]           @relation("ConversationParticipant2")
+  conversation_messages                conversation_messages[]   @relation("MessageSender")
 
   @@index([email])
   @@index([role])
@@ -153,6 +156,7 @@ model products {
   blind_box_mysteries mystery_lists[]     @relation("BlindBoxProducts")
   mystery_reveals     mystery_lists[]     @relation("MysteryProducts")
   flash_drop          flash_drops?
+  conversations       conversations[]
 
   @@index([category_id])
   @@index([user_id])
@@ -559,6 +563,49 @@ model reviews {
   @@index([user_id])
   @@index([rating])
   @@index([created_at])
+}
+
+// Chat Conversations - محادثات المستخدمين
+model conversations {
+  id          String   @id @default(uuid())
+  participant1_id String // First participant (usually buyer)
+  participant2_id String // Second participant (usually seller)
+  product_id  String? // Optional: if conversation is about a product
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt // Updated when last message is sent
+  last_message_at DateTime? // Last message timestamp
+  last_message_text String? // Last message preview
+  
+  // Relations
+  participant1 users @relation("ConversationParticipant1", fields: [participant1_id], references: [id], onDelete: Cascade)
+  participant2 users @relation("ConversationParticipant2", fields: [participant2_id], references: [id], onDelete: Cascade)
+  product      products? @relation(fields: [product_id], references: [id], onDelete: SetNull)
+  messages     conversation_messages[]
+
+  @@unique([participant1_id, participant2_id, product_id]) // Ensure unique conversation between two users about a product
+  @@index([participant1_id])
+  @@index([participant2_id])
+  @@index([product_id])
+  @@index([updated_at])
+}
+
+// Chat Messages - رسائل المحادثات
+model conversation_messages {
+  id             String   @id @default(uuid())
+  conversation_id String
+  sender_id      String
+  content        String   @db.Text
+  is_read        Boolean  @default(false)
+  created_at     DateTime @default(now())
+  
+  // Relations
+  conversation   conversations @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
+  sender         users         @relation("MessageSender", fields: [sender_id], references: [id], onDelete: Cascade)
+
+  @@index([conversation_id])
+  @@index([sender_id])
+  @@index([created_at])
+  @@index([conversation_id, created_at])
 }
 
 model comment_likes {

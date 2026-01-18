@@ -1065,6 +1065,7 @@ export const searchAPI = {
 // ============================================
 
 export const chatAPI = {
+  // AI Chat (existing)
   sendMessage: async (message: string, options?: {
     context?: {
       currentProductId?: string;
@@ -1102,6 +1103,87 @@ export const chatAPI = {
       return {
         success: false,
         error: error.response?.data?.error || error.message || 'Failed to send message',
+      };
+    }
+  },
+
+  // User-to-User Chat (new)
+  startConversation: async (data: {
+    sellerId: string;
+    productId?: string;
+  }): Promise<{
+    success: boolean;
+    conversation?: any;
+    error?: string;
+  }> => {
+    try {
+      const response = await apiClient.post('/chat/start', data);
+      return response.data;
+    } catch (error: any) {
+      console.error('[chatAPI.startConversation] Error:', error);
+      return {
+        success: false,
+        error: error.response?.data?.message || error.message || 'Failed to start conversation',
+      };
+    }
+  },
+
+  sendUserMessage: async (data: {
+    conversationId: string;
+    content: string;
+  }): Promise<{
+    success: boolean;
+    message?: any;
+    error?: string;
+  }> => {
+    try {
+      const response = await apiClient.post('/chat/send', data);
+      return response.data;
+    } catch (error: any) {
+      console.error('[chatAPI.sendUserMessage] Error:', error);
+      return {
+        success: false,
+        error: error.response?.data?.message || error.message || 'Failed to send message',
+      };
+    }
+  },
+
+  getInbox: async (): Promise<{
+    success: boolean;
+    conversations?: any[];
+    total?: number;
+    error?: string;
+  }> => {
+    try {
+      const response = await apiClient.get('/chat/inbox');
+      return response.data;
+    } catch (error: any) {
+      console.error('[chatAPI.getInbox] Error:', error);
+      return {
+        success: false,
+        error: error.response?.data?.message || error.message || 'Failed to fetch inbox',
+      };
+    }
+  },
+
+  getConversation: async (
+    conversationId: string,
+    params?: { page?: number; limit?: number }
+  ): Promise<{
+    success: boolean;
+    conversation?: any;
+    messages?: any[];
+    pagination?: any;
+    error?: string;
+  }> => {
+    try {
+      const response = await apiClient.get(`/chat/${conversationId}`, { params });
+      return response.data;
+    } catch (error: any) {
+      console.error('[chatAPI.getConversation] Error:', error);
+      return {
+        success: false,
+        error: error.response?.data?.message || error.message || 'Failed to fetch conversation',
       };
     }
   },
