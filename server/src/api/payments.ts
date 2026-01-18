@@ -255,7 +255,7 @@ router.post(
 
       const totalPrice = product.price * quantity;
 
-      // Calculate revenue split
+      // Calculate revenue split (5% commission deducted from seller)
       const { platformFee, makerRevenue } = calculateRevenue(totalPrice, currency);
 
       // Create order in database
@@ -268,8 +268,10 @@ router.post(
           id: orderId,
           user_id: userId,
           status: 'PENDING',
-          totalAmount: totalPrice,
+          totalAmount: totalPrice, // Buyer pays full price (no additional fees)
           subtotal: totalPrice, // Required field in schema
+          platformFee: platformFee, // 5% commission deducted from seller
+          makerRevenue: makerRevenue, // Seller receives 95% after commission
           created_at: new Date(),
           updated_at: new Date(),
         },

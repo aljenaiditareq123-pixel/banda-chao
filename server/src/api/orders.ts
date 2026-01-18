@@ -4,6 +4,7 @@ import { authenticateToken, requireRole, AuthRequest } from '../middleware/auth'
 import { calculateHubShippingForItems } from '../config/shippingRates';
 import { checkTransactionRisk, blockUser, logSuspiciousTransaction } from '../services/fraudService';
 import { reserveInventory, releaseInventory } from '../services/inventoryService';
+import { calculateRevenue } from '../config/commerceConfig';
 
 const router = Router();
 
@@ -326,6 +327,11 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
     // المبلغ الإجمالي = سعر المنتجات + تكلفة الشحن
     const calculatedTotal = productsTotal + shippingCost;
 
+    // حساب العمولة (5% من سعر المنتجات فقط - بدون الشحن)
+    // Calculate commission (5% of products only - shipping excluded)
+    const currency = 'USD'; // TODO: Get from request or product
+    const { platformFee, makerRevenue } = calculateRevenue(productsTotal, currency);
+
     console.log('[Orders] 📦 Shipping calculation:', {
       originCountry,
       destinationCountry: shipping.country,
@@ -412,8 +418,10 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
           id: orderId,
           user_id: userId,
           status: 'PENDING',
-          totalAmount: calculatedTotal,
-          subtotal: productsTotal, // Note: subtotal field exists in schema
+          totalAmount: calculatedTotal, // Buyer pays full amount (products + shipping, no additional fees)
+          subtotal: productsTotal, // Products total without shipping
+          platformFee: platformFee, // 5% commission deducted from seller (calculated from productsTotal only)
+          makerRevenue: makerRevenue, // Seller receives 95% after commission (calculated from productsTotal only)
           created_at: new Date(),
           updated_at: new Date(),
         } as any, // Type assertion needed due to Prisma type generation

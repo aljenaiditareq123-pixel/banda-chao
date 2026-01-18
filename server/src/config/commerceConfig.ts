@@ -4,8 +4,8 @@
  */
 
 export const commerceConfig = {
-  // Commission rate (as decimal, e.g., 0.10 = 10%)
-  commissionRate: parseFloat(process.env.COMMISSION_RATE || '0.10'), // 10% default
+  // Commission rate (as decimal, e.g., 0.05 = 5%)
+  commissionRate: parseFloat(process.env.COMMISSION_RATE || '0.05'), // 5% default
 
   // Supported currencies
   supportedCurrencies: ['USD', 'AED', 'CNY', 'EUR', 'GBP'],

@@ -204,6 +204,8 @@ model orders {
   shipping_cost        Float              @default(0)
   tax                  Float              @default(0)
   currency             String             @default("USD")
+  platformFee          Float?             // Platform commission (5% deducted from seller)
+  makerRevenue         Float?             // Revenue to seller after commission deduction
   shipping_address     String?
   shipping_city        String?
   shipping_country     String?
