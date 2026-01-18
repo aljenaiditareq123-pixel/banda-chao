@@ -15,6 +15,8 @@ router.post('/', async (req: Request, res: Response) => {
       category,
       minPrice,
       maxPrice,
+      onlyVerified,
+      sortBy,
       limit = 20,
       offset = 0,
     } = req.body;
@@ -31,6 +33,8 @@ router.post('/', async (req: Request, res: Response) => {
       category,
       minPrice: minPrice ? parseFloat(minPrice) : undefined,
       maxPrice: maxPrice ? parseFloat(maxPrice) : undefined,
+      onlyVerified: onlyVerified === true || onlyVerified === 'true',
+      sortBy: sortBy as 'newest' | 'price_asc' | 'price_desc' | undefined,
       limit: limit ? parseInt(limit) : 20,
       offset: offset ? parseInt(offset) : 0,
     });

@@ -994,6 +994,8 @@ export const searchAPI = {
     category?: string;
     minPrice?: number;
     maxPrice?: number;
+    onlyVerified?: boolean;
+    sortBy?: 'newest' | 'price_asc' | 'price_desc';
     limit?: number;
     offset?: number;
   }): Promise<{

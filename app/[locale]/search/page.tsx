@@ -11,6 +11,8 @@ interface PageProps {
     category?: string;
     minPrice?: string;
     maxPrice?: string;
+    onlyVerified?: string;
+    sortBy?: string;
     page?: string;
   }>;
 }
@@ -35,6 +37,8 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
     minPrice = resolvedSearchParams.minPrice ? parseFloat(resolvedSearchParams.minPrice) : undefined;
     maxPrice = resolvedSearchParams.maxPrice ? parseFloat(resolvedSearchParams.maxPrice) : undefined;
     page = resolvedSearchParams.page ? parseInt(resolvedSearchParams.page) : 1;
+    const onlyVerified = resolvedSearchParams.onlyVerified === 'true';
+    const sortBy = resolvedSearchParams.sortBy as 'newest' | 'price_asc' | 'price_desc' | undefined;
   } catch (error) {
     console.error('Error resolving params:', error);
     notFound();
@@ -59,6 +63,8 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
         category,
         minPrice,
         maxPrice,
+        onlyVerified,
+        sortBy,
         limit: 24,
         offset: (page - 1) * 24,
       });
@@ -85,6 +91,8 @@ export default async function SearchPage({ params, searchParams }: PageProps) {
         category,
         minPrice,
         maxPrice,
+        onlyVerified,
+        sortBy,
       }}
       page={page}
     />

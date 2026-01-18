@@ -3,7 +3,8 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Filter, X, SlidersHorizontal, Grid3x3, List } from 'lucide-react';
+import { Filter, X, SlidersHorizontal, Grid3x3, List, CheckCircle } from 'lucide-react';
+import VerifiedBadge from '@/components/common/VerifiedBadge';
 import SmartSearchBar from '@/components/search/SmartSearchBar';
 import ProductCard from '@/components/cards/ProductCard';
 import EmptyState from '@/components/common/EmptyState';
@@ -21,6 +22,8 @@ interface SearchPageClientProps {
     category?: string;
     minPrice?: number;
     maxPrice?: number;
+    onlyVerified?: boolean;
+    sortBy?: 'newest' | 'price_asc' | 'price_desc';
   };
   page: number;
 }
@@ -44,13 +47,21 @@ function SearchPageContent({
 }: SearchPageClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [filters, setFilters] = useState(initialFilters);
   const [priceRange, setPriceRange] = useState({
     min: initialFilters.minPrice?.toString() || '',
     max: initialFilters.maxPrice?.toString() || '',
   });
+
+  // Update filters when initialFilters change (from server-side)
+  useEffect(() => {
+    setFilters(initialFilters);
+    setPriceRange({
+      min: initialFilters.minPrice?.toString() || '',
+      max: initialFilters.maxPrice?.toString() || '',
+    });
+  }, [initialFilters]);
 
   const handleFilterChange = (key: string, value: any) => {
     const newFilters = { ...filters, [key]: value };
@@ -68,9 +79,29 @@ function SearchPageContent({
     if (newFilters.category) params.set('category', newFilters.category);
     if (newFilters.minPrice) params.set('minPrice', newFilters.minPrice.toString());
     if (newFilters.maxPrice) params.set('maxPrice', newFilters.maxPrice.toString());
+    if (newFilters.onlyVerified) params.set('onlyVerified', 'true');
+    if (newFilters.sortBy) params.set('sortBy', newFilters.sortBy);
     
     router.push(`/${locale}/search?${params.toString()}`);
   };
+
+  // Apply filters automatically when changed (debounced for price)
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (priceRange.min || priceRange.max) {
+        const newFilters = {
+          ...filters,
+          minPrice: priceRange.min ? parseFloat(priceRange.min) : undefined,
+          maxPrice: priceRange.max ? parseFloat(priceRange.max) : undefined,
+        };
+        if (JSON.stringify(newFilters) !== JSON.stringify(filters)) {
+          applyFilters(newFilters);
+        }
+      }
+    }, 500); // Debounce price changes
+
+    return () => clearTimeout(timeoutId);
+  }, [priceRange.min, priceRange.max]);
 
   const handleApplyPriceFilter = () => {
     const newFilters = {
@@ -108,6 +139,73 @@ function SearchPageContent({
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Filters Sidebar */}
+          <div className="lg:w-1/4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 sticky top-24">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
+                {locale === 'ar' ? 'الفلاتر' : locale === 'zh' ? '筛选器' : 'Filters'}
+              </h2>
+
+              <div className="space-y-6">
+                {/* Price Range */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                    {locale === 'ar' ? 'نطاق السعر' : locale === 'zh' ? '价格范围' : 'Price Range'}
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      value={priceRange.min}
+                      onChange={(e) => handlePriceChange('min', e.target.value)}
+                      placeholder={locale === 'ar' ? 'من' : locale === 'zh' ? '从' : 'Min'}
+                      className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    />
+                    <input
+                      type="number"
+                      value={priceRange.max}
+                      onChange={(e) => handlePriceChange('max', e.target.value)}
+                      placeholder={locale === 'ar' ? 'إلى' : locale === 'zh' ? '到' : 'Max'}
+                      className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    />
+                  </div>
+                </div>
+
+                {/* Only Verified Sellers */}
+                <div>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={filters.onlyVerified || false}
+                      onChange={(e) => {
+                        const newFilters = { ...filters, onlyVerified: e.target.checked || undefined };
+                        setFilters(newFilters);
+                        applyFilters(newFilters);
+                      }}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1">
+                      {locale === 'ar' ? 'بائعون موثقون فقط' : locale === 'zh' ? '仅认证卖家' : 'Verified Sellers Only'}
+                      <VerifiedBadge size="sm" />
+                    </span>
+                  </label>
+                </div>
+
+                {/* Clear Filters Button */}
+                {(filters.category || filters.minPrice || filters.maxPrice || filters.onlyVerified) && (
+                  <button
+                    onClick={clearFilters}
+                    className="w-full px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    {locale === 'ar' ? 'مسح الفلاتر' : locale === 'zh' ? '清除筛选' : 'Clear Filters'}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="flex-1">
         {/* Results Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -149,94 +247,22 @@ function SearchPageContent({
               </button>
             </div>
 
-            {/* Filter Toggle */}
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+            {/* Sort By Dropdown */}
+            <select
+              value={filters.sortBy || 'newest'}
+              onChange={(e) => {
+                const newFilters = { ...filters, sortBy: e.target.value as 'newest' | 'price_asc' | 'price_desc' };
+                setFilters(newFilters);
+                applyFilters(newFilters);
+              }}
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
             >
-              <SlidersHorizontal className="w-4 h-4" />
-              {locale === 'ar' ? 'فلاتر' : locale === 'zh' ? '筛选' : 'Filters'}
-            </button>
+              <option value="newest">{locale === 'ar' ? 'الأحدث' : locale === 'zh' ? '最新' : 'Newest'}</option>
+              <option value="price_asc">{locale === 'ar' ? 'الأقل سعراً' : locale === 'zh' ? '价格从低到高' : 'Price: Low to High'}</option>
+              <option value="price_desc">{locale === 'ar' ? 'الأعلى سعراً' : locale === 'zh' ? '价格从高到低' : 'Price: High to Low'}</option>
+            </select>
           </div>
         </div>
-
-        {/* Filters Panel */}
-        {showFilters && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                {locale === 'ar' ? 'الفلاتر' : locale === 'zh' ? '筛选器' : 'Filters'}
-              </h2>
-              <button
-                onClick={clearFilters}
-                className="text-sm text-primary-600 hover:text-primary-700"
-              >
-                {locale === 'ar' ? 'مسح الكل' : locale === 'zh' ? '清除全部' : 'Clear All'}
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Category Filter */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {locale === 'ar' ? 'الفئة' : locale === 'zh' ? '类别' : 'Category'}
-                </label>
-                <select
-                  value={filters.category || ''}
-                  onChange={(e) => handleFilterChange('category', e.target.value || undefined)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                >
-                  <option value="">{locale === 'ar' ? 'الكل' : locale === 'zh' ? '全部' : 'All'}</option>
-                  {categories.map((cat) => (
-                    <option key={cat.value} value={cat.value}>
-                      {cat.label[locale as keyof typeof cat.label] || cat.label.en}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Min Price */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {locale === 'ar' ? 'الحد الأدنى للسعر' : locale === 'zh' ? '最低价格' : 'Min Price'}
-                </label>
-                <input
-                  type="number"
-                  value={priceRange.min}
-                  onChange={(e) => handlePriceChange('min', e.target.value)}
-                  placeholder="0"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                />
-              </div>
-
-              {/* Max Price */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {locale === 'ar' ? 'الحد الأقصى للسعر' : locale === 'zh' ? '最高价格' : 'Max Price'}
-                </label>
-                <input
-                  type="number"
-                  value={priceRange.max}
-                  onChange={(e) => handlePriceChange('max', e.target.value)}
-                  placeholder="1000"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                />
-              </div>
-            </div>
-
-            <button
-              onClick={handleApplyPriceFilter}
-              className="mt-4 px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-            >
-              {locale === 'ar' ? 'تطبيق' : locale === 'zh' ? '应用' : 'Apply'}
-            </button>
-          </motion.div>
-        )}
 
         {/* Keywords */}
         {searchResults.keywords.length > 0 && (
@@ -329,6 +355,8 @@ function SearchPageContent({
             }
           />
         )}
+          </div>
+        </div>
       </div>
     </div>
   );

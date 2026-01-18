@@ -60,8 +60,12 @@ router.get('/', async (req: Request, res: Response) => {
     const category_id = req.query.category_id as string; // Alternative category parameter
     const min_price = req.query.min_price as string; // Minimum price filter
     const max_price = req.query.max_price as string; // Maximum price filter
-    const sort_by = req.query.sort_by as string || 'created_at';
-    const sort_order = req.query.sort_order as string || 'desc';
+    const minPrice = req.query.minPrice as string; // Alternative camelCase parameter
+    const maxPrice = req.query.maxPrice as string; // Alternative camelCase parameter
+    const onlyVerified = req.query.onlyVerified === 'true' || req.query.onlyVerified === true; // Filter by verified sellers only
+    const sortBy = req.query.sortBy as string; // Sort by: newest, price_asc, price_desc
+    const sort_by = (req.query.sort_by as string) || (sortBy === 'newest' ? 'created_at' : sortBy === 'price_asc' ? 'price' : sortBy === 'price_desc' ? 'price' : 'created_at');
+    const sort_order = (req.query.sort_order as string) || (sortBy === 'price_asc' ? 'asc' : sortBy === 'price_desc' ? 'desc' : 'desc');
 
     // Use the search_term if provided, otherwise fall back to search
     const searchQuery = search_term || search;
@@ -86,9 +90,12 @@ router.get('/', async (req: Request, res: Response) => {
       paramIndex++;
     }
 
-    // Filter by price range
-    if (min_price) {
-      const minPriceNum = parseFloat(min_price);
+    // Filter by price range (support both snake_case and camelCase)
+    const minPriceFilter = minPrice || min_price;
+    const maxPriceFilter = maxPrice || max_price;
+    
+    if (minPriceFilter) {
+      const minPriceNum = parseFloat(minPriceFilter);
       if (!isNaN(minPriceNum)) {
         whereClause += ` AND p.price >= $${paramIndex}`;
         params.push(minPriceNum);
@@ -96,13 +103,20 @@ router.get('/', async (req: Request, res: Response) => {
       }
     }
 
-    if (max_price) {
-      const maxPriceNum = parseFloat(max_price);
+    if (maxPriceFilter) {
+      const maxPriceNum = parseFloat(maxPriceFilter);
       if (!isNaN(maxPriceNum)) {
         whereClause += ` AND p.price <= $${paramIndex}`;
         params.push(maxPriceNum);
         paramIndex++;
       }
+    }
+
+    // Filter by verified sellers only
+    if (onlyVerified) {
+      whereClause += ` AND u."isVerified" = $${paramIndex}`;
+      params.push(true);
+      paramIndex++;
     }
 
     // Filter by makerId
@@ -150,7 +164,8 @@ router.get('/', async (req: Request, res: Response) => {
         p.manufacture_status as "manufactureStatus",
         u.id as "userId",
         u.name as "userName",
-        u.profile_picture as "userProfilePicture"
+        u.profile_picture as "userProfilePicture",
+        u."isVerified" as "userIsVerified"
       FROM products p
       LEFT JOIN users u ON p."user_id" = u.id
       WHERE ${whereClause}
@@ -158,10 +173,11 @@ router.get('/', async (req: Request, res: Response) => {
       LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
     `, ...params, limit, skip);
 
-    // NOTE: Safe parameterized query
+    // NOTE: Safe parameterized query (include JOIN for onlyVerified filter)
     const totalResult = await prisma.$queryRawUnsafe<Array<{ count: bigint }>>(`
       SELECT COUNT(*) as count
       FROM products p
+      LEFT JOIN users u ON p."user_id" = u.id
       WHERE ${whereClause}
     `, ...params);
     const total = Number(totalResult[0]?.count || 0);

@@ -82,6 +82,8 @@ export async function searchProducts(
     category?: string;
     minPrice?: number;
     maxPrice?: number;
+    onlyVerified?: boolean;
+    sortBy?: 'newest' | 'price_asc' | 'price_desc';
     limit?: number;
     offset?: number;
   } = {}
@@ -91,6 +93,8 @@ export async function searchProducts(
     category,
     minPrice,
     maxPrice,
+    onlyVerified,
+    sortBy,
     limit = 20,
     offset = 0,
   } = options;
@@ -137,6 +141,23 @@ export async function searchProducts(
         paramIndex++;
       }
 
+      // Filter by verified sellers only
+      if (onlyVerified) {
+        conditions.push(`u."isVerified" = $${paramIndex}`);
+        params.push(true);
+        paramIndex++;
+      }
+
+      // Build ORDER BY clause based on sortBy
+      let orderByClause = `array_position(ARRAY[${productIds.map((_, idx) => `$${paramIndex + idx}::text`).join(',')}], p.id)`;
+      if (sortBy === 'price_asc') {
+        orderByClause = 'p.price ASC';
+      } else if (sortBy === 'price_desc') {
+        orderByClause = 'p.price DESC';
+      } else if (sortBy === 'newest') {
+        orderByClause = 'p.created_at DESC';
+      }
+
       const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
       // Execute search with semantic ordering
@@ -162,15 +183,15 @@ export async function searchProducts(
         FROM products p
         LEFT JOIN users u ON p."user_id" = u.id
         ${whereClause}
-        ORDER BY 
-          array_position(ARRAY[${productIds.map((_, idx) => `$${paramIndex + idx}::text`).join(',')}], p.id)
+        ORDER BY ${orderByClause}
         LIMIT $${paramIndex + productIds.length} OFFSET $${paramIndex + productIds.length + 1}
       `, ...params, ...productIds, limit, offset);
 
-      // Get total count
+      // Get total count (include JOIN for onlyVerified filter)
       const countResult = await prisma.$queryRawUnsafe<Array<{ count: bigint }>>(`
         SELECT COUNT(*) as count
         FROM products p
+        LEFT JOIN users u ON p."user_id" = u.id
         ${whereClause}
       `, ...params);
 
@@ -202,7 +223,7 @@ export async function searchProducts(
   
   if (keywords.length === 0) {
     // Final fallback to simple LIKE search
-    return await simpleSearch(query, { category, minPrice, maxPrice, limit, offset });
+    return await simpleSearch(query, { category, minPrice, maxPrice, onlyVerified, sortBy, limit, offset });
   }
 
   // Build search conditions
@@ -244,6 +265,28 @@ export async function searchProducts(
     paramIndex++;
   }
 
+  // Filter by verified sellers only
+  if (onlyVerified) {
+    conditions.push(`u."isVerified" = $${paramIndex}`);
+    params.push(true);
+    paramIndex++;
+  }
+
+  // Build ORDER BY clause based on sortBy
+  let orderByClause = `CASE 
+        WHEN p.name ILIKE $${paramIndex} THEN 1
+        WHEN p.description ILIKE $${paramIndex} THEN 2
+        ELSE 3
+      END,
+      p.created_at DESC`;
+  if (sortBy === 'price_asc') {
+    orderByClause = 'p.price ASC';
+  } else if (sortBy === 'price_desc') {
+    orderByClause = 'p.price DESC';
+  } else if (sortBy === 'newest') {
+    orderByClause = 'p.created_at DESC';
+  }
+
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
   // Execute search
@@ -269,20 +312,15 @@ export async function searchProducts(
     FROM products p
     LEFT JOIN users u ON p."user_id" = u.id
     ${whereClause}
-    ORDER BY 
-      CASE 
-        WHEN p.name ILIKE $${paramIndex} THEN 1
-        WHEN p.description ILIKE $${paramIndex} THEN 2
-        ELSE 3
-      END,
-      p.created_at DESC
+    ORDER BY ${orderByClause}
     LIMIT $${paramIndex + 1} OFFSET $${paramIndex + 2}
   `, ...params, `%${query}%`, limit, offset);
 
-  // Get total count
+  // Get total count (include JOIN for onlyVerified filter)
   const countResult = await prisma.$queryRawUnsafe<Array<{ count: bigint }>>(`
     SELECT COUNT(*) as count
     FROM products p
+    LEFT JOIN users u ON p."user_id" = u.id
     ${whereClause}
   `, ...params);
 
@@ -315,11 +353,13 @@ async function simpleSearch(
     category?: string;
     minPrice?: number;
     maxPrice?: number;
+    onlyVerified?: boolean;
+    sortBy?: 'newest' | 'price_asc' | 'price_desc';
     limit?: number;
     offset?: number;
   } = {}
 ): Promise<SearchResult> {
-  const { category, minPrice, maxPrice, limit = 20, offset = 0 } = options;
+  const { category, minPrice, maxPrice, onlyVerified, sortBy, limit = 20, offset = 0 } = options;
 
   const conditions: string[] = [];
   const params: any[] = [];
@@ -349,6 +389,23 @@ async function simpleSearch(
     paramIndex++;
   }
 
+  // Filter by verified sellers only
+  if (onlyVerified) {
+    conditions.push(`u."isVerified" = $${paramIndex}`);
+    params.push(true);
+    paramIndex++;
+  }
+
+  // Build ORDER BY clause based on sortBy
+  let orderByClause = 'p.created_at DESC';
+  if (sortBy === 'price_asc') {
+    orderByClause = 'p.price ASC';
+  } else if (sortBy === 'price_desc') {
+    orderByClause = 'p.price DESC';
+  } else if (sortBy === 'newest') {
+    orderByClause = 'p.created_at DESC';
+  }
+
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
   // Note: Using NULL for columns that may not exist in actual DB schema
@@ -373,13 +430,14 @@ async function simpleSearch(
     FROM products p
     LEFT JOIN users u ON p."user_id" = u.id
     ${whereClause}
-    ORDER BY p.created_at DESC
+    ORDER BY ${orderByClause}
     LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
   `, ...params, limit, offset);
 
   const countResult = await prisma.$queryRawUnsafe<Array<{ count: bigint }>>(`
     SELECT COUNT(*) as count
     FROM products p
+    LEFT JOIN users u ON p."user_id" = u.id
     ${whereClause}
   `, ...params);
 
