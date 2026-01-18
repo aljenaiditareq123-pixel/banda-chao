@@ -17,6 +17,7 @@ import {
   ShoppingCart, 
   Users,
   Building2,
+  Wallet,
   Menu,
   X,
   LogOut
@@ -48,6 +49,11 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
       href: '/admin/users', 
       label: 'المستخدمين', 
       icon: Users 
+    },
+    { 
+      href: '/admin/payouts', 
+      label: 'طلبات السحب', 
+      icon: Wallet 
     },
     { 
       href: '/admin/company-settings', 

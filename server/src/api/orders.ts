@@ -866,6 +866,176 @@ router.post('/maker/payout', authenticateToken, async (req: AuthRequest, res: Re
   }
 });
 
+// GET /api/v1/orders/payouts - Get all payout requests (admin/founder only)
+router.get('/payouts', authenticateToken, requireRole(['ADMIN', 'FOUNDER']), async (req: AuthRequest, res: Response) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const pageSize = parseInt(req.query.pageSize as string) || 20;
+    const skip = (page - 1) * pageSize;
+    const status = req.query.status as string;
+
+    const where: any = {};
+    if (status && ['PENDING', 'APPROVED', 'REJECTED', 'COMPLETED'].includes(status)) {
+      where.status = status;
+    }
+
+    const [payouts, total] = await Promise.all([
+      prisma.payout_requests.findMany({
+        where,
+        skip,
+        take: pageSize,
+        include: {
+          users: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+            include: {
+              makers: {
+                select: {
+                  id: true,
+                  display_name: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: {
+          created_at: 'desc',
+        },
+      }),
+      prisma.payout_requests.count({ where }),
+    ]);
+
+    // Format response with maker name
+    const formattedPayouts = payouts.map((payout: any) => ({
+      id: payout.id,
+      makerName: payout.users?.makers?.display_name || payout.users?.name || 'Unknown Maker',
+      makerEmail: payout.users?.email || '',
+      amount: payout.amount,
+      currency: payout.currency,
+      status: payout.status,
+      bankName: payout.bank_name,
+      accountNumber: payout.account_number,
+      adminNotes: payout.admin_notes,
+      processedAt: payout.processed_at,
+      createdAt: payout.created_at,
+      updatedAt: payout.updated_at,
+    }));
+
+    res.json({
+      success: true,
+      payouts: formattedPayouts,
+      pagination: {
+        page,
+        pageSize,
+        total,
+        totalPages: Math.ceil(total / pageSize),
+      },
+    });
+  } catch (error: any) {
+    console.error('Error fetching payout requests:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch payout requests',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+});
+
+// PATCH /api/v1/orders/payouts/:id - Update payout request status (admin/founder only)
+router.patch('/payouts/:id', authenticateToken, requireRole(['ADMIN', 'FOUNDER']), async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { status, adminNotes } = req.body;
+
+    if (!status || !['APPROVED', 'REJECTED', 'COMPLETED'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid status. Must be APPROVED, REJECTED, or COMPLETED',
+        code: 'INVALID_STATUS',
+      });
+    }
+
+    // Find payout request
+    const payout = await prisma.payout_requests.findUnique({
+      where: { id },
+    });
+
+    if (!payout) {
+      return res.status(404).json({
+        success: false,
+        message: 'Payout request not found',
+        code: 'PAYOUT_NOT_FOUND',
+      });
+    }
+
+    // Prepare update data
+    const updateData: any = {
+      status: status,
+      updated_at: new Date(),
+    };
+
+    // Add admin notes if provided
+    if (adminNotes && typeof adminNotes === 'string') {
+      updateData.admin_notes = adminNotes.trim();
+    }
+
+    // If marking as COMPLETED, set processed_at
+    if (status === 'COMPLETED' && !payout.processed_at) {
+      updateData.processed_at = new Date();
+    }
+
+    // Update payout request
+    const updatedPayout = await prisma.payout_requests.update({
+      where: { id },
+      data: updateData,
+      include: {
+        users: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+          include: {
+            makers: {
+              select: {
+                id: true,
+                display_name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    res.json({
+      success: true,
+      message: `Payout request ${status === 'COMPLETED' ? 'marked as paid' : status === 'REJECTED' ? 'rejected' : 'approved'} successfully`,
+      payout: {
+        id: updatedPayout.id,
+        makerName: updatedPayout.users?.makers?.display_name || updatedPayout.users?.name || 'Unknown Maker',
+        amount: updatedPayout.amount,
+        currency: updatedPayout.currency,
+        status: updatedPayout.status,
+        bankName: updatedPayout.bank_name,
+        accountNumber: updatedPayout.account_number,
+        adminNotes: updatedPayout.admin_notes,
+        processedAt: updatedPayout.processed_at,
+        updatedAt: updatedPayout.updated_at,
+      },
+    });
+  } catch (error: any) {
+    console.error('Error updating payout request:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update payout request',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+});
+
 // GET /api/v1/orders/:id - Get order by ID
 router.get('/:id', authenticateToken, async (req: any, res: Response) => {
   try {
