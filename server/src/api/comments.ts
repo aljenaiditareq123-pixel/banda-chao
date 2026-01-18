@@ -53,6 +53,7 @@ router.get('/', async (req: Request, res: Response) => {
               id: true,
               name: true,
               profile_picture: true,
+              isVerified: true,
             },
           },
         } as any,

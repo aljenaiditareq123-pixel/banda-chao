@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { usersAPI } from '@/lib/api';
+import apiClient from '@/lib/api';
 import { Users, Search, Mail, Calendar } from 'lucide-react';
 
 interface User {
@@ -9,6 +10,7 @@ interface User {
   email: string;
   name: string | null;
   role: string;
+  isVerified?: boolean;
   created_at: string;
 }
 
@@ -16,10 +18,27 @@ export default function AdminUsersPageClient() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  const updateVerificationStatus = async (userId: string, isVerified: boolean) => {
+    try {
+      setUpdatingId(userId);
+      const response = await apiClient.patch(`/users/${userId}/verify`, { isVerified });
+      if (response.data.success) {
+        // Update local state
+        setUsers(users.map(u => u.id === userId ? { ...u, isVerified } : u));
+      }
+    } catch (error: any) {
+      console.error('Error updating verification status:', error);
+      alert(error.response?.data?.message || 'فشل في تحديث حالة التحقق');
+    } finally {
+      setUpdatingId(null);
+    }
+  };
 
   const fetchUsers = async () => {
     // HARDCODE MODE - Return dummy data, no API calls
@@ -202,12 +221,15 @@ export default function AdminUsersPageClient() {
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   تاريخ التسجيل
                 </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  التحقق
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center">
+                  <td colSpan={5} className="px-6 py-12 text-center">
                     <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-600">
                       {searchQuery ? 'لا توجد نتائج للبحث' : 'لا يوجد مستخدمين بعد'}
@@ -257,6 +279,22 @@ export default function AdminUsersPageClient() {
                           day: 'numeric',
                         })}
                       </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <button
+                        onClick={() => updateVerificationStatus(user.id, !user.isVerified)}
+                        disabled={updatingId === user.id}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                          user.isVerified ? 'bg-blue-600' : 'bg-gray-300'
+                        }`}
+                        title={user.isVerified ? 'إلغاء التحقق' : 'تفعيل التحقق'}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            user.isVerified ? 'translate-x-6' : 'translate-x-1'
+                          }`}
+                        />
+                      </button>
                     </td>
                   </tr>
                 ))

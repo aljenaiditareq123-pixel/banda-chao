@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { commentsAPI } from '@/lib/api';
 import LikeButton from './LikeButton';
+import UserNameWithBadge from '@/components/common/UserNameWithBadge';
 
 interface CommentListProps {
   targetType: 'POST' | 'VIDEO' | 'PRODUCT';
@@ -23,6 +24,7 @@ interface Comment {
     id: string;
     name: string | null;
     profile_picture: string | null;
+    isVerified?: boolean;
   };
 }
 
@@ -148,9 +150,13 @@ export default function CommentList({
           <div className="flex-1">
             <div className="bg-gray-50 rounded-lg p-3">
               <div className="flex items-center gap-2 mb-1">
-                <span className="font-semibold text-sm text-gray-900">
-                  {comment.users.name || 'Anonymous'}
-                </span>
+                <UserNameWithBadge
+                  name={comment.users.name || 'Anonymous'}
+                  isVerified={comment.users.isVerified || false}
+                  showBadge={true}
+                  badgeSize="sm"
+                  className="font-semibold text-sm text-gray-900"
+                />
                 <span className="text-xs text-gray-500">{formatDate(comment.created_at)}</span>
               </div>
               <p className="text-gray-800 text-sm whitespace-pre-wrap">{comment.content}</p>

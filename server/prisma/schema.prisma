@@ -27,6 +27,7 @@ model users {
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
   role            String   @default("BUYER") // BUYER, MAKER, ADMIN, OWNER
+  isVerified      Boolean  @default(false) // Blue badge verification status
 
   // Social Profile Stats (cached for performance)
   followers_count Int @default(0)

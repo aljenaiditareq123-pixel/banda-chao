@@ -22,6 +22,7 @@ import CommentsSection from '@/components/shared/CommentsSection';
 import VideoReviewsCarousel from '@/components/product/VideoReviewsCarousel';
 import { useAuth } from '@/hooks/useAuth';
 import AutoTranslator from '@/components/AutoTranslator';
+import UserNameWithBadge from '@/components/common/UserNameWithBadge';
 import { MessageCircle, Factory, Shield, Lock, Plane } from 'lucide-react';
 import GroupBuyWidget from '@/components/product/GroupBuyWidget';
 import ProductPoster from '@/components/product/ProductPoster';
@@ -37,6 +38,13 @@ interface Maker {
   city?: string;
   avatarUrl?: string;
   profile_picture_url?: string;
+  user?: {
+    id: string;
+    name: string | null;
+    email: string;
+    profile_picture: string | null;
+    isVerified?: boolean;
+  };
 }
 
 interface Product {
@@ -321,9 +329,13 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 truncate">
-                        {product.maker.displayName || product.maker.name}
-                      </p>
+                      <UserNameWithBadge
+                        name={product.maker.displayName || product.maker.name || ''}
+                        isVerified={product.maker.user?.isVerified || false}
+                        showBadge={true}
+                        badgeSize="sm"
+                        className="font-semibold text-gray-900 truncate"
+                      />
                       {product.maker.bio && (
                         <p className="text-sm text-gray-600 line-clamp-1">
                           {product.maker.bio}
