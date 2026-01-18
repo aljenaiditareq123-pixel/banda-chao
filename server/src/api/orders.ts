@@ -585,6 +585,136 @@ router.get('/maker', authenticateToken, async (req: AuthRequest, res: Response) 
   }
 });
 
+// Get maker's wallet data (financial stats + transaction history)
+router.get('/maker/wallet', authenticateToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Unauthorized',
+      });
+    }
+
+    const maker = await prisma.makers.findFirst({
+      where: { user_id: userId },
+    });
+
+    if (!maker) {
+      return res.status(404).json({
+        success: false,
+        message: 'Maker profile not found',
+      });
+    }
+
+    // Get all paid orders for this maker's products
+    const orders = await prisma.orders.findMany({
+      where: {
+        status: 'PAID',
+        order_items: {
+          some: {
+            products: {
+              user_id: maker.user_id,
+            },
+          },
+        },
+      },
+      select: {
+        id: true,
+        subtotal: true,
+        platformFee: true,
+        makerRevenue: true,
+        currency: true,
+        status: true,
+        created_at: true,
+        order_items: {
+          where: {
+            products: {
+              user_id: maker.user_id,
+            },
+          },
+          include: {
+            products: {
+              select: {
+                id: true,
+                name: true,
+                price: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        created_at: 'desc',
+      },
+    });
+
+    // Calculate totals
+    let totalSales = 0;
+    let totalPlatformFees = 0;
+    let totalNetEarnings = 0;
+
+    orders.forEach((order) => {
+      // Only count products that belong to this maker
+      const makerOrderItems = order.order_items.filter(
+        (item: any) => item.products && item.products.id
+      );
+      
+      if (makerOrderItems.length > 0) {
+        // For each order, calculate based on the maker's portion
+        const orderSubtotal = order.subtotal || 0;
+        const orderPlatformFee = order.platformFee || 0;
+        const orderMakerRevenue = order.makerRevenue || 0;
+
+        totalSales += orderSubtotal;
+        totalPlatformFees += orderPlatformFee;
+        totalNetEarnings += orderMakerRevenue;
+      }
+    });
+
+    // Format transactions for response
+    const transactions = orders.map((order) => {
+      const makerOrderItems = order.order_items.filter(
+        (item: any) => item.products && item.products.id
+      );
+
+      return {
+        orderId: order.id,
+        orderDate: order.created_at,
+        productPrice: order.subtotal || 0, // Total product price (subtotal)
+        platformFee: order.platformFee || 0, // 5% commission
+        netEarnings: order.makerRevenue || 0, // 95% after commission
+        currency: order.currency || 'USD',
+        status: order.status,
+        items: makerOrderItems.map((item: any) => ({
+          productId: item.products?.id,
+          productName: item.products?.name,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+      };
+    });
+
+    res.json({
+      success: true,
+      stats: {
+        totalSales: Math.round(totalSales * 100) / 100,
+        totalPlatformFees: Math.round(totalPlatformFees * 100) / 100,
+        totalNetEarnings: Math.round(totalNetEarnings * 100) / 100,
+        currency: orders[0]?.currency || 'USD',
+      },
+      transactions,
+    });
+  } catch (error: any) {
+    console.error('Error fetching maker wallet:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch maker wallet data',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+});
+
 // GET /api/v1/orders/:id - Get order by ID
 router.get('/:id', authenticateToken, async (req: any, res: Response) => {
   try {
