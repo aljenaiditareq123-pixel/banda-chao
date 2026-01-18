@@ -7,6 +7,7 @@ import { authenticateToken, requireRole, AuthRequest } from '../middleware/auth'
 import { validate } from '../middleware/validate';
 import { updateUserSchema } from '../validation/userSchemas';
 import { getStorageProvider, isStorageConfigured } from '../lib/storage';
+import { notifyVerificationStatus } from '../lib/notifications';
 
 const router = Router();
 
@@ -308,6 +309,19 @@ router.patch('/:id/verify', authenticateToken, requireRole(['ADMIN', 'FOUNDER'])
         updated_at: true,
       },
     });
+
+    // Create notification for user - إنشاء إشعار للمستخدم
+    try {
+      await notifyVerificationStatus({
+        userId: updatedUser.id,
+        isVerified: isVerified,
+      }).catch((err) => {
+        console.warn('[User Verification] Failed to send notification (non-fatal):', err);
+      });
+    } catch (notificationError: any) {
+      // Non-critical: Log but don't fail verification update
+      console.warn('[User Verification] Error creating notification (non-fatal):', notificationError?.message);
+    }
 
     res.json({
       success: true,

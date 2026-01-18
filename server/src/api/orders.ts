@@ -5,6 +5,7 @@ import { calculateHubShippingForItems } from '../config/shippingRates';
 import { checkTransactionRisk, blockUser, logSuspiciousTransaction } from '../services/fraudService';
 import { reserveInventory, releaseInventory } from '../services/inventoryService';
 import { calculateRevenue } from '../config/commerceConfig';
+import { notifyOrderReceived, notifyPayoutStatus } from '../lib/notifications';
 
 const router = Router();
 
@@ -462,6 +463,58 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
       total: order.totalAmount,
       itemsCount: orderItems.length,
     });
+
+    // Create notifications for sellers (makers) - إنشاء إشعارات للبائعين
+    try {
+      // Get buyer info for notification
+      const buyer = await prisma.users.findUnique({
+        where: { id: userId },
+        select: { name: true, email: true },
+      });
+
+      // Get unique sellers from order items
+      const productIds = items.map((item: any) => item.productId);
+      const products = await prisma.products.findMany({
+        where: { id: { in: productIds } },
+        include: {
+          users: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      });
+
+      // Group items by seller and send notification
+      const sellerMap = new Map<string, { total: number; count: number }>();
+      products.forEach((product) => {
+        const sellerId = product.user_id;
+        const item = items.find((i: any) => i.productId === product.id);
+        if (item && sellerId) {
+          const current = sellerMap.get(sellerId) || { total: 0, count: 0 };
+          sellerMap.set(sellerId, {
+            total: current.total + item.price * item.quantity,
+            count: current.count + item.quantity,
+          });
+        }
+      });
+
+      // Send notification to each seller
+      for (const [sellerId, sellerData] of sellerMap.entries()) {
+        await notifyOrderReceived({
+          sellerId,
+          orderId: order.id,
+          orderTotal: sellerData.total,
+          buyerName: buyer?.name || undefined,
+        }).catch((err) => {
+          console.warn('[Orders] Failed to send notification to seller:', sellerId, err);
+        });
+      }
+    } catch (notificationError: any) {
+      // Non-critical: Log but don't fail order creation
+      console.warn('[Orders] Error creating seller notifications (non-fatal):', notificationError?.message);
+    }
 
     res.json({
       success: true,
@@ -1009,6 +1062,21 @@ router.patch('/payouts/:id', authenticateToken, requireRole(['ADMIN', 'FOUNDER']
         },
       },
     });
+
+    // Create notification for user - إنشاء إشعار للمستخدم
+    try {
+      await notifyPayoutStatus({
+        userId: updatedPayout.user_id,
+        payoutId: updatedPayout.id,
+        status: status as 'APPROVED' | 'REJECTED' | 'COMPLETED',
+        amount: updatedPayout.amount,
+      }).catch((err) => {
+        console.warn('[Payout] Failed to send notification (non-fatal):', err);
+      });
+    } catch (notificationError: any) {
+      // Non-critical: Log but don't fail payout update
+      console.warn('[Payout] Error creating notification (non-fatal):', notificationError?.message);
+    }
 
     res.json({
       success: true,
