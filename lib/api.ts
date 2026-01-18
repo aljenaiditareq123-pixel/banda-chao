@@ -1457,6 +1457,37 @@ export const walletAPI = {
 };
 
 // ============================================
+// Admin API
+// ============================================
+
+export const adminAPI = {
+  getStats: async (): Promise<{
+    success: boolean;
+    stats?: {
+      totalRevenue: number;
+      totalUsers: number;
+      pendingPayouts: number;
+      activeProducts: number;
+      totalMessages: number;
+    };
+    recentOrders?: any[];
+    recentUsers?: any[];
+    error?: string;
+  }> => {
+    try {
+      const response = await apiClient.get('/admin/stats');
+      return response.data;
+    } catch (error: any) {
+      console.error('[adminAPI.getStats] Error:', error);
+      return {
+        success: false,
+        error: error.response?.data?.message || error.message || 'Failed to fetch admin stats',
+      };
+    }
+  },
+};
+
+// ============================================
 // Tracking API (Visual Order Tracking)
 // ============================================
 

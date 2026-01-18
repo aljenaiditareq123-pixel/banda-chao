@@ -280,5 +280,133 @@ router.post('/promote-founder', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * GET /api/v1/admin/stats
+ * Get admin dashboard statistics
+ */
+router.get('/stats', async (req: Request, res: Response) => {
+  try {
+    // Get total revenue (sum of paid/completed orders)
+    const revenueResult = await prisma.$queryRawUnsafe<Array<{ total: number }>>(`
+      SELECT COALESCE(SUM("totalAmount"), 0) as total
+      FROM orders
+      WHERE status IN ('PAID', 'COMPLETED')
+    `);
+    const totalRevenue = revenueResult[0]?.total || 0;
+
+    // Get total users count
+    const totalUsers = await prisma.users.count();
+
+    // Get pending payouts count
+    const pendingPayouts = await prisma.payout_requests.count({
+      where: {
+        status: 'PENDING',
+      },
+    });
+
+    // Get active products count
+    const activeProducts = await prisma.products.count({
+      where: {
+        status: 'ACTIVE',
+      },
+    });
+
+    // Get total messages count (conversation_messages)
+    const totalMessages = await prisma.conversation_messages.count();
+
+    // Get recent orders (last 5)
+    const recentOrders = await prisma.orders.findMany({
+      take: 5,
+      orderBy: {
+        created_at: 'desc',
+      },
+      include: {
+        users: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            profile_picture: true,
+          },
+        },
+        order_items: {
+          include: {
+            products: {
+              select: {
+                id: true,
+                name: true,
+                image_url: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Get recent users (last 5)
+    const recentUsers = await prisma.users.findMany({
+      take: 5,
+      orderBy: {
+        created_at: 'desc',
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        profile_picture: true,
+        role: true,
+        isVerified: true,
+        created_at: true,
+      },
+    });
+
+    res.json({
+      success: true,
+      stats: {
+        totalRevenue: Number(totalRevenue),
+        totalUsers,
+        pendingPayouts,
+        activeProducts,
+        totalMessages,
+      },
+      recentOrders: recentOrders.map((order) => ({
+        id: order.id,
+        userId: order.user_id,
+        userName: order.users.name,
+        userEmail: order.users.email,
+        userProfilePicture: order.users.profile_picture,
+        totalAmount: order.totalAmount,
+        status: order.status,
+        currency: order.currency,
+        items: order.order_items.map((item) => ({
+          productId: item.product_id,
+          productName: item.products?.name || 'Unknown',
+          productImage: item.products?.image_url,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+        createdAt: order.created_at,
+        updatedAt: order.updated_at,
+      })),
+      recentUsers: recentUsers.map((user) => ({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        profilePicture: user.profile_picture,
+        role: user.role,
+        isVerified: user.isVerified,
+        createdAt: user.created_at,
+      })),
+    });
+  } catch (error: any) {
+    console.error('❌ [Admin API] Error fetching stats:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch statistics',
+      error: error.message,
+    });
+  }
+});
+
 export default router;
 
