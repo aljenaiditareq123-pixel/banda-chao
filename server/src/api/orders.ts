@@ -715,6 +715,157 @@ router.get('/maker/wallet', authenticateToken, async (req: AuthRequest, res: Res
   }
 });
 
+// POST /api/v1/orders/maker/payout - Request payout (سحب الأرباح)
+router.post('/maker/payout', authenticateToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Unauthorized',
+      });
+    }
+
+    const { amount, bankName, accountNumber, currency = 'USD' } = req.body;
+
+    // Validation
+    if (!amount || typeof amount !== 'number' || amount <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Amount is required and must be greater than 0',
+        code: 'INVALID_AMOUNT',
+      });
+    }
+
+    if (!bankName || typeof bankName !== 'string' || bankName.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Bank name is required',
+        code: 'MISSING_BANK_NAME',
+      });
+    }
+
+    if (!accountNumber || typeof accountNumber !== 'string' || accountNumber.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Account number or IBAN is required',
+        code: 'MISSING_ACCOUNT_NUMBER',
+      });
+    }
+
+    // Check if user is a maker
+    const maker = await prisma.makers.findFirst({
+      where: { user_id: userId },
+    });
+
+    if (!maker) {
+      return res.status(404).json({
+        success: false,
+        message: 'Maker profile not found',
+        code: 'MAKER_NOT_FOUND',
+      });
+    }
+
+    // Calculate available balance (total net earnings from paid orders)
+    const orders = await prisma.orders.findMany({
+      where: {
+        status: 'PAID',
+        order_items: {
+          some: {
+            products: {
+              user_id: maker.user_id,
+            },
+          },
+        },
+      },
+      select: {
+        makerRevenue: true,
+        currency: true,
+      },
+    });
+
+    let totalNetEarnings = 0;
+    orders.forEach((order) => {
+      const orderMakerRevenue = order.makerRevenue || 0;
+      totalNetEarnings += orderMakerRevenue;
+    });
+
+    // Round to 2 decimals
+    totalNetEarnings = Math.round(totalNetEarnings * 100) / 100;
+
+    // Check if requested amount exceeds available balance
+    if (amount > totalNetEarnings) {
+      return res.status(400).json({
+        success: false,
+        message: `Requested amount (${amount}) exceeds available balance (${totalNetEarnings})`,
+        code: 'INSUFFICIENT_BALANCE',
+        availableBalance: totalNetEarnings,
+      });
+    }
+
+    // Check for pending payout requests
+    const pendingPayouts = await prisma.payout_requests.findMany({
+      where: {
+        user_id: userId,
+        status: 'PENDING',
+      },
+      select: {
+        amount: true,
+      },
+    });
+
+    const totalPendingAmount = pendingPayouts.reduce((sum, payout) => sum + (payout.amount || 0), 0);
+
+    // Check if requested amount + pending payouts exceeds available balance
+    if (amount + totalPendingAmount > totalNetEarnings) {
+      return res.status(400).json({
+        success: false,
+        message: `Requested amount (${amount}) plus pending payouts (${totalPendingAmount}) exceeds available balance (${totalNetEarnings})`,
+        code: 'INSUFFICIENT_BALANCE_WITH_PENDING',
+        availableBalance: totalNetEarnings,
+        pendingAmount: totalPendingAmount,
+      });
+    }
+
+    // Create payout request
+    const { randomUUID } = await import('crypto');
+    const payoutId = randomUUID();
+
+    const payoutRequest = await prisma.payout_requests.create({
+      data: {
+        id: payoutId,
+        user_id: userId,
+        amount: Math.round(amount * 100) / 100, // Round to 2 decimals
+        currency: currency,
+        status: 'PENDING',
+        bank_name: bankName.trim(),
+        account_number: accountNumber.trim(),
+        created_at: new Date(),
+        updated_at: new Date(),
+      },
+    });
+
+    res.json({
+      success: true,
+      message: 'Payout request submitted successfully',
+      payoutRequest: {
+        id: payoutRequest.id,
+        amount: payoutRequest.amount,
+        currency: payoutRequest.currency,
+        status: payoutRequest.status,
+        createdAt: payoutRequest.created_at,
+      },
+    });
+  } catch (error: any) {
+    console.error('Error creating payout request:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create payout request',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+});
+
 // GET /api/v1/orders/:id - Get order by ID
 router.get('/:id', authenticateToken, async (req: any, res: Response) => {
   try {

@@ -66,6 +66,7 @@ model users {
   discount_codes                       discount_codes[]
   flash_drop_participants              flash_drop_participants[] @relation("FlashDropParticipant")
   flash_drops_frozen                   flash_drops[]             @relation("FlashDropFrozenBy")
+  payout_requests                      payout_requests[]
 
   @@index([email])
   @@index([role])
@@ -260,6 +261,28 @@ model mystery_lists {
   @@unique([blind_box_product_id, mystery_product_id])
   @@index([blind_box_product_id])
   @@index([mystery_product_id])
+}
+
+// Payout Requests - طلبات سحب الأرباح
+model payout_requests {
+  id              String   @id @default(uuid())
+  user_id         String
+  amount          Float    // Amount requested for payout
+  currency        String   @default("USD")
+  status          String   @default("PENDING") // PENDING, APPROVED, REJECTED, COMPLETED
+  bank_name       String   // Bank name
+  account_number  String   // IBAN or Account Number
+  admin_notes     String?  // Admin notes (optional)
+  processed_at    DateTime? // When the payout was processed
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  // Relations
+  users           users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([status])
+  @@index([created_at])
 }
 
 // ============================================

@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import MakerLayout from '@/components/maker/MakerLayout';
 import LoadingState from '@/components/common/LoadingState';
-import { Wallet, TrendingUp, DollarSign, Percent } from 'lucide-react';
+import { Wallet, TrendingUp, DollarSign, Percent, X, ArrowDown } from 'lucide-react';
 import { formatCurrency } from '@/lib/formatCurrency';
 import apiClient from '@/lib/api';
 
@@ -47,6 +47,13 @@ export default function MakerWalletClient({ locale }: MakerWalletClientProps) {
     currency: 'USD',
   });
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [showPayoutModal, setShowPayoutModal] = useState(false);
+  const [payoutAmount, setPayoutAmount] = useState('');
+  const [bankName, setBankName] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [payoutLoading, setPayoutLoading] = useState(false);
+  const [payoutError, setPayoutError] = useState('');
+  const [payoutSuccess, setPayoutSuccess] = useState(false);
 
   useEffect(() => {
     if (!authLoading) {
@@ -193,13 +200,25 @@ export default function MakerWalletClient({ locale }: MakerWalletClientProps) {
             <p className="text-3xl font-bold text-white mb-1">
               {formatCurrency(stats.totalNetEarnings, stats.currency, locale)}
             </p>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 mb-4">
               {locale === 'ar'
                 ? 'المبلغ المتاح للتاجر (95%)'
                 : locale === 'zh'
                 ? '商家可用金额 (95%)'
                 : 'Available to seller (95%)'}
             </p>
+            <button
+              onClick={() => setShowPayoutModal(true)}
+              disabled={stats.totalNetEarnings <= 0}
+              className={`w-full py-2 px-4 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 ${
+                stats.totalNetEarnings > 0
+                  ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg hover:shadow-xl'
+                  : 'bg-gray-700 text-gray-500 cursor-not-allowed'
+              }`}
+            >
+              <ArrowDown className="w-4 h-4" />
+              <span>{locale === 'ar' ? 'طلب سحب' : locale === 'zh' ? '申请提现' : 'Request Payout'}</span>
+            </button>
           </div>
         </div>
 
@@ -309,6 +328,237 @@ export default function MakerWalletClient({ locale }: MakerWalletClientProps) {
             </div>
           )}
         </div>
+
+        {/* Payout Request Modal */}
+        {showPayoutModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+            <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl border border-amber-500/20 shadow-2xl max-w-md w-full mx-4 p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-white">
+                  {locale === 'ar' ? 'طلب سحب الأرباح' : locale === 'zh' ? '申请提现' : 'Request Payout'}
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowPayoutModal(false);
+                    setPayoutError('');
+                    setPayoutSuccess(false);
+                    setPayoutAmount('');
+                    setBankName('');
+                    setAccountNumber('');
+                  }}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              {payoutSuccess ? (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <TrendingUp className="w-8 h-8 text-green-400" />
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-2">
+                    {locale === 'ar' ? 'تم إرسال الطلب بنجاح!' : locale === 'zh' ? '申请已提交！' : 'Request Submitted!'}
+                  </h3>
+                  <p className="text-gray-400 mb-6">
+                    {locale === 'ar'
+                      ? 'سيتم مراجعة طلبك وسيتلقى معالجة في أقرب وقت ممكن'
+                      : locale === 'zh'
+                      ? '您的申请将被审核并尽快处理'
+                      : 'Your request will be reviewed and processed as soon as possible'}
+                  </p>
+                  <button
+                    onClick={() => {
+                      setShowPayoutModal(false);
+                      setPayoutSuccess(false);
+                      setPayoutAmount('');
+                      setBankName('');
+                      setAccountNumber('');
+                      fetchWalletData();
+                    }}
+                    className="w-full py-3 px-4 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg font-semibold transition-all duration-200"
+                  >
+                    {locale === 'ar' ? 'حسناً' : locale === 'zh' ? '好的' : 'OK'}
+                  </button>
+                </div>
+              ) : (
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (!payoutAmount || !bankName || !accountNumber) {
+                      setPayoutError(
+                        locale === 'ar'
+                          ? 'يرجى ملء جميع الحقول'
+                          : locale === 'zh'
+                          ? '请填写所有字段'
+                          : 'Please fill all fields'
+                      );
+                      return;
+                    }
+
+                    const amount = parseFloat(payoutAmount);
+                    if (isNaN(amount) || amount <= 0) {
+                      setPayoutError(
+                        locale === 'ar'
+                          ? 'يرجى إدخال مبلغ صحيح'
+                          : locale === 'zh'
+                          ? '请输入有效金额'
+                          : 'Please enter a valid amount'
+                      );
+                      return;
+                    }
+
+                    if (amount > stats.totalNetEarnings) {
+                      setPayoutError(
+                        locale === 'ar'
+                          ? `المبلغ المطلوب (${formatCurrency(amount, stats.currency, locale)}) يتجاوز الرصيد المتاح (${formatCurrency(stats.totalNetEarnings, stats.currency, locale)})`
+                          : locale === 'zh'
+                          ? `请求金额 (${formatCurrency(amount, stats.currency, locale)}) 超过可用余额 (${formatCurrency(stats.totalNetEarnings, stats.currency, locale)})`
+                          : `Requested amount (${formatCurrency(amount, stats.currency, locale)}) exceeds available balance (${formatCurrency(stats.totalNetEarnings, stats.currency, locale)})`
+                      );
+                      return;
+                    }
+
+                    try {
+                      setPayoutLoading(true);
+                      setPayoutError('');
+                      const response = await apiClient.post('/orders/maker/payout', {
+                        amount: amount,
+                        bankName: bankName.trim(),
+                        accountNumber: accountNumber.trim(),
+                        currency: stats.currency,
+                      });
+
+                      if (response.data.success) {
+                        setPayoutSuccess(true);
+                      } else {
+                        setPayoutError(response.data.message || 'Failed to submit payout request');
+                      }
+                    } catch (error: any) {
+                      console.error('Error submitting payout request:', error);
+                      const errorMessage =
+                        error.response?.data?.message ||
+                        (locale === 'ar'
+                          ? 'فشل في إرسال طلب السحب. يرجى المحاولة مرة أخرى'
+                          : locale === 'zh'
+                          ? '提现申请提交失败。请重试'
+                          : 'Failed to submit payout request. Please try again');
+                      setPayoutError(errorMessage);
+                    } finally {
+                      setPayoutLoading(false);
+                    }
+                  }}
+                >
+                  <div className="space-y-4">
+                    {/* Available Balance */}
+                    <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                      <p className="text-sm text-gray-400 mb-1">
+                        {locale === 'ar' ? 'الرصيد المتاح' : locale === 'zh' ? '可用余额' : 'Available Balance'}
+                      </p>
+                      <p className="text-2xl font-bold text-green-400">
+                        {formatCurrency(stats.totalNetEarnings, stats.currency, locale)}
+                      </p>
+                    </div>
+
+                    {/* Amount */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        {locale === 'ar' ? 'المبلغ المطلوب سحبه' : locale === 'zh' ? '提现金额' : 'Amount'}
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0.01"
+                        max={stats.totalNetEarnings}
+                        value={payoutAmount}
+                        onChange={(e) => setPayoutAmount(e.target.value)}
+                        className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20"
+                        placeholder="0.00"
+                        required
+                      />
+                    </div>
+
+                    {/* Bank Name */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        {locale === 'ar' ? 'اسم البنك' : locale === 'zh' ? '银行名称' : 'Bank Name'}
+                      </label>
+                      <input
+                        type="text"
+                        value={bankName}
+                        onChange={(e) => setBankName(e.target.value)}
+                        className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20"
+                        placeholder={locale === 'ar' ? 'أدخل اسم البنك' : locale === 'zh' ? '输入银行名称' : 'Enter bank name'}
+                        required
+                      />
+                    </div>
+
+                    {/* Account Number / IBAN */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        {locale === 'ar' ? 'رقم الحساب أو الآيبان' : locale === 'zh' ? '账号或IBAN' : 'Account Number or IBAN'}
+                      </label>
+                      <input
+                        type="text"
+                        value={accountNumber}
+                        onChange={(e) => setAccountNumber(e.target.value)}
+                        className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20"
+                        placeholder={locale === 'ar' ? 'أدخل رقم الحساب أو الآيبان' : locale === 'zh' ? '输入账号或IBAN' : 'Enter account number or IBAN'}
+                        required
+                      />
+                    </div>
+
+                    {/* Error Message */}
+                    {payoutError && (
+                      <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                        <p className="text-sm text-red-400">{payoutError}</p>
+                      </div>
+                    )}
+
+                    {/* Submit Button */}
+                    <div className="flex gap-3 pt-4">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowPayoutModal(false);
+                          setPayoutError('');
+                          setPayoutAmount('');
+                          setBankName('');
+                          setAccountNumber('');
+                        }}
+                        className="flex-1 py-3 px-4 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-semibold transition-all duration-200"
+                        disabled={payoutLoading}
+                      >
+                        {locale === 'ar' ? 'إلغاء' : locale === 'zh' ? '取消' : 'Cancel'}
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={payoutLoading || !payoutAmount || !bankName || !accountNumber}
+                        className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all duration-200 ${
+                          payoutLoading || !payoutAmount || !bankName || !accountNumber
+                            ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                            : 'bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black'
+                        }`}
+                      >
+                        {payoutLoading
+                          ? locale === 'ar'
+                            ? 'جاري الإرسال...'
+                            : locale === 'zh'
+                            ? '提交中...'
+                            : 'Submitting...'
+                          : locale === 'ar'
+                          ? 'إرسال الطلب'
+                          : locale === 'zh'
+                          ? '提交申请'
+                          : 'Submit Request'}
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </MakerLayout>
   );
