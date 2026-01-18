@@ -6,7 +6,7 @@ import ProductCard from '@/components/cards/ProductCard';
 import Link from 'next/link';
 import Button from '@/components/Button';
 import EmptyState from '@/components/common/EmptyState';
-import { paymentsAPI } from '@/lib/api';
+import { paymentsAPI, reviewsAPI } from '@/lib/api';
 import { trackCheckoutStarted } from '@/lib/analytics';
 import LoadingState from '@/components/common/LoadingState';
 import ErrorState from '@/components/common/ErrorState';
@@ -23,7 +23,7 @@ import VideoReviewsCarousel from '@/components/product/VideoReviewsCarousel';
 import { useAuth } from '@/hooks/useAuth';
 import AutoTranslator from '@/components/AutoTranslator';
 import UserNameWithBadge from '@/components/common/UserNameWithBadge';
-import { MessageCircle, Factory, Shield, Lock, Plane } from 'lucide-react';
+import { MessageCircle, Factory, Shield, Lock, Plane, Star } from 'lucide-react';
 import GroupBuyWidget from '@/components/product/GroupBuyWidget';
 import ProductPoster from '@/components/product/ProductPoster';
 import VirtualTryOn from '@/components/product/VirtualTryOn';
@@ -94,6 +94,14 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
     summary: string;
   } | null>(null);
   const [loadingReviewSummary, setLoadingReviewSummary] = useState(false);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
+  const [userHasPurchased, setUserHasPurchased] = useState(false);
+  const [userHasReviewed, setUserHasReviewed] = useState(false);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   // Detect mobile/tablet
   useEffect(() => {
@@ -594,126 +602,13 @@ export default function ProductDetailClient({ locale, product, relatedProducts }
             )}
 
             {/* Reviews Section */}
-            <div className="mb-6 p-4 bg-white rounded-xl border border-gray-200">
-              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <span className="text-2xl">⭐</span>
-                {locale === 'ar' ? 'التقييمات والمراجعات' : locale === 'zh' ? '评价和评论' : 'Reviews & Ratings'}
-                {(product as any).reviews && (
-                  <span className="text-sm font-normal text-gray-500">
-                    ({(product as any).reviews.toLocaleString()})
-                  </span>
-                )}
-              </h3>
-              
-              {/* Rating Summary */}
-              {(product as any).rating && (
-                <div className="mb-4 p-4 bg-gradient-to-br from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
-                  <div className="flex items-center gap-4">
-                    <div className="text-center">
-                      <div className="text-4xl font-black text-yellow-600">
-                        {(product as any).rating}
-                      </div>
-                      <div className="flex items-center gap-1 mt-1">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <span
-                            key={star}
-                            className={`text-xl ${
-                              star <= Math.round((product as any).rating)
-                                ? 'text-yellow-500'
-                                : 'text-gray-300'
-                            }`}
-                          >
-                            ⭐
-                          </span>
-                        ))}
-                      </div>
-                      <p className="text-xs text-gray-600 mt-1">
-                        {(product as any).reviews || 0} {locale === 'ar' ? 'تقييم' : locale === 'zh' ? '评价' : 'reviews'}
-                      </p>
-                    </div>
-                    <div className="flex-1">
-                      <div className="space-y-1">
-                        {[5, 4, 3, 2, 1].map((star) => {
-                          const percentage = Math.random() * 30 + 50; // Mock percentage
-                          return (
-                            <div key={star} className="flex items-center gap-2">
-                              <span className="text-sm text-gray-600 w-8">{star} ⭐</span>
-                              <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                                <div
-                                  className="h-full bg-yellow-500 transition-all"
-                                  style={{ width: `${percentage}%` }}
-                                />
-                              </div>
-                              <span className="text-xs text-gray-500 w-12 text-right">
-                                {Math.round(percentage)}%
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Sample Reviews */}
-              <div className="space-y-4">
-                {[
-                  {
-                    name: locale === 'ar' ? 'أحمد محمد' : locale === 'zh' ? '张明' : 'John Doe',
-                    rating: 5,
-                    date: '2024-01-15',
-                    comment: locale === 'ar' 
-                      ? 'منتج رائع! الجودة ممتازة والتسليم كان سريعاً. أنصح به بشدة.'
-                      : locale === 'zh'
-                      ? '很棒的产品！质量很好，发货也很快。强烈推荐！'
-                      : 'Great product! Excellent quality and fast delivery. Highly recommended!',
-                  },
-                  {
-                    name: locale === 'ar' ? 'فاطمة علي' : locale === 'zh' ? '李华' : 'Jane Smith',
-                    rating: 4,
-                    date: '2024-01-10',
-                    comment: locale === 'ar'
-                      ? 'جيد جداً، لكن يمكن تحسين التغليف قليلاً.'
-                      : locale === 'zh'
-                      ? '很好，但包装可以稍微改进。'
-                      : 'Very good, but packaging could be improved slightly.',
-                  },
-                ].map((review, index) => (
-                  <div key={index} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center text-white text-sm font-bold">
-                          {review.name.charAt(0)}
-                        </div>
-                        <span className="font-semibold text-gray-900">{review.name}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="flex">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <span
-                              key={star}
-                              className={`text-sm ${
-                                star <= review.rating ? 'text-yellow-500' : 'text-gray-300'
-                              }`}
-                            >
-                              ⭐
-                            </span>
-                          ))}
-                        </div>
-                        <span className="text-xs text-gray-500">{review.date}</span>
-                      </div>
-                    </div>
-                    <p className="text-sm text-gray-700">{review.comment}</p>
-                  </div>
-                ))}
-              </div>
-
-              {/* View All Reviews Button */}
-              <button className="w-full mt-4 py-2 text-center text-primary-600 font-semibold hover:bg-primary-50 rounded-lg transition-colors">
-                {locale === 'ar' ? 'عرض جميع التقييمات →' : locale === 'zh' ? '查看所有评价 →' : 'View All Reviews →'}
-              </button>
-            </div>
+            <ProductReviews
+              productId={product.id}
+              locale={locale}
+              productName={product.name}
+              currentRating={(product as any).rating}
+              currentReviewsCount={(product as any).reviews_count || (product as any).reviews}
+            />
 
             {/* AI Review Summary */}
             {reviewSummary && (

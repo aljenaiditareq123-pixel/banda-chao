@@ -589,5 +589,86 @@ router.delete('/:id', authenticateToken, requireRole(['MAKER', 'ADMIN', 'FOUNDER
   }
 });
 
+// GET /api/v1/products/:id/reviews - Get all reviews for a product
+router.get('/:id/reviews', async (req: Request, res: Response) => {
+  try {
+    const { id: productId } = req.params;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const skip = (page - 1) * limit;
+
+    // Check if product exists
+    const product = await prisma.products.findUnique({
+      where: { id: productId },
+      select: { id: true, name: true, rating: true, reviews_count: true },
+    });
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found',
+        error: 'PRODUCT_NOT_FOUND',
+      });
+    }
+
+    // Get reviews
+    const [reviews, total] = await Promise.all([
+      prisma.reviews.findMany({
+        where: { product_id: productId },
+        skip,
+        take: limit,
+        include: {
+          users: {
+            select: {
+              id: true,
+              name: true,
+              profile_picture: true,
+              isVerified: true,
+            },
+          },
+        },
+        orderBy: {
+          created_at: 'desc',
+        },
+      }),
+      prisma.reviews.count({
+        where: { product_id: productId },
+      }),
+    ]);
+
+    res.json({
+      success: true,
+      reviews: reviews.map((review) => ({
+        id: review.id,
+        rating: review.rating,
+        comment: review.comment,
+        createdAt: review.created_at,
+        updatedAt: review.updated_at,
+        user: {
+          id: review.users.id,
+          name: review.users.name,
+          profilePicture: review.users.profile_picture,
+          isVerified: review.users.isVerified,
+        },
+      })),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+      averageRating: product.rating || 0,
+      totalReviews: product.reviews_count || 0,
+    });
+  } catch (error: any) {
+    console.error('Error fetching product reviews:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch reviews',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+});
+
 export default router;
 

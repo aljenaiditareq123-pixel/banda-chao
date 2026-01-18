@@ -25,6 +25,7 @@ import videoRoutes from './api/videos';
 import postRoutes from './api/posts';
 import likeRoutes from './api/likes';
 import commentRoutes from './api/comments';
+import reviewRoutes from './api/reviews';
 import aiRoutes from './api/ai';
 import brainAiRoutes from './routes/aiRoutes';
 import paymentRoutes from './api/payments';
@@ -428,6 +429,7 @@ app.use('/api/v1/videos', videoRoutes);
 app.use('/api/v1/posts', postRoutes);
 app.use('/api/v1/likes', likeRoutes);
 app.use('/api/v1/comments', commentRoutes);
+app.use('/api/v1/reviews', reviewRoutes);
 app.use('/api/v1/ai', aiLimiter, aiRoutes);
 app.use('/api/ai', brainAiRoutes); // AI Brain routes (Neuro-Genesis)
 app.use('/api/v1/payments', paymentRoutes);

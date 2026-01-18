@@ -68,6 +68,7 @@ model users {
   flash_drop_participants              flash_drop_participants[] @relation("FlashDropParticipant")
   flash_drops_frozen                   flash_drops[]             @relation("FlashDropFrozenBy")
   payout_requests                      payout_requests[]
+  reviews                              reviews[]
 
   @@index([email])
   @@index([role])
@@ -141,6 +142,7 @@ model products {
   clan_buys           clan_buys[]
   order_items         order_items[]
   product_likes       product_likes[]
+  reviews             reviews[]
   users               users               @relation(fields: [user_id], references: [id], onDelete: Cascade)
   variants            product_variants[]
   inventory           inventory_items[]
@@ -538,6 +540,25 @@ model comments {
   @@index([video_id])
   @@index([post_id])
   @@index([review_video_url])
+}
+
+// Product Reviews - تقييمات المنتجات
+model reviews {
+  id         String   @id @default(uuid())
+  user_id    String
+  product_id String
+  rating     Int      // Rating from 1 to 5 (النجوم)
+  comment    String?  @db.Text // Review text (optional) - نص المراجعة (اختياري)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  products   products @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, product_id]) // Ensure user can only review a product once - المستخدم يمكنه تقييم المنتج مرة واحدة فقط
+  @@index([product_id])
+  @@index([user_id])
+  @@index([rating])
+  @@index([created_at])
 }
 
 model comment_likes {

@@ -1478,6 +1478,56 @@ export const usersAPI = {
 };
 
 // ============================================
+// Reviews API
+// ============================================
+
+export const reviewsAPI = {
+  create: async (data: {
+    productId: string;
+    rating: number;
+    comment?: string;
+  }): Promise<{
+    success: boolean;
+    review?: any;
+    message?: string;
+    error?: string;
+  }> => {
+    try {
+      const response = await apiClient.post('/reviews', data);
+      return response.data;
+    } catch (error: any) {
+      console.error('[reviewsAPI.create] Error:', error);
+      return {
+        success: false,
+        error: error.response?.data?.message || error.message || 'Failed to create review',
+      };
+    }
+  },
+  getProductReviews: async (
+    productId: string,
+    params?: { page?: number; limit?: number }
+  ): Promise<{
+    success: boolean;
+    reviews?: any[];
+    pagination?: any;
+    averageRating?: number;
+    totalReviews?: number;
+    error?: string;
+  }> => {
+    try {
+      const response = await apiClient.get(`/products/${productId}/reviews`, { params });
+      return response.data;
+    } catch (error: any) {
+      console.error('[reviewsAPI.getProductReviews] Error:', error);
+      return {
+        success: false,
+        error: error.response?.data?.message || error.message || 'Failed to fetch reviews',
+      };
+    }
+  },
+};
+
+// ============================================
 // Messages API
 // ============================================
 
